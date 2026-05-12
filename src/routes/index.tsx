@@ -9,6 +9,47 @@ import { useState } from "react";
 import { BookingDialog } from "@/components/booking-dialog";
 import { DemoDialog } from "@/components/demo-dialog";
 
+const SITE_URL = "https://nfcplatform.vn";
+
+const FAQ_ITEMS: { q: string; a: string }[] = [
+  { q: "NFC Platform là gì?", a: "Là nền tảng all-in-one giúp Sale BĐS chia sẻ danh thiếp số (NFC, QR, Wallet), tự động tạo lead, dùng AI follow-up và quản lý CRM trên một hệ thống duy nhất." },
+  { q: "Tôi có cần thẻ NFC vật lý không?", a: "Không bắt buộc. Bạn vẫn có thể dùng QR động, Wallet Card, link sharing và mobile app. Thẻ NFC vật lý là tuỳ chọn premium." },
+  { q: "AI có hỗ trợ tiếng Việt không?", a: "Có. AI được fine-tune trên dữ liệu hành vi khách hàng BĐS Việt Nam và hiểu ngữ cảnh giao tiếp địa phương." },
+  { q: "Dữ liệu của tôi có an toàn không?", a: "Chúng tôi tuân thủ chuẩn ISO 27001, mã hoá end-to-end và lưu trữ tại data center cấp Enterprise. Phân quyền và audit log đầy đủ." },
+  { q: "Có hỗ trợ tích hợp CRM khác không?", a: "Có. Chúng tôi hỗ trợ tích hợp với Salesforce, HubSpot, Zalo OA, Google Workspace, và webhook tuỳ chỉnh." },
+  { q: "Có dùng thử miễn phí không?", a: "Có. Gói Business cho dùng thử 14 ngày miễn phí, không cần thẻ tín dụng. Gói Starter miễn phí trọn đời." },
+];
+
+const ORGANIZATION_LD = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "NFC Platform",
+  url: SITE_URL,
+  logo: `${SITE_URL}/favicon.ico`,
+  description: "Sales Growth Platform for Real Estate — NFC + AI + CRM cho đội Sale Bất động sản.",
+  sameAs: [
+    "https://www.facebook.com/nfcplatform",
+    "https://www.linkedin.com/company/nfcplatform",
+  ],
+  contactPoint: [{
+    "@type": "ContactPoint",
+    contactType: "sales",
+    email: "hello@nfcplatform.vn",
+    areaServed: "VN",
+    availableLanguage: ["Vietnamese", "English"],
+  }],
+};
+
+const FAQ_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ_ITEMS.map(({ q, a }) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: { "@type": "Answer", text: a },
+  })),
+};
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -16,6 +57,13 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Nền tảng tăng trưởng toàn diện cho Sale Bất động sản: NFC + AI + CRM giúp kết nối khách hàng, tạo lead và chốt deal nhanh hơn." },
       { property: "og:title", content: "NFC Platform — Sales Growth Platform for Real Estate" },
       { property: "og:description", content: "Một profile – đa nền tảng – đa cách chia sẻ. AI Follow-up, AI Lead Score, CRM, Analytics dành riêng cho BĐS." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: SITE_URL },
+    ],
+    links: [{ rel: "canonical", href: SITE_URL }],
+    scripts: [
+      { type: "application/ld+json", children: JSON.stringify(ORGANIZATION_LD) },
+      { type: "application/ld+json", children: JSON.stringify(FAQ_LD) },
     ],
   }),
   component: LandingPage,
