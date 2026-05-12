@@ -1,9 +1,88 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
-import { BarChart3, Users2, Target, DollarSign, Radio, QrCode } from "lucide-react";
-import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend } from "recharts";
+import { BarChart3, Users2, Target, DollarSign, Radio, QrCode, Link2, Share2 } from "lucide-react";
+import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend, PieChart, Pie, Cell } from "recharts";
+import { getSourceAnalytics } from "@/lib/tracking.functions";
 
 export const Route = createFileRoute("/_app/analytics")({ component: AnalyticsPage });
+
+const SOURCE_META: Record<string, { label: string; color: string; icon: any }> = {
+  nfc: { label: "NFC Tap", color: "oklch(0.59 0.22 285)", icon: Radio },
+  qr: { label: "QR Code", color: "oklch(0.65 0.16 240)", icon: QrCode },
+  link: { label: "Direct Link", color: "oklch(0.68 0.16 152)", icon: Link2 },
+  social: { label: "Social Bio", color: "oklch(0.74 0.17 60)", icon: Share2 },
+  direct: { label: "Direct", color: "oklch(0.6 0.02 265)", icon: Link2 },
+};
+
+function SourceAnalyticsBlock() {
+  const fetchSrc = useServerFn(getSourceAnalytics);
+  const { data, isLoading } = useQuery({
+    queryKey: ["source-analytics", 30],
+    queryFn: () => fetchSrc({ data: { days: 30 } }),
+  });
+
+  const bySource = (data?.bySource ?? []).map((r) => ({
+    ...r,
+    label: SOURCE_META[r.source]?.label ?? r.source,
+    color: SOURCE_META[r.source]?.color ?? "oklch(0.6 0.02 265)",
+  }));
+  const total = data?.total ?? 0;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <SectionCard title="Lượt chạm theo nguồn (30 ngày)" className="lg:col-span-2">
+        {isLoading ? (
+          <div className="h-[260px] grid place-items-center text-sm text-muted-foreground">Đang tải…</div>
+        ) : total === 0 ? (
+          <div className="h-[260px] grid place-items-center text-sm text-muted-foreground">
+            Chưa có lượt chạm. Tạo NFC/QR ở mục “NFC & QR” để bắt đầu thu dữ liệu.
+          </div>
+        ) : (
+          <div className="h-[260px]">
+            <ResponsiveContainer>
+              <LineChart data={data?.daily ?? []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid stroke="oklch(0.93 0.008 265)" vertical={false} />
+                <XAxis dataKey="day" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid oklch(0.93 0.008 265)" }} />
+                <Line type="monotone" dataKey="count" stroke="oklch(0.59 0.22 285)" strokeWidth={2.4} dot={false} name="Lượt chạm" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard title="Phân bổ kênh">
+        {total === 0 ? (
+          <div className="h-[260px] grid place-items-center text-sm text-muted-foreground">—</div>
+        ) : (
+          <>
+            <div className="h-[180px]">
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie data={bySource} dataKey="count" nameKey="label" innerRadius={50} outerRadius={75} paddingAngle={2}>
+                    {bySource.map((s) => <Cell key={s.source} fill={s.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid oklch(0.93 0.008 265)" }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <ul className="space-y-1.5 mt-2">
+              {bySource.map((s) => (
+                <li key={s.source} className="flex items-center justify-between text-[12.5px]">
+                  <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />{s.label}</span>
+                  <span className="font-semibold">{s.count.toLocaleString()} <span className="text-muted-foreground font-normal">· {Math.round((s.count / total) * 100)}%</span></span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </SectionCard>
+    </div>
+  );
+}
 
 const funnel = [
   { stage: "Lượt chạm NFC/QR", v: 12456, w: "100%" },
