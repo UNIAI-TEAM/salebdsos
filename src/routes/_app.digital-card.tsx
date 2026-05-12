@@ -13,7 +13,7 @@ import {
   Sparkles, Palette, Settings2, ExternalLink, Loader2, BadgeCheck,
 } from "lucide-react";
 import { toast } from "sonner";
-import { QRCodeBlock } from "@/components/qr-code";
+import { QrCode as QrCodeBlock } from "@/components/qr-code";
 
 export const Route = createFileRoute("/_app/digital-card")({ component: DigitalCardPage });
 
