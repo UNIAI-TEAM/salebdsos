@@ -354,7 +354,7 @@ function DigitalCardPage() {
           <Section id="share" icon={QrIcon} title="Chia sẻ & QR · NFC">
             <div className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-4 items-start">
               <div className="rounded-xl border border-border bg-white p-3 grid place-items-center">
-                <QRCodeBlock value={publicUrl} size={150} />
+                <QrCodeBlock value={publicUrl} size={150} />
               </div>
               <div className="space-y-3 min-w-0">
                 <div>
