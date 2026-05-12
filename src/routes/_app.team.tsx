@@ -1,17 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
 import {
   Crown, Plus, Trophy, Users2, Target, DollarSign, MoreHorizontal,
   CheckCircle2, TrendingUp, Search, Filter, Calendar, Download, Star,
-  Activity, ArrowRight, ShieldCheck,
+  Activity, ArrowRight, ShieldCheck, Mail, Pencil, Trash2, UserPlus, Send, X, Check,
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/team")({ component: TeamPage });
+
+const DEPARTMENTS = ["Kinh doanh 1", "Kinh doanh 2", "Marketing", "Chăm sóc KH", "Hỗ trợ"] as const;
+const ROLES = [
+  { v: "Admin", desc: "Toàn quyền hệ thống" },
+  { v: "Manager", desc: "Quản lý phòng ban" },
+  { v: "Sales Manager", desc: "Quản lý đội sales" },
+  { v: "Senior Sales", desc: "Sale cấp cao" },
+  { v: "Sales", desc: "Sale tiêu chuẩn" },
+  { v: "Sales Executive", desc: "Sale executive" },
+  { v: "Marketing Leader", desc: "Trưởng nhóm marketing" },
+  { v: "Digital Marketing", desc: "Digital marketing" },
+  { v: "CSKH Leader", desc: "Trưởng CSKH" },
+] as const;
+
+type Member = {
+  id: string;
+  n: string; email: string; phone: string;
+  dept: string; role: string;
+  l: number; d: number; rev: string; cv: string; kpi: string; star: number;
+  status: "active" | "invited" | "inactive";
+};
 
 const kpis = [
   { icon: Users2, label: "Tổng thành viên", value: "48", delta: 9.1, tone: "primary" as const },
@@ -40,15 +65,15 @@ const depts = [
   { name: "Hỗ trợ", value: 15.9, color: "hsl(346 77% 60%)" },
 ];
 
-const members = [
-  { n: "Trần Minh Đức", dept: "Kinh doanh 1", role: "Senior Sales", l: 156, d: 24, rev: "12.6 tỷ", cv: "15.4%", kpi: "120%", star: 5 },
-  { n: "Lê Thu Hương", dept: "Kinh doanh 1", role: "Sales Manager", l: 142, d: 18, rev: "9.8 tỷ", cv: "12.7%", kpi: "110%", star: 5 },
-  { n: "Phạm Tuấn Anh", dept: "Kinh doanh 2", role: "Senior Sales", l: 134, d: 16, rev: "8.7 tỷ", cv: "11.9%", kpi: "105%", star: 4 },
-  { n: "Nguyễn Hải Yến", dept: "Marketing", role: "Marketing Leader", l: 98, d: 12, rev: "6.4 tỷ", cv: "12.2%", kpi: "115%", star: 5 },
-  { n: "Đỗ Quốc Bảo", dept: "Kinh doanh 2", role: "Senior Sales", l: 108, d: 14, rev: "6.1 tỷ", cv: "13.0%", kpi: "102%", star: 4 },
-  { n: "Bùi Thị Ngọc", dept: "Chăm sóc KH", role: "CSKH Leader", l: 87, d: 10, rev: "4.3 tỷ", cv: "11.5%", kpi: "98%", star: 4 },
-  { n: "Hoàng Minh Long", dept: "Marketing", role: "Digital Marketing", l: 76, d: 9, rev: "3.2 tỷ", cv: "11.8%", kpi: "95%", star: 3 },
-  { n: "Lưu Thanh Tâm", dept: "Kinh doanh 1", role: "Sales Executive", l: 69, d: 8, rev: "3.0 tỷ", cv: "11.6%", kpi: "92%", star: 3 },
+const members: Member[] = [
+  { id: "m1", n: "Trần Minh Đức", email: "duc.tm@abc.vn", phone: "0901 234 567", dept: "Kinh doanh 1", role: "Senior Sales", l: 156, d: 24, rev: "12.6 tỷ", cv: "15.4%", kpi: "120%", star: 5, status: "active" },
+  { id: "m2", n: "Lê Thu Hương", email: "huong.lt@abc.vn", phone: "0902 345 678", dept: "Kinh doanh 1", role: "Sales Manager", l: 142, d: 18, rev: "9.8 tỷ", cv: "12.7%", kpi: "110%", star: 5, status: "active" },
+  { id: "m3", n: "Phạm Tuấn Anh", email: "anh.pt@abc.vn", phone: "0903 456 789", dept: "Kinh doanh 2", role: "Senior Sales", l: 134, d: 16, rev: "8.7 tỷ", cv: "11.9%", kpi: "105%", star: 4, status: "active" },
+  { id: "m4", n: "Nguyễn Hải Yến", email: "yen.nh@abc.vn", phone: "0904 567 890", dept: "Marketing", role: "Marketing Leader", l: 98, d: 12, rev: "6.4 tỷ", cv: "12.2%", kpi: "115%", star: 5, status: "active" },
+  { id: "m5", n: "Đỗ Quốc Bảo", email: "bao.dq@abc.vn", phone: "0905 678 901", dept: "Kinh doanh 2", role: "Senior Sales", l: 108, d: 14, rev: "6.1 tỷ", cv: "13.0%", kpi: "102%", star: 4, status: "active" },
+  { id: "m6", n: "Bùi Thị Ngọc", email: "ngoc.bt@abc.vn", phone: "0906 789 012", dept: "Chăm sóc KH", role: "CSKH Leader", l: 87, d: 10, rev: "4.3 tỷ", cv: "11.5%", kpi: "98%", star: 4, status: "active" },
+  { id: "m7", n: "Hoàng Minh Long", email: "long.hm@abc.vn", phone: "0907 890 123", dept: "Marketing", role: "Digital Marketing", l: 76, d: 9, rev: "3.2 tỷ", cv: "11.8%", kpi: "95%", star: 3, status: "active" },
+  { id: "m8", n: "Lưu Thanh Tâm", email: "tam.lt@abc.vn", phone: "0908 901 234", dept: "Kinh doanh 1", role: "Sales Executive", l: 69, d: 8, rev: "3.0 tỷ", cv: "11.6%", kpi: "92%", star: 3, status: "invited" },
 ];
 
 const ranking = [
@@ -67,8 +92,37 @@ const activities = [
   { n: "Đỗ Quốc Bảo", act: "gửi email cho khách hàng", sub: "", time: "3 giờ trước" },
 ];
 
+type DialogMode = { kind: "closed" } | { kind: "invite" } | { kind: "create" } | { kind: "edit"; member: Member };
+
 function TeamPage() {
   const [tab, setTab] = useState(0);
+  const [list, setList] = useState<Member[]>(members);
+  const [dialog, setDialog] = useState<DialogMode>({ kind: "closed" });
+  const [query, setQuery] = useState("");
+  const [deptFilter, setDeptFilter] = useState<string>("all");
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return list.filter((m) =>
+      (deptFilter === "all" || m.dept === deptFilter) &&
+      (!q || m.n.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.role.toLowerCase().includes(q))
+    );
+  }, [list, query, deptFilter]);
+
+  function upsertMember(m: Member) {
+    setList((cur) => {
+      const idx = cur.findIndex((x) => x.id === m.id);
+      if (idx === -1) return [m, ...cur];
+      const next = [...cur]; next[idx] = m; return next;
+    });
+  }
+  function removeMember(id: string) {
+    setList((cur) => cur.filter((m) => m.id !== id));
+    toast.success("Đã xoá thành viên");
+  }
+  function resendInvite(m: Member) {
+    toast.success(`Đã gửi lại lời mời tới ${m.email}`);
+  }
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
@@ -81,7 +135,10 @@ function TeamPage() {
               <button className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-muted/50">
                 <Download className="h-4 w-4" /> Xuất báo cáo
               </button>
-              <button className="h-9 px-3 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-semibold inline-flex items-center gap-1.5">
+              <button onClick={() => setDialog({ kind: "invite" })} className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-muted/50">
+                <Mail className="h-4 w-4" /> Mời qua email
+              </button>
+              <button onClick={() => setDialog({ kind: "create" })} className="h-9 px-3 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-semibold inline-flex items-center gap-1.5">
                 <Plus className="h-4 w-4" /> Thêm thành viên
               </button>
             </div>
@@ -112,9 +169,11 @@ function TeamPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2">
-          <button className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] inline-flex items-center gap-2">
-            Tất cả phòng ban <span className="text-muted-foreground">▾</span>
-          </button>
+          <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}
+            className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] outline-none focus:ring-2 focus:ring-primary/30">
+            <option value="all">Tất cả phòng ban</option>
+            {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
           <button className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] inline-flex items-center gap-2">
             <Calendar className="h-3.5 w-3.5" /> 01/05/2024 – 31/05/2024
           </button>
@@ -123,9 +182,10 @@ function TeamPage() {
           </button>
           <div className="ml-auto relative">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input placeholder="Tìm thành viên, phòng ban..." className="h-9 w-72 pl-9 pr-3 rounded-xl border border-border bg-card text-[12.5px] outline-none focus:ring-2 focus:ring-primary/30" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm thành viên, phòng ban..." className="h-9 w-72 pl-9 pr-3 rounded-xl border border-border bg-card text-[12.5px] outline-none focus:ring-2 focus:ring-primary/30" />
           </div>
         </div>
+
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4">
@@ -187,18 +247,25 @@ function TeamPage() {
             <table className="w-full text-[12.5px]">
               <thead>
                 <tr className="text-left text-muted-foreground border-b border-border">
-                  {["Thành viên", "Phòng ban", "Vị trí", "Leads", "Deals", "Doanh thu", "Tỷ lệ chuyển đổi", "KPI", "Hiệu suất"].map((h) => (
-                    <th key={h} className="font-medium px-2 py-2.5 whitespace-nowrap">{h}</th>
+                  {["Thành viên", "Phòng ban", "Vị trí", "Leads", "Deals", "Doanh thu", "Tỷ lệ chuyển đổi", "KPI", "Hiệu suất", ""].map((h, i) => (
+                    <th key={i} className="font-medium px-2 py-2.5 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {members.map((m) => (
-                  <tr key={m.n} className="border-b border-border/60 hover:bg-muted/30">
+                {filtered.map((m) => (
+                  <tr key={m.id} className="border-b border-border/60 hover:bg-muted/30">
                     <td className="px-2 py-2.5">
                       <div className="flex items-center gap-2.5">
                         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-indigo-500 grid place-items-center text-white text-[11px] font-semibold">{m.n.split(" ").pop()![0]}</div>
-                        <span className="font-semibold">{m.n}</span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold">{m.n}</span>
+                            {m.status === "invited" && <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700">Đang mời</span>}
+                            {m.status === "inactive" && <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground">Tạm khoá</span>}
+                          </div>
+                          <div className="text-[10.5px] text-muted-foreground truncate">{m.email}</div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-2 py-2.5">{m.dept}</td>
@@ -217,13 +284,31 @@ function TeamPage() {
                         ))}
                       </div>
                     </td>
+                    <td className="px-2 py-2.5">
+                      <div className="flex items-center gap-0.5 justify-end">
+                        {m.status === "invited" && (
+                          <button onClick={() => resendInvite(m)} title="Gửi lại lời mời" className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-primary hover:bg-muted">
+                            <Send className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        <button onClick={() => setDialog({ kind: "edit", member: m })} title="Chỉnh sửa" className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-primary hover:bg-muted">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={() => { if (confirm(`Xoá ${m.n}?`)) removeMember(m.id); }} title="Xoá" className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-rose-600 hover:bg-rose-50">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
+                {filtered.length === 0 && (
+                  <tr><td colSpan={10} className="px-2 py-10 text-center text-muted-foreground text-[12.5px]">Không có thành viên phù hợp.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
           <div className="flex items-center justify-between pt-3 text-[12px] text-muted-foreground">
-            <span>Hiển thị 1 – 8 của 48 thành viên</span>
+            <span>Hiển thị {filtered.length} / {list.length} thành viên</span>
             <div className="flex items-center gap-1">
               <button className="h-7 px-2 rounded-md border border-border">10 / trang ▾</button>
               {[1, 2, 3, 4, 5].map((p) => (
@@ -232,6 +317,7 @@ function TeamPage() {
             </div>
           </div>
         </SectionCard>
+
 
         {/* Roles */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -325,6 +411,173 @@ function TeamPage() {
           <MoreHorizontal className="h-4 w-4" /> Tuỳ chọn khác
         </button>
       </aside>
+
+      <MemberDialog
+        mode={dialog}
+        onClose={() => setDialog({ kind: "closed" })}
+        onSubmit={(m) => { upsertMember(m); setDialog({ kind: "closed" }); }}
+      />
     </div>
   );
 }
+
+/* =============== Dialog =============== */
+function genId() { return "m" + Math.random().toString(36).slice(2, 9); }
+
+function MemberDialog({
+  mode, onClose, onSubmit,
+}: {
+  mode: DialogMode;
+  onClose: () => void;
+  onSubmit: (m: Member) => void;
+}) {
+  const open = mode.kind !== "closed";
+  const editing = mode.kind === "edit" ? mode.member : null;
+  const isInvite = mode.kind === "invite";
+
+  const [n, setN] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dept, setDept] = useState<string>(DEPARTMENTS[0]);
+  const [role, setRole] = useState<string>(ROLES[4].v);
+  const [emails, setEmails] = useState(""); // for invite (comma/newline)
+
+  // Reset on open
+  useMemo(() => {
+    if (!open) return;
+    if (editing) {
+      setN(editing.n); setEmail(editing.email); setPhone(editing.phone);
+      setDept(editing.dept); setRole(editing.role);
+    } else {
+      setN(""); setEmail(""); setPhone(""); setDept(DEPARTMENTS[0]); setRole(ROLES[4].v); setEmails("");
+    }
+  }, [open, editing?.id]);
+
+  function validateEmail(v: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  }
+
+  function handleSubmit() {
+    if (isInvite) {
+      const parts = emails.split(/[\s,;]+/).map((e) => e.trim()).filter(Boolean);
+      if (parts.length === 0) { toast.error("Nhập ít nhất 1 email"); return; }
+      const invalid = parts.filter((e) => !validateEmail(e));
+      if (invalid.length) { toast.error(`Email không hợp lệ: ${invalid.join(", ")}`); return; }
+      // Create one invited member per email
+      parts.forEach((e) => {
+        onSubmit({
+          id: genId(),
+          n: e.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+          email: e, phone: "", dept, role,
+          l: 0, d: 0, rev: "0", cv: "0%", kpi: "0%", star: 0, status: "invited",
+        });
+      });
+      toast.success(`Đã gửi ${parts.length} lời mời tới phòng ${dept}`);
+      return;
+    }
+
+    if (!n.trim()) { toast.error("Nhập tên thành viên"); return; }
+    if (!validateEmail(email)) { toast.error("Email không hợp lệ"); return; }
+
+    if (editing) {
+      onSubmit({ ...editing, n: n.trim(), email: email.trim(), phone: phone.trim(), dept, role });
+      toast.success("Đã cập nhật thành viên");
+    } else {
+      onSubmit({
+        id: genId(), n: n.trim(), email: email.trim(), phone: phone.trim(), dept, role,
+        l: 0, d: 0, rev: "0", cv: "0%", kpi: "0%", star: 0, status: "active",
+      });
+      toast.success("Đã thêm thành viên");
+    }
+  }
+
+  const title = isInvite ? "Mời thành viên qua email" : editing ? "Chỉnh sửa thành viên" : "Thêm thành viên mới";
+  const desc = isInvite
+    ? "Mời nhiều người cùng lúc bằng email, có thể gán sẵn phòng ban và vai trò."
+    : editing ? "Cập nhật thông tin, phòng ban và vai trò." : "Tạo thành viên mới và phân công phòng ban / vai trò.";
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {isInvite ? <Mail className="h-4.5 w-4.5 text-primary" /> : editing ? <Pencil className="h-4.5 w-4.5 text-primary" /> : <UserPlus className="h-4.5 w-4.5 text-primary" />}
+            {title}
+          </DialogTitle>
+          <DialogDescription>{desc}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3.5 pt-1">
+          {isInvite ? (
+            <Field label="Email (cách nhau bằng dấu phẩy hoặc xuống dòng)">
+              <textarea
+                value={emails}
+                onChange={(e) => setEmails(e.target.value)}
+                placeholder="email1@abc.vn, email2@abc.vn"
+                rows={3}
+                maxLength={2000}
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </Field>
+          ) : (
+            <>
+              <Field label="Họ và tên">
+                <input value={n} onChange={(e) => setN(e.target.value)} maxLength={100}
+                  className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30" />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Email">
+                  <input value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} type="email"
+                    className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30" />
+                </Field>
+                <Field label="Số điện thoại">
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20}
+                    className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30" />
+                </Field>
+              </div>
+            </>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Phòng ban">
+              <select value={dept} onChange={(e) => setDept(e.target.value)}
+                className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30">
+                {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </Field>
+            <Field label="Vai trò">
+              <select value={role} onChange={(e) => setRole(e.target.value)}
+                className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30">
+                {ROLES.map((r) => <option key={r.v} value={r.v}>{r.v}</option>)}
+              </select>
+            </Field>
+          </div>
+
+          <div className="rounded-lg bg-muted/50 border border-border px-3 py-2 text-[11.5px] text-muted-foreground flex items-start gap-2">
+            <ShieldCheck className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
+            <span>{ROLES.find((r) => r.v === role)?.desc} · Có thể thay đổi quyền chi tiết ở tab "Vai trò & Phân quyền".</span>
+          </div>
+        </div>
+
+        <DialogFooter className="pt-2">
+          <button onClick={onClose} className="h-9 px-4 rounded-lg border border-border bg-card text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-muted/50">
+            <X className="h-3.5 w-3.5" /> Huỷ
+          </button>
+          <button onClick={handleSubmit} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-[12.5px] font-semibold inline-flex items-center gap-1.5">
+            {isInvite ? <><Send className="h-3.5 w-3.5" /> Gửi lời mời</> : editing ? <><Check className="h-3.5 w-3.5" /> Lưu thay đổi</> : <><Plus className="h-3.5 w-3.5" /> Thêm thành viên</>}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="block text-[12px] font-semibold text-foreground/80 mb-1.5">{label}</span>
+      {children}
+    </label>
+  );
+}
+
