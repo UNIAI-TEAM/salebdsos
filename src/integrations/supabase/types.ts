@@ -1353,7 +1353,13 @@ export type Database = {
       is_tenant_member: { Args: { _tenant: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "owner" | "admin" | "manager" | "agent" | "viewer"
+      app_role:
+        | "owner"
+        | "admin"
+        | "manager"
+        | "agent"
+        | "viewer"
+        | "platform_admin"
       deal_status: "open" | "won" | "lost"
       lead_status:
         | "new"
@@ -1489,7 +1495,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner", "admin", "manager", "agent", "viewer"],
+      app_role: [
+        "owner",
+        "admin",
+        "manager",
+        "agent",
+        "viewer",
+        "platform_admin",
+      ],
       deal_status: ["open", "won", "lost"],
       lead_status: ["new", "contacted", "qualified", "proposal", "won", "lost"],
     },
