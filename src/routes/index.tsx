@@ -44,9 +44,11 @@ function Nav() {
         </nav>
         <div className="flex items-center gap-2">
           <Link to="/dashboard" className="hidden sm:inline-flex h-9 px-3.5 rounded-lg text-[13px] font-medium text-foreground/80 hover:text-foreground items-center">Đăng nhập</Link>
-          <Link to="/dashboard" className="h-9 px-3.5 rounded-lg bg-foreground text-background text-[13px] font-semibold inline-flex items-center gap-1.5 hover:opacity-90 transition">
-            Trải nghiệm demo <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <DemoDialog>
+            <button type="button" className="h-9 px-3.5 rounded-lg bg-foreground text-background text-[13px] font-semibold inline-flex items-center gap-1.5 hover:opacity-90 transition">
+              Trải nghiệm demo <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </DemoDialog>
         </div>
       </div>
     </header>
