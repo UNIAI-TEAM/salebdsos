@@ -69,7 +69,7 @@ export const listLeads = createServerFn({ method: "GET" })
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .range(from, to);
-    if (data.status) q = q.eq("status", data.status);
+    if (data.status) q = q.eq("status", data.status as LeadStatus);
     if (data.source) q = q.eq("source", data.source);
     if (data.projectId) q = q.eq("project_id", data.projectId);
     if (data.ownerId) q = q.eq("owner_user_id", data.ownerId);
