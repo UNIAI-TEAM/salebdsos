@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ThankYouRouteImport } from './routes/thank-you'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as CustomizeRouteImport } from './routes/customize'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -42,6 +44,16 @@ import { Route as ApiPublicTCodeRouteImport } from './routes/api/public/t.$code'
 const ThankYouRoute = ThankYouRouteImport.update({
   id: '/thank-you',
   path: '/thank-you',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CustomizeRoute = CustomizeRouteImport.update({
@@ -187,6 +199,8 @@ const ApiPublicTCodeRoute = ApiPublicTCodeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/customize': typeof CustomizeRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/thank-you': typeof ThankYouRoute
   '/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/ai-lead-score': typeof AppAiLeadScoreRoute
@@ -217,6 +231,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/customize': typeof CustomizeRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/thank-you': typeof ThankYouRoute
   '/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/ai-lead-score': typeof AppAiLeadScoreRoute
@@ -249,6 +265,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/customize': typeof CustomizeRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/thank-you': typeof ThankYouRoute
   '/_app/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/_app/ai-lead-score': typeof AppAiLeadScoreRoute
@@ -281,6 +299,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/customize'
+    | '/login'
+    | '/onboarding'
     | '/thank-you'
     | '/ai-followup'
     | '/ai-lead-score'
@@ -311,6 +331,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/customize'
+    | '/login'
+    | '/onboarding'
     | '/thank-you'
     | '/ai-followup'
     | '/ai-lead-score'
@@ -342,6 +364,8 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/customize'
+    | '/login'
+    | '/onboarding'
     | '/thank-you'
     | '/_app/ai-followup'
     | '/_app/ai-lead-score'
@@ -374,6 +398,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   CustomizeRoute: typeof CustomizeRoute
+  LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
   ThankYouRoute: typeof ThankYouRoute
   CSlugRoute: typeof CSlugRoute
   ApiPublicTCodeRoute: typeof ApiPublicTCodeRoute
@@ -386,6 +412,20 @@ declare module '@tanstack/react-router' {
       path: '/thank-you'
       fullPath: '/thank-you'
       preLoaderRoute: typeof ThankYouRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/customize': {
@@ -655,6 +695,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   CustomizeRoute: CustomizeRoute,
+  LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
   ThankYouRoute: ThankYouRoute,
   CSlugRoute: CSlugRoute,
   ApiPublicTCodeRoute: ApiPublicTCodeRoute,
@@ -662,3 +704,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
