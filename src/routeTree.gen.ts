@@ -13,6 +13,7 @@ import { Route as ThankYouRouteImport } from './routes/thank-you'
 import { Route as CustomizeRouteImport } from './routes/customize'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AppWalletRouteImport } from './routes/_app.wallet'
 import { Route as AppTeamRouteImport } from './routes/_app.team'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
@@ -35,6 +36,7 @@ import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
 import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
 import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
 import { Route as AppAiFollowupCustomerIdRouteImport } from './routes/_app.ai-followup.$customerId'
+import { Route as ApiPublicTCodeRouteImport } from './routes/api/public/t.$code'
 
 const ThankYouRoute = ThankYouRouteImport.update({
   id: '/thank-you',
@@ -53,6 +55,11 @@ const AppRoute = AppRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CSlugRoute = CSlugRouteImport.update({
+  id: '/c/$slug',
+  path: '/c/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppWalletRoute = AppWalletRouteImport.update({
@@ -165,6 +172,11 @@ const AppAiFollowupCustomerIdRoute = AppAiFollowupCustomerIdRouteImport.update({
   path: '/$customerId',
   getParentRoute: () => AppAiFollowupRoute,
 } as any)
+const ApiPublicTCodeRoute = ApiPublicTCodeRouteImport.update({
+  id: '/api/public/t/$code',
+  path: '/api/public/t/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -191,7 +203,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
   '/wallet': typeof AppWalletRoute
+  '/c/$slug': typeof CSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
+  '/api/public/t/$code': typeof ApiPublicTCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -218,7 +232,9 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
   '/wallet': typeof AppWalletRoute
+  '/c/$slug': typeof CSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
+  '/api/public/t/$code': typeof ApiPublicTCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -247,7 +263,9 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_app/team': typeof AppTeamRoute
   '/_app/wallet': typeof AppWalletRoute
+  '/c/$slug': typeof CSlugRoute
   '/_app/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
+  '/api/public/t/$code': typeof ApiPublicTCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -276,7 +294,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/wallet'
+    | '/c/$slug'
     | '/ai-followup/$customerId'
+    | '/api/public/t/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -303,7 +323,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/wallet'
+    | '/c/$slug'
     | '/ai-followup/$customerId'
+    | '/api/public/t/$code'
   id:
     | '__root__'
     | '/'
@@ -331,7 +353,9 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/team'
     | '/_app/wallet'
+    | '/c/$slug'
     | '/_app/ai-followup/$customerId'
+    | '/api/public/t/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -339,6 +363,8 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   CustomizeRoute: typeof CustomizeRoute
   ThankYouRoute: typeof ThankYouRoute
+  CSlugRoute: typeof CSlugRoute
+  ApiPublicTCodeRoute: typeof ApiPublicTCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -369,6 +395,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/c/$slug': {
+      id: '/c/$slug'
+      path: '/c/$slug'
+      fullPath: '/c/$slug'
+      preLoaderRoute: typeof CSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/wallet': {
@@ -525,6 +558,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiFollowupCustomerIdRouteImport
       parentRoute: typeof AppAiFollowupRoute
     }
+    '/api/public/t/$code': {
+      id: '/api/public/t/$code'
+      path: '/api/public/t/$code'
+      fullPath: '/api/public/t/$code'
+      preLoaderRoute: typeof ApiPublicTCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -595,17 +635,9 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   CustomizeRoute: CustomizeRoute,
   ThankYouRoute: ThankYouRoute,
+  CSlugRoute: CSlugRoute,
+  ApiPublicTCodeRoute: ApiPublicTCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

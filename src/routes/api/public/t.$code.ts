@@ -78,9 +78,6 @@ export const Route = createFileRoute("/api/public/t/$code")({
             if (error) console.error("[track] insert failed", error.message);
           });
 
-        // bump view_count (cheap counter)
-        supabaseAdmin.rpc("increment_card_view", { _card_id: card.id }).then(() => {});
-
         const target = `${url.origin}/c/${card.slug}?utm_source=${source}`;
         return new Response(null, {
           status: 302,
