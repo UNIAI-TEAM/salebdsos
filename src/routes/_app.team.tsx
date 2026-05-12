@@ -65,15 +65,15 @@ const depts = [
   { name: "Hỗ trợ", value: 15.9, color: "hsl(346 77% 60%)" },
 ];
 
-const members = [
-  { n: "Trần Minh Đức", dept: "Kinh doanh 1", role: "Senior Sales", l: 156, d: 24, rev: "12.6 tỷ", cv: "15.4%", kpi: "120%", star: 5 },
-  { n: "Lê Thu Hương", dept: "Kinh doanh 1", role: "Sales Manager", l: 142, d: 18, rev: "9.8 tỷ", cv: "12.7%", kpi: "110%", star: 5 },
-  { n: "Phạm Tuấn Anh", dept: "Kinh doanh 2", role: "Senior Sales", l: 134, d: 16, rev: "8.7 tỷ", cv: "11.9%", kpi: "105%", star: 4 },
-  { n: "Nguyễn Hải Yến", dept: "Marketing", role: "Marketing Leader", l: 98, d: 12, rev: "6.4 tỷ", cv: "12.2%", kpi: "115%", star: 5 },
-  { n: "Đỗ Quốc Bảo", dept: "Kinh doanh 2", role: "Senior Sales", l: 108, d: 14, rev: "6.1 tỷ", cv: "13.0%", kpi: "102%", star: 4 },
-  { n: "Bùi Thị Ngọc", dept: "Chăm sóc KH", role: "CSKH Leader", l: 87, d: 10, rev: "4.3 tỷ", cv: "11.5%", kpi: "98%", star: 4 },
-  { n: "Hoàng Minh Long", dept: "Marketing", role: "Digital Marketing", l: 76, d: 9, rev: "3.2 tỷ", cv: "11.8%", kpi: "95%", star: 3 },
-  { n: "Lưu Thanh Tâm", dept: "Kinh doanh 1", role: "Sales Executive", l: 69, d: 8, rev: "3.0 tỷ", cv: "11.6%", kpi: "92%", star: 3 },
+const members: Member[] = [
+  { id: "m1", n: "Trần Minh Đức", email: "duc.tm@abc.vn", phone: "0901 234 567", dept: "Kinh doanh 1", role: "Senior Sales", l: 156, d: 24, rev: "12.6 tỷ", cv: "15.4%", kpi: "120%", star: 5, status: "active" },
+  { id: "m2", n: "Lê Thu Hương", email: "huong.lt@abc.vn", phone: "0902 345 678", dept: "Kinh doanh 1", role: "Sales Manager", l: 142, d: 18, rev: "9.8 tỷ", cv: "12.7%", kpi: "110%", star: 5, status: "active" },
+  { id: "m3", n: "Phạm Tuấn Anh", email: "anh.pt@abc.vn", phone: "0903 456 789", dept: "Kinh doanh 2", role: "Senior Sales", l: 134, d: 16, rev: "8.7 tỷ", cv: "11.9%", kpi: "105%", star: 4, status: "active" },
+  { id: "m4", n: "Nguyễn Hải Yến", email: "yen.nh@abc.vn", phone: "0904 567 890", dept: "Marketing", role: "Marketing Leader", l: 98, d: 12, rev: "6.4 tỷ", cv: "12.2%", kpi: "115%", star: 5, status: "active" },
+  { id: "m5", n: "Đỗ Quốc Bảo", email: "bao.dq@abc.vn", phone: "0905 678 901", dept: "Kinh doanh 2", role: "Senior Sales", l: 108, d: 14, rev: "6.1 tỷ", cv: "13.0%", kpi: "102%", star: 4, status: "active" },
+  { id: "m6", n: "Bùi Thị Ngọc", email: "ngoc.bt@abc.vn", phone: "0906 789 012", dept: "Chăm sóc KH", role: "CSKH Leader", l: 87, d: 10, rev: "4.3 tỷ", cv: "11.5%", kpi: "98%", star: 4, status: "active" },
+  { id: "m7", n: "Hoàng Minh Long", email: "long.hm@abc.vn", phone: "0907 890 123", dept: "Marketing", role: "Digital Marketing", l: 76, d: 9, rev: "3.2 tỷ", cv: "11.8%", kpi: "95%", star: 3, status: "active" },
+  { id: "m8", n: "Lưu Thanh Tâm", email: "tam.lt@abc.vn", phone: "0908 901 234", dept: "Kinh doanh 1", role: "Sales Executive", l: 69, d: 8, rev: "3.0 tỷ", cv: "11.6%", kpi: "92%", star: 3, status: "invited" },
 ];
 
 const ranking = [
