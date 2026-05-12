@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
-  Wallet, QrCode, Globe2, Radio, Settings, ChevronDown, Crown, Send,
+  Wallet, QrCode, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap,
 } from "lucide-react";
 
 const groups: { label: string; items: { to: string; label: string; icon: any; badge?: string }[] }[] = [

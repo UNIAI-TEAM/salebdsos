@@ -20,6 +20,7 @@ import { Route as AppProductsRouteImport } from './routes/_app.products'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppMarketingRouteImport } from './routes/_app.marketing'
 import { Route as AppLeadsRouteImport } from './routes/_app.leads'
+import { Route as AppLeadCaptureRouteImport } from './routes/_app.lead-capture'
 import { Route as AppFilesRouteImport } from './routes/_app.files'
 import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
 import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
@@ -85,6 +86,11 @@ const AppMarketingRoute = AppMarketingRouteImport.update({
 const AppLeadsRoute = AppLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLeadCaptureRoute = AppLeadCaptureRouteImport.update({
+  id: '/lead-capture',
+  path: '/lead-capture',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFilesRoute = AppFilesRouteImport.update({
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/digital-card': typeof AppDigitalCardRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/files': typeof AppFilesRoute
+  '/lead-capture': typeof AppLeadCaptureRoute
   '/leads': typeof AppLeadsRoute
   '/marketing': typeof AppMarketingRoute
   '/pipeline': typeof AppPipelineRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/digital-card': typeof AppDigitalCardRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/files': typeof AppFilesRoute
+  '/lead-capture': typeof AppLeadCaptureRoute
   '/leads': typeof AppLeadsRoute
   '/marketing': typeof AppMarketingRoute
   '/pipeline': typeof AppPipelineRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/_app/digital-card': typeof AppDigitalCardRoute
   '/_app/dynamic-qr': typeof AppDynamicQrRoute
   '/_app/files': typeof AppFilesRoute
+  '/_app/lead-capture': typeof AppLeadCaptureRoute
   '/_app/leads': typeof AppLeadsRoute
   '/_app/marketing': typeof AppMarketingRoute
   '/_app/pipeline': typeof AppPipelineRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/digital-card'
     | '/dynamic-qr'
     | '/files'
+    | '/lead-capture'
     | '/leads'
     | '/marketing'
     | '/pipeline'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/digital-card'
     | '/dynamic-qr'
     | '/files'
+    | '/lead-capture'
     | '/leads'
     | '/marketing'
     | '/pipeline'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/_app/digital-card'
     | '/_app/dynamic-qr'
     | '/_app/files'
+    | '/_app/lead-capture'
     | '/_app/leads'
     | '/_app/marketing'
     | '/_app/pipeline'
@@ -380,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/leads'
       fullPath: '/leads'
       preLoaderRoute: typeof AppLeadsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/lead-capture': {
+      id: '/_app/lead-capture'
+      path: '/lead-capture'
+      fullPath: '/lead-capture'
+      preLoaderRoute: typeof AppLeadCaptureRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/files': {
@@ -493,6 +512,7 @@ interface AppRouteChildren {
   AppDigitalCardRoute: typeof AppDigitalCardRoute
   AppDynamicQrRoute: typeof AppDynamicQrRoute
   AppFilesRoute: typeof AppFilesRoute
+  AppLeadCaptureRoute: typeof AppLeadCaptureRoute
   AppLeadsRoute: typeof AppLeadsRoute
   AppMarketingRoute: typeof AppMarketingRoute
   AppPipelineRoute: typeof AppPipelineRoute
@@ -516,6 +536,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDigitalCardRoute: AppDigitalCardRoute,
   AppDynamicQrRoute: AppDynamicQrRoute,
   AppFilesRoute: AppFilesRoute,
+  AppLeadCaptureRoute: AppLeadCaptureRoute,
   AppLeadsRoute: AppLeadsRoute,
   AppMarketingRoute: AppMarketingRoute,
   AppPipelineRoute: AppPipelineRoute,
