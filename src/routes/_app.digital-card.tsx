@@ -99,6 +99,9 @@ function DigitalCard() {
         <MiniKpi icon={Target} label="Tỷ lệ chuyển đổi" value="4.99%" delta="+0.8%" tone="bg-emerald-50 text-emerald-600" />
       </div>
 
+      {/* Analytics charts */}
+      <CardAnalytics />
+
       <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr_340px] gap-5">
         {/* ─── LEFT PANEL ─── */}
         <div className="rounded-2xl bg-card border border-border shadow-soft p-4 h-fit">
@@ -675,5 +678,210 @@ function QrPattern() {
         </g>
       ))}
     </svg>
+  );
+}
+
+/* ────────────── Analytics charts ────────────── */
+
+const RANGE_DATA = {
+  "7d": { labels: ["T2","T3","T4","T5","T6","T7","CN"], views: [180, 240, 210, 320, 290, 360, 410], saves: [22, 28, 30, 41, 38, 52, 60], conv: [4.1, 4.3, 4.0, 4.6, 4.8, 5.1, 5.3] },
+  "30d": { labels: ["W1","W2","W3","W4"], views: [820, 1040, 1180, 1320], saves: [110, 142, 168, 196], conv: [4.0, 4.4, 4.7, 4.9] },
+  "90d": { labels: ["T3","T4","T5"], views: [2400, 2860, 3210], saves: [310, 388, 462], conv: [3.9, 4.5, 5.0] },
+} as const;
+
+const SOURCES = [
+  { name: "NFC Tap", value: 1042, color: "#A855F7" },
+  { name: "QR Code", value: 686, color: "#3B82F6" },
+  { name: "AirDrop", value: 312, color: "#8B5CF6" },
+  { name: "Link chia sẻ", value: 268, color: "#10B981" },
+  { name: "Wallet Card", value: 178, color: "#F59E0B" },
+];
+
+function CardAnalytics() {
+  const [range, setRange] = useState<"7d" | "30d" | "90d">("7d");
+  const data = RANGE_DATA[range];
+  const totalSrc = SOURCES.reduce((s, x) => s + x.value, 0);
+
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-5">
+      {/* Time-series */}
+      <div className="rounded-2xl bg-card border border-border shadow-soft p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-[14px] font-semibold text-foreground flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-primary" /> Thống kê theo thời gian
+            </h3>
+            <p className="text-[12px] text-muted-foreground mt-0.5">Lượt xem, lưu liên hệ và tỷ lệ chuyển đổi của danh thiếp.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-muted">
+              {(["7d","30d","90d"] as const).map((r) => (
+                <button key={r} onClick={() => setRange(r)}
+                  className={["px-2.5 h-7 rounded-md text-[12px] font-medium transition", range === r ? "bg-card shadow-soft text-foreground" : "text-muted-foreground"].join(" ")}>
+                  {r === "7d" ? "7 ngày" : r === "30d" ? "30 ngày" : "90 ngày"}
+                </button>
+              ))}
+            </div>
+            <button className="h-7 px-2 rounded-md border border-border text-[11.5px] inline-flex items-center gap-1 hover:bg-muted">
+              <Download className="h-3 w-3" /> Xuất
+            </button>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center gap-4 text-[11.5px] text-muted-foreground mb-3">
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" /> Lượt xem</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-rose-500" /> Lưu liên hệ</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-0.5 w-4 bg-emerald-500" /> Tỷ lệ chuyển đổi (%)</span>
+        </div>
+
+        <TimeSeriesChart labels={data.labels as unknown as string[]} views={data.views as unknown as number[]} saves={data.saves as unknown as number[]} conv={data.conv as unknown as number[]} />
+
+        {/* Summary row */}
+        <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-border">
+          <SumStat label="Tổng lượt xem" value={data.views.reduce((s,v)=>s+v,0).toLocaleString()} delta="+12.4%" tone="text-blue-600" />
+          <SumStat label="Tổng lưu liên hệ" value={data.saves.reduce((s,v)=>s+v,0).toLocaleString()} delta="+18.2%" tone="text-rose-600" />
+          <SumStat label="Chuyển đổi TB" value={`${(data.conv.reduce((s,v)=>s+v,0)/data.conv.length).toFixed(2)}%`} delta="+0.6pp" tone="text-emerald-600" />
+        </div>
+      </div>
+
+      {/* Sources */}
+      <div className="rounded-2xl bg-card border border-border shadow-soft p-5">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-[14px] font-semibold text-foreground flex items-center gap-2">
+              <Share2 className="h-4 w-4 text-primary" /> Nguồn truy cập
+            </h3>
+            <p className="text-[12px] text-muted-foreground mt-0.5">Phân bổ kênh dẫn người xem đến danh thiếp.</p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center mb-4">
+          <DonutChart data={SOURCES} total={totalSrc} />
+        </div>
+
+        <div className="space-y-2">
+          {SOURCES.map((s) => {
+            const pct = (s.value / totalSrc) * 100;
+            return (
+              <div key={s.name} className="flex items-center gap-3">
+                <span className="h-2 w-2 rounded-full shrink-0" style={{ background: s.color }} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between text-[12.5px]">
+                    <span className="font-medium text-foreground">{s.name}</span>
+                    <span className="text-muted-foreground">{s.value.toLocaleString()} · {pct.toFixed(1)}%</span>
+                  </div>
+                  <div className="h-1.5 mt-1 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: s.color }} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SumStat({ label, value, delta, tone }: { label: string; value: string; delta: string; tone: string }) {
+  return (
+    <div>
+      <div className="text-[11.5px] text-muted-foreground">{label}</div>
+      <div className="text-[18px] font-bold tracking-tight mt-0.5">{value}</div>
+      <div className={["text-[11.5px] font-semibold mt-0.5 inline-flex items-center gap-0.5", tone].join(" ")}>
+        <ArrowUpRight className="h-3 w-3" /> {delta}
+      </div>
+    </div>
+  );
+}
+
+function TimeSeriesChart({ labels, views, saves, conv }: { labels: string[]; views: number[]; saves: number[]; conv: number[] }) {
+  const W = 720, H = 220, P = { l: 36, r: 36, t: 14, b: 26 };
+  const iw = W - P.l - P.r, ih = H - P.t - P.b;
+  const maxV = Math.max(...views) * 1.1;
+  const maxC = Math.max(...conv) * 1.3;
+  const x = (i: number) => P.l + (labels.length === 1 ? iw / 2 : (i * iw) / (labels.length - 1));
+  const yV = (v: number) => P.t + ih - (v / maxV) * ih;
+  const yC = (v: number) => P.t + ih - (v / maxC) * ih;
+  const path = (arr: number[], y: (v: number) => number) =>
+    arr.map((v, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(v)}`).join(" ");
+  const area = (arr: number[]) => `${path(arr, yV)} L ${x(arr.length - 1)} ${P.t + ih} L ${x(0)} ${P.t + ih} Z`;
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[220px]">
+        <defs>
+          <linearGradient id="gradViews" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#A855F7" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#A855F7" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="gradSaves" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#F43F5E" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#F43F5E" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {/* grid */}
+        {[0, 0.25, 0.5, 0.75, 1].map((g) => (
+          <line key={g} x1={P.l} x2={W - P.r} y1={P.t + ih * g} y2={P.t + ih * g} stroke="currentColor" className="text-border" strokeDasharray="3 4" />
+        ))}
+        {/* y axis labels (views) */}
+        {[0, 0.5, 1].map((g) => (
+          <text key={g} x={P.l - 6} y={P.t + ih * (1 - g) + 3} textAnchor="end" className="fill-muted-foreground text-[10px]">
+            {Math.round(maxV * g)}
+          </text>
+        ))}
+        {/* right axis (conv %) */}
+        {[0, 0.5, 1].map((g) => (
+          <text key={g} x={W - P.r + 6} y={P.t + ih * (1 - g) + 3} textAnchor="start" className="fill-muted-foreground text-[10px]">
+            {(maxC * g).toFixed(1)}%
+          </text>
+        ))}
+        {/* areas */}
+        <path d={area(views)} fill="url(#gradViews)" />
+        <path d={area(saves)} fill="url(#gradSaves)" />
+        <path d={path(views, yV)} fill="none" stroke="#A855F7" strokeWidth="2" />
+        <path d={path(saves, yV)} fill="none" stroke="#F43F5E" strokeWidth="2" />
+        {/* conversion line */}
+        <path d={path(conv, yC)} fill="none" stroke="#10B981" strokeWidth="2" strokeDasharray="5 4" />
+        {/* points */}
+        {views.map((v, i) => <circle key={`v${i}`} cx={x(i)} cy={yV(v)} r="3" fill="#fff" stroke="#A855F7" strokeWidth="2" />)}
+        {saves.map((v, i) => <circle key={`s${i}`} cx={x(i)} cy={yV(v)} r="2.5" fill="#fff" stroke="#F43F5E" strokeWidth="2" />)}
+        {conv.map((v, i) => <circle key={`c${i}`} cx={x(i)} cy={yC(v)} r="2.5" fill="#10B981" />)}
+        {/* x labels */}
+        {labels.map((l, i) => (
+          <text key={l} x={x(i)} y={H - 8} textAnchor="middle" className="fill-muted-foreground text-[10.5px]">{l}</text>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+function DonutChart({ data, total }: { data: { name: string; value: number; color: string }[]; total: number }) {
+  const R = 70, r = 48, C = 2 * Math.PI * R;
+  let acc = 0;
+  return (
+    <div className="relative">
+      <svg viewBox="0 0 180 180" className="h-[180px] w-[180px] -rotate-90">
+        <circle cx="90" cy="90" r={R} fill="none" stroke="hsl(var(--muted))" strokeWidth={R - r} />
+        {data.map((s) => {
+          const len = (s.value / total) * C;
+          const dash = `${len} ${C - len}`;
+          const offset = -acc;
+          acc += len;
+          return (
+            <circle key={s.name} cx="90" cy="90" r={R} fill="none" stroke={s.color} strokeWidth={R - r}
+              strokeDasharray={dash} strokeDashoffset={offset} />
+          );
+        })}
+      </svg>
+      <div className="absolute inset-0 grid place-items-center text-center">
+        <div>
+          <div className="text-[11px] text-muted-foreground">Tổng</div>
+          <div className="text-[20px] font-bold tracking-tight">{total.toLocaleString()}</div>
+          <div className="text-[10.5px] text-muted-foreground">lượt truy cập</div>
+        </div>
+      </div>
+    </div>
   );
 }
