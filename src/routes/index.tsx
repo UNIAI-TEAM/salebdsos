@@ -9,7 +9,7 @@ import { useState } from "react";
 import { BookingDialog } from "@/components/booking-dialog";
 import { DemoDialog } from "@/components/demo-dialog";
 import { LandingChatbot } from "@/components/landing-chatbot";
-import nfcCardTemplates from "@/assets/nfc-card-templates.jpg";
+import { DesignCarousel } from "@/components/design-carousel";
 import nfcPlatformOverview from "@/assets/nfc-platform-overview.jpg";
 
 const SITE_URL = "https://nfcplatform.vn";
