@@ -309,7 +309,7 @@ export function DesignCarousel() {
             {visible.map((t) => (
               <CarouselItem
                 key={t.id}
-                className="pl-2.5 lg:pl-4 basis-[58%] xs:basis-[48%] sm:basis-1/3 lg:basis-1/3"
+                className="pl-2.5 lg:pl-4 basis-[52%] sm:basis-1/3 lg:basis-1/3"
               >
                 <DesignCard t={t} />
               </CarouselItem>
