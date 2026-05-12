@@ -3,7 +3,7 @@ import {
   Radio, ArrowRight, Sparkles, Zap, ShieldCheck, Wallet, QrCode, Send, Smartphone,
   Users2, BarChart3, Gauge, Globe2, Building2, Crown, Check, Star, Phone, Mail,
   IdCard, Brain, Target, TrendingUp, Activity, ChevronRight, Play, Plus, Minus,
-  Apple, Layers, MessageSquare, Calendar, ArrowUpRight,
+  Apple, Layers, MessageSquare, Calendar,
 } from "lucide-react";
 import { useState } from "react";
 
