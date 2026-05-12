@@ -119,6 +119,8 @@ function AnalyticsPage() {
         <KpiCard icon={BarChart3} label="ROI chiến dịch" value="3.4x" delta={14.2} tone="indigo" />
       </div>
 
+      <SourceAnalyticsBlock />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <SectionCard title="Funnel chuyển đổi" className="lg:col-span-2">
           <ul className="space-y-2.5">
@@ -138,7 +140,7 @@ function AnalyticsPage() {
           </ul>
         </SectionCard>
 
-        <SectionCard title="NFC vs QR (12 tháng)">
+        <SectionCard title="NFC vs QR (xu hướng minh hoạ)">
           <div className="h-[260px]">
             <ResponsiveContainer>
               <LineChart data={trend} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
