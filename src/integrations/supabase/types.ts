@@ -388,6 +388,30 @@ export type Database = {
           },
         ]
       }
+      card_projects: {
+        Row: {
+          card_id: string
+          created_at: string
+          position: number
+          project_id: string
+          tenant_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          position?: number
+          project_id: string
+          tenant_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          position?: number
+          project_id?: string
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       card_templates: {
         Row: {
           created_at: string
@@ -1081,60 +1105,84 @@ export type Database = {
       }
       projects: {
         Row: {
+          brochure_name: string | null
+          brochure_url: string | null
           city: string | null
           cover_url: string | null
           created_at: string
+          cta_form_enabled: boolean
+          cta_phone: string | null
           currency: string | null
           deleted_at: string | null
           description: string | null
           developer: string | null
+          gallery: Json
           id: string
           location: string | null
           meta: Json
           name: string
           price_from: number | null
           price_to: number | null
+          property_type: string | null
+          sales_policy: string | null
           slug: string | null
           status: string | null
           tenant_id: string
+          unit_highlights: Json
           updated_at: string
         }
         Insert: {
+          brochure_name?: string | null
+          brochure_url?: string | null
           city?: string | null
           cover_url?: string | null
           created_at?: string
+          cta_form_enabled?: boolean
+          cta_phone?: string | null
           currency?: string | null
           deleted_at?: string | null
           description?: string | null
           developer?: string | null
+          gallery?: Json
           id?: string
           location?: string | null
           meta?: Json
           name: string
           price_from?: number | null
           price_to?: number | null
+          property_type?: string | null
+          sales_policy?: string | null
           slug?: string | null
           status?: string | null
           tenant_id: string
+          unit_highlights?: Json
           updated_at?: string
         }
         Update: {
+          brochure_name?: string | null
+          brochure_url?: string | null
           city?: string | null
           cover_url?: string | null
           created_at?: string
+          cta_form_enabled?: boolean
+          cta_phone?: string | null
           currency?: string | null
           deleted_at?: string | null
           description?: string | null
           developer?: string | null
+          gallery?: Json
           id?: string
           location?: string | null
           meta?: Json
           name?: string
           price_from?: number | null
           price_to?: number | null
+          property_type?: string | null
+          sales_policy?: string | null
           slug?: string | null
           status?: string | null
           tenant_id?: string
+          unit_highlights?: Json
           updated_at?: string
         }
         Relationships: [
