@@ -6,6 +6,7 @@ import {
   Apple, Layers, MessageSquare, Calendar,
 } from "lucide-react";
 import { useState } from "react";
+import { BookingDialog } from "@/components/booking-dialog";
 
 export const Route = createFileRoute("/")({
   head: () => ({
