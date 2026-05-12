@@ -9,38 +9,285 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppWalletRouteImport } from './routes/_app.wallet'
+import { Route as AppTeamRouteImport } from './routes/_app.team'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppQrSharingRouteImport } from './routes/_app.qr-sharing'
+import { Route as AppProjectsRouteImport } from './routes/_app.projects'
+import { Route as AppProductsRouteImport } from './routes/_app.products'
+import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
+import { Route as AppMarketingRouteImport } from './routes/_app.marketing'
+import { Route as AppLeadsRouteImport } from './routes/_app.leads'
+import { Route as AppFilesRouteImport } from './routes/_app.files'
+import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
+import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppCustomersRouteImport } from './routes/_app.customers'
+import { Route as AppAppointmentsRouteImport } from './routes/_app.appointments'
+import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
+import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
+import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
+import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
 
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppWalletRoute = AppWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTeamRoute = AppTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppQrSharingRoute = AppQrSharingRouteImport.update({
+  id: '/qr-sharing',
+  path: '/qr-sharing',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProjectsRoute = AppProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProductsRoute = AppProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPipelineRoute = AppPipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMarketingRoute = AppMarketingRouteImport.update({
+  id: '/marketing',
+  path: '/marketing',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLeadsRoute = AppLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFilesRoute = AppFilesRouteImport.update({
+  id: '/files',
+  path: '/files',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDynamicQrRoute = AppDynamicQrRouteImport.update({
+  id: '/dynamic-qr',
+  path: '/dynamic-qr',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDigitalCardRoute = AppDigitalCardRouteImport.update({
+  id: '/digital-card',
+  path: '/digital-card',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCustomersRoute = AppCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppointmentsRoute = AppAppointmentsRouteImport.update({
+  id: '/appointments',
+  path: '/appointments',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAiSalesPageRoute = AppAiSalesPageRouteImport.update({
+  id: '/ai-sales-page',
+  path: '/ai-sales-page',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAiLeadScoreRoute = AppAiLeadScoreRouteImport.update({
+  id: '/ai-lead-score',
+  path: '/ai-lead-score',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAiFollowupRoute = AppAiFollowupRouteImport.update({
+  id: '/ai-followup',
+  path: '/ai-followup',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ai-followup': typeof AppAiFollowupRoute
+  '/ai-lead-score': typeof AppAiLeadScoreRoute
+  '/ai-sales-page': typeof AppAiSalesPageRoute
+  '/analytics': typeof AppAnalyticsRoute
+  '/appointments': typeof AppAppointmentsRoute
+  '/customers': typeof AppCustomersRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/digital-card': typeof AppDigitalCardRoute
+  '/dynamic-qr': typeof AppDynamicQrRoute
+  '/files': typeof AppFilesRoute
+  '/leads': typeof AppLeadsRoute
+  '/marketing': typeof AppMarketingRoute
+  '/pipeline': typeof AppPipelineRoute
+  '/products': typeof AppProductsRoute
+  '/projects': typeof AppProjectsRoute
+  '/qr-sharing': typeof AppQrSharingRoute
+  '/settings': typeof AppSettingsRoute
+  '/team': typeof AppTeamRoute
+  '/wallet': typeof AppWalletRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ai-followup': typeof AppAiFollowupRoute
+  '/ai-lead-score': typeof AppAiLeadScoreRoute
+  '/ai-sales-page': typeof AppAiSalesPageRoute
+  '/analytics': typeof AppAnalyticsRoute
+  '/appointments': typeof AppAppointmentsRoute
+  '/customers': typeof AppCustomersRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/digital-card': typeof AppDigitalCardRoute
+  '/dynamic-qr': typeof AppDynamicQrRoute
+  '/files': typeof AppFilesRoute
+  '/leads': typeof AppLeadsRoute
+  '/marketing': typeof AppMarketingRoute
+  '/pipeline': typeof AppPipelineRoute
+  '/products': typeof AppProductsRoute
+  '/projects': typeof AppProjectsRoute
+  '/qr-sharing': typeof AppQrSharingRoute
+  '/settings': typeof AppSettingsRoute
+  '/team': typeof AppTeamRoute
+  '/wallet': typeof AppWalletRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/_app/ai-followup': typeof AppAiFollowupRoute
+  '/_app/ai-lead-score': typeof AppAiLeadScoreRoute
+  '/_app/ai-sales-page': typeof AppAiSalesPageRoute
+  '/_app/analytics': typeof AppAnalyticsRoute
+  '/_app/appointments': typeof AppAppointmentsRoute
+  '/_app/customers': typeof AppCustomersRoute
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/digital-card': typeof AppDigitalCardRoute
+  '/_app/dynamic-qr': typeof AppDynamicQrRoute
+  '/_app/files': typeof AppFilesRoute
+  '/_app/leads': typeof AppLeadsRoute
+  '/_app/marketing': typeof AppMarketingRoute
+  '/_app/pipeline': typeof AppPipelineRoute
+  '/_app/products': typeof AppProductsRoute
+  '/_app/projects': typeof AppProjectsRoute
+  '/_app/qr-sharing': typeof AppQrSharingRoute
+  '/_app/settings': typeof AppSettingsRoute
+  '/_app/team': typeof AppTeamRoute
+  '/_app/wallet': typeof AppWalletRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/ai-followup'
+    | '/ai-lead-score'
+    | '/ai-sales-page'
+    | '/analytics'
+    | '/appointments'
+    | '/customers'
+    | '/dashboard'
+    | '/digital-card'
+    | '/dynamic-qr'
+    | '/files'
+    | '/leads'
+    | '/marketing'
+    | '/pipeline'
+    | '/products'
+    | '/projects'
+    | '/qr-sharing'
+    | '/settings'
+    | '/team'
+    | '/wallet'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/ai-followup'
+    | '/ai-lead-score'
+    | '/ai-sales-page'
+    | '/analytics'
+    | '/appointments'
+    | '/customers'
+    | '/dashboard'
+    | '/digital-card'
+    | '/dynamic-qr'
+    | '/files'
+    | '/leads'
+    | '/marketing'
+    | '/pipeline'
+    | '/products'
+    | '/projects'
+    | '/qr-sharing'
+    | '/settings'
+    | '/team'
+    | '/wallet'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/_app/ai-followup'
+    | '/_app/ai-lead-score'
+    | '/_app/ai-sales-page'
+    | '/_app/analytics'
+    | '/_app/appointments'
+    | '/_app/customers'
+    | '/_app/dashboard'
+    | '/_app/digital-card'
+    | '/_app/dynamic-qr'
+    | '/_app/files'
+    | '/_app/leads'
+    | '/_app/marketing'
+    | '/_app/pipeline'
+    | '/_app/products'
+    | '/_app/projects'
+    | '/_app/qr-sharing'
+    | '/_app/settings'
+    | '/_app/team'
+    | '/_app/wallet'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +295,192 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/wallet': {
+      id: '/_app/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof AppWalletRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/team': {
+      id: '/_app/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof AppTeamRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/qr-sharing': {
+      id: '/_app/qr-sharing'
+      path: '/qr-sharing'
+      fullPath: '/qr-sharing'
+      preLoaderRoute: typeof AppQrSharingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/projects': {
+      id: '/_app/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof AppProjectsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/products': {
+      id: '/_app/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof AppProductsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pipeline': {
+      id: '/_app/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof AppPipelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/marketing': {
+      id: '/_app/marketing'
+      path: '/marketing'
+      fullPath: '/marketing'
+      preLoaderRoute: typeof AppMarketingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/leads': {
+      id: '/_app/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof AppLeadsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/files': {
+      id: '/_app/files'
+      path: '/files'
+      fullPath: '/files'
+      preLoaderRoute: typeof AppFilesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dynamic-qr': {
+      id: '/_app/dynamic-qr'
+      path: '/dynamic-qr'
+      fullPath: '/dynamic-qr'
+      preLoaderRoute: typeof AppDynamicQrRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/digital-card': {
+      id: '/_app/digital-card'
+      path: '/digital-card'
+      fullPath: '/digital-card'
+      preLoaderRoute: typeof AppDigitalCardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/customers': {
+      id: '/_app/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof AppCustomersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/appointments': {
+      id: '/_app/appointments'
+      path: '/appointments'
+      fullPath: '/appointments'
+      preLoaderRoute: typeof AppAppointmentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/analytics': {
+      id: '/_app/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AppAnalyticsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ai-sales-page': {
+      id: '/_app/ai-sales-page'
+      path: '/ai-sales-page'
+      fullPath: '/ai-sales-page'
+      preLoaderRoute: typeof AppAiSalesPageRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ai-lead-score': {
+      id: '/_app/ai-lead-score'
+      path: '/ai-lead-score'
+      fullPath: '/ai-lead-score'
+      preLoaderRoute: typeof AppAiLeadScoreRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ai-followup': {
+      id: '/_app/ai-followup'
+      path: '/ai-followup'
+      fullPath: '/ai-followup'
+      preLoaderRoute: typeof AppAiFollowupRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppAiFollowupRoute: typeof AppAiFollowupRoute
+  AppAiLeadScoreRoute: typeof AppAiLeadScoreRoute
+  AppAiSalesPageRoute: typeof AppAiSalesPageRoute
+  AppAnalyticsRoute: typeof AppAnalyticsRoute
+  AppAppointmentsRoute: typeof AppAppointmentsRoute
+  AppCustomersRoute: typeof AppCustomersRoute
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppDigitalCardRoute: typeof AppDigitalCardRoute
+  AppDynamicQrRoute: typeof AppDynamicQrRoute
+  AppFilesRoute: typeof AppFilesRoute
+  AppLeadsRoute: typeof AppLeadsRoute
+  AppMarketingRoute: typeof AppMarketingRoute
+  AppPipelineRoute: typeof AppPipelineRoute
+  AppProductsRoute: typeof AppProductsRoute
+  AppProjectsRoute: typeof AppProjectsRoute
+  AppQrSharingRoute: typeof AppQrSharingRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppTeamRoute: typeof AppTeamRoute
+  AppWalletRoute: typeof AppWalletRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAiFollowupRoute: AppAiFollowupRoute,
+  AppAiLeadScoreRoute: AppAiLeadScoreRoute,
+  AppAiSalesPageRoute: AppAiSalesPageRoute,
+  AppAnalyticsRoute: AppAnalyticsRoute,
+  AppAppointmentsRoute: AppAppointmentsRoute,
+  AppCustomersRoute: AppCustomersRoute,
+  AppDashboardRoute: AppDashboardRoute,
+  AppDigitalCardRoute: AppDigitalCardRoute,
+  AppDynamicQrRoute: AppDynamicQrRoute,
+  AppFilesRoute: AppFilesRoute,
+  AppLeadsRoute: AppLeadsRoute,
+  AppMarketingRoute: AppMarketingRoute,
+  AppPipelineRoute: AppPipelineRoute,
+  AppProductsRoute: AppProductsRoute,
+  AppProjectsRoute: AppProjectsRoute,
+  AppQrSharingRoute: AppQrSharingRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppTeamRoute: AppTeamRoute,
+  AppWalletRoute: AppWalletRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
