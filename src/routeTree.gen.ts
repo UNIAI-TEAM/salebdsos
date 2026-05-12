@@ -21,6 +21,7 @@ import { Route as AppQrSharingRouteImport } from './routes/_app.qr-sharing'
 import { Route as AppProjectsRouteImport } from './routes/_app.projects'
 import { Route as AppProductsRouteImport } from './routes/_app.products'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
+import { Route as AppNfcCodesRouteImport } from './routes/_app.nfc-codes'
 import { Route as AppMarketingRouteImport } from './routes/_app.marketing'
 import { Route as AppLeadsRouteImport } from './routes/_app.leads'
 import { Route as AppLeadCaptureRouteImport } from './routes/_app.lead-capture'
@@ -95,6 +96,11 @@ const AppProductsRoute = AppProductsRouteImport.update({
 const AppPipelineRoute = AppPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNfcCodesRoute = AppNfcCodesRouteImport.update({
+  id: '/nfc-codes',
+  path: '/nfc-codes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMarketingRoute = AppMarketingRouteImport.update({
@@ -196,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/lead-capture': typeof AppLeadCaptureRoute
   '/leads': typeof AppLeadsRoute
   '/marketing': typeof AppMarketingRoute
+  '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
   '/projects': typeof AppProjectsRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/lead-capture': typeof AppLeadCaptureRoute
   '/leads': typeof AppLeadsRoute
   '/marketing': typeof AppMarketingRoute
+  '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
   '/projects': typeof AppProjectsRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/_app/lead-capture': typeof AppLeadCaptureRoute
   '/_app/leads': typeof AppLeadsRoute
   '/_app/marketing': typeof AppMarketingRoute
+  '/_app/nfc-codes': typeof AppNfcCodesRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/products': typeof AppProductsRoute
   '/_app/projects': typeof AppProjectsRoute
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/lead-capture'
     | '/leads'
     | '/marketing'
+    | '/nfc-codes'
     | '/pipeline'
     | '/products'
     | '/projects'
@@ -316,6 +326,7 @@ export interface FileRouteTypes {
     | '/lead-capture'
     | '/leads'
     | '/marketing'
+    | '/nfc-codes'
     | '/pipeline'
     | '/products'
     | '/projects'
@@ -346,6 +357,7 @@ export interface FileRouteTypes {
     | '/_app/lead-capture'
     | '/_app/leads'
     | '/_app/marketing'
+    | '/_app/nfc-codes'
     | '/_app/pipeline'
     | '/_app/products'
     | '/_app/projects'
@@ -451,6 +463,13 @@ declare module '@tanstack/react-router' {
       path: '/pipeline'
       fullPath: '/pipeline'
       preLoaderRoute: typeof AppPipelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/nfc-codes': {
+      id: '/_app/nfc-codes'
+      path: '/nfc-codes'
+      fullPath: '/nfc-codes'
+      preLoaderRoute: typeof AppNfcCodesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/marketing': {
@@ -595,6 +614,7 @@ interface AppRouteChildren {
   AppLeadCaptureRoute: typeof AppLeadCaptureRoute
   AppLeadsRoute: typeof AppLeadsRoute
   AppMarketingRoute: typeof AppMarketingRoute
+  AppNfcCodesRoute: typeof AppNfcCodesRoute
   AppPipelineRoute: typeof AppPipelineRoute
   AppProductsRoute: typeof AppProductsRoute
   AppProjectsRoute: typeof AppProjectsRoute
@@ -619,6 +639,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLeadCaptureRoute: AppLeadCaptureRoute,
   AppLeadsRoute: AppLeadsRoute,
   AppMarketingRoute: AppMarketingRoute,
+  AppNfcCodesRoute: AppNfcCodesRoute,
   AppPipelineRoute: AppPipelineRoute,
   AppProductsRoute: AppProductsRoute,
   AppProjectsRoute: AppProjectsRoute,
