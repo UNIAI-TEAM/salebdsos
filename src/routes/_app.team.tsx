@@ -1,17 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
 import {
   Crown, Plus, Trophy, Users2, Target, DollarSign, MoreHorizontal,
   CheckCircle2, TrendingUp, Search, Filter, Calendar, Download, Star,
-  Activity, ArrowRight, ShieldCheck,
+  Activity, ArrowRight, ShieldCheck, Mail, Pencil, Trash2, UserPlus, Send, X, Check,
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/team")({ component: TeamPage });
+
+const DEPARTMENTS = ["Kinh doanh 1", "Kinh doanh 2", "Marketing", "Chăm sóc KH", "Hỗ trợ"] as const;
+const ROLES = [
+  { v: "Admin", desc: "Toàn quyền hệ thống" },
+  { v: "Manager", desc: "Quản lý phòng ban" },
+  { v: "Sales Manager", desc: "Quản lý đội sales" },
+  { v: "Senior Sales", desc: "Sale cấp cao" },
+  { v: "Sales", desc: "Sale tiêu chuẩn" },
+  { v: "Sales Executive", desc: "Sale executive" },
+  { v: "Marketing Leader", desc: "Trưởng nhóm marketing" },
+  { v: "Digital Marketing", desc: "Digital marketing" },
+  { v: "CSKH Leader", desc: "Trưởng CSKH" },
+] as const;
+
+type Member = {
+  id: string;
+  n: string; email: string; phone: string;
+  dept: string; role: string;
+  l: number; d: number; rev: string; cv: string; kpi: string; star: number;
+  status: "active" | "invited" | "inactive";
+};
 
 const kpis = [
   { icon: Users2, label: "Tổng thành viên", value: "48", delta: 9.1, tone: "primary" as const },
