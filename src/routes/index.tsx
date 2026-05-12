@@ -1118,12 +1118,6 @@ function DesignGallery() {
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               Sales Growth Platform · Tổng quan
             </div>
-
-          <figure className="group relative rounded-3xl overflow-hidden border border-border/60 bg-card shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:shadow-[0_40px_100px_-30px_rgba(79,70,229,0.35)] transition-all duration-500">
-            <div className="absolute top-5 left-5 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur border border-border text-[11.5px] font-semibold">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Sales Growth Platform · Tổng quan
-            </div>
             <img
               src={nfcPlatformOverview}
               alt="Sales Growth Platform cho Real Estate – tổng quan tính năng"
