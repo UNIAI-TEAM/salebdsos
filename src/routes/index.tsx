@@ -1110,6 +1110,7 @@ function LandingPage() {
       <MultiEntry />
       <Features />
       <PlatformShowcase />
+      <DesignGallery />
       <AiSection />
       <MobileExperience />
       <Benefits />
