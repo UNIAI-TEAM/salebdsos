@@ -9,7 +9,7 @@ import { useState } from "react";
 import { BookingDialog } from "@/components/booking-dialog";
 import { DemoDialog } from "@/components/demo-dialog";
 import { LandingChatbot } from "@/components/landing-chatbot";
-import nfcCardTemplates from "@/assets/nfc-card-templates.jpg";
+import { DesignCarousel } from "@/components/design-carousel";
 import nfcPlatformOverview from "@/assets/nfc-platform-overview.jpg";
 
 const SITE_URL = "https://nfcplatform.vn";
@@ -1110,31 +1110,9 @@ function DesignGallery() {
           sub="Hơn 30+ mẫu danh thiếp NFC + QR thiết kế sẵn theo ngành Bất động sản. Tuỳ biến nhanh trong vài phút, đồng bộ với toàn bộ nền tảng Sales Growth."
         />
 
-        <div className="mt-14 space-y-10">
-          <figure className="group relative rounded-3xl overflow-hidden border border-border/60 bg-card shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:shadow-[0_40px_100px_-30px_rgba(79,70,229,0.35)] transition-all duration-500">
-            <div className="absolute top-5 left-5 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur border border-border text-[11.5px] font-semibold">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              9 mẫu danh thiếp NFC + QR
-            </div>
-            <img
-              src={nfcCardTemplates}
-              alt="9 mẫu danh thiếp NFC + QR cho Sale Bất động sản"
-              loading="lazy"
-              className="w-full h-auto block transition-transform duration-700 group-hover:scale-[1.015]"
-            />
-            <figcaption className="px-6 py-5 border-t border-border/60 bg-muted/30 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="text-[15px] font-semibold">Bộ sưu tập danh thiếp ngành BĐS</div>
-                <div className="text-[12.5px] text-muted-foreground">Chạm NFC · Quét QR · Lưu liên hệ · Xem dự án · Tạo lead · AI follow-up</div>
-              </div>
-              <DemoDialog>
-                <button className="h-9 px-4 rounded-lg bg-foreground text-background text-[12.5px] font-semibold hover:opacity-90 transition">
-                  Tuỳ biến mẫu của bạn
-                </button>
-              </DemoDialog>
-            </figcaption>
-          </figure>
+        <DesignCarousel />
 
+        <div className="mt-14">
           <figure className="group relative rounded-3xl overflow-hidden border border-border/60 bg-card shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:shadow-[0_40px_100px_-30px_rgba(79,70,229,0.35)] transition-all duration-500">
             <div className="absolute top-5 left-5 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur border border-border text-[11.5px] font-semibold">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
