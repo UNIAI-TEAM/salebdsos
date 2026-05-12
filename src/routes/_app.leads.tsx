@@ -48,7 +48,7 @@ const COMMON_SOURCES = ["NFC", "QR Code", "Link", "Social", "Facebook Ads", "Zal
 
 type Lead = Awaited<ReturnType<typeof listLeads>>["rows"][number];
 
-const initials = (n: string) => (n || "?").trim().split(/\s+/).pop()!.charAt(0).toUpperCase();
+const initials = (n: string | null | undefined) => (n || "?").trim().split(/\s+/).pop()!.charAt(0).toUpperCase();
 
 function ScorePill({ score }: { score: number | null }) {
   if (score == null) return <span className="text-muted-foreground text-[11px]">—</span>;
