@@ -428,7 +428,7 @@ function Section({ id, icon: Icon, title, children }: any) {
   );
 }
 
-function Input({ label, value, onChange, placeholder, hint }: any) {
+function Input({ label, value, onChange, placeholder, hint }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; hint?: string }) {
   return (
     <div>
       <label className="text-xs font-medium text-muted-foreground">{label}</label>
