@@ -1119,3 +1119,341 @@ function AiOptimizer() {
     </div>
   );
 }
+
+/* ────────────── QR & Wallet Export ────────────── */
+
+const PROFILE = {
+  fullName: "Nguyễn Văn A",
+  title: "Senior Sales Consultant",
+  org: "Vinhomes Ocean Park",
+  phone: "+84 901 234 567",
+  email: "nguyenvana@vinhomes.vn",
+  website: "https://nfcplatform.vn",
+  address: "Vinhomes Ocean Park, Gia Lâm, Hà Nội",
+};
+
+function QrWalletExport({ slug }: { slug: string }) {
+  const [qrMode, setQrMode] = useState<"static" | "dynamic">("dynamic");
+  const [size, setSize] = useState<256 | 512 | 1024>(512);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const baseUrl = `https://nfcplatform.vn/${slug}`;
+  const dynamicUrl = `https://nfcplatform.vn/r/${slug}?utm_source=qr&utm_medium=card&utm_campaign=wallet`;
+  const targetUrl = qrMode === "static" ? baseUrl : dynamicUrl;
+
+  const flash = (m: string) => {
+    setToast(m);
+    setTimeout(() => setToast(null), 1800);
+  };
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const downloadQr = async (format: "png" | "svg") => {
+    setBusy(`qr-${format}`);
+    try {
+      const ext = format === "svg" ? "svg" : "png";
+      const api = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&format=${ext}&margin=2&data=${encodeURIComponent(targetUrl)}`;
+      const res = await fetch(api);
+      const blob = await res.blob();
+      downloadBlob(blob, `qr-${qrMode}-${slug}-${size}.${ext}`);
+      flash(`Đã tải QR ${qrMode === "static" ? "tĩnh" : "động"} (${ext.toUpperCase()})`);
+    } catch {
+      flash("Không tải được QR – kiểm tra mạng");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const exportVCard = () => {
+    const vcf = [
+      "BEGIN:VCARD",
+      "VERSION:3.0",
+      `FN:${PROFILE.fullName}`,
+      `N:${PROFILE.fullName.split(" ").slice(-1)[0]};${PROFILE.fullName.split(" ").slice(0, -1).join(" ")};;;`,
+      `ORG:${PROFILE.org}`,
+      `TITLE:${PROFILE.title}`,
+      `TEL;TYPE=CELL:${PROFILE.phone}`,
+      `EMAIL;TYPE=WORK:${PROFILE.email}`,
+      `ADR;TYPE=WORK:;;${PROFILE.address};;;;`,
+      `URL:${PROFILE.website}/${slug}`,
+      "END:VCARD",
+    ].join("\r\n");
+    downloadBlob(new Blob([vcf], { type: "text/vcard" }), `${slug}.vcf`);
+    flash("Đã xuất vCard (.vcf)");
+  };
+
+  const exportApplePass = () => {
+    const passJson = {
+      formatVersion: 1,
+      passTypeIdentifier: "pass.vn.nfcplatform.businesscard",
+      serialNumber: `${slug}-${Date.now()}`,
+      teamIdentifier: "REPLACE_WITH_TEAM_ID",
+      organizationName: PROFILE.org,
+      description: `Danh thiếp ${PROFILE.fullName}`,
+      logoText: PROFILE.org,
+      foregroundColor: "rgb(255,255,255)",
+      backgroundColor: "rgb(30,30,46)",
+      labelColor: "rgb(180,180,200)",
+      barcodes: [
+        { format: "PKBarcodeFormatQR", message: targetUrl, messageEncoding: "iso-8859-1", altText: `${slug}` },
+      ],
+      generic: {
+        primaryFields: [{ key: "name", label: "Họ tên", value: PROFILE.fullName }],
+        secondaryFields: [
+          { key: "title", label: "Chức vụ", value: PROFILE.title },
+          { key: "org", label: "Công ty", value: PROFILE.org },
+        ],
+        auxiliaryFields: [
+          { key: "phone", label: "Điện thoại", value: PROFILE.phone },
+          { key: "email", label: "Email", value: PROFILE.email },
+        ],
+        backFields: [
+          { key: "address", label: "Địa chỉ", value: PROFILE.address },
+          { key: "website", label: "Website", value: `${PROFILE.website}/${slug}` },
+          { key: "note", label: "Ghi chú", value: "Quét QR hoặc tap NFC để xem danh thiếp đầy đủ." },
+        ],
+      },
+    };
+    downloadBlob(
+      new Blob([JSON.stringify(passJson, null, 2)], { type: "application/json" }),
+      `apple-wallet-${slug}.pass.json`,
+    );
+    flash("Đã xuất Apple Wallet pass.json");
+  };
+
+  const exportGoogleWallet = () => {
+    const objectId = `3388000000022xxxxx.${slug}-${Date.now()}`;
+    const payload = {
+      iss: "wallet-issuer@nfcplatform.iam.gserviceaccount.com",
+      aud: "google",
+      typ: "savetowallet",
+      origins: ["https://nfcplatform.vn"],
+      payload: {
+        genericObjects: [
+          {
+            id: objectId,
+            classId: "3388000000022xxxxx.business_card_class",
+            logo: { sourceUri: { uri: `${PROFILE.website}/logo.png` } },
+            cardTitle: { defaultValue: { language: "vi-VN", value: PROFILE.org } },
+            subheader: { defaultValue: { language: "vi-VN", value: PROFILE.title } },
+            header: { defaultValue: { language: "vi-VN", value: PROFILE.fullName } },
+            barcode: { type: "QR_CODE", value: targetUrl, alternateText: slug },
+            hexBackgroundColor: "#1E1E2E",
+            heroImage: { sourceUri: { uri: `${PROFILE.website}/${slug}/cover.jpg` } },
+            textModulesData: [
+              { id: "phone", header: "Điện thoại", body: PROFILE.phone },
+              { id: "email", header: "Email", body: PROFILE.email },
+              { id: "address", header: "Địa chỉ", body: PROFILE.address },
+            ],
+            linksModuleData: {
+              uris: [
+                { uri: `${PROFILE.website}/${slug}`, description: "Xem danh thiếp" },
+                { uri: `tel:${PROFILE.phone}`, description: "Gọi ngay" },
+              ],
+            },
+          },
+        ],
+      },
+    };
+    downloadBlob(
+      new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }),
+      `google-wallet-${slug}.json`,
+    );
+    flash("Đã xuất Google Wallet payload");
+  };
+
+  return (
+    <div className="rounded-2xl bg-card border border-border shadow-soft p-5 space-y-4">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 grid place-items-center text-white">
+              <QrCode className="h-4 w-4" />
+            </div>
+            <h3 className="text-[15px] font-semibold tracking-tight">Tải QR & Xuất Wallet Card</h3>
+          </div>
+          <p className="text-[12.5px] text-muted-foreground mt-1.5">
+            QR & Wallet được sinh từ cấu hình hiện tại của danh thiếp · slug{" "}
+            <span className="font-mono text-foreground">/{slug}</span>
+          </p>
+        </div>
+        {toast && (
+          <div className="inline-flex items-center gap-1.5 px-2.5 h-8 rounded-lg bg-emerald-50 text-emerald-700 text-[11.5px] font-medium border border-emerald-200">
+            <Check className="h-3.5 w-3.5" /> {toast}
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5">
+        {/* QR preview + mode */}
+        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+          <div className="aspect-square rounded-lg bg-white border border-border p-3 grid place-items-center">
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=2&data=${encodeURIComponent(targetUrl)}`}
+              alt={`QR ${qrMode}`}
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <div className="inline-flex w-full rounded-lg border border-border p-0.5 bg-card">
+            {(["dynamic", "static"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setQrMode(m)}
+                className={[
+                  "flex-1 h-8 rounded-md text-[12px] font-semibold",
+                  qrMode === m ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:text-foreground",
+                ].join(" ")}
+              >
+                {m === "dynamic" ? "QR động" : "QR tĩnh"}
+              </button>
+            ))}
+          </div>
+          <div className="text-[11.5px] text-muted-foreground leading-relaxed">
+            {qrMode === "dynamic" ? (
+              <>Chuyển hướng qua tracking link – đo được scan, đổi đích đến mà không in lại.</>
+            ) : (
+              <>Trỏ thẳng tới URL danh thiếp – không tracking, không thể đổi sau khi in.</>
+            )}
+          </div>
+          <div className="rounded-lg bg-card border border-border p-2 text-[11px] font-mono text-muted-foreground break-all">
+            {targetUrl}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11.5px] text-muted-foreground">Kích thước</span>
+            <div className="inline-flex rounded-lg border border-border p-0.5 bg-card">
+              {([256, 512, 1024] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSize(s)}
+                  className={[
+                    "h-7 px-2.5 rounded-md text-[11.5px] font-semibold",
+                    size === s ? "bg-muted text-foreground" : "text-muted-foreground",
+                  ].join(" ")}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <ExportTile
+            tone="from-violet-500 to-fuchsia-500"
+            icon={Download}
+            title="Tải QR – PNG"
+            desc={`Ảnh PNG ${size}px, nền trắng, dùng in ấn & marketing.`}
+            badge={qrMode === "dynamic" ? "Tracking" : "No-track"}
+            loading={busy === "qr-png"}
+            onClick={() => downloadQr("png")}
+          />
+          <ExportTile
+            tone="from-blue-500 to-cyan-500"
+            icon={Download}
+            title="Tải QR – SVG"
+            desc="Vector SVG, scale vô hạn cho brochure & standee."
+            badge="Vector"
+            loading={busy === "qr-svg"}
+            onClick={() => downloadQr("svg")}
+          />
+          <ExportTile
+            tone="from-zinc-800 to-zinc-900"
+            icon={Smartphone}
+            title="Apple Wallet (.pass.json)"
+            desc="Mẫu pass.json đầy đủ field – ký bằng cert để tạo .pkpass."
+            badge="iOS"
+            onClick={exportApplePass}
+          />
+          <ExportTile
+            tone="from-emerald-500 to-teal-600"
+            icon={Smartphone}
+            title="Google Wallet (JWT payload)"
+            desc="Payload genericObject – ký JWT để tạo link Save to Wallet."
+            badge="Android"
+            onClick={exportGoogleWallet}
+          />
+          <ExportTile
+            tone="from-amber-500 to-orange-500"
+            icon={User}
+            title="vCard (.vcf)"
+            desc="Tệp danh bạ chuẩn – import nhanh vào iOS/Android/Outlook."
+            badge="Universal"
+            onClick={exportVCard}
+          />
+          <ExportTile
+            tone="from-rose-500 to-pink-500"
+            icon={Printer}
+            title="Bản in A6 (PDF)"
+            desc="Layout in card kèm QR & logo – phù hợp xưởng in offset."
+            badge="Sắp ra mắt"
+            disabled
+            onClick={() => flash("Tính năng đang phát triển")}
+          />
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-muted/30 border border-dashed border-border p-3 text-[11.5px] text-muted-foreground leading-relaxed">
+        <span className="font-semibold text-foreground">Lưu ý kỹ thuật:</span>{" "}
+        File Apple Wallet xuất ra là <span className="font-mono">pass.json</span> – cần ký bằng Apple Developer
+        certificate (PassTypeID + WWDR) để đóng gói thành <span className="font-mono">.pkpass</span>. Google Wallet
+        payload cần ký JWT bằng service account để tạo link{" "}
+        <span className="font-mono">pay.google.com/gp/v/save/...</span>. Hai bước ký này thực hiện ở backend Lovable
+        Cloud khi bật Wallet Provisioning.
+      </div>
+    </div>
+  );
+}
+
+function ExportTile({
+  icon: Icon, title, desc, badge, tone, onClick, loading, disabled,
+}: {
+  icon: typeof Download;
+  title: string;
+  desc: string;
+  badge?: string;
+  tone: string;
+  onClick: () => void;
+  loading?: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled || loading}
+      className={[
+        "group text-left rounded-xl border border-border bg-card p-3.5 transition-all",
+        "hover:border-primary/40 hover:shadow-soft",
+        disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer",
+      ].join(" ")}
+    >
+      <div className="flex items-start gap-3">
+        <div className={`h-9 w-9 rounded-lg bg-gradient-to-br ${tone} grid place-items-center text-white shrink-0`}>
+          {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[13px] font-semibold tracking-tight truncate">{title}</div>
+            {badge && (
+              <span className="text-[10px] font-semibold px-1.5 h-5 inline-flex items-center rounded-md bg-muted text-muted-foreground">
+                {badge}
+              </span>
+            )}
+          </div>
+          <div className="text-[11.5px] text-muted-foreground mt-1 leading-relaxed">{desc}</div>
+        </div>
+        <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+    </button>
+  );
+}
