@@ -99,6 +99,9 @@ function DigitalCard() {
         <MiniKpi icon={Target} label="Tỷ lệ chuyển đổi" value="4.99%" delta="+0.8%" tone="bg-emerald-50 text-emerald-600" />
       </div>
 
+      {/* Analytics charts */}
+      <CardAnalytics />
+
       <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr_340px] gap-5">
         {/* ─── LEFT PANEL ─── */}
         <div className="rounded-2xl bg-card border border-border shadow-soft p-4 h-fit">
