@@ -25,6 +25,7 @@ import { Route as AppProjectsRouteImport } from './routes/_app.projects'
 import { Route as AppProductsRouteImport } from './routes/_app.products'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppNfcCodesRouteImport } from './routes/_app.nfc-codes'
+import { Route as AppMembersRouteImport } from './routes/_app.members'
 import { Route as AppMarketingRouteImport } from './routes/_app.marketing'
 import { Route as AppLeadsRouteImport } from './routes/_app.leads'
 import { Route as AppLeadCaptureRouteImport } from './routes/_app.lead-capture'
@@ -119,6 +120,11 @@ const AppPipelineRoute = AppPipelineRouteImport.update({
 const AppNfcCodesRoute = AppNfcCodesRouteImport.update({
   id: '/nfc-codes',
   path: '/nfc-codes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMembersRoute = AppMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMarketingRoute = AppMarketingRouteImport.update({
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/lead-capture': typeof AppLeadCaptureRoute
   '/leads': typeof AppLeadsRoute
   '/marketing': typeof AppMarketingRoute
+  '/members': typeof AppMembersRoute
   '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/lead-capture': typeof AppLeadCaptureRoute
   '/leads': typeof AppLeadsRoute
   '/marketing': typeof AppMarketingRoute
+  '/members': typeof AppMembersRoute
   '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
@@ -290,6 +298,7 @@ export interface FileRoutesById {
   '/_app/lead-capture': typeof AppLeadCaptureRoute
   '/_app/leads': typeof AppLeadsRoute
   '/_app/marketing': typeof AppMarketingRoute
+  '/_app/members': typeof AppMembersRoute
   '/_app/nfc-codes': typeof AppNfcCodesRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/products': typeof AppProductsRoute
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/lead-capture'
     | '/leads'
     | '/marketing'
+    | '/members'
     | '/nfc-codes'
     | '/pipeline'
     | '/products'
@@ -358,6 +368,7 @@ export interface FileRouteTypes {
     | '/lead-capture'
     | '/leads'
     | '/marketing'
+    | '/members'
     | '/nfc-codes'
     | '/pipeline'
     | '/products'
@@ -392,6 +403,7 @@ export interface FileRouteTypes {
     | '/_app/lead-capture'
     | '/_app/leads'
     | '/_app/marketing'
+    | '/_app/members'
     | '/_app/nfc-codes'
     | '/_app/pipeline'
     | '/_app/products'
@@ -530,6 +542,13 @@ declare module '@tanstack/react-router' {
       path: '/nfc-codes'
       fullPath: '/nfc-codes'
       preLoaderRoute: typeof AppNfcCodesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/members': {
+      id: '/_app/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof AppMembersRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/marketing': {
@@ -674,6 +693,7 @@ interface AppRouteChildren {
   AppLeadCaptureRoute: typeof AppLeadCaptureRoute
   AppLeadsRoute: typeof AppLeadsRoute
   AppMarketingRoute: typeof AppMarketingRoute
+  AppMembersRoute: typeof AppMembersRoute
   AppNfcCodesRoute: typeof AppNfcCodesRoute
   AppPipelineRoute: typeof AppPipelineRoute
   AppProductsRoute: typeof AppProductsRoute
@@ -699,6 +719,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLeadCaptureRoute: AppLeadCaptureRoute,
   AppLeadsRoute: AppLeadsRoute,
   AppMarketingRoute: AppMarketingRoute,
+  AppMembersRoute: AppMembersRoute,
   AppNfcCodesRoute: AppNfcCodesRoute,
   AppPipelineRoute: AppPipelineRoute,
   AppProductsRoute: AppProductsRoute,
@@ -725,3 +746,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
