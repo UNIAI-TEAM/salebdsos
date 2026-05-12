@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { BookingDialog } from "@/components/booking-dialog";
+import { DemoDialog } from "@/components/demo-dialog";
 
 export const Route = createFileRoute("/")({
   head: () => ({
