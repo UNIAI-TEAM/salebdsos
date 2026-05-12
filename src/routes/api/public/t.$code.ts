@@ -42,7 +42,7 @@ export const Route = createFileRoute("/api/public/t/$code")({
         }
 
         const { data: card } = await supabaseAdmin
-          .from("digital_cards")
+          .from("cards")
           .select("id, slug, tenant_id, is_published")
           .eq("id", shortRow.card_id)
           .maybeSingle();

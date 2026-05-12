@@ -10,7 +10,7 @@ const getPublicCard = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => d)
   .handler(async ({ data }) => {
     const { data: card, error } = await supabaseAdmin
-      .from("digital_cards")
+      .from("cards")
       .select("id, slug, display_name, title, company, bio, avatar_url, theme, fields, tenant_id")
       .eq("slug", data.slug)
       .eq("is_published", true)
