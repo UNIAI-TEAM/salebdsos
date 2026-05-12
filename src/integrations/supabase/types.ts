@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_daily: {
+        Row: {
+          card_id: string
+          day: string
+          event_count: number
+          source: string
+          tenant_id: string | null
+          unique_visitors: number
+        }
+        Insert: {
+          card_id: string
+          day: string
+          event_count?: number
+          source: string
+          tenant_id?: string | null
+          unique_visitors?: number
+        }
+        Update: {
+          card_id?: string
+          day?: string
+          event_count?: number
+          source?: string
+          tenant_id?: string | null
+          unique_visitors?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_daily_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "digital_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_leads: {
         Row: {
           conversation: Json | null
@@ -53,12 +88,166 @@ export type Database = {
         }
         Relationships: []
       }
+      digital_cards: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          company: string | null
+          created_at: string
+          display_name: string
+          fields: Json
+          id: string
+          is_published: boolean
+          owner_user_id: string | null
+          slug: string
+          tenant_id: string | null
+          theme: Json
+          title: string | null
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          company?: string | null
+          created_at?: string
+          display_name: string
+          fields?: Json
+          id?: string
+          is_published?: boolean
+          owner_user_id?: string | null
+          slug: string
+          tenant_id?: string | null
+          theme?: Json
+          title?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          company?: string | null
+          created_at?: string
+          display_name?: string
+          fields?: Json
+          id?: string
+          is_published?: boolean
+          owner_user_id?: string | null
+          slug?: string
+          tenant_id?: string | null
+          theme?: Json
+          title?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
+      interaction_events: {
+        Row: {
+          browser: string | null
+          card_id: string
+          country: string | null
+          device_type: string | null
+          id: number
+          ip_hash: string | null
+          occurred_at: string
+          os: string | null
+          referrer: string | null
+          short_code: string | null
+          source: string
+          tenant_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          browser?: string | null
+          card_id: string
+          country?: string | null
+          device_type?: string | null
+          id?: number
+          ip_hash?: string | null
+          occurred_at?: string
+          os?: string | null
+          referrer?: string | null
+          short_code?: string | null
+          source: string
+          tenant_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          browser?: string | null
+          card_id?: string
+          country?: string | null
+          device_type?: string | null
+          id?: number
+          ip_hash?: string | null
+          occurred_at?: string
+          os?: string | null
+          referrer?: string | null
+          short_code?: string | null
+          source?: string
+          tenant_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interaction_events_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "digital_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nfc_short_codes: {
+        Row: {
+          card_id: string
+          code: string
+          created_at: string
+          is_active: boolean
+          label: string | null
+          source: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          card_id: string
+          code: string
+          created_at?: string
+          is_active?: boolean
+          label?: string | null
+          source?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          card_id?: string
+          code?: string
+          created_at?: string
+          is_active?: boolean
+          label?: string | null
+          source?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfc_short_codes_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "digital_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      aggregate_interaction_events_daily: {
+        Args: { _day?: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
