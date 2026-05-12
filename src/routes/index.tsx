@@ -78,9 +78,11 @@ function Hero() {
               <Link to="/dashboard" className="h-12 px-5 rounded-xl bg-foreground text-background text-[14px] font-semibold inline-flex items-center gap-2 hover:opacity-90 transition">
                 Trải nghiệm demo <ArrowRight className="h-4 w-4" />
               </Link>
-              <a href="#pricing" className="h-12 px-5 rounded-xl border border-border bg-card text-[14px] font-semibold inline-flex items-center gap-2 hover:bg-muted/40 transition">
-                <Calendar className="h-4 w-4" /> Đặt lịch tư vấn
-              </a>
+              <BookingDialog>
+                <button type="button" className="h-12 px-5 rounded-xl border border-border bg-card text-[14px] font-semibold inline-flex items-center gap-2 hover:bg-muted/40 transition">
+                  <Calendar className="h-4 w-4" /> Đặt lịch tư vấn
+                </button>
+              </BookingDialog>
             </div>
             {/* Trust */}
             <div className="mt-8 flex items-center gap-6 text-[12px] text-muted-foreground">
