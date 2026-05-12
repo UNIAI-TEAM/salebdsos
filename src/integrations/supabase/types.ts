@@ -804,6 +804,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          budget: string | null
           card_id: string | null
           created_at: string
           deleted_at: string | null
@@ -811,6 +812,7 @@ export type Database = {
           full_name: string | null
           id: string
           meta: Json
+          need_type: string | null
           notes: string | null
           owner_user_id: string | null
           phone: string | null
@@ -818,11 +820,14 @@ export type Database = {
           score: number | null
           source: string | null
           status: Database["public"]["Enums"]["lead_status"]
+          tags: string[] | null
           team_id: string | null
           tenant_id: string
+          timeline: string | null
           updated_at: string
         }
         Insert: {
+          budget?: string | null
           card_id?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -830,6 +835,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           meta?: Json
+          need_type?: string | null
           notes?: string | null
           owner_user_id?: string | null
           phone?: string | null
@@ -837,11 +843,14 @@ export type Database = {
           score?: number | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          tags?: string[] | null
           team_id?: string | null
           tenant_id: string
+          timeline?: string | null
           updated_at?: string
         }
         Update: {
+          budget?: string | null
           card_id?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -849,6 +858,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           meta?: Json
+          need_type?: string | null
           notes?: string | null
           owner_user_id?: string | null
           phone?: string | null
@@ -856,8 +866,10 @@ export type Database = {
           score?: number | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          tags?: string[] | null
           team_id?: string | null
           tenant_id?: string
+          timeline?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1472,6 +1484,9 @@ export type Database = {
         | "proposal"
         | "won"
         | "lost"
+        | "consulting"
+        | "quoted"
+        | "deposit"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1608,7 +1623,17 @@ export const Constants = {
         "platform_admin",
       ],
       deal_status: ["open", "won", "lost"],
-      lead_status: ["new", "contacted", "qualified", "proposal", "won", "lost"],
+      lead_status: [
+        "new",
+        "contacted",
+        "qualified",
+        "proposal",
+        "won",
+        "lost",
+        "consulting",
+        "quoted",
+        "deposit",
+      ],
     },
   },
 } as const
