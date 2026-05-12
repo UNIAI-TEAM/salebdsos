@@ -1116,6 +1116,7 @@ function LandingPage() {
       <Faq />
       <CtaFooter />
       <Footer />
+      <LandingChatbot />
     </div>
   );
 }
