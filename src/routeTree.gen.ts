@@ -40,6 +40,7 @@ import { Route as AppAirdropRouteImport } from './routes/_app.airdrop'
 import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
 import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
 import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
+import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
 import { Route as AppAiFollowupCustomerIdRouteImport } from './routes/_app.ai-followup.$customerId'
 import { Route as ApiPublicTCodeRouteImport } from './routes/api/public/t.$code'
 
@@ -197,6 +198,11 @@ const AppAiFollowupRoute = AppAiFollowupRouteImport.update({
   path: '/ai-followup',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppProjectsRoute,
+} as any)
 const AppAiFollowupCustomerIdRoute = AppAiFollowupCustomerIdRouteImport.update({
   id: '/$customerId',
   path: '/$customerId',
@@ -232,7 +238,7 @@ export interface FileRoutesByFullPath {
   '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
-  '/projects': typeof AppProjectsRoute
+  '/projects': typeof AppProjectsRouteWithChildren
   '/qr-sharing': typeof AppQrSharingRoute
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
@@ -240,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
+  '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
 }
 export interface FileRoutesByTo {
@@ -266,7 +273,7 @@ export interface FileRoutesByTo {
   '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
-  '/projects': typeof AppProjectsRoute
+  '/projects': typeof AppProjectsRouteWithChildren
   '/qr-sharing': typeof AppQrSharingRoute
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
@@ -274,6 +281,7 @@ export interface FileRoutesByTo {
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
+  '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
 }
 export interface FileRoutesById {
@@ -302,7 +310,7 @@ export interface FileRoutesById {
   '/_app/nfc-codes': typeof AppNfcCodesRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/products': typeof AppProductsRoute
-  '/_app/projects': typeof AppProjectsRoute
+  '/_app/projects': typeof AppProjectsRouteWithChildren
   '/_app/qr-sharing': typeof AppQrSharingRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/team': typeof AppTeamRoute
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
   '/_app/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
+  '/_app/projects/$id': typeof AppProjectsIdRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
 }
 export interface FileRouteTypes {
@@ -346,6 +355,7 @@ export interface FileRouteTypes {
     | '/accept-invite/$token'
     | '/c/$slug'
     | '/ai-followup/$customerId'
+    | '/projects/$id'
     | '/api/public/t/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/accept-invite/$token'
     | '/c/$slug'
     | '/ai-followup/$customerId'
+    | '/projects/$id'
     | '/api/public/t/$code'
   id:
     | '__root__'
@@ -415,6 +426,7 @@ export interface FileRouteTypes {
     | '/accept-invite/$token'
     | '/c/$slug'
     | '/_app/ai-followup/$customerId'
+    | '/_app/projects/$id'
     | '/api/public/t/$code'
   fileRoutesById: FileRoutesById
 }
@@ -649,6 +661,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiFollowupRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/projects/$id': {
+      id: '/_app/projects/$id'
+      path: '/$id'
+      fullPath: '/projects/$id'
+      preLoaderRoute: typeof AppProjectsIdRouteImport
+      parentRoute: typeof AppProjectsRoute
+    }
     '/_app/ai-followup/$customerId': {
       id: '/_app/ai-followup/$customerId'
       path: '/$customerId'
@@ -678,6 +697,18 @@ const AppAiFollowupRouteWithChildren = AppAiFollowupRoute._addFileChildren(
   AppAiFollowupRouteChildren,
 )
 
+interface AppProjectsRouteChildren {
+  AppProjectsIdRoute: typeof AppProjectsIdRoute
+}
+
+const AppProjectsRouteChildren: AppProjectsRouteChildren = {
+  AppProjectsIdRoute: AppProjectsIdRoute,
+}
+
+const AppProjectsRouteWithChildren = AppProjectsRoute._addFileChildren(
+  AppProjectsRouteChildren,
+)
+
 interface AppRouteChildren {
   AppAiFollowupRoute: typeof AppAiFollowupRouteWithChildren
   AppAiLeadScoreRoute: typeof AppAiLeadScoreRoute
@@ -697,7 +728,7 @@ interface AppRouteChildren {
   AppNfcCodesRoute: typeof AppNfcCodesRoute
   AppPipelineRoute: typeof AppPipelineRoute
   AppProductsRoute: typeof AppProductsRoute
-  AppProjectsRoute: typeof AppProjectsRoute
+  AppProjectsRoute: typeof AppProjectsRouteWithChildren
   AppQrSharingRoute: typeof AppQrSharingRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTeamRoute: typeof AppTeamRoute
@@ -723,7 +754,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNfcCodesRoute: AppNfcCodesRoute,
   AppPipelineRoute: AppPipelineRoute,
   AppProductsRoute: AppProductsRoute,
-  AppProjectsRoute: AppProjectsRoute,
+  AppProjectsRoute: AppProjectsRouteWithChildren,
   AppQrSharingRoute: AppQrSharingRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTeamRoute: AppTeamRoute,
