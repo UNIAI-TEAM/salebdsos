@@ -102,6 +102,9 @@ function DigitalCard() {
       {/* Analytics charts */}
       <CardAnalytics />
 
+      {/* AI Optimization */}
+      <AiOptimizer />
+
       <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr_340px] gap-5">
         {/* ─── LEFT PANEL ─── */}
         <div className="rounded-2xl bg-card border border-border shadow-soft p-4 h-fit">
