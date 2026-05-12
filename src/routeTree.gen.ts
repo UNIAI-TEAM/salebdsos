@@ -11,10 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppWalletRouteImport } from './routes/_app.wallet'
+import { Route as AppQrSharingRouteImport } from './routes/_app.qr-sharing'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppLeadsRouteImport } from './routes/_app.leads'
+import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
 import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -25,6 +29,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppWalletRoute = AppWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppQrSharingRoute = AppQrSharingRouteImport.update({
+  id: '/qr-sharing',
+  path: '/qr-sharing',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPipelineRoute = AppPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
@@ -33,6 +47,11 @@ const AppPipelineRoute = AppPipelineRouteImport.update({
 const AppLeadsRoute = AppLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDynamicQrRoute = AppDynamicQrRouteImport.update({
+  id: '/dynamic-qr',
+  path: '/dynamic-qr',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDigitalCardRoute = AppDigitalCardRouteImport.update({
@@ -45,43 +64,82 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAiSalesPageRoute = AppAiSalesPageRouteImport.update({
+  id: '/ai-sales-page',
+  path: '/ai-sales-page',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ai-sales-page': typeof AppAiSalesPageRoute
   '/dashboard': typeof AppDashboardRoute
   '/digital-card': typeof AppDigitalCardRoute
+  '/dynamic-qr': typeof AppDynamicQrRoute
   '/leads': typeof AppLeadsRoute
   '/pipeline': typeof AppPipelineRoute
+  '/qr-sharing': typeof AppQrSharingRoute
+  '/wallet': typeof AppWalletRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ai-sales-page': typeof AppAiSalesPageRoute
   '/dashboard': typeof AppDashboardRoute
   '/digital-card': typeof AppDigitalCardRoute
+  '/dynamic-qr': typeof AppDynamicQrRoute
   '/leads': typeof AppLeadsRoute
   '/pipeline': typeof AppPipelineRoute
+  '/qr-sharing': typeof AppQrSharingRoute
+  '/wallet': typeof AppWalletRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/_app/ai-sales-page': typeof AppAiSalesPageRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/digital-card': typeof AppDigitalCardRoute
+  '/_app/dynamic-qr': typeof AppDynamicQrRoute
   '/_app/leads': typeof AppLeadsRoute
   '/_app/pipeline': typeof AppPipelineRoute
+  '/_app/qr-sharing': typeof AppQrSharingRoute
+  '/_app/wallet': typeof AppWalletRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/digital-card' | '/leads' | '/pipeline'
+  fullPaths:
+    | '/'
+    | '/ai-sales-page'
+    | '/dashboard'
+    | '/digital-card'
+    | '/dynamic-qr'
+    | '/leads'
+    | '/pipeline'
+    | '/qr-sharing'
+    | '/wallet'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/digital-card' | '/leads' | '/pipeline'
+  to:
+    | '/'
+    | '/ai-sales-page'
+    | '/dashboard'
+    | '/digital-card'
+    | '/dynamic-qr'
+    | '/leads'
+    | '/pipeline'
+    | '/qr-sharing'
+    | '/wallet'
   id:
     | '__root__'
     | '/'
     | '/_app'
+    | '/_app/ai-sales-page'
     | '/_app/dashboard'
     | '/_app/digital-card'
+    | '/_app/dynamic-qr'
     | '/_app/leads'
     | '/_app/pipeline'
+    | '/_app/qr-sharing'
+    | '/_app/wallet'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -105,6 +163,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/wallet': {
+      id: '/_app/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof AppWalletRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/qr-sharing': {
+      id: '/_app/qr-sharing'
+      path: '/qr-sharing'
+      fullPath: '/qr-sharing'
+      preLoaderRoute: typeof AppQrSharingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/pipeline': {
       id: '/_app/pipeline'
       path: '/pipeline'
@@ -117,6 +189,13 @@ declare module '@tanstack/react-router' {
       path: '/leads'
       fullPath: '/leads'
       preLoaderRoute: typeof AppLeadsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dynamic-qr': {
+      id: '/_app/dynamic-qr'
+      path: '/dynamic-qr'
+      fullPath: '/dynamic-qr'
+      preLoaderRoute: typeof AppDynamicQrRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/digital-card': {
@@ -133,21 +212,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ai-sales-page': {
+      id: '/_app/ai-sales-page'
+      path: '/ai-sales-page'
+      fullPath: '/ai-sales-page'
+      preLoaderRoute: typeof AppAiSalesPageRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAiSalesPageRoute: typeof AppAiSalesPageRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDigitalCardRoute: typeof AppDigitalCardRoute
+  AppDynamicQrRoute: typeof AppDynamicQrRoute
   AppLeadsRoute: typeof AppLeadsRoute
   AppPipelineRoute: typeof AppPipelineRoute
+  AppQrSharingRoute: typeof AppQrSharingRoute
+  AppWalletRoute: typeof AppWalletRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAiSalesPageRoute: AppAiSalesPageRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDigitalCardRoute: AppDigitalCardRoute,
+  AppDynamicQrRoute: AppDynamicQrRoute,
   AppLeadsRoute: AppLeadsRoute,
   AppPipelineRoute: AppPipelineRoute,
+  AppQrSharingRoute: AppQrSharingRoute,
+  AppWalletRoute: AppWalletRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
