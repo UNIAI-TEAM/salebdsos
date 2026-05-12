@@ -10,10 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ThankYouRouteImport } from './routes/thank-you'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as CustomizeRouteImport } from './routes/customize'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
+import { Route as AcceptInviteTokenRouteImport } from './routes/accept-invite.$token'
 import { Route as AppWalletRouteImport } from './routes/_app.wallet'
 import { Route as AppTeamRouteImport } from './routes/_app.team'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
@@ -22,6 +25,7 @@ import { Route as AppProjectsRouteImport } from './routes/_app.projects'
 import { Route as AppProductsRouteImport } from './routes/_app.products'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppNfcCodesRouteImport } from './routes/_app.nfc-codes'
+import { Route as AppMembersRouteImport } from './routes/_app.members'
 import { Route as AppMarketingRouteImport } from './routes/_app.marketing'
 import { Route as AppLeadsRouteImport } from './routes/_app.leads'
 import { Route as AppLeadCaptureRouteImport } from './routes/_app.lead-capture'
@@ -44,6 +48,16 @@ const ThankYouRoute = ThankYouRouteImport.update({
   path: '/thank-you',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CustomizeRoute = CustomizeRouteImport.update({
   id: '/customize',
   path: '/customize',
@@ -61,6 +75,11 @@ const IndexRoute = IndexRouteImport.update({
 const CSlugRoute = CSlugRouteImport.update({
   id: '/c/$slug',
   path: '/c/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcceptInviteTokenRoute = AcceptInviteTokenRouteImport.update({
+  id: '/accept-invite/$token',
+  path: '/accept-invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppWalletRoute = AppWalletRouteImport.update({
@@ -101,6 +120,11 @@ const AppPipelineRoute = AppPipelineRouteImport.update({
 const AppNfcCodesRoute = AppNfcCodesRouteImport.update({
   id: '/nfc-codes',
   path: '/nfc-codes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMembersRoute = AppMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMarketingRoute = AppMarketingRouteImport.update({
@@ -187,6 +211,8 @@ const ApiPublicTCodeRoute = ApiPublicTCodeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/customize': typeof CustomizeRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/thank-you': typeof ThankYouRoute
   '/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/ai-lead-score': typeof AppAiLeadScoreRoute
@@ -202,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/lead-capture': typeof AppLeadCaptureRoute
   '/leads': typeof AppLeadsRoute
   '/marketing': typeof AppMarketingRoute
+  '/members': typeof AppMembersRoute
   '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
@@ -210,6 +237,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
   '/wallet': typeof AppWalletRoute
+  '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
@@ -217,6 +245,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/customize': typeof CustomizeRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/thank-you': typeof ThankYouRoute
   '/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/ai-lead-score': typeof AppAiLeadScoreRoute
@@ -232,6 +262,7 @@ export interface FileRoutesByTo {
   '/lead-capture': typeof AppLeadCaptureRoute
   '/leads': typeof AppLeadsRoute
   '/marketing': typeof AppMarketingRoute
+  '/members': typeof AppMembersRoute
   '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
@@ -240,6 +271,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
   '/wallet': typeof AppWalletRoute
+  '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
@@ -249,6 +281,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/customize': typeof CustomizeRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/thank-you': typeof ThankYouRoute
   '/_app/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/_app/ai-lead-score': typeof AppAiLeadScoreRoute
@@ -264,6 +298,7 @@ export interface FileRoutesById {
   '/_app/lead-capture': typeof AppLeadCaptureRoute
   '/_app/leads': typeof AppLeadsRoute
   '/_app/marketing': typeof AppMarketingRoute
+  '/_app/members': typeof AppMembersRoute
   '/_app/nfc-codes': typeof AppNfcCodesRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/products': typeof AppProductsRoute
@@ -272,6 +307,7 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_app/team': typeof AppTeamRoute
   '/_app/wallet': typeof AppWalletRoute
+  '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
   '/_app/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
@@ -281,6 +317,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/customize'
+    | '/login'
+    | '/onboarding'
     | '/thank-you'
     | '/ai-followup'
     | '/ai-lead-score'
@@ -296,6 +334,7 @@ export interface FileRouteTypes {
     | '/lead-capture'
     | '/leads'
     | '/marketing'
+    | '/members'
     | '/nfc-codes'
     | '/pipeline'
     | '/products'
@@ -304,6 +343,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/wallet'
+    | '/accept-invite/$token'
     | '/c/$slug'
     | '/ai-followup/$customerId'
     | '/api/public/t/$code'
@@ -311,6 +351,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/customize'
+    | '/login'
+    | '/onboarding'
     | '/thank-you'
     | '/ai-followup'
     | '/ai-lead-score'
@@ -326,6 +368,7 @@ export interface FileRouteTypes {
     | '/lead-capture'
     | '/leads'
     | '/marketing'
+    | '/members'
     | '/nfc-codes'
     | '/pipeline'
     | '/products'
@@ -334,6 +377,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/wallet'
+    | '/accept-invite/$token'
     | '/c/$slug'
     | '/ai-followup/$customerId'
     | '/api/public/t/$code'
@@ -342,6 +386,8 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/customize'
+    | '/login'
+    | '/onboarding'
     | '/thank-you'
     | '/_app/ai-followup'
     | '/_app/ai-lead-score'
@@ -357,6 +403,7 @@ export interface FileRouteTypes {
     | '/_app/lead-capture'
     | '/_app/leads'
     | '/_app/marketing'
+    | '/_app/members'
     | '/_app/nfc-codes'
     | '/_app/pipeline'
     | '/_app/products'
@@ -365,6 +412,7 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/team'
     | '/_app/wallet'
+    | '/accept-invite/$token'
     | '/c/$slug'
     | '/_app/ai-followup/$customerId'
     | '/api/public/t/$code'
@@ -374,7 +422,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   CustomizeRoute: typeof CustomizeRoute
+  LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
   ThankYouRoute: typeof ThankYouRoute
+  AcceptInviteTokenRoute: typeof AcceptInviteTokenRoute
   CSlugRoute: typeof CSlugRoute
   ApiPublicTCodeRoute: typeof ApiPublicTCodeRoute
 }
@@ -386,6 +437,20 @@ declare module '@tanstack/react-router' {
       path: '/thank-you'
       fullPath: '/thank-you'
       preLoaderRoute: typeof ThankYouRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/customize': {
@@ -414,6 +479,13 @@ declare module '@tanstack/react-router' {
       path: '/c/$slug'
       fullPath: '/c/$slug'
       preLoaderRoute: typeof CSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accept-invite/$token': {
+      id: '/accept-invite/$token'
+      path: '/accept-invite/$token'
+      fullPath: '/accept-invite/$token'
+      preLoaderRoute: typeof AcceptInviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/wallet': {
@@ -470,6 +542,13 @@ declare module '@tanstack/react-router' {
       path: '/nfc-codes'
       fullPath: '/nfc-codes'
       preLoaderRoute: typeof AppNfcCodesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/members': {
+      id: '/_app/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof AppMembersRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/marketing': {
@@ -614,6 +693,7 @@ interface AppRouteChildren {
   AppLeadCaptureRoute: typeof AppLeadCaptureRoute
   AppLeadsRoute: typeof AppLeadsRoute
   AppMarketingRoute: typeof AppMarketingRoute
+  AppMembersRoute: typeof AppMembersRoute
   AppNfcCodesRoute: typeof AppNfcCodesRoute
   AppPipelineRoute: typeof AppPipelineRoute
   AppProductsRoute: typeof AppProductsRoute
@@ -639,6 +719,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLeadCaptureRoute: AppLeadCaptureRoute,
   AppLeadsRoute: AppLeadsRoute,
   AppMarketingRoute: AppMarketingRoute,
+  AppMembersRoute: AppMembersRoute,
   AppNfcCodesRoute: AppNfcCodesRoute,
   AppPipelineRoute: AppPipelineRoute,
   AppProductsRoute: AppProductsRoute,
@@ -655,7 +736,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   CustomizeRoute: CustomizeRoute,
+  LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
   ThankYouRoute: ThankYouRoute,
+  AcceptInviteTokenRoute: AcceptInviteTokenRoute,
   CSlugRoute: CSlugRoute,
   ApiPublicTCodeRoute: ApiPublicTCodeRoute,
 }

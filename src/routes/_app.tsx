@@ -1,12 +1,34 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { AppSidebar } from "@/components/app/sidebar";
 import { AppTopbar } from "@/components/app/topbar";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
 });
 
 function AppLayout() {
+  const { loading, session, tenants, isPlatformAdmin } = useAuth();
+  const nav = useNavigate();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!session) {
+      nav({ to: "/login", replace: true });
+    } else if (tenants.length === 0 && !isPlatformAdmin) {
+      nav({ to: "/onboarding", replace: true });
+    }
+  }, [loading, session, tenants.length, isPlatformAdmin, nav]);
+
+  if (loading || !session) {
+    return (
+      <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">
+        Đang tải...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex w-full bg-background">
       <AppSidebar />

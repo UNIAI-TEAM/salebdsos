@@ -728,6 +728,56 @@ export type Database = {
           },
         ]
       }
+      invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          tenant_id: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status?: string
+          tenant_id: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          tenant_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           card_id: string | null
@@ -1332,6 +1382,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: { Args: { _token: string }; Returns: string }
       aggregate_interaction_events_daily: {
         Args: { _day?: string }
         Returns: undefined
@@ -1350,10 +1401,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_platform_admin: { Args: never; Returns: boolean }
       is_tenant_member: { Args: { _tenant: string }; Returns: boolean }
+      register_agency: {
+        Args: { _name: string; _slug: string }
+        Returns: string
+      }
     }
     Enums: {
-      app_role: "owner" | "admin" | "manager" | "agent" | "viewer"
+      app_role:
+        | "owner"
+        | "admin"
+        | "manager"
+        | "agent"
+        | "viewer"
+        | "platform_admin"
       deal_status: "open" | "won" | "lost"
       lead_status:
         | "new"
@@ -1489,7 +1551,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner", "admin", "manager", "agent", "viewer"],
+      app_role: [
+        "owner",
+        "admin",
+        "manager",
+        "agent",
+        "viewer",
+        "platform_admin",
+      ],
       deal_status: ["open", "won", "lost"],
       lead_status: ["new", "contacted", "qualified", "proposal", "won", "lost"],
     },
