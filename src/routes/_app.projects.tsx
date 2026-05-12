@@ -32,7 +32,7 @@ const PROPERTY_TYPES = ["Căn hộ", "Khu đô thị", "Biệt thự", "Nhà ph�
 
 function ProjectsPage() {
   const { currentTenant } = useAuth();
-  const tenantId = currentTenant?.tenant_id;
+  const tenantId = currentTenant?.id;
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
