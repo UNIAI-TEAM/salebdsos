@@ -1099,6 +1099,72 @@ function SectionHeading({
   );
 }
 
+/* ============================ DESIGN GALLERY ============================ */
+function DesignGallery() {
+  return (
+    <section id="designs" className="py-24 lg:py-32 bg-gradient-to-b from-background via-muted/30 to-background">
+      <div className="max-w-7xl mx-auto px-5 lg:px-8">
+        <SectionHeading
+          eyebrow="Thư viện thiết kế"
+          title={<>Mẫu danh thiếp NFC & nền tảng <span className="text-primary">cho Sale BĐS</span></>}
+          sub="Hơn 30+ mẫu danh thiếp NFC + QR thiết kế sẵn theo ngành Bất động sản. Tuỳ biến nhanh trong vài phút, đồng bộ với toàn bộ nền tảng Sales Growth."
+        />
+
+        <div className="mt-14 space-y-10">
+          <figure className="group relative rounded-3xl overflow-hidden border border-border/60 bg-card shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:shadow-[0_40px_100px_-30px_rgba(79,70,229,0.35)] transition-all duration-500">
+            <div className="absolute top-5 left-5 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur border border-border text-[11.5px] font-semibold">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              9 mẫu danh thiếp NFC + QR
+            </div>
+            <img
+              src={nfcCardTemplates}
+              alt="9 mẫu danh thiếp NFC + QR cho Sale Bất động sản"
+              loading="lazy"
+              className="w-full h-auto block transition-transform duration-700 group-hover:scale-[1.015]"
+            />
+            <figcaption className="px-6 py-5 border-t border-border/60 bg-muted/30 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-[15px] font-semibold">Bộ sưu tập danh thiếp ngành BĐS</div>
+                <div className="text-[12.5px] text-muted-foreground">Chạm NFC · Quét QR · Lưu liên hệ · Xem dự án · Tạo lead · AI follow-up</div>
+              </div>
+              <DemoDialog>
+                <button className="h-9 px-4 rounded-lg bg-foreground text-background text-[12.5px] font-semibold hover:opacity-90 transition">
+                  Tuỳ biến mẫu của bạn
+                </button>
+              </DemoDialog>
+            </figcaption>
+          </figure>
+
+          <figure className="group relative rounded-3xl overflow-hidden border border-border/60 bg-card shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:shadow-[0_40px_100px_-30px_rgba(79,70,229,0.35)] transition-all duration-500">
+            <div className="absolute top-5 left-5 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur border border-border text-[11.5px] font-semibold">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              Sales Growth Platform · Tổng quan
+            </div>
+            <img
+              src={nfcPlatformOverview}
+              alt="Sales Growth Platform cho Real Estate – tổng quan tính năng"
+              loading="lazy"
+              className="w-full h-auto block transition-transform duration-700 group-hover:scale-[1.01]"
+            />
+            <figcaption className="px-6 py-5 border-t border-border/60 bg-muted/30 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-[15px] font-semibold">Một nền tảng – tất cả entry point</div>
+                <div className="text-[12.5px] text-muted-foreground">NFC · Dynamic QR · Wallet · Mobile App · Lock Screen · AirDrop · AI Sales Page</div>
+              </div>
+              <a
+                href="#pricing"
+                className="h-9 px-4 rounded-lg border border-border text-[12.5px] font-semibold hover:bg-muted transition inline-flex items-center"
+              >
+                Xem bảng giá
+              </a>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ============================ PAGE ============================ */
 function LandingPage() {
   return (
