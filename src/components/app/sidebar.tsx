@@ -36,6 +36,7 @@ const groups: { label: string; items: { to: string; label: string; icon: any; ba
   {
     label: "Sharing",
     items: [
+      { to: "/airdrop", label: "AirDrop chia sẻ", icon: Send, badge: "Live" },
       { to: "/wallet", label: "Wallet Card", icon: Wallet },
       { to: "/qr-sharing", label: "QR Sharing", icon: QrCode },
       { to: "/dynamic-qr", label: "Dynamic QR", icon: Radio },
