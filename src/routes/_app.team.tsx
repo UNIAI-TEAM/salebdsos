@@ -92,8 +92,37 @@ const activities = [
   { n: "Đỗ Quốc Bảo", act: "gửi email cho khách hàng", sub: "", time: "3 giờ trước" },
 ];
 
+type DialogMode = { kind: "closed" } | { kind: "invite" } | { kind: "create" } | { kind: "edit"; member: Member };
+
 function TeamPage() {
   const [tab, setTab] = useState(0);
+  const [list, setList] = useState<Member[]>(members);
+  const [dialog, setDialog] = useState<DialogMode>({ kind: "closed" });
+  const [query, setQuery] = useState("");
+  const [deptFilter, setDeptFilter] = useState<string>("all");
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return list.filter((m) =>
+      (deptFilter === "all" || m.dept === deptFilter) &&
+      (!q || m.n.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.role.toLowerCase().includes(q))
+    );
+  }, [list, query, deptFilter]);
+
+  function upsertMember(m: Member) {
+    setList((cur) => {
+      const idx = cur.findIndex((x) => x.id === m.id);
+      if (idx === -1) return [m, ...cur];
+      const next = [...cur]; next[idx] = m; return next;
+    });
+  }
+  function removeMember(id: string) {
+    setList((cur) => cur.filter((m) => m.id !== id));
+    toast.success("Đã xoá thành viên");
+  }
+  function resendInvite(m: Member) {
+    toast.success(`Đã gửi lại lời mời tới ${m.email}`);
+  }
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
@@ -106,7 +135,10 @@ function TeamPage() {
               <button className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-muted/50">
                 <Download className="h-4 w-4" /> Xuất báo cáo
               </button>
-              <button className="h-9 px-3 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-semibold inline-flex items-center gap-1.5">
+              <button onClick={() => setDialog({ kind: "invite" })} className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-muted/50">
+                <Mail className="h-4 w-4" /> Mời qua email
+              </button>
+              <button onClick={() => setDialog({ kind: "create" })} className="h-9 px-3 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-semibold inline-flex items-center gap-1.5">
                 <Plus className="h-4 w-4" /> Thêm thành viên
               </button>
             </div>
