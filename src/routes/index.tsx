@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { BookingDialog } from "@/components/booking-dialog";
+import { DemoDialog } from "@/components/demo-dialog";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -43,9 +44,11 @@ function Nav() {
         </nav>
         <div className="flex items-center gap-2">
           <Link to="/dashboard" className="hidden sm:inline-flex h-9 px-3.5 rounded-lg text-[13px] font-medium text-foreground/80 hover:text-foreground items-center">Đăng nhập</Link>
-          <Link to="/dashboard" className="h-9 px-3.5 rounded-lg bg-foreground text-background text-[13px] font-semibold inline-flex items-center gap-1.5 hover:opacity-90 transition">
-            Trải nghiệm demo <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <DemoDialog>
+            <button type="button" className="h-9 px-3.5 rounded-lg bg-foreground text-background text-[13px] font-semibold inline-flex items-center gap-1.5 hover:opacity-90 transition">
+              Trải nghiệm demo <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </DemoDialog>
         </div>
       </div>
     </header>
@@ -75,9 +78,11 @@ function Hero() {
               Nền tảng tăng trưởng toàn diện giúp Sale Bất động sản kết nối, tạo lead, chăm sóc khách hàng và chốt deal bằng <span className="text-foreground font-semibold">NFC + AI + CRM</span>.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <Link to="/dashboard" className="h-12 px-5 rounded-xl bg-foreground text-background text-[14px] font-semibold inline-flex items-center gap-2 hover:opacity-90 transition">
-                Trải nghiệm demo <ArrowRight className="h-4 w-4" />
-              </Link>
+              <DemoDialog>
+                <button type="button" className="h-12 px-5 rounded-xl bg-foreground text-background text-[14px] font-semibold inline-flex items-center gap-2 hover:opacity-90 transition">
+                  Trải nghiệm demo <ArrowRight className="h-4 w-4" />
+                </button>
+              </DemoDialog>
               <BookingDialog>
                 <button type="button" className="h-12 px-5 rounded-xl border border-border bg-card text-[14px] font-semibold inline-flex items-center gap-2 hover:bg-muted/40 transition">
                   <Calendar className="h-4 w-4" /> Đặt lịch tư vấn
@@ -927,9 +932,11 @@ function CtaFooter() {
               </h2>
               <p className="mt-4 text-white/70 text-[14.5px] max-w-xl">Dùng thử miễn phí 14 ngày. Không cần thẻ. Hỗ trợ onboarding 1-1.</p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <Link to="/dashboard" className="h-12 px-5 rounded-xl bg-white text-slate-900 text-[13.5px] font-semibold inline-flex items-center gap-2">
-                  <Play className="h-4 w-4" /> Xem demo
-                </Link>
+                <DemoDialog>
+                  <button type="button" className="h-12 px-5 rounded-xl bg-white text-slate-900 text-[13.5px] font-semibold inline-flex items-center gap-2">
+                    <Play className="h-4 w-4" /> Xem demo
+                  </button>
+                </DemoDialog>
                 <BookingDialog>
                   <button type="button" className="h-12 px-5 rounded-xl bg-brand-gradient text-white text-[13.5px] font-semibold inline-flex items-center gap-2">
                     <Calendar className="h-4 w-4" /> Đặt lịch tư vấn
