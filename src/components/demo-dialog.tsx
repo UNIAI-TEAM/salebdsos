@@ -54,13 +54,15 @@ export function DemoDialog({ children }: { children: ReactNode }) {
     }
     setSubmitting(true);
     try {
+      const entry = { ...result.data, source: "demo_cta", createdAt: new Date().toISOString() };
       const leads = JSON.parse(localStorage.getItem("nfc_demo_leads") ?? "[]");
-      leads.push({ ...result.data, source: "demo_cta", createdAt: new Date().toISOString() });
+      leads.push(entry);
       localStorage.setItem("nfc_demo_leads", JSON.stringify(leads));
+      sessionStorage.setItem("nfc_last_lead", JSON.stringify(entry));
       await new Promise((r) => setTimeout(r, 400));
-      toast.success("Đang chuyển bạn vào demo…");
+      toast.success("Đã ghi nhận yêu cầu!");
       setOpen(false);
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/thank-you" });
     } catch {
       toast.error("Có lỗi xảy ra. Vui lòng thử lại.");
     } finally {
