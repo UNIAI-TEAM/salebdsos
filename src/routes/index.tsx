@@ -78,9 +78,11 @@ function Hero() {
               Nền tảng tăng trưởng toàn diện giúp Sale Bất động sản kết nối, tạo lead, chăm sóc khách hàng và chốt deal bằng <span className="text-foreground font-semibold">NFC + AI + CRM</span>.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <Link to="/dashboard" className="h-12 px-5 rounded-xl bg-foreground text-background text-[14px] font-semibold inline-flex items-center gap-2 hover:opacity-90 transition">
-                Trải nghiệm demo <ArrowRight className="h-4 w-4" />
-              </Link>
+              <DemoDialog>
+                <button type="button" className="h-12 px-5 rounded-xl bg-foreground text-background text-[14px] font-semibold inline-flex items-center gap-2 hover:opacity-90 transition">
+                  Trải nghiệm demo <ArrowRight className="h-4 w-4" />
+                </button>
+              </DemoDialog>
               <BookingDialog>
                 <button type="button" className="h-12 px-5 rounded-xl border border-border bg-card text-[14px] font-semibold inline-flex items-center gap-2 hover:bg-muted/40 transition">
                   <Calendar className="h-4 w-4" /> Đặt lịch tư vấn
