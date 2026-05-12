@@ -247,18 +247,25 @@ function TeamPage() {
             <table className="w-full text-[12.5px]">
               <thead>
                 <tr className="text-left text-muted-foreground border-b border-border">
-                  {["Thành viên", "Phòng ban", "Vị trí", "Leads", "Deals", "Doanh thu", "Tỷ lệ chuyển đổi", "KPI", "Hiệu suất"].map((h) => (
-                    <th key={h} className="font-medium px-2 py-2.5 whitespace-nowrap">{h}</th>
+                  {["Thành viên", "Phòng ban", "Vị trí", "Leads", "Deals", "Doanh thu", "Tỷ lệ chuyển đổi", "KPI", "Hiệu suất", ""].map((h, i) => (
+                    <th key={i} className="font-medium px-2 py-2.5 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {members.map((m) => (
-                  <tr key={m.n} className="border-b border-border/60 hover:bg-muted/30">
+                {filtered.map((m) => (
+                  <tr key={m.id} className="border-b border-border/60 hover:bg-muted/30">
                     <td className="px-2 py-2.5">
                       <div className="flex items-center gap-2.5">
                         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-indigo-500 grid place-items-center text-white text-[11px] font-semibold">{m.n.split(" ").pop()![0]}</div>
-                        <span className="font-semibold">{m.n}</span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold">{m.n}</span>
+                            {m.status === "invited" && <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700">Đang mời</span>}
+                            {m.status === "inactive" && <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground">Tạm khoá</span>}
+                          </div>
+                          <div className="text-[10.5px] text-muted-foreground truncate">{m.email}</div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-2 py-2.5">{m.dept}</td>
@@ -277,13 +284,31 @@ function TeamPage() {
                         ))}
                       </div>
                     </td>
+                    <td className="px-2 py-2.5">
+                      <div className="flex items-center gap-0.5 justify-end">
+                        {m.status === "invited" && (
+                          <button onClick={() => resendInvite(m)} title="Gửi lại lời mời" className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-primary hover:bg-muted">
+                            <Send className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        <button onClick={() => setDialog({ kind: "edit", member: m })} title="Chỉnh sửa" className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-primary hover:bg-muted">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={() => { if (confirm(`Xoá ${m.n}?`)) removeMember(m.id); }} title="Xoá" className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-rose-600 hover:bg-rose-50">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
+                {filtered.length === 0 && (
+                  <tr><td colSpan={10} className="px-2 py-10 text-center text-muted-foreground text-[12.5px]">Không có thành viên phù hợp.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
           <div className="flex items-center justify-between pt-3 text-[12px] text-muted-foreground">
-            <span>Hiển thị 1 – 8 của 48 thành viên</span>
+            <span>Hiển thị {filtered.length} / {list.length} thành viên</span>
             <div className="flex items-center gap-1">
               <button className="h-7 px-2 rounded-md border border-border">10 / trang ▾</button>
               {[1, 2, 3, 4, 5].map((p) => (
@@ -292,6 +317,7 @@ function TeamPage() {
             </div>
           </div>
         </SectionCard>
+
 
         {/* Roles */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
