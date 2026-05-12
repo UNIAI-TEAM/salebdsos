@@ -932,9 +932,11 @@ function CtaFooter() {
               </h2>
               <p className="mt-4 text-white/70 text-[14.5px] max-w-xl">Dùng thử miễn phí 14 ngày. Không cần thẻ. Hỗ trợ onboarding 1-1.</p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <Link to="/dashboard" className="h-12 px-5 rounded-xl bg-white text-slate-900 text-[13.5px] font-semibold inline-flex items-center gap-2">
-                  <Play className="h-4 w-4" /> Xem demo
-                </Link>
+                <DemoDialog>
+                  <button type="button" className="h-12 px-5 rounded-xl bg-white text-slate-900 text-[13.5px] font-semibold inline-flex items-center gap-2">
+                    <Play className="h-4 w-4" /> Xem demo
+                  </button>
+                </DemoDialog>
                 <BookingDialog>
                   <button type="button" className="h-12 px-5 rounded-xl bg-brand-gradient text-white text-[13.5px] font-semibold inline-flex items-center gap-2">
                     <Calendar className="h-4 w-4" /> Đặt lịch tư vấn
