@@ -169,9 +169,11 @@ function TeamPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2">
-          <button className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] inline-flex items-center gap-2">
-            Tất cả phòng ban <span className="text-muted-foreground">▾</span>
-          </button>
+          <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}
+            className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] outline-none focus:ring-2 focus:ring-primary/30">
+            <option value="all">Tất cả phòng ban</option>
+            {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
           <button className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] inline-flex items-center gap-2">
             <Calendar className="h-3.5 w-3.5" /> 01/05/2024 – 31/05/2024
           </button>
@@ -180,9 +182,10 @@ function TeamPage() {
           </button>
           <div className="ml-auto relative">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input placeholder="Tìm thành viên, phòng ban..." className="h-9 w-72 pl-9 pr-3 rounded-xl border border-border bg-card text-[12.5px] outline-none focus:ring-2 focus:ring-primary/30" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm thành viên, phòng ban..." className="h-9 w-72 pl-9 pr-3 rounded-xl border border-border bg-card text-[12.5px] outline-none focus:ring-2 focus:ring-primary/30" />
           </div>
         </div>
+
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4">
