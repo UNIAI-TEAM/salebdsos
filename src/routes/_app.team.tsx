@@ -411,6 +411,173 @@ function TeamPage() {
           <MoreHorizontal className="h-4 w-4" /> Tuỳ chọn khác
         </button>
       </aside>
+
+      <MemberDialog
+        mode={dialog}
+        onClose={() => setDialog({ kind: "closed" })}
+        onSubmit={(m) => { upsertMember(m); setDialog({ kind: "closed" }); }}
+      />
     </div>
   );
 }
+
+/* =============== Dialog =============== */
+function genId() { return "m" + Math.random().toString(36).slice(2, 9); }
+
+function MemberDialog({
+  mode, onClose, onSubmit,
+}: {
+  mode: DialogMode;
+  onClose: () => void;
+  onSubmit: (m: Member) => void;
+}) {
+  const open = mode.kind !== "closed";
+  const editing = mode.kind === "edit" ? mode.member : null;
+  const isInvite = mode.kind === "invite";
+
+  const [n, setN] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dept, setDept] = useState<string>(DEPARTMENTS[0]);
+  const [role, setRole] = useState<string>(ROLES[4].v);
+  const [emails, setEmails] = useState(""); // for invite (comma/newline)
+
+  // Reset on open
+  useMemo(() => {
+    if (!open) return;
+    if (editing) {
+      setN(editing.n); setEmail(editing.email); setPhone(editing.phone);
+      setDept(editing.dept); setRole(editing.role);
+    } else {
+      setN(""); setEmail(""); setPhone(""); setDept(DEPARTMENTS[0]); setRole(ROLES[4].v); setEmails("");
+    }
+  }, [open, editing?.id]);
+
+  function validateEmail(v: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  }
+
+  function handleSubmit() {
+    if (isInvite) {
+      const parts = emails.split(/[\s,;]+/).map((e) => e.trim()).filter(Boolean);
+      if (parts.length === 0) { toast.error("Nhập ít nhất 1 email"); return; }
+      const invalid = parts.filter((e) => !validateEmail(e));
+      if (invalid.length) { toast.error(`Email không hợp lệ: ${invalid.join(", ")}`); return; }
+      // Create one invited member per email
+      parts.forEach((e) => {
+        onSubmit({
+          id: genId(),
+          n: e.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+          email: e, phone: "", dept, role,
+          l: 0, d: 0, rev: "0", cv: "0%", kpi: "0%", star: 0, status: "invited",
+        });
+      });
+      toast.success(`Đã gửi ${parts.length} lời mời tới phòng ${dept}`);
+      return;
+    }
+
+    if (!n.trim()) { toast.error("Nhập tên thành viên"); return; }
+    if (!validateEmail(email)) { toast.error("Email không hợp lệ"); return; }
+
+    if (editing) {
+      onSubmit({ ...editing, n: n.trim(), email: email.trim(), phone: phone.trim(), dept, role });
+      toast.success("Đã cập nhật thành viên");
+    } else {
+      onSubmit({
+        id: genId(), n: n.trim(), email: email.trim(), phone: phone.trim(), dept, role,
+        l: 0, d: 0, rev: "0", cv: "0%", kpi: "0%", star: 0, status: "active",
+      });
+      toast.success("Đã thêm thành viên");
+    }
+  }
+
+  const title = isInvite ? "Mời thành viên qua email" : editing ? "Chỉnh sửa thành viên" : "Thêm thành viên mới";
+  const desc = isInvite
+    ? "Mời nhiều người cùng lúc bằng email, có thể gán sẵn phòng ban và vai trò."
+    : editing ? "Cập nhật thông tin, phòng ban và vai trò." : "Tạo thành viên mới và phân công phòng ban / vai trò.";
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-[520px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {isInvite ? <Mail className="h-4.5 w-4.5 text-primary" /> : editing ? <Pencil className="h-4.5 w-4.5 text-primary" /> : <UserPlus className="h-4.5 w-4.5 text-primary" />}
+            {title}
+          </DialogTitle>
+          <DialogDescription>{desc}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3.5 pt-1">
+          {isInvite ? (
+            <Field label="Email (cách nhau bằng dấu phẩy hoặc xuống dòng)">
+              <textarea
+                value={emails}
+                onChange={(e) => setEmails(e.target.value)}
+                placeholder="email1@abc.vn, email2@abc.vn"
+                rows={3}
+                maxLength={2000}
+                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </Field>
+          ) : (
+            <>
+              <Field label="Họ và tên">
+                <input value={n} onChange={(e) => setN(e.target.value)} maxLength={100}
+                  className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30" />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Email">
+                  <input value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} type="email"
+                    className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30" />
+                </Field>
+                <Field label="Số điện thoại">
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20}
+                    className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30" />
+                </Field>
+              </div>
+            </>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Phòng ban">
+              <select value={dept} onChange={(e) => setDept(e.target.value)}
+                className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30">
+                {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </Field>
+            <Field label="Vai trò">
+              <select value={role} onChange={(e) => setRole(e.target.value)}
+                className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30">
+                {ROLES.map((r) => <option key={r.v} value={r.v}>{r.v}</option>)}
+              </select>
+            </Field>
+          </div>
+
+          <div className="rounded-lg bg-muted/50 border border-border px-3 py-2 text-[11.5px] text-muted-foreground flex items-start gap-2">
+            <ShieldCheck className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
+            <span>{ROLES.find((r) => r.v === role)?.desc} · Có thể thay đổi quyền chi tiết ở tab "Vai trò & Phân quyền".</span>
+          </div>
+        </div>
+
+        <DialogFooter className="pt-2">
+          <button onClick={onClose} className="h-9 px-4 rounded-lg border border-border bg-card text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-muted/50">
+            <X className="h-3.5 w-3.5" /> Huỷ
+          </button>
+          <button onClick={handleSubmit} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-[12.5px] font-semibold inline-flex items-center gap-1.5">
+            {isInvite ? <><Send className="h-3.5 w-3.5" /> Gửi lời mời</> : editing ? <><Check className="h-3.5 w-3.5" /> Lưu thay đổi</> : <><Plus className="h-3.5 w-3.5" /> Thêm thành viên</>}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="block text-[12px] font-semibold text-foreground/80 mb-1.5">{label}</span>
+      {children}
+    </label>
+  );
+}
+
