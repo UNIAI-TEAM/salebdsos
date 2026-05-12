@@ -1112,6 +1112,20 @@ function DesignGallery() {
 
         <DesignCarousel />
 
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/customize"
+            className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-foreground text-background text-[13px] font-semibold hover:opacity-90 transition shadow-sm"
+          >
+            <Sparkles className="h-4 w-4" />
+            Tuỳ biến mẫu của bạn
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <span className="text-[12.5px] text-muted-foreground">
+            Đổi màu thương hiệu, logo, nội dung — xem live preview
+          </span>
+        </div>
+
         <div className="mt-14">
           <figure className="group relative rounded-3xl overflow-hidden border border-border/60 bg-card shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] hover:shadow-[0_40px_100px_-30px_rgba(79,70,229,0.35)] transition-all duration-500">
             <div className="absolute top-5 left-5 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur border border-border text-[11.5px] font-semibold">
