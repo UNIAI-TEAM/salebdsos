@@ -8,6 +8,7 @@ import {
 import { useState } from "react";
 import { BookingDialog } from "@/components/booking-dialog";
 import { DemoDialog } from "@/components/demo-dialog";
+import { LandingChatbot } from "@/components/landing-chatbot";
 
 const SITE_URL = "https://nfcplatform.vn";
 
@@ -1115,6 +1116,7 @@ function LandingPage() {
       <Faq />
       <CtaFooter />
       <Footer />
+      <LandingChatbot />
     </div>
   );
 }
