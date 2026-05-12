@@ -931,30 +931,38 @@ function Pricing() {
 
 /* ============================ FAQ ============================ */
 function Faq() {
-  const items = [
-    { q: "NFC Platform là gì?", a: "Là nền tảng all-in-one giúp Sale BĐS chia sẻ danh thiếp số (NFC, QR, Wallet), tự động tạo lead, dùng AI follow-up và quản lý CRM trên một hệ thống duy nhất." },
-    { q: "Tôi có cần thẻ NFC vật lý không?", a: "Không bắt buộc. Bạn vẫn có thể dùng QR động, Wallet Card, link sharing và mobile app. Thẻ NFC vật lý là tuỳ chọn premium." },
-    { q: "AI có hỗ trợ tiếng Việt không?", a: "Có. AI được fine-tune trên dữ liệu hành vi khách hàng BĐS Việt Nam và hiểu ngữ cảnh giao tiếp địa phương." },
-    { q: "Dữ liệu của tôi có an toàn không?", a: "Chúng tôi tuân thủ chuẩn ISO 27001, mã hoá end-to-end và lưu trữ tại data center cấp Enterprise. Phân quyền và audit log đầy đủ." },
-    { q: "Có hỗ trợ tích hợp CRM khác không?", a: "Có. Chúng tôi hỗ trợ tích hợp với Salesforce, HubSpot, Zalo OA, Google Workspace, và webhook tuỳ chỉnh." },
-    { q: "Có dùng thử miễn phí không?", a: "Có. Gói Business cho dùng thử 14 ngày miễn phí, không cần thẻ tín dụng. Gói Starter miễn phí trọn đời." },
-  ];
-  const [open, setOpen] = useState<number | null>(0);
   return (
     <section id="faq" className="py-20 lg:py-28 bg-muted/30 border-y border-border">
       <div className="max-w-3xl mx-auto px-5 lg:px-8">
         <SectionHeading eyebrow="Câu hỏi thường gặp" title={<>Mọi điều bạn cần biết</>} />
-        <div className="mt-10 space-y-2">
-          {items.map((it, i) => (
-            <div key={i} className="rounded-xl bg-card border border-border overflow-hidden">
-              <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between p-4 text-left">
-                <span className="text-[14px] font-semibold">{it.q}</span>
-                {open === i ? <Minus className="h-4 w-4 text-primary" /> : <Plus className="h-4 w-4 text-muted-foreground" />}
-              </button>
-              {open === i && (
-                <div className="px-4 pb-4 text-[13px] text-muted-foreground leading-relaxed animate-fade-in">{it.a}</div>
-              )}
-            </div>
+        <div
+          className="mt-10 space-y-2"
+          itemScope
+          itemType="https://schema.org/FAQPage"
+        >
+          {FAQ_ITEMS.map((it, i) => (
+            <details
+              key={i}
+              open={i === 0}
+              className="group rounded-xl bg-card border border-border overflow-hidden [&_summary::-webkit-details-marker]:hidden"
+              itemScope
+              itemProp="mainEntity"
+              itemType="https://schema.org/Question"
+            >
+              <summary className="flex items-center justify-between p-4 cursor-pointer list-none">
+                <h3 className="text-[14px] font-semibold m-0" itemProp="name">{it.q}</h3>
+                <Plus className="h-4 w-4 text-muted-foreground transition-transform group-open:hidden" />
+                <Minus className="h-4 w-4 text-primary hidden group-open:block" />
+              </summary>
+              <div
+                className="px-4 pb-4 text-[13px] text-muted-foreground leading-relaxed"
+                itemScope
+                itemProp="acceptedAnswer"
+                itemType="https://schema.org/Answer"
+              >
+                <div itemProp="text">{it.a}</div>
+              </div>
+            </details>
           ))}
         </div>
       </div>
