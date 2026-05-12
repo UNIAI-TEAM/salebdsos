@@ -203,7 +203,7 @@ export function DesignCarousel() {
           const count =
             f.id === "all"
               ? TEMPLATES.length
-              : TEMPLATES.filter((t) => t.categories.includes(f.id)).length;
+              : TEMPLATES.filter((t) => f.id !== "all" && t.categories.includes(f.id)).length;
           return (
             <button
               key={f.id}
