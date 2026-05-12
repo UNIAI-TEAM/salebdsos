@@ -31,6 +31,7 @@ import { Route as AppAirdropRouteImport } from './routes/_app.airdrop'
 import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
 import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
 import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
+import { Route as AppAiFollowupCustomerIdRouteImport } from './routes/_app.ai-followup.$customerId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -141,10 +142,15 @@ const AppAiFollowupRoute = AppAiFollowupRouteImport.update({
   path: '/ai-followup',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAiFollowupCustomerIdRoute = AppAiFollowupCustomerIdRouteImport.update({
+  id: '/$customerId',
+  path: '/$customerId',
+  getParentRoute: () => AppAiFollowupRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/ai-followup': typeof AppAiFollowupRoute
+  '/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/ai-lead-score': typeof AppAiLeadScoreRoute
   '/ai-sales-page': typeof AppAiSalesPageRoute
   '/airdrop': typeof AppAirdropRoute
@@ -164,10 +170,11 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
   '/wallet': typeof AppWalletRoute
+  '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/ai-followup': typeof AppAiFollowupRoute
+  '/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/ai-lead-score': typeof AppAiLeadScoreRoute
   '/ai-sales-page': typeof AppAiSalesPageRoute
   '/airdrop': typeof AppAirdropRoute
@@ -187,12 +194,13 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
   '/wallet': typeof AppWalletRoute
+  '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
-  '/_app/ai-followup': typeof AppAiFollowupRoute
+  '/_app/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/_app/ai-lead-score': typeof AppAiLeadScoreRoute
   '/_app/ai-sales-page': typeof AppAiSalesPageRoute
   '/_app/airdrop': typeof AppAirdropRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_app/team': typeof AppTeamRoute
   '/_app/wallet': typeof AppWalletRoute
+  '/_app/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/wallet'
+    | '/ai-followup/$customerId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/team'
     | '/wallet'
+    | '/ai-followup/$customerId'
   id:
     | '__root__'
     | '/'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/team'
     | '/_app/wallet'
+    | '/_app/ai-followup/$customerId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -447,11 +459,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiFollowupRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ai-followup/$customerId': {
+      id: '/_app/ai-followup/$customerId'
+      path: '/$customerId'
+      fullPath: '/ai-followup/$customerId'
+      preLoaderRoute: typeof AppAiFollowupCustomerIdRouteImport
+      parentRoute: typeof AppAiFollowupRoute
+    }
   }
 }
 
+interface AppAiFollowupRouteChildren {
+  AppAiFollowupCustomerIdRoute: typeof AppAiFollowupCustomerIdRoute
+}
+
+const AppAiFollowupRouteChildren: AppAiFollowupRouteChildren = {
+  AppAiFollowupCustomerIdRoute: AppAiFollowupCustomerIdRoute,
+}
+
+const AppAiFollowupRouteWithChildren = AppAiFollowupRoute._addFileChildren(
+  AppAiFollowupRouteChildren,
+)
+
 interface AppRouteChildren {
-  AppAiFollowupRoute: typeof AppAiFollowupRoute
+  AppAiFollowupRoute: typeof AppAiFollowupRouteWithChildren
   AppAiLeadScoreRoute: typeof AppAiLeadScoreRoute
   AppAiSalesPageRoute: typeof AppAiSalesPageRoute
   AppAirdropRoute: typeof AppAirdropRoute
@@ -474,7 +505,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppAiFollowupRoute: AppAiFollowupRoute,
+  AppAiFollowupRoute: AppAiFollowupRouteWithChildren,
   AppAiLeadScoreRoute: AppAiLeadScoreRoute,
   AppAiSalesPageRoute: AppAiSalesPageRoute,
   AppAirdropRoute: AppAirdropRoute,
