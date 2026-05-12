@@ -930,9 +930,11 @@ function CtaFooter() {
                 <Link to="/dashboard" className="h-12 px-5 rounded-xl bg-white text-slate-900 text-[13.5px] font-semibold inline-flex items-center gap-2">
                   <Play className="h-4 w-4" /> Xem demo
                 </Link>
-                <a href="#pricing" className="h-12 px-5 rounded-xl bg-brand-gradient text-white text-[13.5px] font-semibold inline-flex items-center gap-2">
-                  <Calendar className="h-4 w-4" /> Đặt lịch tư vấn
-                </a>
+                <BookingDialog>
+                  <button type="button" className="h-12 px-5 rounded-xl bg-brand-gradient text-white text-[13.5px] font-semibold inline-flex items-center gap-2">
+                    <Calendar className="h-4 w-4" /> Đặt lịch tư vấn
+                  </button>
+                </BookingDialog>
                 <a href="#pricing" className="h-12 px-5 rounded-xl border border-white/20 text-white text-[13.5px] font-semibold inline-flex items-center gap-2 hover:bg-white/10 transition">
                   Dùng thử miễn phí
                 </a>
