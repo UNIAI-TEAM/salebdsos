@@ -27,6 +27,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCustomersRouteImport } from './routes/_app.customers'
 import { Route as AppAppointmentsRouteImport } from './routes/_app.appointments'
 import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
+import { Route as AppAirdropRouteImport } from './routes/_app.airdrop'
 import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
 import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
 import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
@@ -120,6 +121,11 @@ const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAirdropRoute = AppAirdropRouteImport.update({
+  id: '/airdrop',
+  path: '/airdrop',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAiSalesPageRoute = AppAiSalesPageRouteImport.update({
   id: '/ai-sales-page',
   path: '/ai-sales-page',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/ai-followup': typeof AppAiFollowupRoute
   '/ai-lead-score': typeof AppAiLeadScoreRoute
   '/ai-sales-page': typeof AppAiSalesPageRoute
+  '/airdrop': typeof AppAirdropRoute
   '/analytics': typeof AppAnalyticsRoute
   '/appointments': typeof AppAppointmentsRoute
   '/customers': typeof AppCustomersRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/ai-followup': typeof AppAiFollowupRoute
   '/ai-lead-score': typeof AppAiLeadScoreRoute
   '/ai-sales-page': typeof AppAiSalesPageRoute
+  '/airdrop': typeof AppAirdropRoute
   '/analytics': typeof AppAnalyticsRoute
   '/appointments': typeof AppAppointmentsRoute
   '/customers': typeof AppCustomersRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/_app/ai-followup': typeof AppAiFollowupRoute
   '/_app/ai-lead-score': typeof AppAiLeadScoreRoute
   '/_app/ai-sales-page': typeof AppAiSalesPageRoute
+  '/_app/airdrop': typeof AppAirdropRoute
   '/_app/analytics': typeof AppAnalyticsRoute
   '/_app/appointments': typeof AppAppointmentsRoute
   '/_app/customers': typeof AppCustomersRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/ai-followup'
     | '/ai-lead-score'
     | '/ai-sales-page'
+    | '/airdrop'
     | '/analytics'
     | '/appointments'
     | '/customers'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/ai-followup'
     | '/ai-lead-score'
     | '/ai-sales-page'
+    | '/airdrop'
     | '/analytics'
     | '/appointments'
     | '/customers'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/_app/ai-followup'
     | '/_app/ai-lead-score'
     | '/_app/ai-sales-page'
+    | '/_app/airdrop'
     | '/_app/analytics'
     | '/_app/appointments'
     | '/_app/customers'
@@ -407,6 +419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAnalyticsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/airdrop': {
+      id: '/_app/airdrop'
+      path: '/airdrop'
+      fullPath: '/airdrop'
+      preLoaderRoute: typeof AppAirdropRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/ai-sales-page': {
       id: '/_app/ai-sales-page'
       path: '/ai-sales-page'
@@ -435,6 +454,7 @@ interface AppRouteChildren {
   AppAiFollowupRoute: typeof AppAiFollowupRoute
   AppAiLeadScoreRoute: typeof AppAiLeadScoreRoute
   AppAiSalesPageRoute: typeof AppAiSalesPageRoute
+  AppAirdropRoute: typeof AppAirdropRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppAppointmentsRoute: typeof AppAppointmentsRoute
   AppCustomersRoute: typeof AppCustomersRoute
@@ -457,6 +477,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAiFollowupRoute: AppAiFollowupRoute,
   AppAiLeadScoreRoute: AppAiLeadScoreRoute,
   AppAiSalesPageRoute: AppAiSalesPageRoute,
+  AppAirdropRoute: AppAirdropRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppAppointmentsRoute: AppAppointmentsRoute,
   AppCustomersRoute: AppCustomersRoute,

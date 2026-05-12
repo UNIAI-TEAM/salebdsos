@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
-  Wallet, QrCode, Globe2, Radio, Settings, ChevronDown, Crown,
+  Wallet, QrCode, Globe2, Radio, Settings, ChevronDown, Crown, Send,
 } from "lucide-react";
 
 const groups: { label: string; items: { to: string; label: string; icon: any; badge?: string }[] }[] = [
@@ -36,6 +36,7 @@ const groups: { label: string; items: { to: string; label: string; icon: any; ba
   {
     label: "Sharing",
     items: [
+      { to: "/airdrop", label: "AirDrop chia sẻ", icon: Send, badge: "Live" },
       { to: "/wallet", label: "Wallet Card", icon: Wallet },
       { to: "/qr-sharing", label: "QR Sharing", icon: QrCode },
       { to: "/dynamic-qr", label: "Dynamic QR", icon: Radio },
