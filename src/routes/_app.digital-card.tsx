@@ -888,3 +888,231 @@ function DonutChart({ data, total }: { data: { name: string; value: number; colo
     </div>
   );
 }
+
+/* ────────────── AI Optimizer ────────────── */
+
+const AI_SCHEDULE = [
+  { day: "Thứ 2", slot: "08:00 – 09:00", score: 78, note: "Khách commute, mở Zalo cao" },
+  { day: "Thứ 3", slot: "12:30 – 13:30", score: 84, note: "Giờ nghỉ trưa, peak lưu liên hệ" },
+  { day: "Thứ 4", slot: "20:00 – 21:30", score: 92, note: "Khung vàng – chuyển đổi cao nhất", best: true },
+  { day: "Thứ 5", slot: "19:00 – 20:00", score: 81, note: "Khách rảnh, đọc kỹ brochure" },
+  { day: "Thứ 6", slot: "17:30 – 18:30", score: 73, note: "Tan làm, nhiều click số ĐT" },
+  { day: "T7 / CN", slot: "10:00 – 11:30", score: 88, note: "Khách đi xem nhà mẫu" },
+];
+
+const AI_CHANNELS = [
+  { name: "Zalo OA", icon: MessageCircle, currShare: 28, suggest: 38, lift: "+14%", reason: "CTR cao gấp 2.1× Email với khách BĐS", tone: "from-cyan-500 to-blue-500" },
+  { name: "NFC Tap tại Showroom", icon: Wifi, currShare: 35, suggest: 42, lift: "+11%", reason: "Tỷ lệ lưu liên hệ 64% – cao nhất", tone: "from-violet-500 to-fuchsia-500" },
+  { name: "QR trên Brochure", icon: QrCode, currShare: 22, suggest: 14, lift: "−8%", reason: "Quá tải, conversion giảm 3 tuần", tone: "from-amber-500 to-orange-500", down: true },
+  { name: "AirDrop Sự kiện", icon: Share2, currShare: 9, suggest: 6, lift: "−3%", reason: "Chỉ hiệu quả khi có host on-site", tone: "from-rose-500 to-pink-500", down: true },
+];
+
+const AI_CTAS = [
+  { label: "Hành động khẩn cấp", text: "Đặt lịch xem nhà mẫu trong 24h – Tặng voucher 5 triệu", uplift: "+22% conversion", tags: ["FOMO", "Ưu đãi"] },
+  { label: "Cá nhân hoá", text: "Nhận tư vấn riêng từ Chuyên viên Nguyễn Văn A – chỉ 15 phút", uplift: "+17% lưu liên hệ", tags: ["1-1", "Tin cậy"] },
+  { label: "Giá trị rõ ràng", text: "Tải bảng giá & chính sách thanh toán mới nhất Vinhomes Ocean Park 2", uplift: "+12% click", tags: ["Lead magnet"] },
+];
+
+function AiOptimizer() {
+  const [applying, setApplying] = useState<string | null>(null);
+  const [appliedCtas, setAppliedCtas] = useState<number[]>([]);
+
+  const apply = async (key: string) => {
+    setApplying(key);
+    setTimeout(() => setApplying(null), 900);
+  };
+
+  return (
+    <div className="rounded-2xl border border-border bg-gradient-to-br from-violet-50/60 via-card to-card shadow-soft overflow-hidden">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-3 p-5 border-b border-border/70">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-xl bg-brand-gradient grid place-items-center shadow-glow shrink-0">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-[15px] font-bold text-foreground">AI Tối ưu Danh thiếp</h3>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand-gradient text-white text-[10px] font-bold">BETA</span>
+            </div>
+            <p className="text-[12.5px] text-muted-foreground mt-0.5">
+              Phân tích từ <span className="font-semibold text-foreground">2,486 lượt xem</span>, <span className="font-semibold text-foreground">346 lưu liên hệ</span> và <span className="font-semibold text-foreground">4.99% conversion</span> – cập nhật mỗi 6 giờ.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+            <Clock className="h-3 w-3" /> Cập nhật 12 phút trước
+          </span>
+          <button onClick={() => apply("refresh")} className="h-8 px-2.5 rounded-md border border-border text-[12px] inline-flex items-center gap-1 hover:bg-muted">
+            <RefreshCw className={["h-3.5 w-3.5", applying === "refresh" ? "animate-spin" : ""].join(" ")} /> Phân tích lại
+          </button>
+        </div>
+      </div>
+
+      {/* Insight banner */}
+      <div className="mx-5 mt-5 rounded-xl border border-emerald-200/70 bg-emerald-50/60 p-3.5 flex items-start gap-3">
+        <div className="h-8 w-8 rounded-lg bg-emerald-100 grid place-items-center shrink-0">
+          <ArrowUpRight className="h-4 w-4 text-emerald-600" />
+        </div>
+        <div className="flex-1">
+          <div className="text-[13px] font-semibold text-emerald-900">
+            Cơ hội tăng <span className="underline decoration-emerald-400 underline-offset-2">+31% leads / tuần</span> nếu áp dụng 3 đề xuất bên dưới
+          </div>
+          <div className="text-[11.5px] text-emerald-800/80 mt-0.5">
+            Dựa trên hành vi khách BĐS phân khúc 3–6 tỷ trong 30 ngày qua tại HCM.
+          </div>
+        </div>
+        <button className="h-8 px-3 rounded-md bg-emerald-600 text-white text-[12px] font-semibold hover:bg-emerald-700 inline-flex items-center gap-1">
+          Áp dụng tất cả <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {/* 3 columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-5">
+        {/* Schedule */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-lg bg-blue-50 text-blue-600 grid place-items-center">
+                <Clock className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-[13px] font-semibold">Lịch chia sẻ tối ưu</div>
+                <div className="text-[11px] text-muted-foreground">Khung giờ peak theo hành vi xem card</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            {AI_SCHEDULE.map((s) => (
+              <div key={s.day} className={[
+                "flex items-center gap-3 px-2.5 py-2 rounded-lg transition",
+                s.best ? "bg-primary-soft ring-1 ring-primary/30" : "hover:bg-muted/50",
+              ].join(" ")}>
+                <div className="w-12 text-[11.5px] font-semibold text-muted-foreground">{s.day}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[12.5px] font-semibold text-foreground flex items-center gap-1.5">
+                    {s.slot}
+                    {s.best && <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-primary text-primary-foreground font-bold">BEST</span>}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground truncate">{s.note}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[13px] font-bold tabular-nums text-foreground">{s.score}</div>
+                  <div className="h-1 w-12 mt-0.5 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-primary to-indigo-500" style={{ width: `${s.score}%` }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button onClick={() => apply("schedule")} className="mt-3 w-full h-9 rounded-lg border border-border text-[12.5px] font-semibold hover:bg-muted inline-flex items-center justify-center gap-1.5">
+            <Bell className="h-3.5 w-3.5" /> {applying === "schedule" ? "Đang lên lịch…" : "Lên lịch tự động"}
+          </button>
+        </div>
+
+        {/* Channels */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-lg bg-violet-50 text-primary grid place-items-center">
+                <Share2 className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-[13px] font-semibold">Phân bổ kênh chia sẻ</div>
+                <div className="text-[11px] text-muted-foreground">So với hiệu suất hiện tại của bạn</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {AI_CHANNELS.map((c) => (
+              <div key={c.name}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className={["h-6 w-6 rounded-md grid place-items-center bg-gradient-to-br text-white", c.tone].join(" ")}>
+                    <c.icon className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="flex-1 text-[12.5px] font-semibold text-foreground truncate">{c.name}</div>
+                  <span className={["text-[11px] font-bold", c.down ? "text-rose-600" : "text-emerald-600"].join(" ")}>{c.lift}</span>
+                </div>
+                <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="absolute top-0 left-0 h-full bg-muted-foreground/30" style={{ width: `${c.currShare}%` }} title={`Hiện tại ${c.currShare}%`} />
+                  <div className={["absolute top-0 left-0 h-full bg-gradient-to-r", c.tone].join(" ")} style={{ width: `${c.suggest}%`, opacity: 0.95 }} title={`Đề xuất ${c.suggest}%`} />
+                </div>
+                <div className="flex items-center justify-between mt-1 text-[10.5px] text-muted-foreground">
+                  <span>Hiện {c.currShare}% → Đề xuất <span className="font-semibold text-foreground">{c.suggest}%</span></span>
+                  <span className="truncate ml-2">{c.reason}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button onClick={() => apply("channels")} className="mt-3 w-full h-9 rounded-lg bg-primary text-primary-foreground text-[12.5px] font-semibold hover:bg-primary/90 inline-flex items-center justify-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5" /> {applying === "channels" ? "Đang áp dụng…" : "Áp dụng phân bổ"}
+          </button>
+        </div>
+
+        {/* CTAs */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-lg bg-amber-50 text-amber-600 grid place-items-center">
+                <MousePointerClick className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-[13px] font-semibold">CTA do AI viết</div>
+                <div className="text-[11px] text-muted-foreground">3 bản nháp tối ưu cho khách BĐS</div>
+              </div>
+            </div>
+            <button onClick={() => apply("regen")} className="h-7 px-2 rounded-md border border-border text-[11px] inline-flex items-center gap-1 hover:bg-muted">
+              <RefreshCw className={["h-3 w-3", applying === "regen" ? "animate-spin" : ""].join(" ")} /> Viết lại
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {AI_CTAS.map((c, i) => {
+              const applied = appliedCtas.includes(i);
+              return (
+                <div key={i} className={[
+                  "rounded-lg border p-3 transition",
+                  applied ? "border-primary bg-primary-soft/40" : "border-border hover:border-primary/50 hover:shadow-soft",
+                ].join(" ")}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10.5px] uppercase tracking-wider font-bold text-muted-foreground">{c.label}</span>
+                    <span className="text-[10.5px] font-bold text-emerald-600 inline-flex items-center gap-0.5">
+                      <ArrowUpRight className="h-2.5 w-2.5" /> {c.uplift}
+                    </span>
+                  </div>
+                  <p className="text-[12.5px] text-foreground leading-snug font-medium">"{c.text}"</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-1">
+                      {c.tags.map((t) => (
+                        <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{t}</span>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button className="h-6 w-6 grid place-items-center rounded hover:bg-muted text-muted-foreground" title="Sao chép">
+                        <Copy className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={() => setAppliedCtas((arr) => applied ? arr.filter((x) => x !== i) : [...arr, i])}
+                        className={[
+                          "h-6 px-2 rounded text-[10.5px] font-bold inline-flex items-center gap-1",
+                          applied ? "bg-primary text-primary-foreground" : "border border-border hover:bg-muted",
+                        ].join(" ")}
+                      >
+                        {applied ? <><Check className="h-3 w-3" /> Đã chọn</> : "Dùng"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
