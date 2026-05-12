@@ -14,7 +14,7 @@ export const getSourceAnalytics = createServerFn({ method: "GET" })
     const since = new Date(Date.now() - days * 86400_000).toISOString().slice(0, 10);
 
     // Owner scope
-    const cardsQ = supabase.from("digital_cards").select("id").eq("owner_user_id", userId);
+    const cardsQ = supabase.from("cards").select("id").eq("owner_user_id", userId);
     const { data: cards } = data.cardId ? await cardsQ.eq("id", data.cardId) : await cardsQ;
     const cardIds = (cards ?? []).map((c) => c.id);
     if (cardIds.length === 0) return { bySource: [], daily: [], total: 0 };
@@ -69,7 +69,7 @@ export const createShortCode = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: card } = await supabase
-      .from("digital_cards")
+      .from("cards")
       .select("id, tenant_id")
       .eq("id", data.cardId)
       .eq("owner_user_id", userId)
@@ -109,7 +109,7 @@ export const listShortCodes = createServerFn({ method: "GET" })
   .inputValidator((d: { cardId?: string }) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const cardsQ = supabase.from("digital_cards").select("id").eq("owner_user_id", userId);
+    const cardsQ = supabase.from("cards").select("id").eq("owner_user_id", userId);
     const { data: cards } = data.cardId ? await cardsQ.eq("id", data.cardId) : await cardsQ;
     const ids = (cards ?? []).map((c) => c.id);
     if (ids.length === 0) return [];

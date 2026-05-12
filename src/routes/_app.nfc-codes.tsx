@@ -37,7 +37,7 @@ function NfcCodesPage() {
     queryKey: ["my-cards"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("digital_cards")
+        .from("cards")
         .select("id, slug, display_name")
         .order("created_at", { ascending: false });
       return data ?? [];
