@@ -10,6 +10,7 @@ import { Radio, QrCode, Building2, Phone, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Category = "all" | "nfc" | "qr" | "bds";
+type Tone = "all" | "cool" | "warm" | "neutral" | "blue" | "indigo" | "purple" | "green" | "gold";
 
 type Template = {
   id: string;
@@ -20,13 +21,10 @@ type Template = {
   phone: string;
   email: string;
   categories: Exclude<Category, "all">[];
-  /** Tailwind classes for the card surface */
+  tones: Exclude<Tone, "all">[];
   surface: string;
-  /** Tailwind classes for accent bar / chip */
   accent: string;
-  /** Brand text color */
   brandText: string;
-  /** Subtext color */
   subText: string;
 };
 
@@ -40,6 +38,7 @@ const TEMPLATES: Template[] = [
     phone: "0987 654 321",
     email: "nguyenvana@gmail.com",
     categories: ["nfc", "qr", "bds"],
+    tones: ["cool", "blue", "indigo"],
     surface: "bg-gradient-to-br from-[#0b1538] via-[#11215c] to-[#1a3aa3] text-white",
     accent: "bg-amber-300/90 text-[#0b1538]",
     brandText: "text-amber-300",
@@ -54,6 +53,7 @@ const TEMPLATES: Template[] = [
     phone: "0938 222 848",
     email: "duc.tran@luxuryreal.vn",
     categories: ["nfc", "qr", "bds"],
+    tones: ["warm", "gold"],
     surface: "bg-gradient-to-br from-[#fbf7ee] to-[#f0e6cf] text-[#1a1408]",
     accent: "bg-[#b48e3a] text-white",
     brandText: "text-[#b48e3a]",
@@ -68,6 +68,7 @@ const TEMPLATES: Template[] = [
     phone: "0912 345 678",
     email: "huong.le@homeplus.vn",
     categories: ["nfc", "qr", "bds"],
+    tones: ["cool", "green"],
     surface: "bg-gradient-to-br from-[#0f2418] via-[#143524] to-[#1c4a32] text-white",
     accent: "bg-emerald-300/90 text-[#0f2418]",
     brandText: "text-emerald-300",
@@ -82,6 +83,7 @@ const TEMPLATES: Template[] = [
     phone: "0906 168 268",
     email: "tuananh.pham@gmail.com",
     categories: ["nfc", "bds"],
+    tones: ["cool", "blue"],
     surface: "bg-gradient-to-br from-[#0a1340] via-[#152574] to-[#2748b4] text-white",
     accent: "bg-sky-300/90 text-[#0a1340]",
     brandText: "text-sky-300",
@@ -96,6 +98,7 @@ const TEMPLATES: Template[] = [
     phone: "0888 668 699",
     email: "bao.do@elitereal.vn",
     categories: ["nfc", "qr", "bds"],
+    tones: ["neutral", "gold"],
     surface: "bg-gradient-to-br from-[#0a0a0a] via-[#161616] to-[#262421] text-white",
     accent: "bg-amber-300/90 text-black",
     brandText: "text-amber-300",
@@ -110,6 +113,7 @@ const TEMPLATES: Template[] = [
     phone: "0961 789 456",
     email: "haiyen.nguyen@greenhomes.vn",
     categories: ["nfc", "qr", "bds"],
+    tones: ["cool", "green"],
     surface: "bg-gradient-to-br from-[#f7f9f5] to-[#dceadb] text-[#0f2418]",
     accent: "bg-emerald-700 text-white",
     brandText: "text-emerald-800",
@@ -124,6 +128,7 @@ const TEMPLATES: Template[] = [
     phone: "0945 662 288",
     email: "ngoc.bui@sunland.vn",
     categories: ["qr", "bds"],
+    tones: ["warm"],
     surface: "bg-gradient-to-br from-[#3a0a12] via-[#5a1320] to-[#7a1a2c] text-white",
     accent: "bg-amber-200 text-[#3a0a12]",
     brandText: "text-amber-200",
@@ -138,6 +143,7 @@ const TEMPLATES: Template[] = [
     phone: "0978 555 111",
     email: "long.hoang@megarealty.vn",
     categories: ["nfc", "qr", "bds"],
+    tones: ["cool", "blue"],
     surface: "bg-gradient-to-br from-[#fafbff] to-[#dfe6f5] text-[#0a1340]",
     accent: "bg-[#0a1340] text-white",
     brandText: "text-[#0a1340]",
@@ -152,6 +158,7 @@ const TEMPLATES: Template[] = [
     phone: "0859 333 999",
     email: "tung.vu@nextgen.vn",
     categories: ["nfc", "qr", "bds"],
+    tones: ["cool", "purple", "indigo"],
     surface: "bg-gradient-to-br from-[#1a0b3a] via-[#2c1361] to-[#451f8f] text-white",
     accent: "bg-fuchsia-300/90 text-[#1a0b3a]",
     brandText: "text-fuchsia-300",
@@ -166,6 +173,7 @@ const TEMPLATES: Template[] = [
     phone: "0901 234 567",
     email: "huy.dinh@urbanhomes.vn",
     categories: ["qr", "bds"],
+    tones: ["warm"],
     surface: "bg-gradient-to-br from-[#fff8ef] to-[#fde3c5] text-[#3a210a]",
     accent: "bg-orange-500 text-white",
     brandText: "text-orange-700",
@@ -180,23 +188,39 @@ const FILTERS: { id: Category; label: string }[] = [
   { id: "bds", label: "Bất động sản" },
 ];
 
+const TONE_FILTERS: { id: Tone; label: string; swatch?: string }[] = [
+  { id: "all", label: "Mọi tone" },
+  { id: "cool", label: "Lạnh", swatch: "bg-gradient-to-br from-sky-400 to-indigo-600" },
+  { id: "warm", label: "Ấm", swatch: "bg-gradient-to-br from-amber-300 to-rose-500" },
+  { id: "neutral", label: "Trung tính", swatch: "bg-gradient-to-br from-zinc-300 to-zinc-700" },
+  { id: "blue", label: "Blue", swatch: "bg-blue-600" },
+  { id: "indigo", label: "Indigo", swatch: "bg-indigo-700" },
+  { id: "purple", label: "Purple", swatch: "bg-purple-600" },
+  { id: "green", label: "Green", swatch: "bg-emerald-600" },
+  { id: "gold", label: "Gold", swatch: "bg-amber-500" },
+];
+
 export function DesignCarousel() {
   const [active, setActive] = useState<Category>("all");
+  const [tone, setTone] = useState<Tone>("all");
 
   const visible = useMemo(
     () =>
-      active === "all"
-        ? TEMPLATES
-        : TEMPLATES.filter((t) => t.categories.includes(active)),
-    [active],
+      TEMPLATES.filter((t) => {
+        const catOk = active === "all" || t.categories.includes(active);
+        const toneOk = tone === "all" || t.tones.includes(tone);
+        return catOk && toneOk;
+      }),
+    [active, tone],
   );
 
   return (
     <div className="mt-10">
-      {/* Filters */}
+      {/* Category filters */}
       <div
         className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 lg:mx-0 lg:px-0 lg:justify-center scrollbar-none"
         role="tablist"
+        aria-label="Lọc theo loại"
       >
         {FILTERS.map((f) => {
           const isActive = active === f.id;
@@ -231,24 +255,83 @@ export function DesignCarousel() {
         })}
       </div>
 
-      {/* Carousel */}
-      <Carousel
-        opts={{ align: "start", loop: false, dragFree: true }}
-        className="mt-6"
+      {/* Tone filters */}
+      <div
+        className="mt-2 flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 lg:mx-0 lg:px-0 lg:justify-center scrollbar-none"
+        role="tablist"
+        aria-label="Lọc theo tone màu"
       >
-        <CarouselContent className="-ml-3 lg:-ml-4">
-          {visible.map((t) => (
-            <CarouselItem
-              key={t.id}
-              className="pl-3 lg:pl-4 basis-[88%] sm:basis-1/2 lg:basis-1/3"
+        {TONE_FILTERS.map((f) => {
+          const isActive = tone === f.id;
+          const count =
+            f.id === "all"
+              ? TEMPLATES.length
+              : TEMPLATES.filter((t) => f.id !== "all" && t.tones.includes(f.id)).length;
+          if (count === 0 && f.id !== "all") return null;
+          return (
+            <button
+              key={f.id}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setTone(f.id)}
+              className={cn(
+                "shrink-0 inline-flex items-center gap-1.5 h-8 pl-2 pr-3 rounded-full text-[12px] font-medium transition-all border",
+                isActive
+                  ? "bg-foreground/5 text-foreground border-foreground/40 shadow-sm"
+                  : "bg-background text-muted-foreground border-border hover:text-foreground hover:border-foreground/30",
+              )}
             >
-              <DesignCard t={t} />
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious className="hidden lg:flex -left-4" />
-        <CarouselNext className="hidden lg:flex -right-4" />
-      </Carousel>
+              {f.swatch ? (
+                <span
+                  className={cn(
+                    "h-4 w-4 rounded-full ring-1 ring-black/10",
+                    f.swatch,
+                  )}
+                  aria-hidden
+                />
+              ) : (
+                <span className="h-4 w-4 rounded-full border border-dashed border-foreground/30" aria-hidden />
+              )}
+              {f.label}
+              <span className="text-[10.5px] text-muted-foreground/70">{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Carousel */}
+      {visible.length > 0 ? (
+        <Carousel
+          opts={{ align: "start", loop: false, dragFree: true }}
+          className="mt-6"
+        >
+          <CarouselContent className="-ml-3 lg:-ml-4">
+            {visible.map((t) => (
+              <CarouselItem
+                key={t.id}
+                className="pl-3 lg:pl-4 basis-[88%] sm:basis-1/2 lg:basis-1/3"
+              >
+                <DesignCard t={t} />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="hidden lg:flex -left-4" />
+          <CarouselNext className="hidden lg:flex -right-4" />
+        </Carousel>
+      ) : (
+        <div className="mt-6 rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+          Không có mẫu phù hợp với bộ lọc hiện tại.
+          <button
+            className="ml-2 underline underline-offset-2 hover:text-foreground"
+            onClick={() => {
+              setActive("all");
+              setTone("all");
+            }}
+          >
+            Đặt lại
+          </button>
+        </div>
+      )}
 
       {/* Mobile hint */}
       <p className="lg:hidden mt-3 text-center text-[11.5px] text-muted-foreground">
@@ -266,7 +349,6 @@ function DesignCard({ t }: { t: Template }) {
         t.surface,
       )}
     >
-      {/* Top: number + brand */}
       <header className="flex items-start justify-between">
         <span
           className={cn(
@@ -281,7 +363,6 @@ function DesignCard({ t }: { t: Template }) {
         </div>
       </header>
 
-      {/* Body: name + role */}
       <div className="mt-3">
         <h3 className="text-[15px] sm:text-[17px] font-bold leading-tight tracking-tight">
           {t.name}
@@ -289,7 +370,6 @@ function DesignCard({ t }: { t: Template }) {
         <p className={cn("text-[10.5px] mt-0.5", t.subText)}>{t.role}</p>
       </div>
 
-      {/* Contact */}
       <ul className={cn("mt-3 space-y-1 text-[10.5px]", t.subText)}>
         <li className="flex items-center gap-1.5">
           <Phone className="h-3 w-3 opacity-80" />
@@ -305,7 +385,6 @@ function DesignCard({ t }: { t: Template }) {
         </li>
       </ul>
 
-      {/* NFC + QR cluster (right) */}
       <div className="absolute right-3 bottom-3 flex items-end gap-2">
         {t.categories.includes("nfc") && (
           <div
