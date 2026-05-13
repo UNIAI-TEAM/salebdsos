@@ -174,6 +174,7 @@ function LoginPage() {
               </>
             )}
           </div>
+          </div>
         </div>
       </main>
     </div>
