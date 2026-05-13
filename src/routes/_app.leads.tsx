@@ -26,6 +26,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { getLeadScore, explainLeadScoreAI, bandFromScore, SCORE_LABEL, type ScoreBand } from "@/lib/lead-score.functions";
 
 export const Route = createFileRoute("/_app/leads")({ component: LeadsPage });
 
@@ -355,13 +356,7 @@ function LeadDetail({
           <button onClick={onEdit} className="h-10 rounded-lg bg-primary text-primary-foreground grid place-items-center hover:bg-primary/90"><Save className="h-4 w-4" /></button>
         </div>
 
-        <div className="rounded-xl bg-gradient-to-br from-primary/5 to-indigo-50 p-3 flex items-center gap-3">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <div className="text-[12px]">
-            <div className="font-semibold">AI Lead Score</div>
-            <div className="text-muted-foreground">Tính năng đang chuẩn bị — sẽ chấm điểm dựa trên hành vi tương tác.</div>
-          </div>
-        </div>
+        <LeadScorePanel leadId={lead.id} initialScore={lead.score ?? null} />
 
         <div>
           <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Trạng thái</Label>
@@ -418,6 +413,97 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
     <div className="flex items-center justify-between gap-3">
       <dt className="text-muted-foreground">{k}</dt>
       <dd className="font-medium text-right truncate">{v}</dd>
+    </div>
+  );
+}
+
+const BAND_TONE: Record<ScoreBand, { chip: string; ring: string; text: string }> = {
+  very_hot: { chip: "bg-rose-50 text-rose-600 ring-1 ring-rose-100", ring: "ring-rose-200", text: "text-rose-600" },
+  hot: { chip: "bg-amber-50 text-amber-600 ring-1 ring-amber-100", ring: "ring-amber-200", text: "text-amber-600" },
+  warm: { chip: "bg-blue-50 text-blue-600 ring-1 ring-blue-100", ring: "ring-blue-200", text: "text-blue-600" },
+  cold: { chip: "bg-slate-100 text-slate-600 ring-1 ring-slate-200", ring: "ring-slate-200", text: "text-slate-500" },
+};
+
+function LeadScorePanel({ leadId, initialScore }: { leadId: string; initialScore: number | null }) {
+  const fnScore = useServerFn(getLeadScore);
+  const fnExplain = useServerFn(explainLeadScoreAI);
+  const qc = useQueryClient();
+  const [aiText, setAiText] = useState<string | null>(null);
+
+  const scoreQ = useQuery({
+    queryKey: ["lead-score", leadId],
+    queryFn: () => fnScore({ data: { leadId } }),
+  });
+
+  const explainM = useMutation({
+    mutationFn: () => fnExplain({ data: { leadId } }),
+    onSuccess: (r) => setAiText(r.text),
+    onError: (e: any) => toast.error(e?.message || "AI không phản hồi"),
+  });
+
+  const recomputeM = useMutation({
+    mutationFn: () => fnScore({ data: { leadId } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["lead-score", leadId] });
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Đã tính lại điểm");
+    },
+  });
+
+  const data = scoreQ.data;
+  const score = data?.score ?? initialScore ?? 0;
+  const band = bandFromScore(score);
+  const tone = BAND_TONE[band];
+
+  return (
+    <div className={["rounded-xl border-2 p-4 bg-gradient-to-br from-card to-muted/30", `border-transparent ring-2 ${tone.ring}`].join(" ")}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className={["h-14 w-14 rounded-xl grid place-items-center font-bold text-[20px] tabular-nums", tone.chip].join(" ")}>{score}</div>
+          <div>
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">AI Lead Score</div>
+            <div className={["text-[15px] font-bold", tone.text].join(" ")}>{SCORE_LABEL[band]}</div>
+            <div className="text-[10.5px] text-muted-foreground">Rule-based v1</div>
+          </div>
+        </div>
+        <Button size="sm" variant="ghost" onClick={() => recomputeM.mutate()} disabled={recomputeM.isPending}>
+          {recomputeM.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+        </Button>
+      </div>
+
+      {data?.next_action && (
+        <div className="mt-3 rounded-lg bg-primary/5 border border-primary/10 p-2.5">
+          <div className="text-[10.5px] font-bold uppercase tracking-wider text-primary mb-0.5">Hành động đề xuất</div>
+          <div className="text-[12px] text-foreground">{data.next_action}</div>
+        </div>
+      )}
+
+      {data?.factors && data.factors.length > 0 && (
+        <div className="mt-3">
+          <div className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Lý do chấm điểm</div>
+          <ul className="space-y-1">
+            {data.factors.slice(0, 8).map((f) => (
+              <li key={f.key} className="flex items-center justify-between text-[12px] gap-2">
+                <span className="text-muted-foreground truncate">{f.label}</span>
+                <span className={["font-bold tabular-nums shrink-0", f.points >= 0 ? "text-emerald-600" : "text-rose-600"].join(" ")}>
+                  {f.points >= 0 ? "+" : ""}{f.points}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="mt-3 pt-3 border-t border-border">
+        {aiText ? (
+          <div className="text-[12px] text-foreground whitespace-pre-wrap">{aiText}</div>
+        ) : (
+          <Button size="sm" variant="outline" className="w-full" onClick={() => explainM.mutate()} disabled={explainM.isPending}>
+            {explainM.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            Giải thích bằng AI
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
