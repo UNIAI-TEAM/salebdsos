@@ -97,7 +97,7 @@ export function AppSidebar() {
             <Radio className="h-4.5 w-4.5 text-white" strokeWidth={2.5} />
           </div>
           <div className="leading-tight">
-            <div className="text-[15px] font-bold text-white">NFC Platform</div>
+            <div className="text-[15px] font-bold text-white">SaleBDS OS</div>
             <div className="text-[11px] text-sidebar-foreground/60">Sales Growth · BĐS</div>
           </div>
         </Link>
