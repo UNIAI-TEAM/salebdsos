@@ -15,7 +15,7 @@ import nfcPlatformOverview from "@/assets/nfc-platform-overview.jpg";
 const SITE_URL = "https://nfcplatform.vn";
 
 const FAQ_ITEMS: { q: string; a: string }[] = [
-  { q: "NFC Platform là gì?", a: "Là nền tảng all-in-one giúp Sale BĐS chia sẻ danh thiếp số (NFC, QR, Wallet), tự động tạo lead, dùng AI follow-up và quản lý CRM trên một hệ thống duy nhất." },
+  { q: "SaleBDS OS là gì?", a: "Là nền tảng all-in-one giúp Sale BĐS chia sẻ danh thiếp số (NFC, QR, Wallet), tự động tạo lead, dùng AI follow-up và quản lý CRM trên một hệ thống duy nhất." },
   { q: "Tôi có cần thẻ NFC vật lý không?", a: "Không bắt buộc. Bạn vẫn có thể dùng QR động, Wallet Card, link sharing và mobile app. Thẻ NFC vật lý là tuỳ chọn premium." },
   { q: "AI có hỗ trợ tiếng Việt không?", a: "Có. AI được fine-tune trên dữ liệu hành vi khách hàng BĐS Việt Nam và hiểu ngữ cảnh giao tiếp địa phương." },
   { q: "Dữ liệu của tôi có an toàn không?", a: "Chúng tôi tuân thủ chuẩn ISO 27001, mã hoá end-to-end và lưu trữ tại data center cấp Enterprise. Phân quyền và audit log đầy đủ." },
@@ -26,7 +26,7 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
 const ORGANIZATION_LD = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "NFC Platform",
+  name: "SaleBDS OS",
   url: SITE_URL,
   logo: `${SITE_URL}/favicon.ico`,
   description: "Sales Growth Platform for Real Estate — NFC + AI + CRM cho đội Sale Bất động sản.",
@@ -56,9 +56,9 @@ const FAQ_LD = {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "NFC Platform — Sales Growth Platform for Real Estate" },
+      { title: "SaleBDS OS — Sales Growth Platform for Real Estate" },
       { name: "description", content: "Nền tảng tăng trưởng toàn diện cho Sale Bất động sản: NFC + AI + CRM giúp kết nối khách hàng, tạo lead và chốt deal nhanh hơn." },
-      { property: "og:title", content: "NFC Platform — Sales Growth Platform for Real Estate" },
+      { property: "og:title", content: "SaleBDS OS — Sales Growth Platform for Real Estate" },
       { property: "og:description", content: "Một profile – đa nền tảng – đa cách chia sẻ. AI Follow-up, AI Lead Score, CRM, Analytics dành riêng cho BĐS." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: SITE_URL },
@@ -82,7 +82,7 @@ function Nav() {
             <Radio className="h-4.5 w-4.5 text-white" strokeWidth={2.5} />
           </div>
           <div className="leading-tight">
-            <div className="text-[15px] font-bold tracking-tight">NFC Platform</div>
+            <div className="text-[15px] font-bold tracking-tight">SaleBDS OS</div>
             <div className="text-[10.5px] text-muted-foreground">Sales Growth · BĐS</div>
           </div>
         </Link>
@@ -352,7 +352,7 @@ function Problem() {
             <div className="absolute -top-20 -right-20 h-60 w-60 rounded-full bg-primary/15 blur-3xl" />
             <div className="flex items-center gap-2 mb-5 relative">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <div className="text-[12px] font-bold uppercase tracking-wider text-primary">Với NFC Platform</div>
+              <div className="text-[12px] font-bold uppercase tracking-wider text-primary">Với SaleBDS OS</div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 relative">
               {solutions.map((p) => (
@@ -852,7 +852,7 @@ function Benefits() {
 /* ============================ TESTIMONIALS ============================ */
 function Testimonials() {
   const tests = [
-    { n: "Anh Hoàng Long", r: "Sales Director · Vinhomes", q: "Sau 3 tháng dùng NFC Platform, đội tôi tăng 312% lead chất lượng và rút ngắn 60% thời gian follow-up." },
+    { n: "Anh Hoàng Long", r: "Sales Director · Vinhomes", q: "Sau 3 tháng dùng SaleBDS OS, đội tôi tăng 312% lead chất lượng và rút ngắn 60% thời gian follow-up." },
     { n: "Chị Mai Phương", r: "CEO · ABC Real Estate", q: "AI Lead Score giúp tôi biết chính xác khách nào nên gọi trước. Tỷ lệ chốt deal tăng gấp đôi." },
     { n: "Anh Tuấn Anh", r: "Manager · Masteri Group", q: "Wallet Card và NFC khiến đội ngũ trông cực kỳ chuyên nghiệp. Khách nhớ chúng tôi ngay từ lần gặp đầu." },
   ];
@@ -1042,7 +1042,7 @@ function Footer() {
             <Link to="/" className="flex items-center gap-2.5">
               <div className="h-9 w-9 rounded-xl bg-brand-gradient grid place-items-center"><Radio className="h-4.5 w-4.5 text-white" /></div>
               <div>
-                <div className="text-[15px] font-bold tracking-tight">NFC Platform</div>
+                <div className="text-[15px] font-bold tracking-tight">SaleBDS OS</div>
                 <div className="text-[10.5px] text-muted-foreground">Sales Growth · BĐS</div>
               </div>
             </Link>
@@ -1069,7 +1069,7 @@ function Footer() {
           ))}
         </div>
         <div className="mt-10 pt-6 border-t border-border flex flex-wrap items-center justify-between gap-3 text-[11.5px] text-muted-foreground">
-          <div>© 2026 NFC Platform. All rights reserved.</div>
+          <div>© 2026 SaleBDS OS. All rights reserved.</div>
           <div className="flex gap-5">
             <a href="#" className="hover:text-foreground">Điều khoản</a>
             <a href="#" className="hover:text-foreground">Bảo mật</a>

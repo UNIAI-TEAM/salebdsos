@@ -117,7 +117,7 @@ function PublicCard() {
         </nav>
 
         <footer className="mt-10 text-center text-[11px] opacity-60">
-          Tạo bởi NFC Platform · BĐS
+          Tạo bởi SaleBDS OS · BĐS
         </footer>
       </div>
     </main>

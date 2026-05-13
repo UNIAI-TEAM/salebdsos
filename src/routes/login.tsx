@@ -64,7 +64,7 @@ function LoginPage() {
         <Link to="/" className="block text-center mb-6">
           <div className="inline-flex items-center gap-2">
             <div className="h-9 w-9 rounded-xl bg-brand-gradient" />
-            <span className="font-bold text-lg">NFC Platform</span>
+            <span className="font-bold text-lg">SaleBDS OS</span>
           </div>
         </Link>
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">

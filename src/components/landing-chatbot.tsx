@@ -11,7 +11,7 @@ type Msg = { role: "user" | "assistant"; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
 const SUGGESTIONS = [
-  "NFC Platform là gì?",
+  "SaleBDS OS là gì?",
   "Bảng giá thế nào?",
   "Tôi muốn đặt lịch demo",
   "Tích hợp được với CRM nào?",
@@ -20,7 +20,7 @@ const SUGGESTIONS = [
 const INITIAL: Msg = {
   role: "assistant",
   content:
-    "Xin chào! Mình là trợ lý ảo của UNICOM NFC Platform. Mình có thể giúp gì cho bạn? (sản phẩm, giá, demo, tích hợp…)",
+    "Xin chào! Mình là trợ lý ảo của UNICOM SaleBDS OS. Mình có thể giúp gì cho bạn? (sản phẩm, giá, demo, tích hợp…)",
 };
 
 export function LandingChatbot() {
@@ -128,7 +128,7 @@ export function LandingChatbot() {
               <Sparkles className="h-4 w-4" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold">Trợ lý NFC Platform</p>
+              <p className="text-sm font-semibold">Trợ lý SaleBDS OS</p>
               <p className="text-xs text-muted-foreground">Trả lời tức thì 24/7</p>
             </div>
           </header>

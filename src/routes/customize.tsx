@@ -13,9 +13,9 @@ import { DemoDialog } from "@/components/demo-dialog";
 export const Route = createFileRoute("/customize")({
   head: () => ({
     meta: [
-      { title: "Tuỳ biến mẫu danh thiếp NFC — NFC Platform" },
+      { title: "Tuỳ biến mẫu danh thiếp NFC — SaleBDS OS" },
       { name: "description", content: "Đổi màu thương hiệu, logo, nội dung danh thiếp NFC và xem live preview ngay lập tức. Tạo danh thiếp số chuyên nghiệp trong vài phút." },
-      { property: "og:title", content: "Tuỳ biến mẫu danh thiếp NFC — NFC Platform" },
+      { property: "og:title", content: "Tuỳ biến mẫu danh thiếp NFC — SaleBDS OS" },
       { property: "og:description", content: "Live preview chỉnh sửa danh thiếp NFC theo thương hiệu của bạn." },
     ],
   }),
@@ -500,7 +500,7 @@ function CardPreview({ state }: { state: State }) {
             {state.note || "Ghi chú mặt sau danh thiếp."}
           </p>
           <div className={cn("text-[10px] uppercase tracking-wider", sub)}>
-            Powered by NFC Platform
+            Powered by SaleBDS OS
           </div>
         </div>
       </article>
