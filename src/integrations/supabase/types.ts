@@ -952,8 +952,11 @@ export type Database = {
           deleted_at: string | null
           expected_close_date: string | null
           id: string
+          last_activity_at: string
           lead_id: string | null
           meta: Json
+          next_action: string | null
+          next_action_at: string | null
           owner_user_id: string | null
           project_id: string | null
           stage_id: string
@@ -970,8 +973,11 @@ export type Database = {
           deleted_at?: string | null
           expected_close_date?: string | null
           id?: string
+          last_activity_at?: string
           lead_id?: string | null
           meta?: Json
+          next_action?: string | null
+          next_action_at?: string | null
           owner_user_id?: string | null
           project_id?: string | null
           stage_id: string
@@ -988,8 +994,11 @@ export type Database = {
           deleted_at?: string | null
           expected_close_date?: string | null
           id?: string
+          last_activity_at?: string
           lead_id?: string | null
           meta?: Json
+          next_action?: string | null
+          next_action_at?: string | null
           owner_user_id?: string | null
           project_id?: string | null
           stage_id?: string
@@ -1445,6 +1454,10 @@ export type Database = {
       accept_invitation: { Args: { _token: string }; Returns: string }
       aggregate_interaction_events_daily: {
         Args: { _day?: string }
+        Returns: undefined
+      }
+      ensure_default_pipeline_stages: {
+        Args: { _tenant: string }
         Returns: undefined
       }
       has_tenant_role: {
