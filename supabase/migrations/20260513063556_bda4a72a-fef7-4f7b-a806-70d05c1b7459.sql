@@ -1,0 +1,2 @@
+CREATE INDEX IF NOT EXISTS idx_events_tenant_source_time ON public.interaction_events (tenant_id, source, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_events_tenant_card ON public.interaction_events (tenant_id, card_id, occurred_at DESC);
