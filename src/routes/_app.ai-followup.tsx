@@ -1,370 +1,656 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, KpiCard } from "@/components/app/ui";
 import {
-  Inbox, Activity, Send, MessageSquare, Target, Percent, Plus, Filter, Search,
-  Mail, MessageCircle, Smartphone, Eye, MoreHorizontal, ChevronDown, Sparkles,
-  Users2, Clock, ArrowRight,
+  Inbox, Send, Sparkles, Wand2, Search, Plus, Loader2, Copy, Check, Mail,
+  MessageCircle, Smartphone, Phone, Trash2, X, ChevronDown, MessageSquare, Target,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  listFollowups, getFollowupStats, getFollowupQueue,
+  updateFollowupStatus, deleteFollowup,
+  SCENARIOS, SCENARIO_LABEL_VI,
+  type Scenario, type FollowupStatus,
+} from "@/lib/followup.functions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/_app/ai-followup")({ component: AiFollowupPage });
 
-const TABS = ["Tất cả", "Đang chăm sóc", "Chờ phản hồi", "Đã phản hồi", "Đã chuyển đổi", "Tạm dừng"] as const;
+type Channel = "email" | "zalo" | "sms";
 
-type Status = "Đang chăm sóc" | "Chờ phản hồi" | "Đã phản hồi" | "Tạm dừng";
-const STATUS_TONE: Record<Status, string> = {
-  "Đang chăm sóc": "bg-blue-50 text-blue-700 ring-1 ring-blue-100",
-  "Chờ phản hồi": "bg-amber-50 text-amber-700 ring-1 ring-amber-100",
-  "Đã phản hồi": "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100",
-  "Tạm dừng": "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
+const CHANNEL_META: Record<Channel, { label: string; icon: typeof Mail; tone: string }> = {
+  email: { label: "Email", icon: Mail, tone: "bg-violet-50 text-violet-600" },
+  zalo: { label: "Zalo", icon: MessageCircle, tone: "bg-cyan-50 text-cyan-700" },
+  sms: { label: "SMS", icon: Smartphone, tone: "bg-emerald-50 text-emerald-700" },
 };
 
-type Channel = "Email" | "Zalo" | "SMS" | "Messenger";
-const CHANNEL_TONE: Record<Channel, { bg: string; icon: typeof Mail }> = {
-  Email: { bg: "bg-violet-50 text-violet-600", icon: Mail },
-  Zalo: { bg: "bg-cyan-50 text-cyan-700", icon: MessageCircle },
-  SMS: { bg: "bg-emerald-50 text-emerald-700", icon: Smartphone },
-  Messenger: { bg: "bg-blue-50 text-blue-700", icon: MessageSquare },
+const STATUS_LABEL: Record<FollowupStatus, string> = {
+  suggested: "Gợi ý",
+  sent: "Đã gửi",
+  dismissed: "Bỏ qua",
+  draft: "Nháp",
+};
+const STATUS_TONE: Record<FollowupStatus, string> = {
+  suggested: "bg-blue-50 text-blue-700 ring-1 ring-blue-100",
+  sent: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100",
+  dismissed: "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
+  draft: "bg-amber-50 text-amber-700 ring-1 ring-amber-100",
 };
 
-const ROWS: {
-  name: string; phone: string; email: string; channel: Channel;
-  campaign: string; series: string; steps: number;
-  status: Status; current: string; lastAt: string;
-  score: number; reply: string; replyAt?: string;
-}[] = [
-  { name: "Trần Minh Đức", phone: "0987 654 321", email: "duc.tran@gmail.com", channel: "Email", campaign: "Dự án Vinhomes Ocean Park 2", series: "Email Series", steps: 5, status: "Đang chăm sóc", current: "Bước 2: Gửi thông tin dự án", lastAt: "1 giờ trước", score: 86, reply: "Chưa phản hồi" },
-  { name: "Lê Thu Hương", phone: "0976 543 210", email: "huong.le@gmail.com", channel: "Zalo", campaign: "Masteri Waterfront", series: "Zalo Series", steps: 4, status: "Chờ phản hồi", current: "Bước 3: Gửi chính sách bán hàng", lastAt: "3 giờ trước", score: 78, reply: "Đã mở tin nhắn", replyAt: "2 giờ trước" },
-  { name: "Phạm Tuấn Anh", phone: "0912 345 678", email: "tuananh.pham@gmail.com", channel: "SMS", campaign: "Lumi Hanoi", series: "SMS Series", steps: 3, status: "Đã phản hồi", current: "Bước 2: Tư vấn chuyên sâu", lastAt: "5 giờ trước", score: 72, reply: "Quan tâm", replyAt: "5 giờ trước" },
-  { name: "Nguyễn Hải Yến", phone: "0933 222 111", email: "haiyen.nguyen@gmail.com", channel: "Email", campaign: "The Global City", series: "Email Series", steps: 5, status: "Đang chăm sóc", current: "Bước 1: Giới thiệu dự án", lastAt: "1 ngày trước", score: 65, reply: "Chưa phản hồi" },
-  { name: "Đỗ Quốc Bảo", phone: "0908 765 432", email: "baodo@gmail.com", channel: "Messenger", campaign: "Eaton Park", series: "Messenger Series", steps: 4, status: "Đã phản hồi", current: "Bước 4: Gửi ưu đãi đặc biệt", lastAt: "1 ngày trước", score: 60, reply: "Quan tâm", replyAt: "1 ngày trước" },
-  { name: "Bùi Thị Ngọc", phone: "0823 456 789", email: "ngoc.bui@gmail.com", channel: "Email", campaign: "Vinhomes Ocean Park 2", series: "Email Series", steps: 5, status: "Tạm dừng", current: "Chờ thời điểm phù hợp", lastAt: "2 ngày trước", score: 58, reply: "Chưa phản hồi" },
-  { name: "Hoàng Minh Long", phone: "0919 888 666", email: "long.hoang@gmail.com", channel: "Zalo", campaign: "Masteri Waterfront", series: "Zalo Series", steps: 4, status: "Đang chăm sóc", current: "Bước 2: Gửi thông tin dự án", lastAt: "2 ngày trước", score: 80, reply: "Đã mở tin nhắn", replyAt: "1 ngày trước" },
-  { name: "Lưu Thanh Tâm", phone: "0934 567 890", email: "tam.luu@gmail.com", channel: "SMS", campaign: "Lumi Hanoi", series: "SMS Series", steps: 3, status: "Chờ phản hồi", current: "Bước 3: Gửi bảng giá", lastAt: "3 ngày trước", score: 74, reply: "Chưa phản hồi" },
-  { name: "Võ Hoàng Nam", phone: "0922 111 333", email: "nam.vo@gmail.com", channel: "Email", campaign: "The Global City", series: "Email Series", steps: 5, status: "Đang chăm sóc", current: "Bước 5: Follow-up", lastAt: "3 ngày trước", score: 66, reply: "Chưa phản hồi" },
-  { name: "Nguyễn Văn Tùng", phone: "0944 222 777", email: "tung.nguyen@gmail.com", channel: "Messenger", campaign: "Eaton Park", series: "Messenger Series", steps: 4, status: "Đã phản hồi", current: "Bước 4: Gửi ưu đãi đặc biệt", lastAt: "4 ngày trước", score: 71, reply: "Quan tâm", replyAt: "4 ngày trước" },
-];
+const TABS = [
+  { id: "queue", label: "Hàng chờ chăm sóc" },
+  { id: "suggested", label: "Đã tạo gợi ý" },
+  { id: "history", label: "Lịch sử gửi" },
+] as const;
+type TabId = (typeof TABS)[number]["id"];
 
-const SCORE_TONE = (s: number) =>
-  s >= 80 ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
-    : s >= 70 ? "bg-blue-50 text-blue-700 ring-blue-100"
-    : s >= 60 ? "bg-amber-50 text-amber-700 ring-amber-100"
-    : "bg-slate-100 text-slate-600 ring-slate-200";
+const initials = (n?: string | null) => (n || "?").trim().split(/\s+/).pop()!.charAt(0).toUpperCase();
+const avatarTone = (i: number) =>
+  ["from-blue-300 to-indigo-400","from-rose-300 to-fuchsia-400","from-amber-300 to-orange-400",
+   "from-emerald-300 to-teal-400","from-violet-300 to-purple-400","from-cyan-300 to-blue-400"][i % 6];
 
-const REPLY_TONE = (r: string) =>
-  r === "Quan tâm" ? "text-emerald-600"
-    : r === "Đã mở tin nhắn" ? "text-blue-600"
-    : "text-muted-foreground";
-
-const DONUT = [
-  { name: "Quan tâm", count: 48, pct: 39, color: "#6D5EF6" },
-  { name: "Tư vấn", count: 35, pct: 28, color: "#22C55E" },
-  { name: "Không quan tâm", count: 25, pct: 20, color: "#F59E0B" },
-  { name: "Khác", count: 15, pct: 13, color: "#F43F5E" },
-];
-
-const CHANNEL_STATS = [
-  { name: "Email", count: "456 leads", pct: 42, color: "bg-violet-500" },
-  { name: "Zalo", count: "324 leads", pct: 28, color: "bg-cyan-500" },
-  { name: "SMS", count: "210 leads", pct: 18, color: "bg-emerald-500" },
-  { name: "Messenger", count: "156 leads", pct: 12, color: "bg-blue-500" },
-];
-
-function Donut() {
-  const r = 60, c = 2 * Math.PI * r;
-  let acc = 0;
-  return (
-    <div className="relative h-[170px] w-[170px] mx-auto">
-      <svg viewBox="0 0 160 160" className="h-full w-full -rotate-90">
-        {DONUT.map((d) => {
-          const len = (d.pct / 100) * c;
-          const arr = `${len} ${c - len}`;
-          const off = -acc; acc += len;
-          return <circle key={d.name} cx="80" cy="80" r={r} fill="none" stroke={d.color} strokeWidth="20" strokeDasharray={arr} strokeDashoffset={off} />;
-        })}
-      </svg>
-      <div className="absolute inset-0 grid place-items-center text-center">
-        <div>
-          <div className="text-[22px] font-bold leading-none">123</div>
-          <div className="text-[11px] text-muted-foreground mt-1">Phản hồi</div>
-        </div>
-      </div>
-    </div>
-  );
+function fmtDate(s?: string | null) {
+  if (!s) return "—";
+  try {
+    return new Date(s).toLocaleString("vi-VN", {
+      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+    });
+  } catch { return s; }
 }
 
-const initials = (n: string) => n.split(" ").map((p) => p[0]).slice(-2).join("");
-const avatarTone = (i: number) => [
-  "from-blue-300 to-indigo-400", "from-rose-300 to-fuchsia-400", "from-amber-300 to-orange-400",
-  "from-emerald-300 to-teal-400", "from-violet-300 to-purple-400", "from-cyan-300 to-blue-400",
-][i % 6];
-
 function AiFollowupPage() {
-  const [tab, setTab] = useState<(typeof TABS)[number]>("Tất cả");
+  const { currentTenant } = useAuth();
+  const tenantId = currentTenant?.id;
+  const qc = useQueryClient();
+
+  const [tab, setTab] = useState<TabId>("queue");
+  const [scenarioF, setScenarioF] = useState<Scenario | "all">("all");
+  const [search, setSearch] = useState("");
+  const [generatorLeadId, setGeneratorLeadId] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+
+  const fnStats = useServerFn(getFollowupStats);
+  const fnQueue = useServerFn(getFollowupQueue);
+  const fnList = useServerFn(listFollowups);
+  const fnUpdate = useServerFn(updateFollowupStatus);
+  const fnDelete = useServerFn(deleteFollowup);
+
+  const stats = useQuery({
+    queryKey: ["followup-stats", tenantId],
+    queryFn: () => fnStats({ data: { tenantId: tenantId! } }),
+    enabled: !!tenantId,
+  });
+
+  const queue = useQuery({
+    queryKey: ["followup-queue", tenantId, scenarioF],
+    queryFn: () => fnQueue({ data: { tenantId: tenantId!, scenario: scenarioF, limit: 50 } }),
+    enabled: !!tenantId && tab === "queue",
+  });
+
+  const suggestions = useQuery({
+    queryKey: ["followups", tenantId, "suggested", scenarioF],
+    queryFn: () => fnList({ data: { tenantId: tenantId!, status: "suggested", scenario: scenarioF, pageSize: 50 } }),
+    enabled: !!tenantId && tab === "suggested",
+  });
+
+  const history = useQuery({
+    queryKey: ["followups", tenantId, "all", scenarioF],
+    queryFn: () => fnList({ data: { tenantId: tenantId!, status: "all", scenario: scenarioF, pageSize: 50 } }),
+    enabled: !!tenantId && tab === "history",
+  });
+
+  const updateMut = useMutation({
+    mutationFn: (v: { id: string; status: FollowupStatus }) => fnUpdate({ data: v }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["followups", tenantId] });
+      qc.invalidateQueries({ queryKey: ["followup-stats", tenantId] });
+    },
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => fnDelete({ data: { id } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["followups", tenantId] });
+      qc.invalidateQueries({ queryKey: ["followup-stats", tenantId] });
+      setPreviewId(null);
+    },
+  });
+
+  const previewItem = useMemo(() => {
+    if (!previewId) return null;
+    return [...(suggestions.data?.items ?? []), ...(history.data?.items ?? [])].find((x) => x.id === previewId) ?? null;
+  }, [previewId, suggestions.data, history.data]);
+
+  const queueFiltered = useMemo(() => {
+    const items = queue.data?.items ?? [];
+    if (!search.trim()) return items;
+    const t = search.trim().toLowerCase();
+    return items.filter(
+      (l) =>
+        (l.full_name ?? "").toLowerCase().includes(t) ||
+        (l.email ?? "").toLowerCase().includes(t) ||
+        (l.phone ?? "").includes(t),
+    );
+  }, [queue.data, search]);
+
+  if (!tenantId) {
+    return (
+      <div className="p-8 text-sm text-muted-foreground">Chọn workspace để dùng AI Follow-up.</div>
+    );
+  }
 
   return (
     <div className="space-y-5">
-      <PageHeader title="AI Follow-up" sub="Tự động chăm sóc & nuôi dưỡng khách hàng bằng AI." />
+      <PageHeader
+        title="AI Follow-up"
+        sub="AI gợi ý tin nhắn chăm sóc lead theo từng kịch bản. Bạn xem trước, chỉnh sửa và gửi thủ công."
+      />
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-5">
-        <div className="space-y-5 min-w-0">
-          {/* KPIs */}
-          <div className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-4">
-            <KpiCard icon={Inbox} label="Tổng leads trong AI" value="1,234" delta={18.2} tone="primary" />
-            <KpiCard icon={Activity} label="Đang chăm sóc" value="678" delta={12.4} tone="blue" />
-            <KpiCard icon={Send} label="Đã liên hệ" value="456" delta={15.6} tone="rose" />
-            <KpiCard icon={MessageSquare} label="Phản hồi" value="123" delta={21.3} tone="amber" />
-            <KpiCard icon={Target} label="Chuyển đổi" value="48" delta={16.8} tone="green" />
-            <KpiCard icon={Percent} label="Tỷ lệ phản hồi" value="27.0%" delta={4.2} tone="indigo" />
-          </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard icon={Inbox} label="Tổng gợi ý đã tạo" value={String(stats.data?.total ?? 0)} delta={0} tone="primary" />
+        <KpiCard icon={Sparkles} label="Đang chờ gửi" value={String(stats.data?.suggested ?? 0)} delta={0} tone="blue" />
+        <KpiCard icon={Send} label="Đã gửi" value={String(stats.data?.sent ?? 0)} delta={0} tone="green" />
+        <KpiCard icon={Target} label="30 ngày qua" value={String(stats.data?.last30d ?? 0)} delta={0} tone="indigo" />
+      </div>
 
-          {/* Tabs */}
-          <div className="border-b border-border flex items-center gap-1 overflow-x-auto">
-            {TABS.map((t) => (
-              <button key={t} onClick={() => setTab(t)}
-                className={["px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap border-b-2 -mb-px transition",
-                  tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"].join(" ")}>
-                {t}
-              </button>
+      {/* Tabs */}
+      <div className="border-b border-border flex items-center gap-1 overflow-x-auto">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={[
+              "px-3 py-2.5 text-[13px] font-semibold whitespace-nowrap border-b-2 -mb-px transition",
+              tab === t.id
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            ].join(" ")}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[220px] max-w-md">
+          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Tìm theo tên, email, SĐT…"
+            className="pl-9 h-9"
+          />
+        </div>
+        <Select value={scenarioF} onValueChange={(v) => setScenarioF(v as any)}>
+          <SelectTrigger className="h-9 w-[200px]">
+            <SelectValue placeholder="Tất cả kịch bản" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả kịch bản</SelectItem>
+            {SCENARIOS.map((s) => (
+              <SelectItem key={s} value={s}>{SCENARIO_LABEL_VI[s]}</SelectItem>
             ))}
-          </div>
+          </SelectContent>
+        </Select>
+      </div>
 
-          {/* Toolbar + table */}
-          <div className="rounded-2xl bg-card border border-border shadow-soft overflow-hidden">
-            <div className="p-4 flex flex-wrap items-center gap-2 border-b border-border">
-              <div className="relative flex-1 min-w-[220px]">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input className="w-full h-9 pl-9 pr-3 rounded-xl bg-muted/40 border border-border text-[13px] outline-none focus:ring-2 focus:ring-primary/20" placeholder="Tìm kiếm lead, email, SDT…" />
-              </div>
-              <Pill label="Tất cả chiến dịch" />
-              <Pill label="Tất cả kênh" />
-              <Pill label="Trạng thái: Tất cả" />
-              <button className="h-9 px-3 rounded-xl border border-border text-[12.5px] font-medium inline-flex items-center gap-1.5 hover:bg-muted/40">
-                <Filter className="h-4 w-4" /> Bộ lọc
-              </button>
-              <button className="ml-auto h-9 px-3 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-semibold inline-flex items-center gap-1.5 shadow-soft">
-                <Plus className="h-4 w-4" /> Tạo chiến dịch
-              </button>
-            </div>
+      {/* Body */}
+      {tab === "queue" && (
+        <QueueTable
+          loading={queue.isLoading}
+          items={queueFiltered}
+          onGenerate={(id) => setGeneratorLeadId(id)}
+        />
+      )}
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-[13px]">
-                <thead>
-                  <tr className="text-left text-[11.5px] uppercase tracking-wide text-muted-foreground bg-muted/30">
-                    <th className="px-5 py-3 font-semibold">Lead</th>
-                    <th className="px-3 py-3 font-semibold">Kênh</th>
-                    <th className="px-3 py-3 font-semibold">Chiến dịch</th>
-                    <th className="px-3 py-3 font-semibold">Trạng thái</th>
-                    <th className="px-3 py-3 font-semibold">Bước hiện tại</th>
-                    <th className="px-3 py-3 font-semibold">Lần liên hệ cuối</th>
-                    <th className="px-3 py-3 font-semibold">AI Score</th>
-                    <th className="px-3 py-3 font-semibold">Phản hồi</th>
-                    <th className="px-3 py-3 font-semibold text-right pr-5">Hành động</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ROWS.map((r, i) => {
-                    const ch = CHANNEL_TONE[r.channel];
-                    return (
-                      <tr key={r.email} className="border-t border-border hover:bg-muted/30 transition">
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className={["h-9 w-9 rounded-full bg-gradient-to-br shrink-0 grid place-items-center text-white text-[11.5px] font-bold", avatarTone(i)].join(" ")}>{initials(r.name)}</div>
-                            <div className="min-w-0">
-                              <div className="font-semibold truncate">{r.name}</div>
-                              <div className="text-[11px] text-muted-foreground">{r.phone}</div>
-                              <div className="text-[11px] text-muted-foreground truncate">{r.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="flex flex-col items-center gap-1">
-                            <div className={["h-8 w-8 rounded-lg grid place-items-center", ch.bg].join(" ")}>
-                              <ch.icon className="h-4 w-4" />
-                            </div>
-                            <span className="text-[10.5px] text-muted-foreground">{r.channel}</span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="font-medium">{r.campaign}</div>
-                          <div className="text-[11px] text-muted-foreground">{r.series} · {r.steps} bước</div>
-                        </td>
-                        <td className="px-3 py-3">
-                          <span className={["inline-flex items-center px-2 py-1 rounded-md text-[11.5px] font-semibold", STATUS_TONE[r.status]].join(" ")}>{r.status}</span>
-                        </td>
-                        <td className="px-3 py-3 text-foreground/90">{r.current}</td>
-                        <td className="px-3 py-3 text-muted-foreground">{r.lastAt}</td>
-                        <td className="px-3 py-3">
-                          <span className={["inline-flex items-center justify-center h-6 min-w-[32px] px-1.5 rounded-md text-[11.5px] font-bold ring-1", SCORE_TONE(r.score)].join(" ")}>{r.score}</span>
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className={["text-[12.5px] font-medium", REPLY_TONE(r.reply)].join(" ")}>{r.reply}</div>
-                          {r.replyAt && <div className="text-[11px] text-muted-foreground">{r.replyAt}</div>}
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center justify-end gap-1 pr-2">
-                            <button className="h-8 w-8 grid place-items-center rounded-lg hover:bg-muted text-muted-foreground"><Eye className="h-4 w-4" /></button>
-                            <button className="h-8 w-8 grid place-items-center rounded-lg hover:bg-muted text-muted-foreground"><MessageCircle className="h-4 w-4" /></button>
-                            <button className="h-8 w-8 grid place-items-center rounded-lg hover:bg-muted text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+      {tab === "suggested" && (
+        <SuggestionsTable
+          loading={suggestions.isLoading}
+          items={suggestions.data?.items ?? []}
+          onPreview={setPreviewId}
+          onMarkSent={(id) => updateMut.mutate({ id, status: "sent" })}
+          onDismiss={(id) => updateMut.mutate({ id, status: "dismissed" })}
+        />
+      )}
 
-            <div className="flex items-center justify-between px-5 py-3 border-t border-border text-[12.5px]">
-              <div className="text-muted-foreground">Hiển thị 1 - 10 của 1,234 leads</div>
-              <div className="flex items-center gap-2">
-                <button className="h-8 px-2.5 rounded-lg border border-border inline-flex items-center gap-1 text-[12px]">10 / trang <ChevronDown className="h-3.5 w-3.5 opacity-60" /></button>
-                <div className="flex items-center gap-1">
-                  <button className="h-8 w-8 grid place-items-center rounded-lg border border-border text-muted-foreground">‹</button>
-                  <button className="h-8 w-8 grid place-items-center rounded-lg bg-primary text-primary-foreground font-semibold">1</button>
-                  {[2, 3, 4, 5].map((n) => <button key={n} className="h-8 w-8 grid place-items-center rounded-lg hover:bg-muted">{n}</button>)}
-                  <span className="px-1 text-muted-foreground">…</span>
-                  <button className="h-8 w-8 grid place-items-center rounded-lg hover:bg-muted">124</button>
-                  <button className="h-8 w-8 grid place-items-center rounded-lg border border-border text-muted-foreground">›</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {tab === "history" && (
+        <SuggestionsTable
+          loading={history.isLoading}
+          items={history.data?.items ?? []}
+          onPreview={setPreviewId}
+          onMarkSent={(id) => updateMut.mutate({ id, status: "sent" })}
+          onDismiss={(id) => updateMut.mutate({ id, status: "dismissed" })}
+          showStatus
+        />
+      )}
 
-        {/* Right column */}
-        <div className="space-y-5">
-          {/* AI suggestions */}
-          <div className="rounded-2xl bg-card border border-border shadow-soft p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[14px] font-semibold inline-flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-primary" /> AI đề xuất hành động</h3>
-              <button className="text-[11.5px] font-semibold text-primary hover:underline">Xem tất cả</button>
-            </div>
-            <div className="space-y-3">
-              <SuggestionCard
-                icon={Users2} tone="bg-primary-soft text-primary"
-                title="Ưu tiên liên hệ lại với 5 leads"
-                desc="có AI Score cao nhưng chưa phản hồi"
-                actionLabel="Xem danh sách"
-                count={5}
-              />
-              <SuggestionCard
-                icon={Target} tone="bg-emerald-50 text-emerald-600"
-                title="Gửi chính sách ưu đãi mới"
-                desc="cho 78 leads quan tâm dự án"
-                actionLabel="Tạo chiến dịch"
-                count={75}
-              />
-              <SuggestionCard
-                icon={Clock} tone="bg-amber-50 text-amber-600"
-                title="Thời điểm vàng để follow-up"
-                desc="với nhóm leads đã mở email 2 lần"
-                actionLabel="Xem chi tiết"
-              />
-            </div>
-          </div>
+      {/* Generator dialog */}
+      {generatorLeadId && (
+        <GeneratorDialog
+          tenantId={tenantId}
+          lead={(queue.data?.items ?? []).find((x) => x.id === generatorLeadId) ?? null}
+          onClose={() => setGeneratorLeadId(null)}
+          onCreated={() => {
+            qc.invalidateQueries({ queryKey: ["followups", tenantId] });
+            qc.invalidateQueries({ queryKey: ["followup-stats", tenantId] });
+          }}
+        />
+      )}
 
-          {/* Donut */}
-          <div className="rounded-2xl bg-card border border-border shadow-soft p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[14px] font-semibold">Hiệu quả AI Follow-up</h3>
-              <button className="h-7 px-2.5 rounded-lg border border-border text-[11.5px] inline-flex items-center gap-1 text-muted-foreground">30 ngày qua <ChevronDown className="h-3 w-3" /></button>
-            </div>
-            <Donut />
-            <div className="mt-4 space-y-2">
-              {DONUT.map((d) => (
-                <div key={d.name} className="flex items-center gap-2 text-[12px]">
-                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
-                  <span className="flex-1 truncate">{d.name}</span>
-                  <span className="text-muted-foreground">({d.count})</span>
-                  <span className="font-semibold">{d.pct}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Preview dialog */}
+      {previewItem && (
+        <PreviewDialog
+          item={previewItem}
+          onClose={() => setPreviewId(null)}
+          onMarkSent={() => updateMut.mutate({ id: previewItem.id, status: "sent" })}
+          onDelete={() => deleteMut.mutate(previewItem.id)}
+        />
+      )}
+    </div>
+  );
+}
 
-          {/* Channel stats */}
-          <div className="rounded-2xl bg-card border border-border shadow-soft p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[14px] font-semibold">Thống kê theo kênh</h3>
-              <button className="h-7 px-2.5 rounded-lg border border-border text-[11.5px] inline-flex items-center gap-1 text-muted-foreground">30 ngày qua <ChevronDown className="h-3 w-3" /></button>
-            </div>
-            <div className="space-y-3.5">
-              {CHANNEL_STATS.map((s) => (
-                <div key={s.name}>
-                  <div className="flex items-center justify-between text-[12.5px] mb-1">
-                    <div>
-                      <div className="font-medium">{s.name}</div>
-                      <div className="text-[11px] text-muted-foreground">{s.count}</div>
+/* ============================================================ */
+
+function QueueTable({
+  loading, items, onGenerate,
+}: {
+  loading: boolean;
+  items: any[];
+  onGenerate: (leadId: string) => void;
+}) {
+  return (
+    <div className="rounded-2xl bg-card border border-border shadow-soft overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="text-left text-[11.5px] uppercase tracking-wide text-muted-foreground bg-muted/30">
+              <th className="px-5 py-3 font-semibold">Lead</th>
+              <th className="px-3 py-3 font-semibold">Trạng thái</th>
+              <th className="px-3 py-3 font-semibold">Dự án quan tâm</th>
+              <th className="px-3 py-3 font-semibold">AI Score</th>
+              <th className="px-3 py-3 font-semibold">Tạo lúc</th>
+              <th className="px-3 py-3 font-semibold text-right pr-5">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading && (
+              <tr><td colSpan={6} className="px-5 py-12 text-center text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin inline mr-2" />Đang tải hàng chờ…</td></tr>
+            )}
+            {!loading && items.length === 0 && (
+              <tr><td colSpan={6} className="px-5 py-12 text-center text-muted-foreground">Không có lead nào trong hàng chờ.</td></tr>
+            )}
+            {items.map((l, i) => (
+              <tr key={l.id} className="border-t border-border hover:bg-muted/30 transition">
+                <td className="px-5 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className={["h-9 w-9 rounded-full bg-gradient-to-br shrink-0 grid place-items-center text-white text-[12px] font-bold", avatarTone(i)].join(" ")}>{initials(l.full_name)}</div>
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{l.full_name ?? "Khách chưa rõ tên"}</div>
+                      <div className="text-[11px] text-muted-foreground">{l.phone ?? "—"} {l.email ? `· ${l.email}` : ""}</div>
                     </div>
-                    <span className="font-semibold">{s.pct}%</span>
                   </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className={["h-full rounded-full", s.color].join(" ")} style={{ width: `${s.pct * 2}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Active campaigns */}
-          <div className="rounded-2xl bg-card border border-border shadow-soft p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[14px] font-semibold">Chiến dịch hoạt động</h3>
-              <button className="text-[11.5px] font-semibold text-primary hover:underline">Xem tất cả</button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-emerald-50 ring-1 ring-emerald-100 p-3">
-                <div className="text-[11px] text-emerald-700 font-semibold">Đang chạy</div>
-                <div className="text-[18px] font-bold text-emerald-800 mt-1">8 chiến dịch</div>
-              </div>
-              <div className="rounded-xl bg-amber-50 ring-1 ring-amber-100 p-3">
-                <div className="text-[11px] text-amber-700 font-semibold">Sắp chạy</div>
-                <div className="text-[18px] font-bold text-amber-800 mt-1">3 chiến dịch</div>
-              </div>
-            </div>
-          </div>
-        </div>
+                </td>
+                <td className="px-3 py-3"><span className="text-foreground/80">{l.status ?? "—"}</span></td>
+                <td className="px-3 py-3">{l.project_name ?? <span className="text-muted-foreground">—</span>}</td>
+                <td className="px-3 py-3">
+                  {l.score != null ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[11px] font-bold ring-1 ring-emerald-100">
+                      <Sparkles className="h-3 w-3" />{l.score}
+                    </span>
+                  ) : <span className="text-muted-foreground text-[11px]">—</span>}
+                </td>
+                <td className="px-3 py-3 text-muted-foreground">{fmtDate(l.created_at)}</td>
+                <td className="px-3 py-3 text-right pr-5">
+                  <Button size="sm" onClick={() => onGenerate(l.id)} className="gap-1.5">
+                    <Wand2 className="h-3.5 w-3.5" /> Tạo gợi ý AI
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
 
-function Pill({ label }: { label: string }) {
+function SuggestionsTable({
+  loading, items, onPreview, onMarkSent, onDismiss, showStatus = false,
+}: {
+  loading: boolean;
+  items: any[];
+  onPreview: (id: string) => void;
+  onMarkSent: (id: string) => void;
+  onDismiss: (id: string) => void;
+  showStatus?: boolean;
+}) {
   return (
-    <button className="h-9 px-3 rounded-xl border border-border text-[12.5px] font-medium inline-flex items-center gap-1.5 hover:bg-muted/40">
-      {label} <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-    </button>
+    <div className="rounded-2xl bg-card border border-border shadow-soft overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="text-left text-[11.5px] uppercase tracking-wide text-muted-foreground bg-muted/30">
+              <th className="px-5 py-3 font-semibold">Lead</th>
+              <th className="px-3 py-3 font-semibold">Kịch bản</th>
+              <th className="px-3 py-3 font-semibold">Kênh</th>
+              <th className="px-3 py-3 font-semibold">Xem trước</th>
+              {showStatus && <th className="px-3 py-3 font-semibold">Trạng thái</th>}
+              <th className="px-3 py-3 font-semibold">Tạo lúc</th>
+              <th className="px-3 py-3 font-semibold text-right pr-5">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading && (
+              <tr><td colSpan={showStatus ? 7 : 6} className="px-5 py-12 text-center text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin inline mr-2" />Đang tải…</td></tr>
+            )}
+            {!loading && items.length === 0 && (
+              <tr><td colSpan={showStatus ? 7 : 6} className="px-5 py-12 text-center text-muted-foreground">Chưa có gợi ý nào. Tạo ở tab "Hàng chờ chăm sóc".</td></tr>
+            )}
+            {items.map((it: any, i: number) => {
+              const ch = (it.channel ?? "zalo") as Channel;
+              const ChIcon = CHANNEL_META[ch].icon;
+              const sc = (it.scenario ?? "new_lead") as Scenario;
+              return (
+                <tr key={it.id} className="border-t border-border hover:bg-muted/30 transition">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className={["h-9 w-9 rounded-full bg-gradient-to-br shrink-0 grid place-items-center text-white text-[12px] font-bold", avatarTone(i)].join(" ")}>{initials(it.lead?.full_name)}</div>
+                      <div className="min-w-0">
+                        <div className="font-semibold truncate">{it.lead?.full_name ?? "Khách"}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">{it.lead?.phone ?? "—"}{it.lead?.email ? ` · ${it.lead.email}` : ""}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-3"><Badge variant="secondary" className="font-medium">{SCENARIO_LABEL_VI[sc]}</Badge></td>
+                  <td className="px-3 py-3">
+                    <span className={["inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11.5px] font-medium", CHANNEL_META[ch].tone].join(" ")}>
+                      <ChIcon className="h-3.5 w-3.5" /> {CHANNEL_META[ch].label}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 max-w-[420px]">
+                    <div className="line-clamp-2 text-foreground/85">{it.output ?? "—"}</div>
+                  </td>
+                  {showStatus && (
+                    <td className="px-3 py-3">
+                      <span className={["inline-flex items-center px-2 py-1 rounded-md text-[11.5px] font-semibold", STATUS_TONE[(it.status ?? "suggested") as FollowupStatus]].join(" ")}>
+                        {STATUS_LABEL[(it.status ?? "suggested") as FollowupStatus]}
+                      </span>
+                    </td>
+                  )}
+                  <td className="px-3 py-3 text-muted-foreground whitespace-nowrap">{fmtDate(it.created_at)}</td>
+                  <td className="px-3 py-3 text-right pr-5">
+                    <div className="inline-flex gap-1.5">
+                      <Button size="sm" variant="outline" onClick={() => onPreview(it.id)}>Xem</Button>
+                      {it.status !== "sent" && (
+                        <Button size="sm" variant="outline" className="gap-1" onClick={() => onMarkSent(it.id)}>
+                          <Check className="h-3.5 w-3.5" /> Đã gửi
+                        </Button>
+                      )}
+                      {it.status !== "dismissed" && (
+                        <Button size="sm" variant="ghost" className="text-muted-foreground" onClick={() => onDismiss(it.id)}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
-function SuggestionCard({
-  icon: Icon, tone, title, desc, actionLabel, count,
-}: { icon: typeof Users2; tone: string; title: string; desc: string; actionLabel: string; count?: number }) {
+/* ============================================================ */
+
+function GeneratorDialog({
+  tenantId, lead, onClose, onCreated,
+}: {
+  tenantId: string;
+  lead: any | null;
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [scenario, setScenario] = useState<Scenario>(
+    lead?.score >= 75 ? "high_score" : lead?.project_id ? "viewed_project" : "new_lead",
+  );
+  const [channel, setChannel] = useState<Channel>("zalo");
+  const [tone, setTone] = useState("Chuyên nghiệp, ấm áp");
+  const [extraNote, setExtraNote] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [result, setResult] = useState<{ subject: string; message: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  if (!lead) return null;
+
+  async function generate() {
+    setGenerating(true);
+    setResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-followup-generate", {
+        body: { tenantId, leadId: lead.id, scenario, channel, tone, extraNote, persist: true },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setResult({ subject: data?.preview?.subject ?? "", message: data?.preview?.message ?? "" });
+      onCreated();
+      toast.success("Đã tạo gợi ý AI");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Không tạo được gợi ý");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  function copy() {
+    const text = channel === "email" && result?.subject
+      ? `Tiêu đề: ${result.subject}\n\n${result.message}`
+      : result?.message ?? "";
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+    toast.success("Đã copy nội dung");
+  }
+
   return (
-    <div className="rounded-xl border border-border p-3.5 hover:bg-muted/30 transition">
-      <div className="flex items-start gap-3">
-        <div className={["h-9 w-9 rounded-xl grid place-items-center shrink-0", tone].join(" ")}>
-          <Icon className="h-4 w-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[12.5px] font-semibold">{title}</div>
-          <div className="text-[11.5px] text-muted-foreground mt-0.5">{desc}</div>
-          <div className="mt-2.5 flex items-center justify-between gap-2">
-            {count ? (
-              <div className="flex items-center -space-x-1.5">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className={["h-6 w-6 rounded-full bg-gradient-to-br ring-2 ring-card", avatarTone(i)].join(" ")} />
-                ))}
-                <span className="ml-2.5 text-[11px] font-semibold text-muted-foreground">+{count - 3}</span>
-              </div>
-            ) : <span />}
-            <button className="h-7 px-2.5 rounded-lg bg-card border border-border text-[11.5px] font-semibold inline-flex items-center gap-1 hover:bg-muted/40">
-              {actionLabel} <ArrowRight className="h-3 w-3" />
-            </button>
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Wand2 className="h-5 w-5 text-primary" /> Tạo gợi ý AI cho {lead.full_name ?? "khách"}
+          </DialogTitle>
+          <DialogDescription>
+            AI sẽ soạn tin nhắn theo kịch bản và kênh bạn chọn. MVP: bạn copy/gửi thủ công.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <Label className="text-[12px]">Kịch bản</Label>
+            <Select value={scenario} onValueChange={(v) => setScenario(v as Scenario)}>
+              <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SCENARIOS.map((s) => <SelectItem key={s} value={s}>{SCENARIO_LABEL_VI[s]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[12px]">Kênh</Label>
+            <Select value={channel} onValueChange={(v) => setChannel(v as Channel)}>
+              <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="zalo">Zalo</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="sms">SMS</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[12px]">Tông giọng</Label>
+            <Input value={tone} onChange={(e) => setTone(e.target.value)} className="mt-1.5" placeholder="Chuyên nghiệp, ấm áp" />
           </div>
         </div>
-      </div>
-    </div>
+
+        <div>
+          <Label className="text-[12px]">Yêu cầu thêm cho AI (tuỳ chọn)</Label>
+          <Textarea
+            value={extraNote}
+            onChange={(e) => setExtraNote(e.target.value)}
+            placeholder="VD: Mời khách đi xem nhà mẫu cuối tuần này…"
+            className="mt-1.5 min-h-[60px]"
+          />
+        </div>
+
+        {result && (
+          <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+            {channel === "email" && result.subject && (
+              <div>
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">Tiêu đề</div>
+                <div className="font-semibold">{result.subject}</div>
+              </div>
+            )}
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">Nội dung</div>
+              <div className="whitespace-pre-wrap text-[13.5px] leading-relaxed">{result.message}</div>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+              <Button size="sm" onClick={copy} className="gap-1.5">
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                Copy
+              </Button>
+              {channel === "zalo" && lead.phone && (
+                <Button asChild size="sm" variant="outline" className="gap-1.5">
+                  <a href={`https://zalo.me/${lead.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
+                    <MessageCircle className="h-3.5 w-3.5" /> Mở Zalo
+                  </a>
+                </Button>
+              )}
+              {channel === "email" && lead.email && (
+                <Button asChild size="sm" variant="outline" className="gap-1.5">
+                  <a href={`mailto:${lead.email}?subject=${encodeURIComponent(result.subject ?? "")}&body=${encodeURIComponent(result.message)}`}>
+                    <Mail className="h-3.5 w-3.5" /> Mở Email
+                  </a>
+                </Button>
+              )}
+              {channel === "sms" && lead.phone && (
+                <Button asChild size="sm" variant="outline" className="gap-1.5">
+                  <a href={`sms:${lead.phone}?body=${encodeURIComponent(result.message)}`}>
+                    <Smartphone className="h-3.5 w-3.5" /> Mở SMS
+                  </a>
+                </Button>
+              )}
+              {lead.phone && (
+                <Button asChild size="sm" variant="ghost" className="gap-1.5">
+                  <a href={`tel:${lead.phone}`}><Phone className="h-3.5 w-3.5" /> Gọi</a>
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <DialogFooter className="gap-2">
+          <Button variant="ghost" onClick={onClose}>Đóng</Button>
+          <Button onClick={generate} disabled={generating} className="gap-1.5">
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {result ? "Tạo lại" : "Tạo gợi ý AI"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PreviewDialog({
+  item, onClose, onMarkSent, onDelete,
+}: {
+  item: any;
+  onClose: () => void;
+  onMarkSent: () => void;
+  onDelete: () => void;
+}) {
+  const ch = (item.channel ?? "zalo") as Channel;
+  const sc = (item.scenario ?? "new_lead") as Scenario;
+  const status = (item.status ?? "suggested") as FollowupStatus;
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    const text = ch === "email" && item.subject ? `Tiêu đề: ${item.subject}\n\n${item.output}` : item.output;
+    navigator.clipboard.writeText(text ?? "");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+    toast.success("Đã copy");
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" /> Xem trước tin nhắn
+          </DialogTitle>
+          <DialogDescription>
+            <span className="inline-flex items-center gap-2">
+              <Badge variant="secondary">{SCENARIO_LABEL_VI[sc]}</Badge>
+              <span className={["inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium", CHANNEL_META[ch].tone].join(" ")}>{CHANNEL_META[ch].label}</span>
+              <span className={["inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold", STATUS_TONE[status]].join(" ")}>{STATUS_LABEL[status]}</span>
+            </span>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+          <div className="text-[12px] text-muted-foreground">
+            Gửi cho <span className="font-semibold text-foreground">{item.lead?.full_name ?? "Khách"}</span>
+            {item.lead?.phone && <> · {item.lead.phone}</>}
+            {item.lead?.email && <> · {item.lead.email}</>}
+          </div>
+          {ch === "email" && item.subject && (
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">Tiêu đề</div>
+              <div className="font-semibold">{item.subject}</div>
+            </div>
+          )}
+          <div>
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">Nội dung</div>
+            <div className="whitespace-pre-wrap text-[13.5px] leading-relaxed">{item.output ?? "—"}</div>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 flex-wrap sm:justify-between">
+          <div className="flex gap-2">
+            <Button variant="destructive" size="sm" onClick={onDelete} className="gap-1.5">
+              <Trash2 className="h-3.5 w-3.5" /> Xoá
+            </Button>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Button size="sm" variant="outline" onClick={copy} className="gap-1.5">
+              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} Copy
+            </Button>
+            {status !== "sent" && (
+              <Button size="sm" onClick={onMarkSent} className="gap-1.5">
+                <Send className="h-3.5 w-3.5" /> Đánh dấu đã gửi
+              </Button>
+            )}
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
