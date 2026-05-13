@@ -507,6 +507,8 @@ function LeadScorePanel({ leadId, initialScore }: { leadId: string; initialScore
     </div>
   );
 }
+
+function LeadEditor({
   open, onClose, initial, owners, projects, saving, onSave,
 }: {
   open: boolean; onClose: () => void; initial: Partial<Lead> | null;
