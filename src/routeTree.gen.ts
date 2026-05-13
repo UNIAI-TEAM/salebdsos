@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as CustomizeRouteImport } from './routes/customize'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ShareSlugRouteImport } from './routes/share.$slug'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AcceptInviteTokenRouteImport } from './routes/accept-invite.$token'
 import { Route as AppWalletRouteImport } from './routes/_app.wallet'
@@ -43,6 +44,7 @@ import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
 import { Route as AppAiFollowupCustomerIdRouteImport } from './routes/_app.ai-followup.$customerId'
 import { Route as ApiPublicTCodeRouteImport } from './routes/api/public/t.$code'
+import { Route as ApiPublicQCodeRouteImport } from './routes/api/public/q.$code'
 
 const ThankYouRoute = ThankYouRouteImport.update({
   id: '/thank-you',
@@ -71,6 +73,11 @@ const AppRoute = AppRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareSlugRoute = ShareSlugRouteImport.update({
+  id: '/share/$slug',
+  path: '/share/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CSlugRoute = CSlugRouteImport.update({
@@ -213,6 +220,11 @@ const ApiPublicTCodeRoute = ApiPublicTCodeRouteImport.update({
   path: '/api/public/t/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicQCodeRoute = ApiPublicQCodeRouteImport.update({
+  id: '/api/public/q/$code',
+  path: '/api/public/q/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -245,8 +257,10 @@ export interface FileRoutesByFullPath {
   '/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
+  '/share/$slug': typeof ShareSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/q/$code': typeof ApiPublicQCodeRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
 }
 export interface FileRoutesByTo {
@@ -280,8 +294,10 @@ export interface FileRoutesByTo {
   '/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
+  '/share/$slug': typeof ShareSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/q/$code': typeof ApiPublicQCodeRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
 }
 export interface FileRoutesById {
@@ -317,8 +333,10 @@ export interface FileRoutesById {
   '/_app/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
+  '/share/$slug': typeof ShareSlugRoute
   '/_app/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/q/$code': typeof ApiPublicQCodeRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
 }
 export interface FileRouteTypes {
@@ -354,8 +372,10 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/accept-invite/$token'
     | '/c/$slug'
+    | '/share/$slug'
     | '/ai-followup/$customerId'
     | '/projects/$id'
+    | '/api/public/q/$code'
     | '/api/public/t/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -389,8 +409,10 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/accept-invite/$token'
     | '/c/$slug'
+    | '/share/$slug'
     | '/ai-followup/$customerId'
     | '/projects/$id'
+    | '/api/public/q/$code'
     | '/api/public/t/$code'
   id:
     | '__root__'
@@ -425,8 +447,10 @@ export interface FileRouteTypes {
     | '/_app/wallet'
     | '/accept-invite/$token'
     | '/c/$slug'
+    | '/share/$slug'
     | '/_app/ai-followup/$customerId'
     | '/_app/projects/$id'
+    | '/api/public/q/$code'
     | '/api/public/t/$code'
   fileRoutesById: FileRoutesById
 }
@@ -439,6 +463,8 @@ export interface RootRouteChildren {
   ThankYouRoute: typeof ThankYouRoute
   AcceptInviteTokenRoute: typeof AcceptInviteTokenRoute
   CSlugRoute: typeof CSlugRoute
+  ShareSlugRoute: typeof ShareSlugRoute
+  ApiPublicQCodeRoute: typeof ApiPublicQCodeRoute
   ApiPublicTCodeRoute: typeof ApiPublicTCodeRoute
 }
 
@@ -484,6 +510,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share/$slug': {
+      id: '/share/$slug'
+      path: '/share/$slug'
+      fullPath: '/share/$slug'
+      preLoaderRoute: typeof ShareSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/c/$slug': {
@@ -682,6 +715,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/q/$code': {
+      id: '/api/public/q/$code'
+      path: '/api/public/q/$code'
+      fullPath: '/api/public/q/$code'
+      preLoaderRoute: typeof ApiPublicQCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -772,6 +812,8 @@ const rootRouteChildren: RootRouteChildren = {
   ThankYouRoute: ThankYouRoute,
   AcceptInviteTokenRoute: AcceptInviteTokenRoute,
   CSlugRoute: CSlugRoute,
+  ShareSlugRoute: ShareSlugRoute,
+  ApiPublicQCodeRoute: ApiPublicQCodeRoute,
   ApiPublicTCodeRoute: ApiPublicTCodeRoute,
 }
 export const routeTree = rootRouteImport
