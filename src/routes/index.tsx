@@ -83,7 +83,7 @@ function Nav() {
           </div>
           <div className="leading-tight">
             <div className="text-[15px] font-bold tracking-tight">SaleBDS OS</div>
-            <div className="text-[10.5px] text-muted-foreground">Sales Growth · BĐS</div>
+            <div className="text-[10.5px] text-muted-foreground">Điều hành kinh doanh bằng điểm chạm</div>
           </div>
         </Link>
         <nav className="hidden lg:flex items-center gap-7 text-[13.5px] text-muted-foreground">
@@ -1043,7 +1043,7 @@ function Footer() {
               <div className="h-9 w-9 rounded-xl bg-brand-gradient grid place-items-center"><Radio className="h-4.5 w-4.5 text-white" /></div>
               <div>
                 <div className="text-[15px] font-bold tracking-tight">SaleBDS OS</div>
-                <div className="text-[10.5px] text-muted-foreground">Sales Growth · BĐS</div>
+                <div className="text-[10.5px] text-muted-foreground">Điều hành kinh doanh bằng điểm chạm</div>
               </div>
             </Link>
             <p className="mt-4 text-[12.5px] text-muted-foreground max-w-xs leading-relaxed">
