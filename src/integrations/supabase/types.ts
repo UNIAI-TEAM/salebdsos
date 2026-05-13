@@ -24,10 +24,14 @@ export type Database = {
           lead_id: string | null
           model: string | null
           output: string | null
+          owner_user_id: string | null
+          project_id: string | null
           prompt: string | null
+          scenario: string | null
           scheduled_at: string | null
           sent_at: string | null
           status: string | null
+          subject: string | null
           tenant_id: string
           tokens: number | null
           updated_at: string
@@ -41,10 +45,14 @@ export type Database = {
           lead_id?: string | null
           model?: string | null
           output?: string | null
+          owner_user_id?: string | null
+          project_id?: string | null
           prompt?: string | null
+          scenario?: string | null
           scheduled_at?: string | null
           sent_at?: string | null
           status?: string | null
+          subject?: string | null
           tenant_id: string
           tokens?: number | null
           updated_at?: string
@@ -58,10 +66,14 @@ export type Database = {
           lead_id?: string | null
           model?: string | null
           output?: string | null
+          owner_user_id?: string | null
+          project_id?: string | null
           prompt?: string | null
+          scenario?: string | null
           scheduled_at?: string | null
           sent_at?: string | null
           status?: string | null
+          subject?: string | null
           tenant_id?: string
           tokens?: number | null
           updated_at?: string
