@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth, type Role } from "@/hooks/use-auth";
 import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
 import {
-  Crown, Plus, Trophy, Users2, Target, DollarSign, MoreHorizontal,
+  Crown, Plus, Trophy, Users2, Target, DollarSign,
   CheckCircle2, TrendingUp, Search, Filter, Calendar, Download, Star,
-  Activity, ArrowRight, ShieldCheck, Mail, Pencil, Trash2, UserPlus, Send, X, Check,
+  Activity, ArrowRight, ShieldCheck, Mail, Pencil, Trash2, UserPlus, Copy, IdCard,
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,
@@ -14,570 +17,633 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import {
+  listMembers, inviteMember, revokeInvitation, updateMemberRole, removeMember,
+} from "@/lib/auth.functions";
+import {
+  getTeamPerformance, getTeamLeaderboard, getTeamActivity,
+  assignCardsToMember, listTenantCards,
+} from "@/lib/team.functions";
 
 export const Route = createFileRoute("/_app/team")({ component: TeamPage });
 
-const DEPARTMENTS = ["Kinh doanh 1", "Kinh doanh 2", "Marketing", "Chăm sóc KH", "Hỗ trợ"] as const;
-const ROLES = [
-  { v: "Admin", desc: "Toàn quyền hệ thống" },
-  { v: "Manager", desc: "Quản lý phòng ban" },
-  { v: "Sales Manager", desc: "Quản lý đội sales" },
-  { v: "Senior Sales", desc: "Sale cấp cao" },
-  { v: "Sales", desc: "Sale tiêu chuẩn" },
-  { v: "Sales Executive", desc: "Sale executive" },
-  { v: "Marketing Leader", desc: "Trưởng nhóm marketing" },
-  { v: "Digital Marketing", desc: "Digital marketing" },
-  { v: "CSKH Leader", desc: "Trưởng CSKH" },
-] as const;
-
-type Member = {
-  id: string;
-  n: string; email: string; phone: string;
-  dept: string; role: string;
-  l: number; d: number; rev: string; cv: string; kpi: string; star: number;
-  status: "active" | "invited" | "inactive";
-};
-
-const kpis = [
-  { icon: Users2, label: "Tổng thành viên", value: "48", delta: 9.1, tone: "primary" as const },
-  { icon: CheckCircle2, label: "Đang hoạt động", value: "42", delta: 11.3, tone: "blue" as const },
-  { icon: DollarSign, label: "Tổng doanh thu", value: "128.6 tỷ", delta: 18.7, tone: "green" as const },
-  { icon: Crown, label: "Tổng deals", value: "356", delta: 14.6, tone: "amber" as const },
-  { icon: TrendingUp, label: "Tỷ lệ chuyển đổi TB", value: "7.94%", delta: 1.2, tone: "indigo" as const },
+const ROLE_OPTIONS: { value: Role; label: string; desc: string }[] = [
+  { value: "owner", label: "Agency Owner", desc: "Toàn quyền hệ thống" },
+  { value: "admin", label: "Agency Admin", desc: "Quản trị workspace" },
+  { value: "manager", label: "Sales Manager", desc: "Quản lý đội sales" },
+  { value: "agent", label: "Sales Agent", desc: "Sale tiêu chuẩn" },
+  { value: "viewer", label: "Viewer", desc: "Chỉ xem" },
 ];
+const tabs = ["Tổng quan", "Thành viên", "Phân quyền", "Phân công danh thiếp", "Hoạt động"];
 
-const tabs = ["Tổng quan", "Thành viên", "Phòng ban", "Vai trò & Phân quyền", "Mục tiêu (KPI)", "Báo cáo"];
-
-const series = [
-  { d: "01/05", rev: 18, deals: 42, leads: 110 },
-  { d: "06/05", rev: 22, deals: 50, leads: 130 },
-  { d: "11/05", rev: 19, deals: 46, leads: 120 },
-  { d: "16/05", rev: 22.4, deals: 68, leads: 156 },
-  { d: "21/05", rev: 26, deals: 60, leads: 148 },
-  { d: "26/05", rev: 24, deals: 58, leads: 140 },
-  { d: "31/05", rev: 28, deals: 72, leads: 162 },
-];
-
-const depts = [
-  { name: "Kinh doanh", value: 68.4, color: "hsl(244 75% 60%)" },
-  { name: "Marketing", value: 24.7, color: "hsl(199 89% 55%)" },
-  { name: "Chăm sóc KH", value: 19.6, color: "hsl(160 64% 45%)" },
-  { name: "Hỗ trợ", value: 15.9, color: "hsl(346 77% 60%)" },
-];
-
-const members: Member[] = [
-  { id: "m1", n: "Trần Minh Đức", email: "duc.tm@abc.vn", phone: "0901 234 567", dept: "Kinh doanh 1", role: "Senior Sales", l: 156, d: 24, rev: "12.6 tỷ", cv: "15.4%", kpi: "120%", star: 5, status: "active" },
-  { id: "m2", n: "Lê Thu Hương", email: "huong.lt@abc.vn", phone: "0902 345 678", dept: "Kinh doanh 1", role: "Sales Manager", l: 142, d: 18, rev: "9.8 tỷ", cv: "12.7%", kpi: "110%", star: 5, status: "active" },
-  { id: "m3", n: "Phạm Tuấn Anh", email: "anh.pt@abc.vn", phone: "0903 456 789", dept: "Kinh doanh 2", role: "Senior Sales", l: 134, d: 16, rev: "8.7 tỷ", cv: "11.9%", kpi: "105%", star: 4, status: "active" },
-  { id: "m4", n: "Nguyễn Hải Yến", email: "yen.nh@abc.vn", phone: "0904 567 890", dept: "Marketing", role: "Marketing Leader", l: 98, d: 12, rev: "6.4 tỷ", cv: "12.2%", kpi: "115%", star: 5, status: "active" },
-  { id: "m5", n: "Đỗ Quốc Bảo", email: "bao.dq@abc.vn", phone: "0905 678 901", dept: "Kinh doanh 2", role: "Senior Sales", l: 108, d: 14, rev: "6.1 tỷ", cv: "13.0%", kpi: "102%", star: 4, status: "active" },
-  { id: "m6", n: "Bùi Thị Ngọc", email: "ngoc.bt@abc.vn", phone: "0906 789 012", dept: "Chăm sóc KH", role: "CSKH Leader", l: 87, d: 10, rev: "4.3 tỷ", cv: "11.5%", kpi: "98%", star: 4, status: "active" },
-  { id: "m7", n: "Hoàng Minh Long", email: "long.hm@abc.vn", phone: "0907 890 123", dept: "Marketing", role: "Digital Marketing", l: 76, d: 9, rev: "3.2 tỷ", cv: "11.8%", kpi: "95%", star: 3, status: "active" },
-  { id: "m8", n: "Lưu Thanh Tâm", email: "tam.lt@abc.vn", phone: "0908 901 234", dept: "Kinh doanh 1", role: "Sales Executive", l: 69, d: 8, rev: "3.0 tỷ", cv: "11.6%", kpi: "92%", star: 3, status: "invited" },
-];
-
-const ranking = [
-  { i: 1, n: "Phòng Kinh doanh 1", v: "68.4 tỷ", t: 21.5, badge: Crown, tone: "text-amber-500" },
-  { i: 2, n: "Phòng Kinh doanh 2", v: "38.7 tỷ", t: 18.6, badge: Trophy, tone: "text-slate-400" },
-  { i: 3, n: "Phòng Marketing", v: "12.9 tỷ", t: 15.3, badge: Trophy, tone: "text-amber-700" },
-  { i: 4, n: "Phòng Chăm sóc KH", v: "5.6 tỷ", t: 11.2 },
-  { i: 5, n: "Phòng Hỗ trợ", v: "2.9 tỷ", t: 8.7 },
-];
-
-const activities = [
-  { n: "Trần Minh Đức", act: "vừa chốt deal", sub: "Vinhomes Ocean Park 2", time: "10 phút trước", tag: "+2.3 tỷ", tone: "bg-emerald-50 text-emerald-700" },
-  { n: "Lê Thu Hương", act: "thêm mới lead", sub: "Masteri Waterfront", time: "30 phút trước" },
-  { n: "Phạm Tuấn Anh", act: "cập nhật dự án", sub: "Lumi Hanoi", time: "1 giờ trước" },
-  { n: "Nguyễn Hải Yến", act: "đạt KPI tháng 5", sub: "120% mục tiêu", time: "2 giờ trước" },
-  { n: "Đỗ Quốc Bảo", act: "gửi email cho khách hàng", sub: "", time: "3 giờ trước" },
-];
-
-type DialogMode = { kind: "closed" } | { kind: "invite" } | { kind: "create" } | { kind: "edit"; member: Member };
+function fmtMoney(n: number) {
+  if (!n) return "0";
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + " tỷ";
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + " tr";
+  return n.toLocaleString("vi-VN");
+}
+function pct(v: number) {
+  return (v * 100).toFixed(1) + "%";
+}
 
 function TeamPage() {
+  const { currentTenant, hasRole, user } = useAuth();
+  const tenantId = currentTenant?.id;
+  const canManage = hasRole(["owner", "admin"]);
+  const qc = useQueryClient();
+
+  const fetchMembers = useServerFn(listMembers);
+  const fetchPerf = useServerFn(getTeamPerformance);
+  const fetchLb = useServerFn(getTeamLeaderboard);
+  const fetchAct = useServerFn(getTeamActivity);
+  const fetchCards = useServerFn(listTenantCards);
+  const invite = useServerFn(inviteMember);
+  const revoke = useServerFn(revokeInvitation);
+  const updateRole = useServerFn(updateMemberRole);
+  const remove = useServerFn(removeMember);
+  const assignCards = useServerFn(assignCardsToMember);
+
+  const membersQ = useQuery({
+    queryKey: ["team-members", tenantId],
+    queryFn: () => fetchMembers({ data: { tenantId: tenantId! } }),
+    enabled: !!tenantId,
+  });
+  const perfQ = useQuery({
+    queryKey: ["team-perf", tenantId],
+    queryFn: () => fetchPerf({ data: { tenantId: tenantId!, days: 30 } }),
+    enabled: !!tenantId,
+  });
+  const lbQ = useQuery({
+    queryKey: ["team-lb", tenantId],
+    queryFn: () => fetchLb({ data: { tenantId: tenantId!, metric: "revenue", limit: 10 } }),
+    enabled: !!tenantId,
+  });
+  const actQ = useQuery({
+    queryKey: ["team-act", tenantId],
+    queryFn: () => fetchAct({ data: { tenantId: tenantId!, limit: 10 } }),
+    enabled: !!tenantId,
+  });
+  const cardsQ = useQuery({
+    queryKey: ["team-cards", tenantId],
+    queryFn: () => fetchCards({ data: { tenantId: tenantId! } }),
+    enabled: !!tenantId,
+  });
+
   const [tab, setTab] = useState(0);
-  const [list, setList] = useState<Member[]>(members);
-  const [dialog, setDialog] = useState<DialogMode>({ kind: "closed" });
   const [query, setQuery] = useState("");
-  const [deptFilter, setDeptFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [inviteOpen, setInviteOpen] = useState(false);
 
-  const filtered = useMemo(() => {
+  const inviteMu = useMutation({
+    mutationFn: (v: { email: string; role: Role }) =>
+      invite({ data: { tenantId: tenantId!, email: v.email, role: v.role } }),
+    onSuccess: (row) => {
+      toast.success("Đã tạo lời mời");
+      const link = `${window.location.origin}/accept-invite/${row.token}`;
+      navigator.clipboard?.writeText(link).catch(() => {});
+      toast.message("Link đã sao chép", { description: link });
+      qc.invalidateQueries({ queryKey: ["team-members", tenantId] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Không gửi được lời mời"),
+  });
+  const updateMu = useMutation({
+    mutationFn: (v: { roleRowId: string; role: Role }) => updateRole({ data: v }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["team-members", tenantId] }),
+  });
+  const removeMu = useMutation({
+    mutationFn: (roleRowId: string) => remove({ data: { roleRowId } }),
+    onSuccess: () => {
+      toast.success("Đã xoá thành viên");
+      qc.invalidateQueries({ queryKey: ["team-members", tenantId] });
+    },
+  });
+  const revokeMu = useMutation({
+    mutationFn: (id: string) => revoke({ data: { id } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["team-members", tenantId] }),
+  });
+  const assignCardMu = useMutation({
+    mutationFn: (v: { cardIds: string[]; ownerUserId: string }) =>
+      assignCards({ data: { tenantId: tenantId!, ...v } }),
+    onSuccess: (r) => {
+      toast.success(`Đã phân công ${r.count} danh thiếp`);
+      qc.invalidateQueries({ queryKey: ["team-cards", tenantId] });
+      qc.invalidateQueries({ queryKey: ["team-perf", tenantId] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Lỗi phân công"),
+  });
+
+  if (!tenantId) {
+    return <div className="text-sm text-muted-foreground">Chọn workspace trước.</div>;
+  }
+
+  const members = membersQ.data?.members ?? [];
+  const invitations = membersQ.data?.invitations ?? [];
+  const perf = perfQ.data;
+  const perfMap = new Map(perf?.members.map((m) => [m.userId, m]) ?? []);
+
+  const merged = members.map((m) => ({
+    ...m,
+    perf: perfMap.get(m.userId),
+  }));
+  const filtered = merged.filter((m) => {
+    if (roleFilter !== "all" && m.role !== roleFilter) return false;
     const q = query.trim().toLowerCase();
-    return list.filter((m) =>
-      (deptFilter === "all" || m.dept === deptFilter) &&
-      (!q || m.n.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.role.toLowerCase().includes(q))
-    );
-  }, [list, query, deptFilter]);
+    if (!q) return true;
+    return (m.fullName ?? "").toLowerCase().includes(q) ||
+      (m.email ?? "").toLowerCase().includes(q) ||
+      m.role.toLowerCase().includes(q);
+  });
 
-  function upsertMember(m: Member) {
-    setList((cur) => {
-      const idx = cur.findIndex((x) => x.id === m.id);
-      if (idx === -1) return [m, ...cur];
-      const next = [...cur]; next[idx] = m; return next;
-    });
-  }
-  function removeMember(id: string) {
-    setList((cur) => cur.filter((m) => m.id !== id));
-    toast.success("Đã xoá thành viên");
-  }
-  function resendInvite(m: Member) {
-    toast.success(`Đã gửi lại lời mời tới ${m.email}`);
-  }
+  const totals = perf?.totals;
+  const revShare = perf?.members
+    .filter((m) => m.revenue > 0)
+    .slice(0, 5)
+    .map((m, i) => ({
+      name: m.fullName || m.email || "—",
+      value: m.revenue,
+      color: ["hsl(244 75% 60%)", "hsl(199 89% 55%)", "hsl(160 64% 45%)", "hsl(346 77% 60%)", "hsl(38 92% 50%)"][i % 5],
+    })) ?? [];
+
+  // Time series: last 7 buckets aggregated synthetically from leads/deals would require more queries.
+  // Provide a flat preview using totals split equally.
+  const series = Array.from({ length: 7 }).map((_, i) => ({
+    d: ["T2", "T3", "T4", "T5", "T6", "T7", "CN"][i],
+    rev: ((totals?.revenue ?? 0) / 7) / 1e9,
+    deals: Math.round((totals?.dealsWon ?? 0) / 7),
+    leads: Math.round((totals?.leads ?? 0) / 7),
+  }));
+
+  const kpis = [
+    { icon: Users2, label: "Tổng thành viên", value: String(totals?.memberCount ?? members.length), delta: 0, tone: "primary" as const },
+    { icon: CheckCircle2, label: "Đang hoạt động", value: String(totals?.activeMembers ?? 0), delta: 0, tone: "blue" as const },
+    { icon: DollarSign, label: "Doanh thu thắng", value: fmtMoney(totals?.revenue ?? 0), delta: 0, tone: "green" as const },
+    { icon: Crown, label: "Deals thắng", value: String(totals?.dealsWon ?? 0), delta: 0, tone: "amber" as const },
+    { icon: TrendingUp, label: "Conversion TB", value: pct(totals?.avgConversion ?? 0), delta: 0, tone: "indigo" as const },
+  ];
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
       <div className="space-y-6 min-w-0">
         <PageHeader
           title="Team Management"
-          sub="Quản lý đội nhóm và hiệu suất kinh doanh"
+          sub="Quản lý đội nhóm, phân quyền và hiệu suất"
           action={
             <div className="flex items-center gap-2">
-              <button className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-muted/50">
+              <button
+                onClick={() => {
+                  const csv = ["Họ tên,Email,Vai trò,Leads,Deals thắng,Doanh thu,Tỷ lệ chuyển đổi,NFC/QR"].concat(
+                    merged.map((m) =>
+                      [m.fullName ?? "", m.email ?? "", m.role,
+                      m.perf?.leadsTotal ?? 0, m.perf?.dealsWon ?? 0,
+                      m.perf?.revenue ?? 0, ((m.perf?.conversionRate ?? 0) * 100).toFixed(1) + "%",
+                      m.perf?.nfcQrInteractions ?? 0].join(","),
+                    ),
+                  ).join("\n");
+                  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a"); a.href = url; a.download = "team-performance.csv"; a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-muted/50">
                 <Download className="h-4 w-4" /> Xuất báo cáo
               </button>
-              <button onClick={() => setDialog({ kind: "invite" })} className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-muted/50">
-                <Mail className="h-4 w-4" /> Mời qua email
-              </button>
-              <button onClick={() => setDialog({ kind: "create" })} className="h-9 px-3 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-semibold inline-flex items-center gap-1.5">
-                <Plus className="h-4 w-4" /> Thêm thành viên
-              </button>
+              {canManage && (
+                <button onClick={() => setInviteOpen(true)} className="h-9 px-3 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-semibold inline-flex items-center gap-1.5">
+                  <UserPlus className="h-4 w-4" /> Mời thành viên
+                </button>
+              )}
             </div>
           }
         />
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {kpis.map((k) => <KpiCard key={k.label} {...k} deltaLabel="so với tháng trước" />)}
+          {kpis.map((k) => <KpiCard key={k.label} {...k} deltaLabel="30 ngày qua" />)}
         </div>
 
-        {/* Tabs */}
         <div className="border-b border-border">
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin">
             {tabs.map((t, i) => (
-              <button
-                key={t}
-                onClick={() => setTab(i)}
+              <button key={t} onClick={() => setTab(i)}
                 className={[
                   "px-3.5 py-2.5 text-[13px] font-medium whitespace-nowrap border-b-2 -mb-px transition",
                   tab === i ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
-                ].join(" ")}
-              >
+                ].join(" ")}>
                 {t}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}
-            className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] outline-none focus:ring-2 focus:ring-primary/30">
-            <option value="all">Tất cả phòng ban</option>
-            {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
-          <button className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] inline-flex items-center gap-2">
-            <Calendar className="h-3.5 w-3.5" /> 01/05/2024 – 31/05/2024
-          </button>
-          <button className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] inline-flex items-center gap-2">
-            <Filter className="h-3.5 w-3.5" /> Bộ lọc
-          </button>
-          <div className="ml-auto relative">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm thành viên, phòng ban..." className="h-9 w-72 pl-9 pr-3 rounded-xl border border-border bg-card text-[12.5px] outline-none focus:ring-2 focus:ring-primary/30" />
+        {(tab === 0 || tab === 1) && (
+          <div className="flex flex-wrap items-center gap-2">
+            <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
+              className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] outline-none focus:ring-2 focus:ring-primary/30">
+              <option value="all">Tất cả vai trò</option>
+              {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+            </select>
+            <button className="h-9 px-3 rounded-xl border border-border bg-card text-[12.5px] inline-flex items-center gap-2">
+              <Calendar className="h-3.5 w-3.5" /> 30 ngày qua
+            </button>
+            <div className="ml-auto relative">
+              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)}
+                placeholder="Tìm theo tên, email..."
+                className="h-9 pl-8 pr-3 rounded-xl border border-border bg-card text-[12.5px] w-64 outline-none focus:ring-2 focus:ring-primary/30" />
+            </div>
           </div>
-        </div>
+        )}
 
-
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4">
-          <SectionCard title="Hiệu suất đội nhóm"
-            action={<button className="h-7 px-2.5 rounded-lg border border-border text-[11.5px] inline-flex items-center gap-1">Theo ngày ▾</button>}>
-            <div className="flex items-center gap-4 mb-2 text-[11.5px]">
-              <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" />Doanh thu</span>
-              <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-blue-500" />Deals</span>
-              <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" />Leads</span>
-            </div>
-            <div className="h-[260px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={series}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="d" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))", fontSize: 12 }} />
-                  <Line type="monotone" dataKey="rev" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="deals" stroke="hsl(199 89% 55%)" strokeWidth={2.5} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="leads" stroke="hsl(160 64% 45%)" strokeWidth={2.5} dot={{ r: 3 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </SectionCard>
-
-          <SectionCard title="Phân bổ theo phòng ban">
-            <div className="flex items-center gap-3">
-              <div className="h-[220px] w-[200px] relative shrink-0">
+        {tab === 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <SectionCard title="Hiệu suất 7 ngày" className="lg:col-span-2">
+              <div className="h-[260px] -ml-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={depts} dataKey="value" innerRadius={62} outerRadius={88} paddingAngle={2}>
-                      {depts.map((d) => <Cell key={d.name} fill={d.color} />)}
-                    </Pie>
-                  </PieChart>
+                  <LineChart data={series}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="d" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                    <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))", fontSize: 12 }} />
+                    <Line type="monotone" dataKey="rev" name="Doanh thu (tỷ)" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="deals" name="Deals" stroke="hsl(199 89% 55%)" strokeWidth={2.5} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="leads" name="Leads" stroke="hsl(160 64% 45%)" strokeWidth={2.5} dot={{ r: 3 }} />
+                  </LineChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 grid place-items-center pointer-events-none">
-                  <div className="text-center">
-                    <div className="text-[18px] font-bold leading-tight">128.6</div>
-                    <div className="text-[10.5px] text-muted-foreground">tỷ doanh thu</div>
-                  </div>
-                </div>
-              </div>
-              <ul className="flex-1 space-y-2 text-[12px]">
-                {depts.map((d) => (
-                  <li key={d.name} className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full" style={{ background: d.color }} />
-                    <span className="flex-1 truncate">{d.name}</span>
-                    <span className="font-semibold">{d.value} tỷ</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </SectionCard>
-        </div>
-
-        {/* Members table */}
-        <SectionCard title="Hiệu suất thành viên">
-          <div className="overflow-x-auto -mx-2">
-            <table className="w-full text-[12.5px]">
-              <thead>
-                <tr className="text-left text-muted-foreground border-b border-border">
-                  {["Thành viên", "Phòng ban", "Vị trí", "Leads", "Deals", "Doanh thu", "Tỷ lệ chuyển đổi", "KPI", "Hiệu suất", ""].map((h, i) => (
-                    <th key={i} className="font-medium px-2 py-2.5 whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((m) => (
-                  <tr key={m.id} className="border-b border-border/60 hover:bg-muted/30">
-                    <td className="px-2 py-2.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-indigo-500 grid place-items-center text-white text-[11px] font-semibold">{m.n.split(" ").pop()![0]}</div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-semibold">{m.n}</span>
-                            {m.status === "invited" && <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700">Đang mời</span>}
-                            {m.status === "inactive" && <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground">Tạm khoá</span>}
-                          </div>
-                          <div className="text-[10.5px] text-muted-foreground truncate">{m.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-2 py-2.5">{m.dept}</td>
-                    <td className="px-2 py-2.5 text-muted-foreground">{m.role}</td>
-                    <td className="px-2 py-2.5 font-semibold">{m.l}</td>
-                    <td className="px-2 py-2.5 font-semibold">{m.d}</td>
-                    <td className="px-2 py-2.5 font-semibold text-primary">{m.rev}</td>
-                    <td className="px-2 py-2.5">{m.cv}</td>
-                    <td className="px-2 py-2.5">
-                      <span className={["text-[11px] font-bold px-2 py-0.5 rounded-md", parseInt(m.kpi) >= 100 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"].join(" ")}>{m.kpi}</span>
-                    </td>
-                    <td className="px-2 py-2.5">
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} className={["h-3.5 w-3.5", i < m.star ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"].join(" ")} />
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-2 py-2.5">
-                      <div className="flex items-center gap-0.5 justify-end">
-                        {m.status === "invited" && (
-                          <button onClick={() => resendInvite(m)} title="Gửi lại lời mời" className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-primary hover:bg-muted">
-                            <Send className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                        <button onClick={() => setDialog({ kind: "edit", member: m })} title="Chỉnh sửa" className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-primary hover:bg-muted">
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <button onClick={() => { if (confirm(`Xoá ${m.n}?`)) removeMember(m.id); }} title="Xoá" className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-rose-600 hover:bg-rose-50">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {filtered.length === 0 && (
-                  <tr><td colSpan={10} className="px-2 py-10 text-center text-muted-foreground text-[12.5px]">Không có thành viên phù hợp.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex items-center justify-between pt-3 text-[12px] text-muted-foreground">
-            <span>Hiển thị {filtered.length} / {list.length} thành viên</span>
-            <div className="flex items-center gap-1">
-              <button className="h-7 px-2 rounded-md border border-border">10 / trang ▾</button>
-              {[1, 2, 3, 4, 5].map((p) => (
-                <button key={p} className={["h-7 w-7 rounded-md text-[12px]", p === 1 ? "bg-primary text-primary-foreground font-semibold" : "border border-border"].join(" ")}>{p}</button>
-              ))}
-            </div>
-          </div>
-        </SectionCard>
-
-
-        {/* Roles */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {[
-            { role: "Admin", count: 2, perms: ["Toàn quyền hệ thống", "Quản lý billing", "Quản lý team"], tone: "from-rose-500/10", icon: ShieldCheck },
-            { role: "Manager", count: 4, perms: ["Quản lý sales team", "Báo cáo tổng", "Phê duyệt deal"], tone: "from-blue-500/10", icon: Target },
-            { role: "Sales", count: 18, perms: ["Quản lý lead cá nhân", "Pipeline cá nhân", "Chia sẻ danh thiếp"], tone: "from-primary/10", icon: Users2 },
-          ].map((r) => (
-            <SectionCard key={r.role}>
-              <div className={["rounded-xl bg-gradient-to-br to-transparent p-4 -m-1", r.tone].join(" ")}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <r.icon className="h-4 w-4 text-foreground/70" />
-                    <div className="text-[15px] font-bold">{r.role}</div>
-                  </div>
-                  <span className="text-[11px] px-2 py-0.5 rounded-md bg-card border border-border font-semibold">{r.count} người</span>
-                </div>
-                <ul className="space-y-1.5 text-[12px] text-muted-foreground">
-                  {r.perms.map((p) => <li key={p}>• {p}</li>)}
-                </ul>
               </div>
             </SectionCard>
-          ))}
-        </div>
+
+            <SectionCard title="Top doanh thu thành viên">
+              {revShare.length === 0 ? (
+                <div className="py-10 text-center text-[12.5px] text-muted-foreground">Chưa có doanh thu thắng.</div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="h-[200px] w-[180px] relative shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={revShare} dataKey="value" innerRadius={56} outerRadius={82} paddingAngle={2}>
+                          {revShare.map((d) => <Cell key={d.name} fill={d.color} />)}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 grid place-items-center pointer-events-none">
+                      <div className="text-center">
+                        <div className="text-[16px] font-bold leading-tight">{fmtMoney(totals?.revenue ?? 0)}</div>
+                        <div className="text-[10.5px] text-muted-foreground">tổng doanh thu</div>
+                      </div>
+                    </div>
+                  </div>
+                  <ul className="flex-1 space-y-2 text-[12px] min-w-0">
+                    {revShare.map((d) => (
+                      <li key={d.name} className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: d.color }} />
+                        <span className="flex-1 truncate">{d.name}</span>
+                        <span className="font-semibold">{fmtMoney(d.value)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </SectionCard>
+          </div>
+        )}
+
+        {(tab === 0 || tab === 1) && (
+          <SectionCard title="Hiệu suất thành viên">
+            <div className="overflow-x-auto -mx-2">
+              <table className="w-full text-[12.5px]">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b border-border">
+                    {["Thành viên", "Vai trò", "Leads", "Deals thắng", "Doanh thu", "Conversion", "NFC/QR", "Pipeline", ""].map((h, i) => (
+                      <th key={i} className="font-medium px-2 py-2.5 whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((m) => {
+                    const initials = (m.fullName || m.email || "?").slice(0, 2).toUpperCase();
+                    const isMe = m.userId === user?.id;
+                    return (
+                      <tr key={m.roleRowId} className="border-b border-border/60 hover:bg-muted/30">
+                        <td className="px-2 py-2.5">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-indigo-500 grid place-items-center text-white text-[11px] font-semibold">{initials}</div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-semibold">{m.fullName ?? m.email ?? "—"}</span>
+                                {isMe && <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-md bg-primary-soft text-primary">Bạn</span>}
+                              </div>
+                              <div className="text-[10.5px] text-muted-foreground truncate">{m.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-2 py-2.5">
+                          {canManage && !isMe ? (
+                            <select
+                              value={m.role}
+                              onChange={(e) => updateMu.mutate({ roleRowId: m.roleRowId, role: e.target.value as Role })}
+                              className="h-7 rounded-md border border-border bg-card px-1.5 text-[11.5px]"
+                            >
+                              {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                            </select>
+                          ) : (
+                            <span className="text-[11.5px] px-2 py-0.5 rounded-md bg-muted">{ROLE_OPTIONS.find((r) => r.value === m.role)?.label ?? m.role}</span>
+                          )}
+                        </td>
+                        <td className="px-2 py-2.5 font-semibold">{m.perf?.leadsTotal ?? 0}</td>
+                        <td className="px-2 py-2.5 font-semibold">{m.perf?.dealsWon ?? 0}</td>
+                        <td className="px-2 py-2.5 font-semibold text-primary">{fmtMoney(m.perf?.revenue ?? 0)}</td>
+                        <td className="px-2 py-2.5">{pct(m.perf?.conversionRate ?? 0)}</td>
+                        <td className="px-2 py-2.5">{m.perf?.nfcQrInteractions ?? 0}</td>
+                        <td className="px-2 py-2.5 text-muted-foreground">{fmtMoney(m.perf?.pipelineValue ?? 0)}</td>
+                        <td className="px-2 py-2.5">
+                          {canManage && !isMe && (
+                            <button onClick={() => { if (confirm(`Xoá ${m.fullName ?? m.email}?`)) removeMu.mutate(m.roleRowId); }}
+                              title="Xoá" className="h-7 w-7 grid place-items-center rounded-md text-muted-foreground hover:text-rose-600 hover:bg-rose-50">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {!membersQ.isLoading && filtered.length === 0 && (
+                    <tr><td colSpan={9} className="px-2 py-10 text-center text-muted-foreground text-[12.5px]">Không có thành viên phù hợp.</td></tr>
+                  )}
+                  {membersQ.isLoading && (
+                    <tr><td colSpan={9} className="px-2 py-10 text-center text-muted-foreground text-[12.5px]">Đang tải...</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {invitations.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <div className="text-[12px] font-semibold text-muted-foreground mb-2">Lời mời ({invitations.length})</div>
+                <div className="space-y-1.5">
+                  {invitations.map((inv: any) => {
+                    const link = `${typeof window !== "undefined" ? window.location.origin : ""}/accept-invite/${inv.token}`;
+                    return (
+                      <div key={inv.id} className="flex items-center gap-2 text-[12px] py-1.5 px-2 rounded-md hover:bg-muted/40">
+                        <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="font-medium truncate flex-1">{inv.email}</span>
+                        <span className="text-[11px] text-muted-foreground">{ROLE_OPTIONS.find((r) => r.value === inv.role)?.label ?? inv.role}</span>
+                        <span className={[
+                          "text-[10.5px] px-1.5 py-0.5 rounded-md font-semibold",
+                          inv.status === "pending" ? "bg-amber-50 text-amber-700" : "bg-muted text-muted-foreground",
+                        ].join(" ")}>{inv.status}</span>
+                        {canManage && inv.status === "pending" && (
+                          <>
+                            <button onClick={() => { navigator.clipboard.writeText(link); toast.success("Đã sao chép link"); }}
+                              className="h-7 w-7 grid place-items-center rounded-md hover:bg-muted">
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                            <button onClick={() => revokeMu.mutate(inv.id)}
+                              className="h-7 px-2 rounded-md hover:bg-muted text-[11px] text-rose-600">Thu hồi</button>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </SectionCard>
+        )}
+
+        {tab === 2 && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {ROLE_OPTIONS.map((r) => {
+              const count = members.filter((m) => m.role === r.value).length;
+              return (
+                <SectionCard key={r.value}>
+                  <div className="rounded-xl bg-gradient-to-br from-primary/5 to-transparent p-4 -m-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4 text-foreground/70" />
+                        <div className="text-[15px] font-bold">{r.label}</div>
+                      </div>
+                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-card border border-border font-semibold">{count} người</span>
+                    </div>
+                    <div className="text-[12px] text-muted-foreground">{r.desc}</div>
+                  </div>
+                </SectionCard>
+              );
+            })}
+          </div>
+        )}
+
+        {tab === 3 && (
+          <SectionCard title="Phân công danh thiếp">
+            <div className="overflow-x-auto -mx-2">
+              <table className="w-full text-[12.5px]">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b border-border">
+                    {["Danh thiếp", "Chủ sở hữu", "Trạng thái", ""].map((h, i) => (
+                      <th key={i} className="font-medium px-2 py-2.5 whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(cardsQ.data?.cards ?? []).map((c: any) => {
+                    const owner = members.find((m) => m.userId === c.owner_user_id);
+                    return (
+                      <tr key={c.id} className="border-b border-border/60 hover:bg-muted/30">
+                        <td className="px-2 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <IdCard className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-semibold">{c.display_name}</span>
+                            <span className="text-[11px] text-muted-foreground">/{c.slug}</span>
+                          </div>
+                        </td>
+                        <td className="px-2 py-2.5">{owner?.fullName ?? owner?.email ?? <span className="text-muted-foreground">Chưa gán</span>}</td>
+                        <td className="px-2 py-2.5">
+                          <span className={["text-[10.5px] px-1.5 py-0.5 rounded-md font-semibold",
+                            c.is_published ? "bg-emerald-50 text-emerald-700" : "bg-muted text-muted-foreground"].join(" ")}>
+                            {c.is_published ? "Published" : "Draft"}
+                          </span>
+                        </td>
+                        <td className="px-2 py-2.5">
+                          {canManage && (
+                            <select
+                              value={c.owner_user_id ?? ""}
+                              onChange={(e) => assignCardMu.mutate({ cardIds: [c.id], ownerUserId: e.target.value })}
+                              className="h-7 rounded-md border border-border bg-card px-1.5 text-[11.5px]"
+                            >
+                              {members.map((m) => (
+                                <option key={m.userId} value={m.userId}>{m.fullName ?? m.email}</option>
+                              ))}
+                            </select>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {(cardsQ.data?.cards.length ?? 0) === 0 && (
+                    <tr><td colSpan={4} className="px-2 py-10 text-center text-muted-foreground">Chưa có danh thiếp nào.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </SectionCard>
+        )}
+
+        {tab === 4 && (
+          <SectionCard title="Hoạt động gần đây">
+            <div className="space-y-3">
+              {(actQ.data?.activities ?? []).map((a) => (
+                <div key={a.kind + a.id} className="flex items-start gap-2.5 py-1.5 border-b border-border/50 last:border-0">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-indigo-500 grid place-items-center text-white text-[11px] font-semibold shrink-0">
+                    {(a.ownerName ?? "?").slice(0, 1).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[12.5px]">
+                      <span className="font-semibold">{a.ownerName ?? "Chưa gán"}</span>{" "}
+                      <span className="text-muted-foreground">
+                        {a.kind === "lead" ? "cập nhật lead" : "cập nhật deal"} ({a.status})
+                      </span>
+                    </div>
+                    <div className="text-[11.5px] text-muted-foreground truncate">{a.title}</div>
+                    <div className="text-[10.5px] text-muted-foreground mt-0.5">{new Date(a.occurredAt).toLocaleString("vi-VN")}</div>
+                  </div>
+                  {a.value ? <span className="text-[10.5px] px-1.5 py-0.5 rounded-md font-semibold bg-emerald-50 text-emerald-700 whitespace-nowrap">{fmtMoney(a.value)}</span> : null}
+                </div>
+              ))}
+              {(actQ.data?.activities.length ?? 0) === 0 && (
+                <div className="py-10 text-center text-[12.5px] text-muted-foreground">Chưa có hoạt động.</div>
+              )}
+            </div>
+          </SectionCard>
+        )}
       </div>
 
-      {/* Right rail */}
       <aside className="space-y-4">
-        <SectionCard title="Bảng xếp hạng đội nhóm"
-          action={<button className="h-7 px-2 rounded-lg border border-border text-[11.5px]">Tháng này ▾</button>}>
+        <SectionCard title="Bảng xếp hạng" action={<span className="text-[11px] text-muted-foreground">Theo doanh thu</span>}>
           <div className="space-y-2">
-            {ranking.map((r) => (
-              <div key={r.n} className="flex items-center gap-3 py-1.5">
-                <div className="w-5 text-center text-[12px] font-bold text-muted-foreground">{r.i}</div>
-                {r.badge ? (
-                  <r.badge className={["h-5 w-5", r.tone].join(" ")} />
-                ) : (
-                  <div className="h-5 w-5" />
-                )}
-                <div className="flex-1 min-w-0 text-[12.5px] truncate">{r.n}</div>
-                <div className="text-[12px] font-semibold">{r.v}</div>
-                <div className="text-[11px] font-bold text-emerald-600 w-10 text-right">↑{r.t}%</div>
-              </div>
-            ))}
-          </div>
-          <button className="mt-3 w-full text-[12px] font-semibold text-primary inline-flex items-center justify-center gap-1">
-            Xem bảng xếp hạng chi tiết <ArrowRight className="h-3.5 w-3.5" />
-          </button>
-        </SectionCard>
-
-        <SectionCard title="Hoạt động gần đây">
-          <div className="space-y-3">
-            {activities.map((a, i) => (
-              <div key={i} className="flex items-start gap-2.5">
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-indigo-500 grid place-items-center text-white text-[11px] font-semibold shrink-0">{a.n.split(" ").pop()![0]}</div>
+            {(lbQ.data?.rows ?? []).map((r, i) => (
+              <div key={r.userId} className="flex items-center gap-3 py-1.5">
+                <div className="w-5 text-center text-[12px] font-bold text-muted-foreground">{i + 1}</div>
+                {i === 0 ? <Crown className="h-5 w-5 text-amber-500" /> :
+                  i === 1 ? <Trophy className="h-5 w-5 text-slate-400" /> :
+                  i === 2 ? <Trophy className="h-5 w-5 text-amber-700" /> :
+                  <div className="h-5 w-5" />}
                 <div className="flex-1 min-w-0">
-                  <div className="text-[12.5px]"><span className="font-semibold">{a.n}</span> <span className="text-muted-foreground">{a.act}</span></div>
-                  {a.sub && <div className="text-[11.5px] text-muted-foreground truncate">{a.sub}</div>}
-                  <div className="text-[10.5px] text-muted-foreground mt-0.5">{a.time}</div>
+                  <div className="text-[12.5px] truncate font-medium">{r.fullName ?? r.email ?? "—"}</div>
+                  <div className="text-[10.5px] text-muted-foreground">{r.dealsWon} deals · {r.leads} leads</div>
                 </div>
-                {a.tag && <span className={["text-[10.5px] px-1.5 py-0.5 rounded-md font-semibold whitespace-nowrap", a.tone].join(" ")}>{a.tag}</span>}
+                <div className="text-[12px] font-semibold text-primary">{fmtMoney(r.revenue)}</div>
+              </div>
+            ))}
+            {(lbQ.data?.rows.length ?? 0) === 0 && (
+              <div className="py-6 text-center text-[12px] text-muted-foreground">Chưa có dữ liệu xếp hạng.</div>
+            )}
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Hoạt động">
+          <div className="space-y-3">
+            {(actQ.data?.activities ?? []).slice(0, 5).map((a) => (
+              <div key={"r" + a.kind + a.id} className="flex items-start gap-2">
+                <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-indigo-500 grid place-items-center text-white text-[10px] font-semibold shrink-0">
+                  {(a.ownerName ?? "?").slice(0, 1).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[12px]"><span className="font-semibold">{a.ownerName ?? "—"}</span> <span className="text-muted-foreground">{a.kind === "lead" ? "lead" : "deal"} · {a.status}</span></div>
+                  <div className="text-[11px] text-muted-foreground truncate">{a.title}</div>
+                </div>
               </div>
             ))}
           </div>
-          <button className="mt-3 w-full text-[12px] font-semibold text-primary inline-flex items-center justify-center gap-1">
-            Xem tất cả hoạt động <ArrowRight className="h-3.5 w-3.5" />
+          <button onClick={() => setTab(4)} className="mt-3 w-full text-[12px] font-semibold text-primary inline-flex items-center justify-center gap-1">
+            Xem tất cả <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </SectionCard>
 
-        <SectionCard title="Mục tiêu tháng 5"
-          action={<span className="text-[11px] text-muted-foreground">Còn 10 ngày</span>}>
+        <SectionCard title="Pipeline đội">
           <div className="flex items-end justify-between mb-1">
             <div>
-              <div className="text-[20px] font-bold">128.6 tỷ</div>
-              <div className="text-[11px] text-muted-foreground">Doanh thu thực tế</div>
+              <div className="text-[20px] font-bold">{fmtMoney(totals?.pipeline ?? 0)}</div>
+              <div className="text-[11px] text-muted-foreground">Giá trị đang mở</div>
             </div>
             <div className="text-right">
-              <div className="text-[14px] font-bold">150 tỷ</div>
-              <div className="text-[11px] text-muted-foreground">Mục tiêu</div>
+              <div className="text-[14px] font-bold">{totals?.dealsOpen ?? 0}</div>
+              <div className="text-[11px] text-muted-foreground">Deals mở</div>
             </div>
           </div>
-          <div className="h-2 rounded-full bg-muted overflow-hidden mt-2">
-            <div className="h-full bg-gradient-to-r from-primary to-indigo-500" style={{ width: "85.7%" }} />
-          </div>
           <div className="text-[11.5px] text-muted-foreground mt-2 inline-flex items-center gap-1">
-            <Activity className="h-3 w-3" /> Đạt 85.7% mục tiêu
+            <Activity className="h-3 w-3" /> Tổng leads {totals?.leads ?? 0} · NFC/QR {totals?.nfcQr ?? 0}
           </div>
         </SectionCard>
-
-        <button className="w-full h-10 rounded-xl border border-border text-[12.5px] font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-muted/50">
-          <MoreHorizontal className="h-4 w-4" /> Tuỳ chọn khác
-        </button>
       </aside>
 
-      <MemberDialog
-        mode={dialog}
-        onClose={() => setDialog({ kind: "closed" })}
-        onSubmit={(m) => { upsertMember(m); setDialog({ kind: "closed" }); }}
+      <InviteDialog
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        onSubmit={(email, role) => { inviteMu.mutate({ email, role }); setInviteOpen(false); }}
+        pending={inviteMu.isPending}
       />
     </div>
   );
 }
 
-/* =============== Dialog =============== */
-function genId() { return "m" + Math.random().toString(36).slice(2, 9); }
-
-function MemberDialog({
-  mode, onClose, onSubmit,
+function InviteDialog({
+  open, onClose, onSubmit, pending,
 }: {
-  mode: DialogMode;
+  open: boolean;
   onClose: () => void;
-  onSubmit: (m: Member) => void;
+  onSubmit: (email: string, role: Role) => void;
+  pending: boolean;
 }) {
-  const open = mode.kind !== "closed";
-  const editing = mode.kind === "edit" ? mode.member : null;
-  const isInvite = mode.kind === "invite";
-
-  const [n, setN] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [dept, setDept] = useState<string>(DEPARTMENTS[0]);
-  const [role, setRole] = useState<string>(ROLES[4].v);
-  const [emails, setEmails] = useState(""); // for invite (comma/newline)
+  const [role, setRole] = useState<Role>("agent");
 
-  // Reset on open
-  useMemo(() => {
-    if (!open) return;
-    if (editing) {
-      setN(editing.n); setEmail(editing.email); setPhone(editing.phone);
-      setDept(editing.dept); setRole(editing.role);
-    } else {
-      setN(""); setEmail(""); setPhone(""); setDept(DEPARTMENTS[0]); setRole(ROLES[4].v); setEmails("");
+  function submit() {
+    const v = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+      toast.error("Email không hợp lệ"); return;
     }
-  }, [open, editing?.id]);
-
-  function validateEmail(v: string) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+    onSubmit(v, role);
+    setEmail("");
   }
-
-  function handleSubmit() {
-    if (isInvite) {
-      const parts = emails.split(/[\s,;]+/).map((e) => e.trim()).filter(Boolean);
-      if (parts.length === 0) { toast.error("Nhập ít nhất 1 email"); return; }
-      const invalid = parts.filter((e) => !validateEmail(e));
-      if (invalid.length) { toast.error(`Email không hợp lệ: ${invalid.join(", ")}`); return; }
-      // Create one invited member per email
-      parts.forEach((e) => {
-        onSubmit({
-          id: genId(),
-          n: e.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-          email: e, phone: "", dept, role,
-          l: 0, d: 0, rev: "0", cv: "0%", kpi: "0%", star: 0, status: "invited",
-        });
-      });
-      toast.success(`Đã gửi ${parts.length} lời mời tới phòng ${dept}`);
-      return;
-    }
-
-    if (!n.trim()) { toast.error("Nhập tên thành viên"); return; }
-    if (!validateEmail(email)) { toast.error("Email không hợp lệ"); return; }
-
-    if (editing) {
-      onSubmit({ ...editing, n: n.trim(), email: email.trim(), phone: phone.trim(), dept, role });
-      toast.success("Đã cập nhật thành viên");
-    } else {
-      onSubmit({
-        id: genId(), n: n.trim(), email: email.trim(), phone: phone.trim(), dept, role,
-        l: 0, d: 0, rev: "0", cv: "0%", kpi: "0%", star: 0, status: "active",
-      });
-      toast.success("Đã thêm thành viên");
-    }
-  }
-
-  const title = isInvite ? "Mời thành viên qua email" : editing ? "Chỉnh sửa thành viên" : "Thêm thành viên mới";
-  const desc = isInvite
-    ? "Mời nhiều người cùng lúc bằng email, có thể gán sẵn phòng ban và vai trò."
-    : editing ? "Cập nhật thông tin, phòng ban và vai trò." : "Tạo thành viên mới và phân công phòng ban / vai trò.";
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {isInvite ? <Mail className="h-4.5 w-4.5 text-primary" /> : editing ? <Pencil className="h-4.5 w-4.5 text-primary" /> : <UserPlus className="h-4.5 w-4.5 text-primary" />}
-            {title}
+            <UserPlus className="h-4 w-4 text-primary" /> Mời thành viên
           </DialogTitle>
-          <DialogDescription>{desc}</DialogDescription>
+          <DialogDescription>
+            Gửi lời mời tham gia workspace. Link sẽ được sao chép vào clipboard.
+          </DialogDescription>
         </DialogHeader>
-
-        <div className="space-y-3.5 pt-1">
-          {isInvite ? (
-            <Field label="Email (cách nhau bằng dấu phẩy hoặc xuống dòng)">
-              <textarea
-                value={emails}
-                onChange={(e) => setEmails(e.target.value)}
-                placeholder="email1@abc.vn, email2@abc.vn"
-                rows={3}
-                maxLength={2000}
-                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-primary/30"
-              />
-            </Field>
-          ) : (
-            <>
-              <Field label="Họ và tên">
-                <input value={n} onChange={(e) => setN(e.target.value)} maxLength={100}
-                  className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30" />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Email">
-                  <input value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} type="email"
-                    className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30" />
-                </Field>
-                <Field label="Số điện thoại">
-                  <input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20}
-                    className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30" />
-                </Field>
-              </div>
-            </>
-          )}
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Phòng ban">
-              <select value={dept} onChange={(e) => setDept(e.target.value)}
-                className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30">
-                {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </Field>
-            <Field label="Vai trò">
-              <select value={role} onChange={(e) => setRole(e.target.value)}
-                className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30">
-                {ROLES.map((r) => <option key={r.v} value={r.v}>{r.v}</option>)}
-              </select>
-            </Field>
+        <div className="space-y-3 pt-1">
+          <div>
+            <label className="text-[12px] font-medium text-muted-foreground">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="email@congty.com"
+              className="mt-1 w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px] outline-none focus:ring-2 focus:ring-primary/30"
+            />
           </div>
-
-          <div className="rounded-lg bg-muted/50 border border-border px-3 py-2 text-[11.5px] text-muted-foreground flex items-start gap-2">
-            <ShieldCheck className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
-            <span>{ROLES.find((r) => r.v === role)?.desc} · Có thể thay đổi quyền chi tiết ở tab "Vai trò & Phân quyền".</span>
+          <div>
+            <label className="text-[12px] font-medium text-muted-foreground">Vai trò</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as Role)}
+              className="mt-1 w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px]"
+            >
+              {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label} — {r.desc}</option>)}
+            </select>
           </div>
         </div>
-
-        <DialogFooter className="pt-2">
-          <button onClick={onClose} className="h-9 px-4 rounded-lg border border-border bg-card text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-muted/50">
-            <X className="h-3.5 w-3.5" /> Huỷ
-          </button>
-          <button onClick={handleSubmit} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-[12.5px] font-semibold inline-flex items-center gap-1.5">
-            {isInvite ? <><Send className="h-3.5 w-3.5" /> Gửi lời mời</> : editing ? <><Check className="h-3.5 w-3.5" /> Lưu thay đổi</> : <><Plus className="h-3.5 w-3.5" /> Thêm thành viên</>}
+        <DialogFooter>
+          <button onClick={onClose} className="h-9 px-4 rounded-lg border border-border bg-card text-[12.5px] font-semibold">Huỷ</button>
+          <button onClick={submit} disabled={pending} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-[12.5px] font-semibold disabled:opacity-60">
+            {pending ? "Đang gửi..." : "Gửi lời mời"}
           </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="block text-[12px] font-semibold text-foreground/80 mb-1.5">{label}</span>
-      {children}
-    </label>
-  );
-}
-
