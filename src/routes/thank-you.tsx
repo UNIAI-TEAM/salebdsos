@@ -29,10 +29,10 @@ const SIZE_LABEL: Record<string, string> = {
 export const Route = createFileRoute("/thank-you")({
   head: () => ({
     meta: [
-      { title: "Cảm ơn bạn — NFC Platform" },
+      { title: "Cảm ơn bạn — SaleBDS OS" },
       { name: "description", content: "Yêu cầu trải nghiệm demo của bạn đã được ghi nhận. Xem các bước tiếp theo để bắt đầu." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Cảm ơn bạn — NFC Platform" },
+      { property: "og:title", content: "Cảm ơn bạn — SaleBDS OS" },
       { property: "og:description", content: "Yêu cầu trải nghiệm demo của bạn đã được ghi nhận." },
     ],
   }),
