@@ -355,13 +355,7 @@ function LeadDetail({
           <button onClick={onEdit} className="h-10 rounded-lg bg-primary text-primary-foreground grid place-items-center hover:bg-primary/90"><Save className="h-4 w-4" /></button>
         </div>
 
-        <div className="rounded-xl bg-gradient-to-br from-primary/5 to-indigo-50 p-3 flex items-center gap-3">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <div className="text-[12px]">
-            <div className="font-semibold">AI Lead Score</div>
-            <div className="text-muted-foreground">Tính năng đang chuẩn bị — sẽ chấm điểm dựa trên hành vi tương tác.</div>
-          </div>
-        </div>
+        <LeadScorePanel leadId={lead.id} initialScore={lead.score ?? null} />
 
         <div>
           <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Trạng thái</Label>
