@@ -98,7 +98,7 @@ export function AppSidebar() {
           </div>
           <div className="leading-tight">
             <div className="text-[15px] font-bold text-white">SaleBDS OS</div>
-            <div className="text-[11px] text-sidebar-foreground/60">Sales Growth · BĐS</div>
+            <div className="text-[11px] text-sidebar-foreground/60">Điều hành kinh doanh bằng điểm chạm</div>
           </div>
         </Link>
       </div>
