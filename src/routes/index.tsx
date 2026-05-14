@@ -122,8 +122,8 @@ function Hero() {
               <Sparkles className="h-3.5 w-3.5" /> AI-native · Mobile-first · Enterprise
             </div>
             <h1 className="mt-5 text-[44px] sm:text-[56px] lg:text-[64px] leading-[1.05] font-bold tracking-tight">
-              Sales Growth Platform <br />
-              <span className="text-brand-gradient">for Real Estate</span>
+              Nền tảng tăng trưởng <br />
+              <span className="text-brand-gradient">cho Bất động sản</span>
             </h1>
             <p className="mt-5 text-[16px] lg:text-[17.5px] text-muted-foreground leading-relaxed max-w-xl">
               Nền tảng tăng trưởng toàn diện giúp Sale Bất động sản kết nối, tạo lead, chăm sóc khách hàng và chốt deal bằng <span className="text-foreground font-semibold">NFC + AI + CRM</span>.
