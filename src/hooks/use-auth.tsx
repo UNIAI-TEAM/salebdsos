@@ -45,15 +45,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshTenants = useCallback(async () => {
     try {
-      const r = await fetchTenants();
-      setTenants(r.tenants);
-      setIsPlatformAdmin(r.isPlatformAdmin);
-      if (!currentTenantId && r.tenants.length) {
-        const first = r.tenants[0].id;
+      const r = (await fetchTenants()) ?? { tenants: [], isPlatformAdmin: false };
+      const ts = Array.isArray(r.tenants) ? r.tenants : [];
+      setTenants(ts);
+      setIsPlatformAdmin(!!r.isPlatformAdmin);
+      if (!currentTenantId && ts.length) {
+        const first = ts[0].id;
         setCurrentTenantId(first);
         if (typeof window !== "undefined") localStorage.setItem(TENANT_KEY, first);
-      } else if (currentTenantId && !r.tenants.some((t) => t.id === currentTenantId) && r.tenants.length) {
-        const first = r.tenants[0].id;
+      } else if (currentTenantId && !ts.some((t) => t.id === currentTenantId) && ts.length) {
+        const first = ts[0].id;
         setCurrentTenantId(first);
         if (typeof window !== "undefined") localStorage.setItem(TENANT_KEY, first);
       }
