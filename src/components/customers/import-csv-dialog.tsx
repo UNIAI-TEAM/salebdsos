@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Upload, FileText, X } from "lucide-react";
+import { Upload, FileText, X, Download } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
@@ -91,6 +91,24 @@ export function ImportCustomersDialog({
     onError: (e: any) => toast.error(e?.message ?? "Nhập thất bại"),
   });
 
+  const downloadSample = useCallback(() => {
+    const csv = [
+      "Họ và tên,SĐT,Email,Công ty,Ghi chú",
+      "Nguyễn Văn A,0901234567,nguyenvana@example.com,Công ty ABC,Khách hàng tiềm năng",
+      "Trần Thị B,0912345678,tranthib@example.com,Công ty XYZ,Đã gặp mặt",
+      "Lê Văn C,0987654321,levanc@example.com,Công ty DEF,Cần follow-up",
+    ].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "mau-khach-hang.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, []);
+
   const fullNameMapped = Object.values(mapping).includes("full_name");
 
   return (
@@ -100,6 +118,9 @@ export function ImportCustomersDialog({
           <DialogTitle>Nhập khách hàng từ CSV</DialogTitle>
           <DialogDescription>
             Dòng đầu tiên là tiêu đề cột. Hệ thống tự động map (Họ tên, SĐT, Email, Công ty, Ghi chú); bạn có thể chỉnh lại bên dưới.
+            <button onClick={downloadSample} className="ml-1 inline-flex items-center gap-1 text-primary hover:underline cursor-pointer bg-transparent border-0 p-0 font-[inherit]">
+              <Download className="h-3 w-3" /> Tải file mẫu
+            </button>
           </DialogDescription>
         </DialogHeader>
 
@@ -114,9 +135,14 @@ export function ImportCustomersDialog({
               className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
             />
-            <Button type="button" variant="outline" onClick={() => inputRef.current?.click()}>
-              Chọn file
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={() => inputRef.current?.click()}>
+                Chọn file
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); downloadSample(); }}>
+                <Download className="h-4 w-4 mr-1" /> File mẫu
+              </Button>
+            </div>
           </label>
         ) : (
           <div className="space-y-4">
