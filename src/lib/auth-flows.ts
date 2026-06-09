@@ -4,9 +4,11 @@
  */
 import { isEmailAllowed, buildGoogleExtraParams, type AllowlistConfig } from "./auth-allowlist";
 
-export type OAuthResult =
-  | { redirected: true; error?: undefined }
-  | { redirected?: false; error?: { message: string } | null; tokens?: unknown };
+export type OAuthResult = {
+  redirected?: boolean;
+  error?: { message: string } | null;
+  tokens?: unknown;
+};
 
 export type GoogleSignInFn = (
   provider: "google",
