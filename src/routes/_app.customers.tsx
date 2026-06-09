@@ -42,6 +42,7 @@ function CustomersPage() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<FormState | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const fnList = useServerFn(listCustomers);
   const fnCreate = useServerFn(createCustomer);
@@ -115,7 +116,10 @@ function CustomersPage() {
             />
           </form>
           <Button type="button" variant="outline" onClick={onSubmitSearch}>Tìm</Button>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4" /> Import CSV
+            </Button>
             <Button onClick={() => setEditing({ ...EMPTY })}>
               <Plus className="h-4 w-4" /> Thêm khách hàng
             </Button>
