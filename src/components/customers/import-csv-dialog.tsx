@@ -135,9 +135,14 @@ export function ImportCustomersDialog({
               className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }}
             />
-            <Button type="button" variant="outline" onClick={() => inputRef.current?.click()}>
-              Chọn file
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={() => inputRef.current?.click()}>
+                Chọn file
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); downloadSample(); }}>
+                <Download className="h-4 w-4 mr-1" /> File mẫu
+              </Button>
+            </div>
           </label>
         ) : (
           <div className="space-y-4">
