@@ -5,13 +5,13 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { getPublicAllowlist } from "@/lib/auth-settings.functions";
-import { listMyTenants } from "@/lib/auth.functions";
+import { listMyTenants, registerAgency } from "@/lib/auth.functions";
 import { signInWithGoogleFlow, signInWithPasswordFlow } from "@/lib/auth-flows";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2, Mail, Lock, User, ArrowRight, Building2, Check, ShieldCheck, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Lock, User, ArrowRight, Building2, Check, ShieldCheck, AlertCircle, Briefcase } from "lucide-react";
 
 const ADMIN_ROLES = new Set(["platform_admin", "owner", "admin"]);
 
@@ -35,23 +35,43 @@ export const Route = createFileRoute("/login")({
   validateSearch: search,
 });
 
+function slugify(s: string) {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50);
+}
+
 function LoginPage() {
   const nav = useNavigate();
   const sp = useSearch({ from: "/login" });
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [workspaceName, setWorkspaceName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const fetchAllowlist = useServerFn(getPublicAllowlist);
+  const register = useServerFn(registerAgency);
+
+  const passwordStrength = (() => {
+    let s = 0;
+    if (password.length >= 6) s++;
+    if (password.length >= 10) s++;
+    if (/[A-Z]/.test(password) && /[a-z]/.test(password)) s++;
+    if (/\d/.test(password) && /[^A-Za-z0-9]/.test(password)) s++;
+    return s; // 0..4
+  })();
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
-    if (mode === "signup" && !fullName.trim()) {
-      nextErrors.fullName = "Vui lòng nhập họ tên";
+    if (mode === "signup") {
+      if (!fullName.trim()) nextErrors.fullName = "Vui lòng nhập họ tên";
+      if (!workspaceName.trim()) nextErrors.workspaceName = "Vui lòng nhập tên workspace";
+      else if (workspaceName.trim().length < 2) nextErrors.workspaceName = "Tên workspace tối thiểu 2 ký tự";
     }
     if (!email.trim()) {
       nextErrors.email = "Vui lòng nhập email";
@@ -62,6 +82,10 @@ function LoginPage() {
       nextErrors.password = "Vui lòng nhập mật khẩu";
     } else if (password.length < 6) {
       nextErrors.password = "Mật khẩu ít nhất 6 ký tự";
+    }
+    if (mode === "signup") {
+      if (!confirmPassword) nextErrors.confirmPassword = "Vui lòng xác nhận mật khẩu";
+      else if (confirmPassword !== password) nextErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -74,7 +98,7 @@ function LoginPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTouched({ email: true, password: true, fullName: true });
+    setTouched({ email: true, password: true, fullName: true, confirmPassword: true, workspaceName: true });
     if (!validate()) return;
 
     setLoading(true);
@@ -87,18 +111,43 @@ function LoginPage() {
           signInWithPassword: async () => ({ error: null }),
         });
         if (!gate.ok) throw new Error(gate.error);
-        const { error } = await supabase.auth.signUp({
+        const slug = slugify(workspaceName);
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/login`,
-            data: { full_name: fullName },
+            data: {
+              full_name: fullName,
+              workspace_name: workspaceName,
+              workspace_slug: slug,
+            },
           },
         });
         if (error) throw error;
-        toast.success("Đăng ký thành công. Kiểm tra email để xác thực.");
+
+        // If session is returned immediately (email auto-confirm), create the workspace now.
+        if (signUpData.session) {
+          try {
+            await register({ data: { name: workspaceName, slug } });
+            toast.success("Đã tạo tài khoản & workspace");
+            nav({ to: "/dashboard", replace: true });
+            return;
+          } catch (regErr: any) {
+            toast.error(regErr.message ?? "Không thể tạo workspace, vào trang thiết lập...");
+            nav({ to: "/onboarding", replace: true });
+            return;
+          }
+        }
+
+        // Email confirmation flow — stash workspace info for onboarding prefill.
+        try {
+          sessionStorage.setItem("pending_workspace", JSON.stringify({ name: workspaceName, slug }));
+        } catch {}
+        toast.success("Đăng ký thành công. Kiểm tra email để xác thực, sau đó đăng nhập để tạo workspace.");
         setMode("signin");
         setPassword("");
+        setConfirmPassword("");
         setErrors({});
       } else {
         const res = await signInWithPasswordFlow({
