@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2, Mail, Lock, User, ArrowRight, Building2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Lock, User, ArrowRight, Building2, Check, ShieldCheck, AlertCircle } from "lucide-react";
 
 const ADMIN_ROLES = new Set(["platform_admin", "owner", "admin"]);
 
