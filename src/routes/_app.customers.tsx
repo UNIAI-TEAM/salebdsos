@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Users2 } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Users2, Upload } from "lucide-react";
+import { ImportCustomersDialog } from "@/components/customers/import-csv-dialog";
 import { PageHeader, KpiCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ function CustomersPage() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<FormState | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const fnList = useServerFn(listCustomers);
   const fnCreate = useServerFn(createCustomer);
@@ -114,7 +116,10 @@ function CustomersPage() {
             />
           </form>
           <Button type="button" variant="outline" onClick={onSubmitSearch}>Tìm</Button>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4" /> Import CSV
+            </Button>
             <Button onClick={() => setEditing({ ...EMPTY })}>
               <Plus className="h-4 w-4" /> Thêm khách hàng
             </Button>
@@ -228,6 +233,13 @@ function CustomersPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ImportCustomersDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        tenantId={tenantId}
+        onDone={() => qc.invalidateQueries({ queryKey: ["customers", tenantId] })}
+      />
 
       <AlertDialog open={!!deletingId} onOpenChange={(o) => !o && setDeletingId(null)}>
         <AlertDialogContent>

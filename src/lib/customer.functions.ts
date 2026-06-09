@@ -67,6 +67,31 @@ export const createCustomer = createServerFn({ method: "POST" })
     return row;
   });
 
+export const bulkCreateCustomers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      tenantId: z.string().uuid(),
+      rows: z.array(CustomerInput).min(1).max(1000),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const inserts = data.rows.map((r) => ({
+      tenant_id: data.tenantId,
+      owner_user_id: userId,
+      full_name: r.full_name,
+      email: r.email || null,
+      phone: r.phone || null,
+      company: r.company || null,
+      notes: r.notes || null,
+      tags: r.tags ?? null,
+    }));
+    const { data: rows, error } = await supabase.from("customers").insert(inserts).select("id");
+    if (error) throw new Error(error.message);
+    return { inserted: rows?.length ?? 0 };
+  });
+
 export const updateCustomer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
