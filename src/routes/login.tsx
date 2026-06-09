@@ -5,13 +5,13 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { getPublicAllowlist } from "@/lib/auth-settings.functions";
-import { listMyTenants } from "@/lib/auth.functions";
+import { listMyTenants, registerAgency } from "@/lib/auth.functions";
 import { signInWithGoogleFlow, signInWithPasswordFlow } from "@/lib/auth-flows";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2, Mail, Lock, User, ArrowRight, Building2, Check, ShieldCheck, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Lock, User, ArrowRight, Building2, Check, ShieldCheck, AlertCircle, Briefcase } from "lucide-react";
 
 const ADMIN_ROLES = new Set(["platform_admin", "owner", "admin"]);
 
@@ -35,23 +35,43 @@ export const Route = createFileRoute("/login")({
   validateSearch: search,
 });
 
+function slugify(s: string) {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50);
+}
+
 function LoginPage() {
   const nav = useNavigate();
   const sp = useSearch({ from: "/login" });
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [workspaceName, setWorkspaceName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const fetchAllowlist = useServerFn(getPublicAllowlist);
+  const register = useServerFn(registerAgency);
+
+  const passwordStrength = (() => {
+    let s = 0;
+    if (password.length >= 6) s++;
+    if (password.length >= 10) s++;
+    if (/[A-Z]/.test(password) && /[a-z]/.test(password)) s++;
+    if (/\d/.test(password) && /[^A-Za-z0-9]/.test(password)) s++;
+    return s; // 0..4
+  })();
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
-    if (mode === "signup" && !fullName.trim()) {
-      nextErrors.fullName = "Vui lòng nhập họ tên";
+    if (mode === "signup") {
+      if (!fullName.trim()) nextErrors.fullName = "Vui lòng nhập họ tên";
+      if (!workspaceName.trim()) nextErrors.workspaceName = "Vui lòng nhập tên workspace";
+      else if (workspaceName.trim().length < 2) nextErrors.workspaceName = "Tên workspace tối thiểu 2 ký tự";
     }
     if (!email.trim()) {
       nextErrors.email = "Vui lòng nhập email";
@@ -62,6 +82,10 @@ function LoginPage() {
       nextErrors.password = "Vui lòng nhập mật khẩu";
     } else if (password.length < 6) {
       nextErrors.password = "Mật khẩu ít nhất 6 ký tự";
+    }
+    if (mode === "signup") {
+      if (!confirmPassword) nextErrors.confirmPassword = "Vui lòng xác nhận mật khẩu";
+      else if (confirmPassword !== password) nextErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -74,7 +98,7 @@ function LoginPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTouched({ email: true, password: true, fullName: true });
+    setTouched({ email: true, password: true, fullName: true, confirmPassword: true, workspaceName: true });
     if (!validate()) return;
 
     setLoading(true);
@@ -87,18 +111,43 @@ function LoginPage() {
           signInWithPassword: async () => ({ error: null }),
         });
         if (!gate.ok) throw new Error(gate.error);
-        const { error } = await supabase.auth.signUp({
+        const slug = slugify(workspaceName);
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/login`,
-            data: { full_name: fullName },
+            data: {
+              full_name: fullName,
+              workspace_name: workspaceName,
+              workspace_slug: slug,
+            },
           },
         });
         if (error) throw error;
-        toast.success("Đăng ký thành công. Kiểm tra email để xác thực.");
+
+        // If session is returned immediately (email auto-confirm), create the workspace now.
+        if (signUpData.session) {
+          try {
+            await register({ data: { name: workspaceName, slug } });
+            toast.success("Đã tạo tài khoản & workspace");
+            nav({ to: "/dashboard", replace: true });
+            return;
+          } catch (regErr: any) {
+            toast.error(regErr.message ?? "Không thể tạo workspace, vào trang thiết lập...");
+            nav({ to: "/onboarding", replace: true });
+            return;
+          }
+        }
+
+        // Email confirmation flow — stash workspace info for onboarding prefill.
+        try {
+          sessionStorage.setItem("pending_workspace", JSON.stringify({ name: workspaceName, slug }));
+        } catch {}
+        toast.success("Đăng ký thành công. Kiểm tra email để xác thực, sau đó đăng nhập để tạo workspace.");
         setMode("signin");
         setPassword("");
+        setConfirmPassword("");
         setErrors({});
       } else {
         const res = await signInWithPasswordFlow({
@@ -142,6 +191,8 @@ function LoginPage() {
   const hasEmailError = touched.email && !!errors.email;
   const hasPasswordError = touched.password && !!errors.password;
   const hasNameError = touched.fullName && !!errors.fullName;
+  const hasWorkspaceError = touched.workspaceName && !!errors.workspaceName;
+  const hasConfirmError = touched.confirmPassword && !!errors.confirmPassword;
 
   return (
     <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-[#F8FAFC]">
@@ -270,6 +321,30 @@ function LoginPage() {
                 </Field>
               )}
 
+
+
+              {mode === "signup" && (
+                <Field
+                  id="workspaceName"
+                  label="Tên workspace / Agency"
+                  icon={<Briefcase className="h-4 w-4" />}
+                  error={hasWorkspaceError ? errors.workspaceName : undefined}
+                  hint={workspaceName ? `URL: salebds.vn/${slugify(workspaceName) || "..."}` : undefined}
+                >
+                  <Input
+                    id="workspaceName"
+                    type="text"
+                    placeholder="ABC Real Estate"
+                    value={workspaceName}
+                    onChange={(e) => setWorkspaceName(e.target.value)}
+                    onBlur={() => onBlur("workspaceName")}
+                    disabled={loading}
+                    className={inputCls(hasWorkspaceError)}
+                    required
+                  />
+                </Field>
+              )}
+
               <Field
                 id="email"
                 label="Email"
@@ -321,6 +396,69 @@ function LoginPage() {
                   minLength={6}
                 />
               </Field>
+
+              {mode === "signup" && password && (
+                <div className="-mt-1 space-y-1.5">
+                  <div className="flex gap-1">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className={`h-1 flex-1 rounded-full transition-colors ${
+                          i < passwordStrength
+                            ? passwordStrength <= 1
+                              ? "bg-[#EF4444]"
+                              : passwordStrength === 2
+                              ? "bg-[#F59E0B]"
+                              : passwordStrength === 3
+                              ? "bg-[#22C55E]"
+                              : "bg-[#16A34A]"
+                            : "bg-[#E2E8F0]"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-[#64748B]">
+                    {passwordStrength <= 1 && "Mật khẩu yếu — thêm chữ hoa, số hoặc ký tự đặc biệt."}
+                    {passwordStrength === 2 && "Tạm ổn — nên dùng thêm ký tự đặc biệt."}
+                    {passwordStrength === 3 && "Mạnh."}
+                    {passwordStrength === 4 && "Rất mạnh ✓"}
+                  </p>
+                </div>
+              )}
+
+              {mode === "signup" && (
+                <Field
+                  id="confirmPassword"
+                  label="Xác nhận mật khẩu"
+                  icon={<Lock className="h-4 w-4" />}
+                  error={hasConfirmError ? errors.confirmPassword : undefined}
+                  rightSlot={
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center rounded-md text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3730A3]"
+                      tabIndex={-1}
+                      aria-label={showConfirm ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    >
+                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  }
+                >
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirm ? "text" : "password"}
+                    placeholder="Nhập lại mật khẩu"
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onBlur={() => onBlur("confirmPassword")}
+                    disabled={loading}
+                    className={`${inputCls(hasConfirmError)} pr-11`}
+                    required
+                    minLength={6}
+                  />
+                </Field>
+              )}
 
               {mode === "signin" && (
                 <div className="flex items-center justify-between pt-1">
@@ -408,6 +546,7 @@ function Field({
   icon,
   error,
   rightSlot,
+  hint,
   children,
 }: {
   id: string;
@@ -415,6 +554,7 @@ function Field({
   icon: React.ReactNode;
   error?: string;
   rightSlot?: React.ReactNode;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -429,12 +569,14 @@ function Field({
         {children}
         {rightSlot}
       </div>
-      {error && (
+      {error ? (
         <p className="text-xs text-[#DC2626] flex items-center gap-1.5 pt-0.5">
           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
           {error}
         </p>
-      )}
+      ) : hint ? (
+        <p className="text-[11px] text-[#94A3B8] pt-0.5">{hint}</p>
+      ) : null}
     </div>
   );
 }
