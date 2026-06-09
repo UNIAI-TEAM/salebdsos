@@ -66,10 +66,7 @@ function LoginPage() {
     const next = sp.invite ? `/accept-invite/${sp.invite}` : sp.redirect ?? "/dashboard";
     try {
       const cfg = await fetchAllowlist();
-      const extraParams: Record<string, string> = { prompt: "select_account" };
-      if (cfg.enforce_domain_allowlist && cfg.allowed_email_domains.length === 1) {
-        extraParams.hd = cfg.allowed_email_domains[0];
-      }
+      const extraParams = buildGoogleExtraParams({ prompt: "select_account" }, cfg);
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: `${window.location.origin}${next}`,
         extraParams,
