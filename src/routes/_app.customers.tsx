@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Users2 } from "lucide-react";
 import { PageHeader, KpiCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
