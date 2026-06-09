@@ -5,7 +5,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { getPublicAllowlist } from "@/lib/auth-settings.functions";
-import { isEmailAllowed, buildGoogleExtraParams, type AllowlistConfig } from "@/lib/auth-allowlist";
+import { signInWithGoogleFlow, signInWithPasswordFlow } from "@/lib/auth-flows";
 import { toast } from "sonner";
 
 const search = z.object({ redirect: z.string().optional(), invite: z.string().optional() });
@@ -14,10 +14,6 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
   validateSearch: search,
 });
-
-async function checkEmailAllowed(email: string, fetcher: () => Promise<AllowlistConfig>) {
-  return isEmailAllowed(email, await fetcher());
-}
 
 function LoginPage() {
   const nav = useNavigate();
@@ -33,9 +29,15 @@ function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const ok = await checkEmailAllowed(email, fetchAllowlist);
-      if (!ok) throw new Error("Email không thuộc domain được phép đăng nhập.");
       if (mode === "signup") {
+        const gate = await signInWithPasswordFlow({
+          email,
+          password: "__noop__",
+          fetchAllowlist,
+          // Skip real call; we only need the allowlist gate here.
+          signInWithPassword: async () => ({ error: null }),
+        });
+        if (!gate.ok) throw new Error(gate.error);
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -48,8 +50,13 @@ function LoginPage() {
         toast.success("Đăng ký thành công. Kiểm tra email để xác thực.");
         setMode("signin");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const res = await signInWithPasswordFlow({
+          email,
+          password,
+          fetchAllowlist,
+          signInWithPassword: (args) => supabase.auth.signInWithPassword(args).then((r) => ({ error: r.error })),
+        });
+        if (!res.ok) throw new Error(res.error);
         toast.success("Đăng nhập thành công");
         const next = sp.invite ? `/accept-invite/${sp.invite}` : sp.redirect ?? "/dashboard";
         nav({ to: next, replace: true });
@@ -65,17 +72,16 @@ function LoginPage() {
   const onGoogle = async () => {
     const next = sp.invite ? `/accept-invite/${sp.invite}` : sp.redirect ?? "/dashboard";
     try {
-      const cfg = await fetchAllowlist();
-      const extraParams = buildGoogleExtraParams({ prompt: "select_account" }, cfg);
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}${next}`,
-        extraParams,
+      const res = await signInWithGoogleFlow({
+        fetchAllowlist,
+        signInWithOAuth: (provider, opts) => lovable.auth.signInWithOAuth(provider, opts),
+        redirectUri: `${window.location.origin}${next}`,
       });
-      if (result.error) {
-        toast.error(result.error.message ?? "Không thể đăng nhập Google");
+      if (!res.ok) {
+        toast.error(res.error ?? "Không thể đăng nhập Google");
         return;
       }
-      if (result.redirected) return;
+      if (res.redirected) return;
       nav({ to: next, replace: true });
     } catch (e: any) {
       toast.error(e?.message ?? "Lỗi đăng nhập Google");
