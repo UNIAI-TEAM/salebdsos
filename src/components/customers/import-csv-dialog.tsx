@@ -92,21 +92,12 @@ export function ImportCustomersDialog({
   });
 
   const downloadSample = useCallback(() => {
-    const csv = [
-      "Họ và tên,SĐT,Email,Công ty,Ghi chú",
-      "Nguyễn Văn A,0901234567,nguyenvana@example.com,Công ty ABC,Khách hàng tiềm năng",
-      "Trần Thị B,0912345678,tranthib@example.com,Công ty XYZ,Đã gặp mặt",
-      "Lê Văn C,0987654321,levanc@example.com,Công ty DEF,Cần follow-up",
-    ].join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
+    a.href = "/mau-khach-hang.csv";
     a.download = "mau-khach-hang.csv";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   }, []);
 
   const fullNameMapped = Object.values(mapping).includes("full_name");
