@@ -68,9 +68,14 @@ function LoginPage() {
   const onGoogle = async () => {
     const next = sp.invite ? `/accept-invite/${sp.invite}` : sp.redirect ?? "/dashboard";
     try {
+      const cfg = await fetchAllowlist();
+      const extraParams: Record<string, string> = { prompt: "select_account" };
+      if (cfg.enforce_domain_allowlist && cfg.allowed_email_domains.length === 1) {
+        extraParams.hd = cfg.allowed_email_domains[0];
+      }
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: `${window.location.origin}${next}`,
-        extraParams: { prompt: "select_account" },
+        extraParams,
       });
       if (result.error) {
         toast.error(result.error.message ?? "Không thể đăng nhập Google");
