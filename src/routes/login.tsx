@@ -5,7 +5,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { getPublicAllowlist } from "@/lib/auth-settings.functions";
-import { isEmailAllowed, buildGoogleExtraParams, type AllowlistConfig } from "@/lib/auth-allowlist";
+import { signInWithGoogleFlow, signInWithPasswordFlow } from "@/lib/auth-flows";
 import { toast } from "sonner";
 
 const search = z.object({ redirect: z.string().optional(), invite: z.string().optional() });
@@ -14,10 +14,6 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
   validateSearch: search,
 });
-
-async function checkEmailAllowed(email: string, fetcher: () => Promise<AllowlistConfig>) {
-  return isEmailAllowed(email, await fetcher());
-}
 
 function LoginPage() {
   const nav = useNavigate();
