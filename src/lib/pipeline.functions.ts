@@ -27,11 +27,30 @@ function clean<T extends Record<string, any>>(o: T) {
   return out;
 }
 
+async function seedDefaultStages(supabase: any, tenantId: string): Promise<void> {
+  const { count } = await supabase
+    .from("pipeline_stages")
+    .select("id", { count: "exact", head: true })
+    .eq("tenant_id", tenantId)
+    .is("deleted_at", null);
+  if ((count ?? 0) > 0) return;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  await supabaseAdmin.from("pipeline_stages").insert([
+    { tenant_id: tenantId, name: "Mới", position: 0, win_probability: 5 },
+    { tenant_id: tenantId, name: "Đã liên hệ", position: 1, win_probability: 15 },
+    { tenant_id: tenantId, name: "Đang tư vấn", position: 2, win_probability: 35 },
+    { tenant_id: tenantId, name: "Đã báo giá", position: 3, win_probability: 55 },
+    { tenant_id: tenantId, name: "Đặt cọc", position: 4, win_probability: 80 },
+    { tenant_id: tenantId, name: "Thành công", position: 5, win_probability: 100 },
+    { tenant_id: tenantId, name: "Thất bại", position: 6, win_probability: 0 },
+  ]);
+}
+
 export const ensurePipeline = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { tenantId: string }) => d)
   .handler(async ({ data, context }) => {
-    await context.supabase.rpc("ensure_default_pipeline_stages", { _tenant: data.tenantId });
+    await seedDefaultStages(context.supabase, data.tenantId);
     return { ok: true };
   });
 
@@ -39,8 +58,8 @@ export const getPipeline = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { tenantId: string }) => d)
   .handler(async ({ data, context }) => {
-    // Auto-seed if empty
-    await context.supabase.rpc("ensure_default_pipeline_stages", { _tenant: data.tenantId });
+    await seedDefaultStages(context.supabase, data.tenantId);
+
 
     const [stagesQ, dealsQ, leadsQ, projectsQ, rolesQ] = await Promise.all([
       context.supabase.from("pipeline_stages")
