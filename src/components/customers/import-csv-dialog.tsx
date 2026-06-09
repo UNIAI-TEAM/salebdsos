@@ -146,8 +146,12 @@ export function ImportCustomersDialog({
               <Button size="icon" variant="ghost" onClick={reset}><X className="h-4 w-4" /></Button>
             </div>
 
-            <div>
-              <div className="text-[12.5px] font-semibold mb-2">Map cột</div>
+            <div className="flex items-center justify-between">
+              <div className="text-[12.5px] font-semibold">Map cột</div>
+              <Button type="button" variant="ghost" size="sm" className="h-7 text-[12px]" onClick={downloadSample}>
+                <Download className="h-3.5 w-3.5 mr-1" /> Tải lại file mẫu
+              </Button>
+            </div>
               <div className="space-y-2">
                 {headers.map((h) => (
                   <div key={h} className="grid grid-cols-2 gap-2 items-center">
