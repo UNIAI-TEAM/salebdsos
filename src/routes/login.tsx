@@ -319,6 +319,27 @@ function LoginPage() {
                     required
                   />
                 </Field>
+
+              {mode === "signup" && (
+                <Field
+                  id="workspaceName"
+                  label="Tên workspace / Agency"
+                  icon={<Briefcase className="h-4 w-4" />}
+                  error={hasWorkspaceError ? errors.workspaceName : undefined}
+                  hint={workspaceName ? `URL: salebds.vn/${slugify(workspaceName) || "..."}` : undefined}
+                >
+                  <Input
+                    id="workspaceName"
+                    type="text"
+                    placeholder="ABC Real Estate"
+                    value={workspaceName}
+                    onChange={(e) => setWorkspaceName(e.target.value)}
+                    onBlur={() => onBlur("workspaceName")}
+                    disabled={loading}
+                    className={inputCls(hasWorkspaceError)}
+                    required
+                  />
+                </Field>
               )}
 
               <Field
@@ -372,6 +393,69 @@ function LoginPage() {
                   minLength={6}
                 />
               </Field>
+
+              {mode === "signup" && password && (
+                <div className="-mt-1 space-y-1.5">
+                  <div className="flex gap-1">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className={`h-1 flex-1 rounded-full transition-colors ${
+                          i < passwordStrength
+                            ? passwordStrength <= 1
+                              ? "bg-[#EF4444]"
+                              : passwordStrength === 2
+                              ? "bg-[#F59E0B]"
+                              : passwordStrength === 3
+                              ? "bg-[#22C55E]"
+                              : "bg-[#16A34A]"
+                            : "bg-[#E2E8F0]"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-[#64748B]">
+                    {passwordStrength <= 1 && "Mật khẩu yếu — thêm chữ hoa, số hoặc ký tự đặc biệt."}
+                    {passwordStrength === 2 && "Tạm ổn — nên dùng thêm ký tự đặc biệt."}
+                    {passwordStrength === 3 && "Mạnh."}
+                    {passwordStrength === 4 && "Rất mạnh ✓"}
+                  </p>
+                </div>
+              )}
+
+              {mode === "signup" && (
+                <Field
+                  id="confirmPassword"
+                  label="Xác nhận mật khẩu"
+                  icon={<Lock className="h-4 w-4" />}
+                  error={hasConfirmError ? errors.confirmPassword : undefined}
+                  rightSlot={
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center rounded-md text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3730A3]"
+                      tabIndex={-1}
+                      aria-label={showConfirm ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    >
+                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  }
+                >
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirm ? "text" : "password"}
+                    placeholder="Nhập lại mật khẩu"
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onBlur={() => onBlur("confirmPassword")}
+                    disabled={loading}
+                    className={`${inputCls(hasConfirmError)} pr-11`}
+                    required
+                    minLength={6}
+                  />
+                </Field>
+              )}
 
               {mode === "signin" && (
                 <div className="flex items-center justify-between pt-1">
