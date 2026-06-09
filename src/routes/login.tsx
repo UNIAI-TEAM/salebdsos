@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-r
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 const search = z.object({ redirect: z.string().optional(), invite: z.string().optional() });
@@ -52,10 +53,20 @@ function LoginPage() {
 
   const onGoogle = async () => {
     const next = sp.invite ? `/accept-invite/${sp.invite}` : sp.redirect ?? "/dashboard";
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}${next}` },
-    });
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}${next}`,
+        extraParams: { prompt: "select_account" },
+      });
+      if (result.error) {
+        toast.error(result.error.message ?? "Không thể đăng nhập Google");
+        return;
+      }
+      if (result.redirected) return;
+      nav({ to: next, replace: true });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Lỗi đăng nhập Google");
+    }
   };
 
   return (
