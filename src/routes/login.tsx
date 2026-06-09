@@ -5,6 +5,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { getPublicAllowlist } from "@/lib/auth-settings.functions";
+import { isEmailAllowed, buildGoogleExtraParams, type AllowlistConfig } from "@/lib/auth-allowlist";
 import { toast } from "sonner";
 
 const search = z.object({ redirect: z.string().optional(), invite: z.string().optional() });
@@ -14,12 +15,8 @@ export const Route = createFileRoute("/login")({
   validateSearch: search,
 });
 
-async function checkEmailAllowed(email: string, fetcher: () => Promise<{ allowed_email_domains: string[]; enforce_domain_allowlist: boolean }>) {
-  const cfg = await fetcher();
-  if (!cfg.enforce_domain_allowlist) return true;
-  const domain = email.split("@")[1]?.toLowerCase();
-  if (!domain) return false;
-  return cfg.allowed_email_domains.map((d) => d.toLowerCase()).includes(domain);
+async function checkEmailAllowed(email: string, fetcher: () => Promise<AllowlistConfig>) {
+  return isEmailAllowed(email, await fetcher());
 }
 
 function LoginPage() {
@@ -69,10 +66,7 @@ function LoginPage() {
     const next = sp.invite ? `/accept-invite/${sp.invite}` : sp.redirect ?? "/dashboard";
     try {
       const cfg = await fetchAllowlist();
-      const extraParams: Record<string, string> = { prompt: "select_account" };
-      if (cfg.enforce_domain_allowlist && cfg.allowed_email_domains.length === 1) {
-        extraParams.hd = cfg.allowed_email_domains[0];
-      }
+      const extraParams = buildGoogleExtraParams({ prompt: "select_account" }, cfg);
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: `${window.location.origin}${next}`,
         extraParams,
