@@ -74,7 +74,8 @@ function LoginPage() {
         });
         if (!res.ok) throw new Error(res.error);
         toast.success("Đăng nhập thành công");
-        const next = sp.invite ? `/accept-invite/${sp.invite}` : sp.redirect ?? "/dashboard";
+        const fallback = sp.invite ? `/accept-invite/${sp.invite}` : sp.redirect ?? "/dashboard";
+        const next = sp.invite || sp.redirect ? fallback : await resolveRoleRedirect(fallback);
         nav({ to: next, replace: true });
       }
     } catch (err: any) {
