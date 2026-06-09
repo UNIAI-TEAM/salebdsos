@@ -5,7 +5,23 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { getPublicAllowlist } from "@/lib/auth-settings.functions";
+import { listMyTenants } from "@/lib/auth.functions";
 import { signInWithGoogleFlow, signInWithPasswordFlow } from "@/lib/auth-flows";
+
+const ADMIN_ROLES = new Set(["platform_admin", "owner", "admin"]);
+
+async function resolveRoleRedirect(fallback: string): Promise<string> {
+  try {
+    const r = await listMyTenants();
+    if (r?.isPlatformAdmin) return "/dashboard";
+    const roles = (r?.tenants ?? []).map((t: any) => t.role);
+    if (roles.some((role: string) => ADMIN_ROLES.has(role))) return "/dashboard";
+    if (roles.length > 0) return "/leads";
+    return "/onboarding";
+  } catch {
+    return fallback;
+  }
+}
 import { toast } from "sonner";
 
 const search = z.object({ redirect: z.string().optional(), invite: z.string().optional() });
@@ -58,7 +74,8 @@ function LoginPage() {
         });
         if (!res.ok) throw new Error(res.error);
         toast.success("Đăng nhập thành công");
-        const next = sp.invite ? `/accept-invite/${sp.invite}` : sp.redirect ?? "/dashboard";
+        const fallback = sp.invite ? `/accept-invite/${sp.invite}` : sp.redirect ?? "/dashboard";
+        const next = sp.invite || sp.redirect ? fallback : await resolveRoleRedirect(fallback);
         nav({ to: next, replace: true });
       }
     } catch (err: any) {
