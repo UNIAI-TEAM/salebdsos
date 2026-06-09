@@ -319,6 +319,9 @@ function LoginPage() {
                     required
                   />
                 </Field>
+              )}
+
+
 
               {mode === "signup" && (
                 <Field
