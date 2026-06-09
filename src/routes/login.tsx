@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { getPublicAllowlist } from "@/lib/auth-settings.functions";
 import { toast } from "sonner";
 
 const search = z.object({ redirect: z.string().optional(), invite: z.string().optional() });
@@ -12,6 +14,14 @@ export const Route = createFileRoute("/login")({
   validateSearch: search,
 });
 
+async function checkEmailAllowed(email: string, fetcher: () => Promise<{ allowed_email_domains: string[]; enforce_domain_allowlist: boolean }>) {
+  const cfg = await fetcher();
+  if (!cfg.enforce_domain_allowlist) return true;
+  const domain = email.split("@")[1]?.toLowerCase();
+  if (!domain) return false;
+  return cfg.allowed_email_domains.map((d) => d.toLowerCase()).includes(domain);
+}
+
 function LoginPage() {
   const nav = useNavigate();
   const sp = useSearch({ from: "/login" });
@@ -20,11 +30,14 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const fetchAllowlist = useServerFn(getPublicAllowlist);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      const ok = await checkEmailAllowed(email, fetchAllowlist);
+      if (!ok) throw new Error("Email không thuộc domain được phép đăng nhập.");
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
@@ -50,6 +63,7 @@ function LoginPage() {
       setLoading(false);
     }
   };
+
 
   const onGoogle = async () => {
     const next = sp.invite ? `/accept-invite/${sp.invite}` : sp.redirect ?? "/dashboard";
