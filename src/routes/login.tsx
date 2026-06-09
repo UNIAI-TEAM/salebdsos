@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2, Mail, Lock, User, ArrowRight, Building2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Lock, User, ArrowRight, Building2, Check, ShieldCheck, AlertCircle } from "lucide-react";
 
 const ADMIN_ROLES = new Set(["platform_admin", "owner", "admin"]);
 
@@ -139,203 +139,231 @@ function LoginPage() {
     }
   };
 
+  const hasEmailError = touched.email && !!errors.email;
+  const hasPasswordError = touched.password && !!errors.password;
+  const hasNameError = touched.fullName && !!errors.fullName;
+
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-background">
-      {/* Left: brand + intro */}
-      <aside className="relative hidden lg:flex flex-col justify-between p-10 xl:p-14 bg-brand-gradient text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-20 pointer-events-none [background:radial-gradient(circle_at_20%_20%,white,transparent_45%),radial-gradient(circle_at_80%_70%,white,transparent_40%)]" />
-        <Link to="/" className="relative inline-flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
+    <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-[#F8FAFC]">
+      {/* Left: brand panel — Deep Indigo */}
+      <aside className="relative hidden lg:flex flex-col justify-between p-10 xl:p-16 text-white overflow-hidden bg-[#0F172A]">
+        {/* gradient + glow layers */}
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,#1E1B4B_0%,#3730A3_55%,#0E7490_100%)]" />
+        <div className="absolute -top-32 -left-24 h-[28rem] w-[28rem] rounded-full bg-[#6366F1] opacity-30 blur-3xl" />
+        <div className="absolute -bottom-32 -right-16 h-[26rem] w-[26rem] rounded-full bg-[#06B6D4] opacity-25 blur-3xl" />
+        <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] [background-size:42px_42px]" />
+
+        <Link to="/" className="relative inline-flex items-center gap-3 group">
+          <div className="h-11 w-11 rounded-2xl bg-white/10 backdrop-blur ring-1 ring-white/20 flex items-center justify-center group-hover:bg-white/15 transition-colors">
             <Building2 className="h-5 w-5 text-white" />
           </div>
           <span className="font-bold text-xl tracking-tight">SaleBDS OS</span>
         </Link>
 
-        <div className="relative space-y-6 max-w-md">
-          <h2 className="text-3xl xl:text-4xl font-bold leading-tight tracking-tight">
-            Điều hành kinh doanh BĐS bằng điểm chạm
+        <div className="relative space-y-7 max-w-md">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur ring-1 ring-white/15 px-3 py-1 text-xs font-medium text-white/90">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#22D3EE] shadow-[0_0_12px_#22D3EE]" />
+            Nền tảng số #1 cho Sale BĐS
+          </div>
+          <h2 className="text-3xl xl:text-[2.6rem] font-bold leading-[1.1] tracking-tight">
+            Điều hành kinh doanh BĐS bằng <span className="text-[#67E8F9]">điểm chạm</span>.
           </h2>
-          <p className="text-white/80 text-base leading-relaxed">
-            Nền tảng NFC card · Dynamic QR · CRM · AI Follow-up · Lead Score —
-            tất cả trong một workspace cho agency và sale BĐS.
+          <p className="text-white/75 text-base leading-relaxed">
+            NFC card · Dynamic QR · CRM · AI Follow-up · Lead Score — tất cả trong
+            một workspace cho agency và sale BĐS.
           </p>
           <ul className="space-y-3 text-sm">
             {[
               "Card NFC & QR cá nhân hóa cho từng sale",
               "CRM pipeline theo dự án, phân quyền theo team",
               "AI chấm điểm lead & gợi ý kịch bản chăm sóc",
-              "Analytics điểm chạm, leaderboard theo thời gian thực",
+              "Analytics điểm chạm theo thời gian thực",
             ].map((t) => (
-              <li key={t} className="flex items-start gap-3">
-                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-white/90 shrink-0" />
-                <span className="text-white/85">{t}</span>
+              <li key={t} className="flex items-start gap-3 text-white/85">
+                <span className="mt-0.5 h-5 w-5 rounded-md bg-white/10 ring-1 ring-white/15 flex items-center justify-center">
+                  <Check className="h-3 w-3 text-[#67E8F9]" />
+                </span>
+                <span>{t}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <p className="relative text-xs text-white/60">
-          © {new Date().getFullYear()} SaleBDS OS — Unicom AI Software Factory
-        </p>
+        <div className="relative flex items-center justify-between text-xs text-white/55">
+          <span>© {new Date().getFullYear()} SaleBDS OS</span>
+          <span className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Bảo mật SOC 2 · Mã hoá AES-256
+          </span>
+        </div>
       </aside>
 
       {/* Right: form */}
-      <main className="flex items-center justify-center px-4 py-10 sm:px-8">
-        <div className="w-full max-w-[420px]">
-          <Link to="/" className="lg:hidden block text-center mb-8">
-            <div className="inline-flex items-center gap-2">
-              <div className="h-9 w-9 rounded-xl bg-brand-gradient flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-white" />
-              </div>
-              <span className="font-bold text-lg">SaleBDS OS</span>
+      <main className="flex items-center justify-center px-4 py-10 sm:px-8 relative">
+        {/* subtle background accents on mobile/right side */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-24 right-1/4 h-72 w-72 rounded-full bg-[#EEF2FF] blur-3xl opacity-70" />
+          <div className="absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-[#CFFAFE] blur-3xl opacity-60" />
+        </div>
+
+        <div className="relative w-full max-w-[440px]">
+          <Link to="/" className="lg:hidden flex items-center justify-center gap-2 mb-8">
+            <div className="h-10 w-10 rounded-xl bg-[linear-gradient(135deg,#3730A3,#06B6D4)] flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <Building2 className="h-5 w-5 text-white" />
             </div>
+            <span className="font-bold text-lg text-[#0F172A]">SaleBDS OS</span>
           </Link>
 
-          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-card">
+          <div className="rounded-3xl border border-[#E2E8F0] bg-white/90 backdrop-blur-xl p-7 sm:p-9 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.18)]">
+            {/* Tabs */}
+            <div className="grid grid-cols-2 gap-1 p-1 mb-7 rounded-xl bg-[#F1F5F9]">
+              {(["signin", "signup"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => {
+                    setMode(m);
+                    setErrors({});
+                    setTouched({});
+                  }}
+                  className={`h-9 rounded-lg text-sm font-semibold transition-all ${
+                    mode === m
+                      ? "bg-white text-[#0F172A] shadow-sm"
+                      : "text-[#64748B] hover:text-[#0F172A]"
+                  }`}
+                >
+                  {m === "signin" ? "Đăng nhập" : "Đăng ký"}
+                </button>
+              ))}
+            </div>
+
             <div className="mb-6">
-              <h1 className="text-xl font-semibold tracking-tight">
-                {mode === "signin" ? "Đăng nhập" : "Tạo tài khoản"}
+              <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
+                {mode === "signin" ? "Chào mừng trở lại 👋" : "Bắt đầu hành trình"}
               </h1>
-              <p className="text-sm text-muted-foreground mt-1.5">
-                {mode === "signin" ? "Vào workspace BĐS của bạn" : "Tạo tài khoản & đăng ký agency"}
+              <p className="text-sm text-[#64748B] mt-1.5">
+                {mode === "signin"
+                  ? "Đăng nhập để vào workspace BĐS của bạn."
+                  : "Tạo tài khoản & đăng ký agency của bạn."}
               </p>
             </div>
 
-            <form onSubmit={onSubmit} className="space-y-4">
+            <form onSubmit={onSubmit} className="space-y-4" noValidate>
               {mode === "signup" && (
-                <div className="space-y-1.5">
-                  <Label htmlFor="fullName" className="text-sm font-medium">
-                    Họ và tên
-                  </Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder="Nguyễn Văn A"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      onBlur={() => onBlur("fullName")}
-                      className="h-11 pl-10 rounded-xl border-border bg-background text-sm transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
-                      required
-                    />
-                  </div>
-                  {touched.fullName && errors.fullName && (
-                    <p className="text-xs text-destructive flex items-center gap-1">
-                      <span className="inline-block h-1 w-1 rounded-full bg-destructive" />
-                      {errors.fullName}
-                    </p>
-                  )}
-                </div>
+                <Field
+                  id="fullName"
+                  label="Họ và tên"
+                  icon={<User className="h-4 w-4" />}
+                  error={hasNameError ? errors.fullName : undefined}
+                >
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Nguyễn Văn A"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    onBlur={() => onBlur("fullName")}
+                    disabled={loading}
+                    className={inputCls(hasNameError)}
+                    required
+                  />
+                </Field>
               )}
 
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-sm font-medium">
-                  Email
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="name@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onBlur={() => onBlur("email")}
-                    className="h-11 pl-10 rounded-xl border-border bg-background text-sm transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
-                    required
-                  />
-                </div>
-                {touched.email && errors.email && (
-                  <p className="text-xs text-destructive flex items-center gap-1">
-                    <span className="inline-block h-1 w-1 rounded-full bg-destructive" />
-                    {errors.email}
-                  </p>
-                )}
-              </div>
+              <Field
+                id="email"
+                label="Email"
+                icon={<Mail className="h-4 w-4" />}
+                error={hasEmailError ? errors.email : undefined}
+              >
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@company.com"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => onBlur("email")}
+                  disabled={loading}
+                  className={inputCls(hasEmailError)}
+                  required
+                />
+              </Field>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Mật khẩu
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onBlur={() => onBlur("password")}
-                    className="h-11 pl-10 pr-10 rounded-xl border-border bg-background text-sm transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
-                    required
-                    minLength={6}
-                  />
+              <Field
+                id="password"
+                label="Mật khẩu"
+                icon={<Lock className="h-4 w-4" />}
+                error={hasPasswordError ? errors.password : undefined}
+                rightSlot={
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md p-0.5"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center rounded-md text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3730A3]"
                     tabIndex={-1}
                     aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
-                </div>
-                {touched.password && errors.password && (
-                  <p className="text-xs text-destructive flex items-center gap-1">
-                    <span className="inline-block h-1 w-1 rounded-full bg-destructive" />
-                    {errors.password}
-                  </p>
-                )}
-              </div>
+                }
+              >
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Tối thiểu 6 ký tự"
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => onBlur("password")}
+                  disabled={loading}
+                  className={`${inputCls(hasPasswordError)} pr-11`}
+                  required
+                  minLength={6}
+                />
+              </Field>
 
               {mode === "signin" && (
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer group">
+                <div className="flex items-center justify-between pt-1">
+                  <label className="flex items-center gap-2 text-sm text-[#475569] cursor-pointer select-none">
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-border text-primary focus:ring-ring"
+                      className="h-4 w-4 rounded border-[#CBD5E1] accent-[#3730A3]"
                     />
-                    <span className="group-hover:text-foreground transition-colors">Ghi nhớ đăng nhập</span>
+                    Ghi nhớ đăng nhập
                   </label>
-                  <Link
-                    to="/"
-                    className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      toast.info("Tính năng đang phát triển");
-                    }}
+                  <button
+                    type="button"
+                    onClick={() => toast.info("Tính năng đang phát triển")}
+                    className="text-sm font-semibold text-[#3730A3] hover:text-[#1E1B4B] transition-colors"
                   >
                     Quên mật khẩu?
-                  </Link>
+                  </button>
                 </div>
               )}
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-soft hover:shadow-card transition-all disabled:opacity-60"
+                className="group w-full h-12 rounded-xl bg-[linear-gradient(135deg,#3730A3_0%,#4338CA_55%,#06B6D4_140%)] text-white text-sm font-semibold shadow-[0_10px_30px_-10px_rgba(55,48,163,0.6)] hover:shadow-[0_14px_36px_-12px_rgba(55,48,163,0.7)] hover:brightness-110 active:brightness-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Đang xử lý...
-                  </span>
-                ) : mode === "signin" ? (
-                  <span className="flex items-center justify-center gap-2">
-                    Đăng nhập
-                    <ArrowRight className="h-4 w-4" />
+                    {mode === "signin" ? "Đang đăng nhập..." : "Đang tạo tài khoản..."}
                   </span>
                 ) : (
-                  "Tạo tài khoản"
+                  <span className="flex items-center justify-center gap-2">
+                    {mode === "signin" ? "Đăng nhập" : "Tạo tài khoản"}
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
                 )}
               </Button>
             </form>
 
-            <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-              <div className="h-px flex-1 bg-border" />
-              <span className="uppercase tracking-wider font-medium">hoặc</span>
-              <div className="h-px flex-1 bg-border" />
+            <div className="my-6 flex items-center gap-3 text-[11px] text-[#94A3B8]">
+              <div className="h-px flex-1 bg-[#E2E8F0]" />
+              <span className="uppercase tracking-[0.16em] font-semibold">hoặc tiếp tục với</span>
+              <div className="h-px flex-1 bg-[#E2E8F0]" />
             </div>
 
             <Button
@@ -343,7 +371,7 @@ function LoginPage() {
               variant="outline"
               onClick={onGoogle}
               disabled={loading}
-              className="w-full h-11 rounded-xl border-border bg-background text-sm font-medium hover:bg-muted transition-all"
+              className="w-full h-11 rounded-xl border-[#E2E8F0] bg-white text-[#0F172A] text-sm font-medium hover:bg-[#F8FAFC] hover:border-[#CBD5E1] transition-all"
             >
               <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M23.766 12.2764C23.766 11.4607 23.6999 10.6406 23.5588 9.83807H12.24V14.4591H18.7217C18.4528 15.9494 17.5885 17.2678 16.323 18.1056V21.1039H20.19C22.4608 19.0139 23.766 15.9274 23.766 12.2764Z" fill="#4285F4" />
@@ -354,42 +382,59 @@ function LoginPage() {
               Tiếp tục với Google
             </Button>
 
-            <div className="mt-5 text-center text-sm text-muted-foreground">
-              {mode === "signin" ? (
-                <>
-                  Chưa có tài khoản?{" "}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode("signup");
-                      setErrors({});
-                      setTouched({});
-                    }}
-                    className="text-primary font-semibold hover:underline transition-all"
-                  >
-                    Đăng ký
-                  </button>
-                </>
-              ) : (
-                <>
-                  Đã có tài khoản?{" "}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode("signin");
-                      setErrors({});
-                      setTouched({});
-                    }}
-                    className="text-primary font-semibold hover:underline transition-all"
-                  >
-                    Đăng nhập
-                  </button>
-                </>
-              )}
-            </div>
+            <p className="mt-6 text-center text-[11px] text-[#94A3B8] leading-relaxed">
+              Bằng việc tiếp tục, bạn đồng ý với{" "}
+              <span className="text-[#475569] font-medium">Điều khoản</span> &{" "}
+              <span className="text-[#475569] font-medium">Chính sách bảo mật</span> của SaleBDS OS.
+            </p>
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+function inputCls(hasError: boolean) {
+  return `h-11 pl-10 rounded-xl bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] transition-all focus-visible:ring-2 focus-visible:ring-offset-1 ${
+    hasError
+      ? "border-[#EF4444] focus-visible:ring-[#EF4444]/40"
+      : "border-[#E2E8F0] focus-visible:ring-[#3730A3]/40 focus-visible:border-[#3730A3]"
+  }`;
+}
+
+function Field({
+  id,
+  label,
+  icon,
+  error,
+  rightSlot,
+  children,
+}: {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  error?: string;
+  rightSlot?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id} className="text-[13px] font-medium text-[#334155]">
+        {label}
+      </Label>
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none">
+          {icon}
+        </span>
+        {children}
+        {rightSlot}
+      </div>
+      {error && (
+        <p className="text-xs text-[#DC2626] flex items-center gap-1.5 pt-0.5">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          {error}
+        </p>
+      )}
     </div>
   );
 }
