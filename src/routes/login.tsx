@@ -546,6 +546,7 @@ function Field({
   icon,
   error,
   rightSlot,
+  hint,
   children,
 }: {
   id: string;
@@ -553,6 +554,7 @@ function Field({
   icon: React.ReactNode;
   error?: string;
   rightSlot?: React.ReactNode;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -567,12 +569,14 @@ function Field({
         {children}
         {rightSlot}
       </div>
-      {error && (
+      {error ? (
         <p className="text-xs text-[#DC2626] flex items-center gap-1.5 pt-0.5">
           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
           {error}
         </p>
-      )}
+      ) : hint ? (
+        <p className="text-[11px] text-[#94A3B8] pt-0.5">{hint}</p>
+      ) : null}
     </div>
   );
 }
