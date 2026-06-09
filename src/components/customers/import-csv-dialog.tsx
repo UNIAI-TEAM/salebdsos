@@ -118,6 +118,9 @@ export function ImportCustomersDialog({
           <DialogTitle>Nhập khách hàng từ CSV</DialogTitle>
           <DialogDescription>
             Dòng đầu tiên là tiêu đề cột. Hệ thống tự động map (Họ tên, SĐT, Email, Công ty, Ghi chú); bạn có thể chỉnh lại bên dưới.
+            <button onClick={downloadSample} className="ml-1 inline-flex items-center gap-1 text-primary hover:underline cursor-pointer bg-transparent border-0 p-0 font-[inherit]">
+              <Download className="h-3 w-3" /> Tải file mẫu
+            </button>
           </DialogDescription>
         </DialogHeader>
 
