@@ -36,13 +36,19 @@ export const registerAgency = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { supabase } = context;
-    const { data: tid, error } = await supabase.rpc("register_agency", {
-      _name: data.name,
-      _slug: data.slug,
-    });
-    if (error) throw new Error(error.message);
-    return { tenantId: tid as string };
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: tenant, error: tErr } = await supabaseAdmin
+      .from("tenants")
+      .insert({ name: data.name, slug: data.slug })
+      .select("id")
+      .single();
+    if (tErr || !tenant) throw new Error(tErr?.message ?? "Failed to create tenant");
+    const { error: rErr } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ tenant_id: tenant.id, user_id: userId, role: "owner" });
+    if (rErr) throw new Error(rErr.message);
+    return { tenantId: tenant.id as string };
   });
 
 export const listMembers = createServerFn({ method: "GET" })
@@ -131,11 +137,28 @@ export const acceptInvitation = createServerFn({ method: "POST" })
     z.object({ token: z.string().min(8).max(128) }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { data: tid, error } = await context.supabase.rpc("accept_invitation", {
-      _token: data.token,
-    });
-    if (error) throw new Error(error.message);
-    return { tenantId: tid as string };
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: inv, error: iErr } = await supabaseAdmin
+      .from("invitations")
+      .select("id, tenant_id, role, status, expires_at")
+      .eq("token", data.token)
+      .maybeSingle();
+    if (iErr) throw new Error(iErr.message);
+    if (!inv) throw new Error("Invalid invitation");
+    if (inv.status !== "pending") throw new Error("Invitation no longer pending");
+    if (new Date(inv.expires_at) < new Date()) {
+      await supabaseAdmin.from("invitations").update({ status: "expired" }).eq("id", inv.id);
+      throw new Error("Invitation expired");
+    }
+    await supabaseAdmin
+      .from("user_roles")
+      .insert({ tenant_id: inv.tenant_id, user_id: userId, role: inv.role });
+    await supabaseAdmin
+      .from("invitations")
+      .update({ status: "accepted", accepted_at: new Date().toISOString(), accepted_by: userId })
+      .eq("id", inv.id);
+    return { tenantId: inv.tenant_id as string };
   });
 
 export const updateMemberRole = createServerFn({ method: "POST" })

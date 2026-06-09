@@ -1463,34 +1463,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_invitation: { Args: { _token: string }; Returns: string }
       aggregate_interaction_events_daily: {
         Args: { _day?: string }
         Returns: undefined
-      }
-      ensure_default_pipeline_stages: {
-        Args: { _tenant: string }
-        Returns: undefined
-      }
-      has_tenant_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _tenant: string
-        }
-        Returns: boolean
-      }
-      has_tenant_role_in: {
-        Args: {
-          _roles: Database["public"]["Enums"]["app_role"][]
-          _tenant: string
-        }
-        Returns: boolean
-      }
-      is_platform_admin: { Args: never; Returns: boolean }
-      is_tenant_member: { Args: { _tenant: string }; Returns: boolean }
-      register_agency: {
-        Args: { _name: string; _slug: string }
-        Returns: string
       }
     }
     Enums: {
