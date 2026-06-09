@@ -47,6 +47,7 @@ function OnboardingPage() {
       await register({ data: { name, slug: slug || slugify(name) } });
       await refreshTenants();
       toast.success("Đã tạo agency");
+      try { sessionStorage.removeItem("pending_workspace"); } catch {}
       nav({ to: "/dashboard", replace: true });
     } catch (err: any) {
       toast.error(err.message ?? "Không tạo được agency");
