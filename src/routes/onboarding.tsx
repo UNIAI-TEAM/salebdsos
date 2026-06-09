@@ -24,6 +24,22 @@ function OnboardingPage() {
     if (!loading && !session) nav({ to: "/login", replace: true });
   }, [loading, session, nav]);
 
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("pending_workspace");
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p?.name && !name) setName(p.name);
+        if (p?.slug && !slug) setSlug(p.slug);
+      } else {
+        const meta = (session?.user?.user_metadata ?? {}) as Record<string, string>;
+        if (meta.workspace_name && !name) setName(meta.workspace_name);
+        if (meta.workspace_slug && !slug) setSlug(meta.workspace_slug);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
