@@ -10,7 +10,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 
-type Item = { to: string; label: string; icon: any; badge?: string; roles?: Role[] };
+type Item = { to: string; label: string; icon: any; badge?: string; roles?: Role[]; platformOnly?: boolean };
 type Group = { label: string; items: Item[] };
 
 // roles undefined => all members can see; platform_admin always sees everything
@@ -61,6 +61,7 @@ const groups: Group[] = [
       { to: "/products", label: "Sản phẩm", icon: Package },
       { to: "/files", label: "Tài liệu & Brochure", icon: FolderArchive },
       { to: "/settings", label: "Cài đặt", icon: Settings, roles: ["owner", "admin"] },
+      { to: "/auth-settings", label: "Bảo mật xác thực", icon: ShieldCheck, platformOnly: true },
     ],
   },
 ];
@@ -84,6 +85,7 @@ export function AppSidebar() {
   const [open, setOpen] = useState(false);
 
   const can = (item: Item) => {
+    if (item.platformOnly) return isPlatformAdmin;
     if (!item.roles) return true;
     if (isPlatformAdmin) return true;
     return currentRole !== null && currentRole !== "viewer" && (item.roles as string[]).includes(currentRole);

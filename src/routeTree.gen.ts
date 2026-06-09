@@ -35,6 +35,7 @@ import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
 import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCustomersRouteImport } from './routes/_app.customers'
+import { Route as AppAuthSettingsRouteImport } from './routes/_app.auth-settings'
 import { Route as AppAppointmentsRouteImport } from './routes/_app.appointments'
 import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
 import { Route as AppAirdropRouteImport } from './routes/_app.airdrop'
@@ -175,6 +176,11 @@ const AppCustomersRoute = AppCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAuthSettingsRoute = AppAuthSettingsRouteImport.update({
+  id: '/auth-settings',
+  path: '/auth-settings',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAppointmentsRoute = AppAppointmentsRouteImport.update({
   id: '/appointments',
   path: '/appointments',
@@ -238,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/airdrop': typeof AppAirdropRoute
   '/analytics': typeof AppAnalyticsRoute
   '/appointments': typeof AppAppointmentsRoute
+  '/auth-settings': typeof AppAuthSettingsRoute
   '/customers': typeof AppCustomersRoute
   '/dashboard': typeof AppDashboardRoute
   '/digital-card': typeof AppDigitalCardRoute
@@ -275,6 +282,7 @@ export interface FileRoutesByTo {
   '/airdrop': typeof AppAirdropRoute
   '/analytics': typeof AppAnalyticsRoute
   '/appointments': typeof AppAppointmentsRoute
+  '/auth-settings': typeof AppAuthSettingsRoute
   '/customers': typeof AppCustomersRoute
   '/dashboard': typeof AppDashboardRoute
   '/digital-card': typeof AppDigitalCardRoute
@@ -314,6 +322,7 @@ export interface FileRoutesById {
   '/_app/airdrop': typeof AppAirdropRoute
   '/_app/analytics': typeof AppAnalyticsRoute
   '/_app/appointments': typeof AppAppointmentsRoute
+  '/_app/auth-settings': typeof AppAuthSettingsRoute
   '/_app/customers': typeof AppCustomersRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/digital-card': typeof AppDigitalCardRoute
@@ -353,6 +362,7 @@ export interface FileRouteTypes {
     | '/airdrop'
     | '/analytics'
     | '/appointments'
+    | '/auth-settings'
     | '/customers'
     | '/dashboard'
     | '/digital-card'
@@ -390,6 +400,7 @@ export interface FileRouteTypes {
     | '/airdrop'
     | '/analytics'
     | '/appointments'
+    | '/auth-settings'
     | '/customers'
     | '/dashboard'
     | '/digital-card'
@@ -428,6 +439,7 @@ export interface FileRouteTypes {
     | '/_app/airdrop'
     | '/_app/analytics'
     | '/_app/appointments'
+    | '/_app/auth-settings'
     | '/_app/customers'
     | '/_app/dashboard'
     | '/_app/digital-card'
@@ -652,6 +664,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCustomersRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/auth-settings': {
+      id: '/_app/auth-settings'
+      path: '/auth-settings'
+      fullPath: '/auth-settings'
+      preLoaderRoute: typeof AppAuthSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/appointments': {
       id: '/_app/appointments'
       path: '/appointments'
@@ -756,6 +775,7 @@ interface AppRouteChildren {
   AppAirdropRoute: typeof AppAirdropRoute
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppAppointmentsRoute: typeof AppAppointmentsRoute
+  AppAuthSettingsRoute: typeof AppAuthSettingsRoute
   AppCustomersRoute: typeof AppCustomersRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDigitalCardRoute: typeof AppDigitalCardRoute
@@ -782,6 +802,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAirdropRoute: AppAirdropRoute,
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppAppointmentsRoute: AppAppointmentsRoute,
+  AppAuthSettingsRoute: AppAuthSettingsRoute,
   AppCustomersRoute: AppCustomersRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDigitalCardRoute: AppDigitalCardRoute,

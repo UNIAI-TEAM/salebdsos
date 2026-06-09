@@ -236,6 +236,33 @@ export type Database = {
           },
         ]
       }
+      auth_settings: {
+        Row: {
+          allowed_email_domains: string[]
+          enforce_domain_allowlist: boolean
+          google_oauth_mode: string
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allowed_email_domains?: string[]
+          enforce_domain_allowlist?: boolean
+          google_oauth_mode?: string
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allowed_email_domains?: string[]
+          enforce_domain_allowlist?: boolean
+          google_oauth_mode?: string
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       brochures: {
         Row: {
           created_at: string
