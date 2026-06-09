@@ -191,6 +191,8 @@ function LoginPage() {
   const hasEmailError = touched.email && !!errors.email;
   const hasPasswordError = touched.password && !!errors.password;
   const hasNameError = touched.fullName && !!errors.fullName;
+  const hasWorkspaceError = touched.workspaceName && !!errors.workspaceName;
+  const hasConfirmError = touched.confirmPassword && !!errors.confirmPassword;
 
   return (
     <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-[#F8FAFC]">
