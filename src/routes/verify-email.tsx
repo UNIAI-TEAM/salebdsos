@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { checkEmailVerification, resendVerificationEmail, type VerifyStatus } from "@/lib/verify-email.functions";
 import { toast } from "sonner";
 import {
-  Building2, Mail, Loader2, ArrowRight, RefreshCw, ShieldCheck, Check, Inbox, AlertTriangle, Clock,
+  Building2, Mail, Loader2, ArrowRight, RefreshCw, ShieldCheck, Check, Inbox, AlertTriangle, Clock, User as UserIcon, CalendarClock,
 } from "lucide-react";
 
 const search = z.object({ email: z.string().optional() });
@@ -17,6 +17,15 @@ export const Route = createFileRoute("/verify-email")({
 });
 
 type UiStatus = VerifyStatus | "idle";
+type ServerUser = {
+  email: string;
+  username: string | null;
+  fullName: string | null;
+  createdAt: string | null;
+  lastSignInAt: string | null;
+};
+
+const POLL_SECONDS = 5;
 
 function VerifyEmailPage() {
   const nav = useNavigate();
@@ -29,8 +38,11 @@ function VerifyEmailPage() {
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null);
+  const [serverUser, setServerUser] = useState<ServerUser | null>(null);
+  const [nextCheckIn, setNextCheckIn] = useState<number>(POLL_SECONDS);
   const redirectedRef = useRef(false);
   const pollRef = useRef<number | null>(null);
+  const tickRef = useRef<number | null>(null);
 
   const checkFn = useServerFn(checkEmailVerification);
   const resendFn = useServerFn(resendVerificationEmail);
@@ -51,15 +63,18 @@ function VerifyEmailPage() {
   const runCheck = async (silent = false) => {
     if (!email) return;
     if (!silent) setChecking(true);
+    setNextCheckIn(POLL_SECONDS);
     try {
       const r = await checkFn({ data: { email } });
       setStatus(r.status);
       setConfirmedAt(r.confirmedAt);
       setServerMsg(r.message ?? null);
+      setServerUser(r.user ?? null);
       setLastCheckedAt(new Date());
       if (r.status === "verified" && !redirectedRef.current) {
         redirectedRef.current = true;
         if (pollRef.current) window.clearInterval(pollRef.current);
+        if (tickRef.current) window.clearInterval(tickRef.current);
         toast.success("Email đã xác thực — đang đưa bạn vào hệ thống");
         setTimeout(() => nav({ to: "/onboarding", replace: true }), 800);
       }
@@ -75,9 +90,14 @@ function VerifyEmailPage() {
   useEffect(() => {
     if (!email) return;
     runCheck(false);
-    pollRef.current = window.setInterval(() => runCheck(true), 5000);
+    pollRef.current = window.setInterval(() => runCheck(true), POLL_SECONDS * 1000);
+    tickRef.current = window.setInterval(
+      () => setNextCheckIn((n) => (n <= 1 ? POLL_SECONDS : n - 1)),
+      1000,
+    );
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
+      if (tickRef.current) window.clearInterval(tickRef.current);
     };
   }, [email]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -190,13 +210,52 @@ function VerifyEmailPage() {
           <div className="rounded-3xl border border-[#E2E8F0] bg-white/90 backdrop-blur-xl p-7 sm:p-9 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.18)]">
             <StatusHeader status={status} checking={checking} />
 
-            <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 mb-5">
-              <div className="text-xs font-medium text-[#64748B] mb-1">Email</div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#0F172A] break-all">
-                <Mail className="h-4 w-4 text-[#3730A3] shrink-0" />
-                {email || "—"}
+            <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 mb-5 space-y-3">
+              <div>
+                <div className="text-xs font-medium text-[#64748B] mb-1">Email</div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#0F172A] break-all">
+                  <Mail className="h-4 w-4 text-[#3730A3] shrink-0" />
+                  {serverUser?.email ?? email ?? "—"}
+                </div>
               </div>
+              {(serverUser?.username || serverUser?.fullName) && (
+                <div className="pt-3 border-t border-[#E2E8F0]">
+                  <div className="text-xs font-medium text-[#64748B] mb-1">
+                    {serverUser?.username ? "Tên đăng nhập" : "Họ tên"}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-[#0F172A]">
+                    <UserIcon className="h-4 w-4 text-[#3730A3] shrink-0" />
+                    {serverUser?.username ?? serverUser?.fullName}
+                  </div>
+                </div>
+              )}
+              {serverUser?.createdAt && (
+                <div className="pt-3 border-t border-[#E2E8F0] flex items-center gap-2 text-xs text-[#64748B]">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  Tạo {new Date(serverUser.createdAt).toLocaleString("vi-VN")}
+                </div>
+              )}
             </div>
+
+            {isPending && !isVerified && (
+              <div className="mb-5 rounded-xl border border-[#C7D2FE] bg-white p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-[#3730A3] inline-flex items-center gap-1.5">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Đang chờ bạn xác thực email
+                  </span>
+                  <span className="text-xs font-mono tabular-nums text-[#475569]">
+                    Tự kiểm tra sau {nextCheckIn}s
+                  </span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-[#EEF2FF] overflow-hidden">
+                  <div
+                    className="h-full bg-[linear-gradient(90deg,#3730A3,#06B6D4)] transition-all duration-1000 ease-linear"
+                    style={{ width: `${((POLL_SECONDS - nextCheckIn) / POLL_SECONDS) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             <StatusBanner
               status={status}
