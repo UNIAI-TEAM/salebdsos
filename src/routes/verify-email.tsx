@@ -1,9 +1,13 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { checkEmailVerification, resendVerificationEmail, type VerifyStatus } from "@/lib/verify-email.functions";
 import { toast } from "sonner";
-import { Building2, Mail, Loader2, ArrowRight, RefreshCw, ShieldCheck, Check, Inbox } from "lucide-react";
+import {
+  Building2, Mail, Loader2, ArrowRight, RefreshCw, ShieldCheck, Check, Inbox, AlertTriangle, Clock,
+} from "lucide-react";
 
 const search = z.object({ email: z.string().optional() });
 
@@ -12,16 +16,26 @@ export const Route = createFileRoute("/verify-email")({
   validateSearch: search,
 });
 
+type UiStatus = VerifyStatus | "idle";
+
 function VerifyEmailPage() {
   const nav = useNavigate();
   const sp = useSearch({ from: "/verify-email" });
   const [email, setEmail] = useState<string>(sp.email ?? "");
+  const [status, setStatus] = useState<UiStatus>("idle");
+  const [serverMsg, setServerMsg] = useState<string | null>(null);
+  const [confirmedAt, setConfirmedAt] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const [verified, setVerified] = useState(false);
+  const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null);
+  const redirectedRef = useRef(false);
   const pollRef = useRef<number | null>(null);
 
-  // Prefill email from sessionStorage if absent
+  const checkFn = useServerFn(checkEmailVerification);
+  const resendFn = useServerFn(resendVerificationEmail);
+
+  // Prefill email
   useEffect(() => {
     if (!email) {
       try {
@@ -32,47 +46,57 @@ function VerifyEmailPage() {
         }
       } catch {}
     }
-    supabase.auth.getUser().then(({ data }) => {
-      const u = data.user;
-      if (!email && u?.email) setEmail(u.email);
-      if (u?.email_confirmed_at) handleVerified();
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Listen for auth changes (email confirmed → session)
+  const runCheck = async (silent = false) => {
+    if (!email) return;
+    if (!silent) setChecking(true);
+    try {
+      const r = await checkFn({ data: { email } });
+      setStatus(r.status);
+      setConfirmedAt(r.confirmedAt);
+      setServerMsg(r.message ?? null);
+      setLastCheckedAt(new Date());
+      if (r.status === "verified" && !redirectedRef.current) {
+        redirectedRef.current = true;
+        if (pollRef.current) window.clearInterval(pollRef.current);
+        toast.success("Email đã xác thực — đang đưa bạn vào hệ thống");
+        setTimeout(() => nav({ to: "/onboarding", replace: true }), 800);
+      }
+    } catch (e: any) {
+      setStatus("error");
+      setServerMsg(e?.message ?? "Không kiểm tra được trạng thái");
+    } finally {
+      if (!silent) setChecking(false);
+    }
+  };
+
+  // Initial + polling check (server-driven)
+  useEffect(() => {
+    if (!email) return;
+    runCheck(false);
+    pollRef.current = window.setInterval(() => runCheck(true), 5000);
+    return () => {
+      if (pollRef.current) window.clearInterval(pollRef.current);
+    };
+  }, [email]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Also react to client-side auth events
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session?.user?.email_confirmed_at) {
-        handleVerified();
+        runCheck(true);
       }
     });
-    // Poll fallback every 4s in case the email is confirmed in another tab
-    pollRef.current = window.setInterval(async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user?.email_confirmed_at) handleVerified();
-    }, 4000);
-    return () => {
-      sub.subscription.unsubscribe();
-      if (pollRef.current) window.clearInterval(pollRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => sub.subscription.unsubscribe();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Cooldown timer for resend
+  // Cooldown timer
   useEffect(() => {
     if (cooldown <= 0) return;
     const t = window.setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
     return () => window.clearInterval(t);
   }, [cooldown]);
-
-  const handleVerified = () => {
-    if (verified) return;
-    setVerified(true);
-    if (pollRef.current) window.clearInterval(pollRef.current);
-    toast.success("Email đã xác thực — đang đưa bạn vào hệ thống");
-    setTimeout(() => nav({ to: "/onboarding", replace: true }), 800);
-  };
 
   const onResend = async () => {
     if (!email) {
@@ -81,12 +105,9 @@ function VerifyEmailPage() {
     }
     setResending(true);
     try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email,
-        options: { emailRedirectTo: `${window.location.origin}/verify-email?email=${encodeURIComponent(email)}` },
-      });
-      if (error) throw error;
+      const redirectTo = `${window.location.origin}/verify-email?email=${encodeURIComponent(email)}`;
+      const r = await resendFn({ data: { email, redirectTo } });
+      if (!r.ok) throw new Error(r.message);
       toast.success("Đã gửi lại email xác thực");
       setCooldown(45);
     } catch (e: any) {
@@ -95,6 +116,11 @@ function VerifyEmailPage() {
       setResending(false);
     }
   };
+
+  const isVerified = status === "verified";
+  const isError = status === "error";
+  const isNotFound = status === "not_found";
+  const isPending = status === "pending";
 
   return (
     <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-[#F8FAFC]">
@@ -120,14 +146,13 @@ function VerifyEmailPage() {
             Kiểm tra hộp thư để <span className="text-[#67E8F9]">kích hoạt</span> tài khoản
           </h2>
           <p className="text-white/75 text-base leading-relaxed">
-            Chúng tôi đã gửi link xác thực đến email của bạn. Mở email và bấm vào liên kết
-            để hoàn tất đăng ký và tạo workspace agency.
+            Chúng tôi đã gửi link xác thực đến email của bạn. Trạng thái bên phải được kiểm tra trực tiếp từ máy chủ.
           </p>
           <ul className="space-y-3 text-sm">
             {[
-              "Link xác thực có hiệu lực trong 24 giờ",
+              "Trạng thái lấy từ Lovable Cloud (không phụ thuộc trình duyệt)",
+              "Tự động làm mới mỗi 5 giây",
               "Có thể gửi lại nếu không thấy email",
-              "Kiểm tra cả thư mục Spam / Quảng cáo",
             ].map((t) => (
               <li key={t} className="flex items-start gap-3 text-white/85">
                 <span className="mt-0.5 h-5 w-5 rounded-md bg-white/10 ring-1 ring-white/15 flex items-center justify-center">
@@ -163,40 +188,26 @@ function VerifyEmailPage() {
           </Link>
 
           <div className="rounded-3xl border border-[#E2E8F0] bg-white/90 backdrop-blur-xl p-7 sm:p-9 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.18)]">
-            <div className="mb-6 flex items-start gap-4">
-              <div className="h-12 w-12 shrink-0 rounded-2xl bg-[linear-gradient(135deg,#EEF2FF,#CFFAFE)] flex items-center justify-center ring-1 ring-[#E2E8F0]">
-                {verified ? (
-                  <Check className="h-6 w-6 text-[#059669]" />
-                ) : (
-                  <Mail className="h-6 w-6 text-[#3730A3]" />
-                )}
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-                  {verified ? "Đã xác thực!" : "Xác thực email của bạn"}
-                </h1>
-                <p className="text-sm text-[#64748B] mt-1.5">
-                  {verified
-                    ? "Đang chuyển hướng đến thiết lập workspace..."
-                    : "Mở email và bấm vào liên kết xác thực để tiếp tục."}
-                </p>
+            <StatusHeader status={status} checking={checking} />
+
+            <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 mb-5">
+              <div className="text-xs font-medium text-[#64748B] mb-1">Email</div>
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#0F172A] break-all">
+                <Mail className="h-4 w-4 text-[#3730A3] shrink-0" />
+                {email || "—"}
               </div>
             </div>
 
-            {!verified && (
-              <>
-                <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 mb-5">
-                  <div className="text-xs font-medium text-[#64748B] mb-1">Email đã gửi tới</div>
-                  <div className="flex items-center gap-2 text-sm font-semibold text-[#0F172A] break-all">
-                    <Mail className="h-4 w-4 text-[#3730A3] shrink-0" />
-                    {email || "—"}
-                  </div>
-                </div>
+            <StatusBanner
+              status={status}
+              serverMsg={serverMsg}
+              confirmedAt={confirmedAt}
+              lastCheckedAt={lastCheckedAt}
+            />
 
-                <div className="space-y-3">
-                  <label htmlFor="resend-email" className="text-sm font-semibold text-[#0F172A]">
-                    Không nhận được email?
-                  </label>
+            {!isVerified && (
+              <div className="space-y-3 mt-5">
+                {!sp.email && (
                   <input
                     id="resend-email"
                     type="email"
@@ -205,54 +216,62 @@ function VerifyEmailPage() {
                     placeholder="name@company.com"
                     className="w-full h-11 rounded-xl border border-[#E2E8F0] bg-background px-3 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3730A3]/40 focus-visible:border-[#3730A3]"
                   />
+                )}
 
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => runCheck(false)}
+                    disabled={checking || !email}
+                    className="h-11 rounded-xl border border-[#E2E8F0] bg-white text-sm font-semibold text-[#0F172A] hover:bg-[#F8FAFC] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                  >
+                    {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    Kiểm tra lại
+                  </button>
                   <button
                     type="button"
                     onClick={onResend}
-                    disabled={resending || cooldown > 0}
-                    className="w-full h-11 rounded-xl bg-[linear-gradient(135deg,#3730A3,#4338CA,#06B6D4)] text-white text-sm font-semibold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                    disabled={resending || cooldown > 0 || !email}
+                    className="h-11 rounded-xl bg-[linear-gradient(135deg,#3730A3,#4338CA,#06B6D4)] text-white text-sm font-semibold shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
                   >
                     {resending ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Đang gửi...
+                        Đang gửi
                       </>
                     ) : cooldown > 0 ? (
-                      <>
-                        <RefreshCw className="h-4 w-4" />
-                        Gửi lại sau {cooldown}s
-                      </>
+                      <>Gửi lại sau {cooldown}s</>
                     ) : (
                       <>
-                        <RefreshCw className="h-4 w-4" />
-                        Gửi lại email xác thực
+                        <Mail className="h-4 w-4" />
+                        Gửi lại email
                       </>
                     )}
                   </button>
                 </div>
 
-                <div className="mt-6 pt-5 border-t border-[#E2E8F0] flex items-center justify-between text-sm">
+                <div className="pt-5 border-t border-[#E2E8F0] flex items-center justify-between text-sm">
                   <Link to="/login" className="text-[#64748B] hover:text-[#0F172A]">
                     ← Quay lại đăng nhập
                   </Link>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const { data } = await supabase.auth.getUser();
-                      if (data.user?.email_confirmed_at) handleVerified();
-                      else toast.info("Chưa thấy xác thực. Vui lòng kiểm tra email.");
-                    }}
-                    className="inline-flex items-center gap-1 text-[#3730A3] font-medium hover:underline"
-                  >
-                    Tôi đã xác thực <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
+                  <span className="text-xs text-[#94A3B8]">
+                    {lastCheckedAt ? `Cập nhật ${formatRelative(lastCheckedAt)}` : "Đang chờ..."}
+                  </span>
                 </div>
-              </>
+              </div>
             )}
 
-            {verified && (
-              <div className="flex items-center justify-center py-6 text-[#3730A3]">
-                <Loader2 className="h-6 w-6 animate-spin" />
+            {isVerified && (
+              <div className="mt-5 flex items-center justify-between">
+                <span className="text-sm text-[#059669] font-medium inline-flex items-center gap-1.5">
+                  <Check className="h-4 w-4" /> Xác thực thành công
+                </span>
+                <button
+                  onClick={() => nav({ to: "/onboarding", replace: true })}
+                  className="inline-flex items-center gap-1 text-[#3730A3] font-medium hover:underline text-sm"
+                >
+                  Tiếp tục <ArrowRight className="h-3.5 w-3.5" />
+                </button>
               </div>
             )}
           </div>
@@ -267,4 +286,125 @@ function VerifyEmailPage() {
       </main>
     </div>
   );
+}
+
+function StatusHeader({ status, checking }: { status: UiStatus; checking: boolean }) {
+  const cfg = headerConfig(status, checking);
+  return (
+    <div className="mb-6 flex items-start gap-4">
+      <div className={`h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center ring-1 ${cfg.iconWrap}`}>
+        {cfg.icon}
+      </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">{cfg.title}</h1>
+        <p className="text-sm text-[#64748B] mt-1.5">{cfg.subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
+function headerConfig(status: UiStatus, checking: boolean) {
+  if (status === "verified") {
+    return {
+      icon: <Check className="h-6 w-6 text-[#059669]" />,
+      iconWrap: "bg-[#ECFDF5] ring-[#A7F3D0]",
+      title: "Đã xác thực!",
+      subtitle: "Đang chuyển hướng đến thiết lập workspace...",
+    };
+  }
+  if (status === "error") {
+    return {
+      icon: <AlertTriangle className="h-6 w-6 text-[#DC2626]" />,
+      iconWrap: "bg-[#FEF2F2] ring-[#FECACA]",
+      title: "Không kiểm tra được trạng thái",
+      subtitle: "Máy chủ tạm thời gặp lỗi. Hãy thử lại sau.",
+    };
+  }
+  if (status === "not_found") {
+    return {
+      icon: <AlertTriangle className="h-6 w-6 text-[#D97706]" />,
+      iconWrap: "bg-[#FFFBEB] ring-[#FDE68A]",
+      title: "Không tìm thấy tài khoản",
+      subtitle: "Email này chưa được đăng ký hoặc đã bị xoá.",
+    };
+  }
+  if (status === "pending") {
+    return {
+      icon: <Clock className="h-6 w-6 text-[#3730A3]" />,
+      iconWrap: "bg-[#EEF2FF] ring-[#C7D2FE]",
+      title: "Đang chờ xác thực",
+      subtitle: "Mở email và bấm vào liên kết để hoàn tất.",
+    };
+  }
+  return {
+    icon: checking ? (
+      <Loader2 className="h-6 w-6 text-[#3730A3] animate-spin" />
+    ) : (
+      <Mail className="h-6 w-6 text-[#3730A3]" />
+    ),
+    iconWrap: "bg-[linear-gradient(135deg,#EEF2FF,#CFFAFE)] ring-[#E2E8F0]",
+    title: "Xác thực email của bạn",
+    subtitle: "Đang kiểm tra trạng thái từ máy chủ...",
+  };
+}
+
+function StatusBanner({
+  status, serverMsg, confirmedAt, lastCheckedAt,
+}: {
+  status: UiStatus;
+  serverMsg: string | null;
+  confirmedAt: string | null;
+  lastCheckedAt: Date | null;
+}) {
+  if (status === "verified") {
+    return (
+      <div className="rounded-xl border border-[#A7F3D0] bg-[#ECFDF5] p-4 text-sm text-[#065F46]">
+        <div className="font-semibold flex items-center gap-2"><Check className="h-4 w-4" /> Email đã được xác thực</div>
+        {confirmedAt && (
+          <div className="text-xs text-[#047857] mt-1">Lúc {new Date(confirmedAt).toLocaleString("vi-VN")}</div>
+        )}
+      </div>
+    );
+  }
+  if (status === "error") {
+    return (
+      <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-4 text-sm text-[#991B1B]">
+        <div className="font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Lỗi máy chủ</div>
+        <div className="text-xs mt-1 break-words">{serverMsg ?? "Không xác định"}</div>
+      </div>
+    );
+  }
+  if (status === "not_found") {
+    return (
+      <div className="rounded-xl border border-[#FDE68A] bg-[#FFFBEB] p-4 text-sm text-[#92400E]">
+        <div className="font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Chưa có tài khoản</div>
+        <div className="text-xs mt-1">
+          Email này chưa tồn tại trong hệ thống. Hãy <Link to="/login" className="underline font-medium">đăng ký</Link> trước.
+        </div>
+      </div>
+    );
+  }
+  if (status === "pending") {
+    return (
+      <div className="rounded-xl border border-[#C7D2FE] bg-[#EEF2FF] p-4 text-sm text-[#3730A3]">
+        <div className="font-semibold flex items-center gap-2"><Clock className="h-4 w-4" /> Đang chờ xác thực</div>
+        <div className="text-xs mt-1 text-[#4338CA]">
+          Kiểm tra hộp thư (kể cả Spam). Trang sẽ tự cập nhật khi bạn bấm link.
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm text-[#475569]">
+      <div className="font-semibold inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Đang kiểm tra...</div>
+    </div>
+  );
+}
+
+function formatRelative(d: Date) {
+  const s = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
+  if (s < 5) return "vừa xong";
+  if (s < 60) return `${s}s trước`;
+  const m = Math.floor(s / 60);
+  return `${m}m trước`;
 }
