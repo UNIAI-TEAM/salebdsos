@@ -11,6 +11,9 @@ export const checkEmailVerification = createServerFn({ method: "GET" })
     status: VerifyStatus;
     confirmedAt: string | null;
     message?: string;
+    serverTime: string;
+    nextCheckAt: string;
+    pollSeconds: number;
     user?: {
       email: string;
       username: string | null;
@@ -19,6 +22,11 @@ export const checkEmailVerification = createServerFn({ method: "GET" })
       lastSignInAt: string | null;
     } | null;
   }> => {
+    const POLL_SECONDS = 5;
+    const now = new Date();
+    const serverTime = now.toISOString();
+    const nextCheckAt = new Date(now.getTime() + POLL_SECONDS * 1000).toISOString();
+    const base = { serverTime, nextCheckAt, pollSeconds: POLL_SECONDS };
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const email = data.email.toLowerCase();
