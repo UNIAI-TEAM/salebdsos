@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { checkEmailVerification, resendVerificationEmail, type VerifyStatus } from "@/lib/verify-email.functions";
 import { toast } from "sonner";
 import {
-  Building2, Mail, Loader2, ArrowRight, RefreshCw, ShieldCheck, Check, Inbox, AlertTriangle, Clock,
+  Building2, Mail, Loader2, ArrowRight, RefreshCw, ShieldCheck, Check, Inbox, AlertTriangle, Clock, User as UserIcon, CalendarClock,
 } from "lucide-react";
 
 const search = z.object({ email: z.string().optional() });
