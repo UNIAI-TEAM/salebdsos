@@ -17,6 +17,15 @@ export const Route = createFileRoute("/verify-email")({
 });
 
 type UiStatus = VerifyStatus | "idle";
+type ServerUser = {
+  email: string;
+  username: string | null;
+  fullName: string | null;
+  createdAt: string | null;
+  lastSignInAt: string | null;
+};
+
+const POLL_SECONDS = 5;
 
 function VerifyEmailPage() {
   const nav = useNavigate();
