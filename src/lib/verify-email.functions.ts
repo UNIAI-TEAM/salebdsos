@@ -69,15 +69,65 @@ export const resendVerificationEmail = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data }) => {
+    const MIN_INTERVAL_SEC = 45;
+    const HOURLY_LIMIT = 5;
+    const IP_HOURLY_LIMIT = 20;
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const email = data.email.toLowerCase();
+
+      let ip: string | null = null;
+      try {
+        const { getRequestHeader } = await import("@tanstack/react-start/server");
+        const fwd = getRequestHeader("x-forwarded-for") ?? getRequestHeader("cf-connecting-ip") ?? "";
+        ip = (fwd.split(",")[0] || "").trim() || null;
+      } catch {}
+
+      const now = Date.now();
+      const sinceHour = new Date(now - 60 * 60 * 1000).toISOString();
+
+      const { data: emailRows, error: qErr } = await supabaseAdmin
+        .from("verification_resend_log")
+        .select("sent_at")
+        .eq("email", email)
+        .gte("sent_at", sinceHour)
+        .order("sent_at", { ascending: false })
+        .limit(HOURLY_LIMIT);
+      if (qErr) return { ok: false as const, message: qErr.message };
+
+      if (emailRows && emailRows.length > 0) {
+        const last = new Date(emailRows[0].sent_at).getTime();
+        const waitSec = Math.ceil((MIN_INTERVAL_SEC * 1000 - (now - last)) / 1000);
+        if (waitSec > 0) {
+          return { ok: false as const, retryAfter: waitSec, message: `Vui lòng đợi ${waitSec}s trước khi gửi lại.` };
+        }
+        if (emailRows.length >= HOURLY_LIMIT) {
+          const oldest = new Date(emailRows[emailRows.length - 1].sent_at).getTime();
+          const retry = Math.ceil((60 * 60 * 1000 - (now - oldest)) / 1000);
+          return { ok: false as const, retryAfter: retry, message: `Đã đạt giới hạn ${HOURLY_LIMIT} email/giờ. Thử lại sau ${Math.ceil(retry / 60)} phút.` };
+        }
+      }
+
+      if (ip) {
+        const { count: ipCount } = await supabaseAdmin
+          .from("verification_resend_log")
+          .select("id", { count: "exact", head: true })
+          .eq("ip", ip)
+          .gte("sent_at", sinceHour);
+        if ((ipCount ?? 0) >= IP_HOURLY_LIMIT) {
+          return { ok: false as const, retryAfter: 3600, message: "Quá nhiều yêu cầu từ địa chỉ này. Thử lại sau." };
+        }
+      }
+
       const { error } = await supabaseAdmin.auth.resend({
         type: "signup",
-        email: data.email.toLowerCase(),
+        email,
         options: data.redirectTo ? { emailRedirectTo: data.redirectTo } : undefined,
       });
       if (error) return { ok: false as const, message: error.message };
-      return { ok: true as const };
+
+      await supabaseAdmin.from("verification_resend_log").insert({ email, ip });
+      return { ok: true as const, minIntervalSec: MIN_INTERVAL_SEC };
     } catch (e: any) {
       return { ok: false as const, message: e?.message ?? "Unknown error" };
     }

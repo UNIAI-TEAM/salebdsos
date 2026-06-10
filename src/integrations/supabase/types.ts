@@ -1428,6 +1428,27 @@ export type Database = {
           },
         ]
       }
+      verification_resend_log: {
+        Row: {
+          email: string
+          id: string
+          ip: string | null
+          sent_at: string
+        }
+        Insert: {
+          email: string
+          id?: string
+          ip?: string | null
+          sent_at?: string
+        }
+        Update: {
+          email?: string
+          id?: string
+          ip?: string | null
+          sent_at?: string
+        }
+        Relationships: []
+      }
       wallet_cards: {
         Row: {
           card_id: string
