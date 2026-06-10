@@ -63,15 +63,18 @@ function VerifyEmailPage() {
   const runCheck = async (silent = false) => {
     if (!email) return;
     if (!silent) setChecking(true);
+    setNextCheckIn(POLL_SECONDS);
     try {
       const r = await checkFn({ data: { email } });
       setStatus(r.status);
       setConfirmedAt(r.confirmedAt);
       setServerMsg(r.message ?? null);
+      setServerUser(r.user ?? null);
       setLastCheckedAt(new Date());
       if (r.status === "verified" && !redirectedRef.current) {
         redirectedRef.current = true;
         if (pollRef.current) window.clearInterval(pollRef.current);
+        if (tickRef.current) window.clearInterval(tickRef.current);
         toast.success("Email đã xác thực — đang đưa bạn vào hệ thống");
         setTimeout(() => nav({ to: "/onboarding", replace: true }), 800);
       }
@@ -87,9 +90,14 @@ function VerifyEmailPage() {
   useEffect(() => {
     if (!email) return;
     runCheck(false);
-    pollRef.current = window.setInterval(() => runCheck(true), 5000);
+    pollRef.current = window.setInterval(() => runCheck(true), POLL_SECONDS * 1000);
+    tickRef.current = window.setInterval(
+      () => setNextCheckIn((n) => (n <= 1 ? POLL_SECONDS : n - 1)),
+      1000,
+    );
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
+      if (tickRef.current) window.clearInterval(tickRef.current);
     };
   }, [email]); // eslint-disable-line react-hooks/exhaustive-deps
 
