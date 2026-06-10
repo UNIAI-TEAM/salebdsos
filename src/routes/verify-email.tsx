@@ -38,8 +38,11 @@ function VerifyEmailPage() {
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null);
+  const [serverUser, setServerUser] = useState<ServerUser | null>(null);
+  const [nextCheckIn, setNextCheckIn] = useState<number>(POLL_SECONDS);
   const redirectedRef = useRef(false);
   const pollRef = useRef<number | null>(null);
+  const tickRef = useRef<number | null>(null);
 
   const checkFn = useServerFn(checkEmailVerification);
   const resendFn = useServerFn(resendVerificationEmail);
