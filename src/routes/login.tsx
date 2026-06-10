@@ -116,7 +116,7 @@ function LoginPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/login`,
+            emailRedirectTo: `${window.location.origin}/verify-email?email=${encodeURIComponent(email)}`,
             data: {
               full_name: fullName,
               workspace_name: workspaceName,
@@ -140,15 +140,13 @@ function LoginPage() {
           }
         }
 
-        // Email confirmation flow — stash workspace info for onboarding prefill.
+        // Email confirmation flow — stash workspace info for onboarding prefill, then route to verify page.
         try {
-          sessionStorage.setItem("pending_workspace", JSON.stringify({ name: workspaceName, slug }));
+          sessionStorage.setItem("pending_workspace", JSON.stringify({ name: workspaceName, slug, email }));
         } catch {}
-        toast.success("Đăng ký thành công. Kiểm tra email để xác thực, sau đó đăng nhập để tạo workspace.");
-        setMode("signin");
-        setPassword("");
-        setConfirmPassword("");
-        setErrors({});
+        toast.success("Đã gửi email xác thực. Vui lòng kiểm tra hộp thư.");
+        nav({ to: "/verify-email", search: { email }, replace: true });
+
       } else {
         const res = await signInWithPasswordFlow({
           email,

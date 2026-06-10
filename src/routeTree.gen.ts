@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as ThankYouRouteImport } from './routes/thank-you'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
@@ -47,6 +48,11 @@ import { Route as AppAiFollowupCustomerIdRouteImport } from './routes/_app.ai-fo
 import { Route as ApiPublicTCodeRouteImport } from './routes/api/public/t.$code'
 import { Route as ApiPublicQCodeRouteImport } from './routes/api/public/q.$code'
 
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ThankYouRoute = ThankYouRouteImport.update({
   id: '/thank-you',
   path: '/thank-you',
@@ -238,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/thank-you': typeof ThankYouRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/ai-lead-score': typeof AppAiLeadScoreRoute
   '/ai-sales-page': typeof AppAiSalesPageRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/thank-you': typeof ThankYouRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/ai-lead-score': typeof AppAiLeadScoreRoute
   '/ai-sales-page': typeof AppAiSalesPageRoute
@@ -316,6 +324,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/thank-you': typeof ThankYouRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/_app/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/_app/ai-lead-score': typeof AppAiLeadScoreRoute
   '/_app/ai-sales-page': typeof AppAiSalesPageRoute
@@ -356,6 +365,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/thank-you'
+    | '/verify-email'
     | '/ai-followup'
     | '/ai-lead-score'
     | '/ai-sales-page'
@@ -394,6 +404,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/thank-you'
+    | '/verify-email'
     | '/ai-followup'
     | '/ai-lead-score'
     | '/ai-sales-page'
@@ -433,6 +444,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/thank-you'
+    | '/verify-email'
     | '/_app/ai-followup'
     | '/_app/ai-lead-score'
     | '/_app/ai-sales-page'
@@ -473,6 +485,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   ThankYouRoute: typeof ThankYouRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
   AcceptInviteTokenRoute: typeof AcceptInviteTokenRoute
   CSlugRoute: typeof CSlugRoute
   ShareSlugRoute: typeof ShareSlugRoute
@@ -482,6 +495,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/thank-you': {
       id: '/thank-you'
       path: '/thank-you'
@@ -831,6 +851,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   ThankYouRoute: ThankYouRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
   AcceptInviteTokenRoute: AcceptInviteTokenRoute,
   CSlugRoute: CSlugRoute,
   ShareSlugRoute: ShareSlugRoute,
@@ -840,13 +861,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
