@@ -11,6 +11,9 @@ export const checkEmailVerification = createServerFn({ method: "GET" })
     status: VerifyStatus;
     confirmedAt: string | null;
     message?: string;
+    serverTime: string;
+    nextCheckAt: string;
+    pollSeconds: number;
     user?: {
       email: string;
       username: string | null;
@@ -19,6 +22,11 @@ export const checkEmailVerification = createServerFn({ method: "GET" })
       lastSignInAt: string | null;
     } | null;
   }> => {
+    const POLL_SECONDS = 5;
+    const now = new Date();
+    const serverTime = now.toISOString();
+    const nextCheckAt = new Date(now.getTime() + POLL_SECONDS * 1000).toISOString();
+    const base = { serverTime, nextCheckAt, pollSeconds: POLL_SECONDS };
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const email = data.email.toLowerCase();
@@ -26,12 +34,13 @@ export const checkEmailVerification = createServerFn({ method: "GET" })
       const perPage = 200;
       for (let i = 0; i < 25; i++) {
         const { data: list, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
-        if (error) return { status: "error", confirmedAt: null, message: error.message };
+        if (error) return { ...base, status: "error", confirmedAt: null, message: error.message };
         const u = list.users.find((x) => (x.email ?? "").toLowerCase() === email);
         if (u) {
           const confirmedAt = u.email_confirmed_at ?? (u as any).confirmed_at ?? null;
           const meta = (u.user_metadata ?? {}) as Record<string, any>;
           return {
+            ...base,
             status: confirmedAt ? "verified" : "pending",
             confirmedAt,
             user: {
@@ -46,9 +55,9 @@ export const checkEmailVerification = createServerFn({ method: "GET" })
         if (list.users.length < perPage) break;
         page += 1;
       }
-      return { status: "not_found", confirmedAt: null, user: null };
+      return { ...base, status: "not_found", confirmedAt: null, user: null };
     } catch (e: any) {
-      return { status: "error", confirmedAt: null, message: e?.message ?? "Unknown error" };
+      return { ...base, status: "error", confirmedAt: null, message: e?.message ?? "Unknown error" };
     }
   });
 

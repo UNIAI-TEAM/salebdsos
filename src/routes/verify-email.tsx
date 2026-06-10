@@ -26,6 +26,27 @@ type ServerUser = {
 };
 
 const POLL_SECONDS = 5;
+const SYNC_KEY = "verify_email_sync";
+
+type SyncState = {
+  email: string;
+  nextCheckAt: number; // client-epoch ms (skew-adjusted)
+  skewMs: number;      // clientNow - serverNow
+  pollSeconds: number;
+  lastCheckedAt: number;
+};
+
+function loadSync(email: string): SyncState | null {
+  try {
+    const raw = sessionStorage.getItem(SYNC_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw) as SyncState;
+    return s.email === email ? s : null;
+  } catch { return null; }
+}
+function saveSync(s: SyncState) {
+  try { sessionStorage.setItem(SYNC_KEY, JSON.stringify(s)); } catch {}
+}
 
 function VerifyEmailPage() {
   const nav = useNavigate();
@@ -40,41 +61,68 @@ function VerifyEmailPage() {
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null);
   const [serverUser, setServerUser] = useState<ServerUser | null>(null);
   const [nextCheckIn, setNextCheckIn] = useState<number>(POLL_SECONDS);
+  const [pollSeconds, setPollSeconds] = useState<number>(POLL_SECONDS);
   const redirectedRef = useRef(false);
+  const syncRef = useRef<SyncState | null>(null);
   const pollRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
 
   const checkFn = useServerFn(checkEmailVerification);
   const resendFn = useServerFn(resendVerificationEmail);
 
-  // Prefill email
+  // Prefill email + restore sync
   useEffect(() => {
-    if (!email) {
+    let resolvedEmail = email;
+    if (!resolvedEmail) {
       try {
         const raw = sessionStorage.getItem("pending_workspace");
         if (raw) {
           const p = JSON.parse(raw);
-          if (p?.email) setEmail(p.email);
+          if (p?.email) { resolvedEmail = p.email; setEmail(p.email); }
         }
       } catch {}
+    }
+    if (resolvedEmail) {
+      const s = loadSync(resolvedEmail);
+      if (s) {
+        syncRef.current = s;
+        setPollSeconds(s.pollSeconds);
+        setLastCheckedAt(new Date(s.lastCheckedAt));
+        setNextCheckIn(Math.max(0, Math.ceil((s.nextCheckAt - Date.now()) / 1000)));
+      }
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const runCheck = async (silent = false) => {
     if (!email) return;
     if (!silent) setChecking(true);
-    setNextCheckIn(POLL_SECONDS);
     try {
       const r = await checkFn({ data: { email } });
+      const clientNow = Date.now();
+      const serverNow = new Date(r.serverTime).getTime();
+      const skewMs = clientNow - serverNow;
+      const nextCheckAt = new Date(r.nextCheckAt).getTime() + skewMs;
+      const sync: SyncState = {
+        email,
+        nextCheckAt,
+        skewMs,
+        pollSeconds: r.pollSeconds,
+        lastCheckedAt: clientNow,
+      };
+      syncRef.current = sync;
+      saveSync(sync);
+      setPollSeconds(r.pollSeconds);
+      setNextCheckIn(Math.max(0, Math.ceil((nextCheckAt - Date.now()) / 1000)));
       setStatus(r.status);
       setConfirmedAt(r.confirmedAt);
       setServerMsg(r.message ?? null);
       setServerUser(r.user ?? null);
-      setLastCheckedAt(new Date());
+      setLastCheckedAt(new Date(clientNow));
       if (r.status === "verified" && !redirectedRef.current) {
         redirectedRef.current = true;
         if (pollRef.current) window.clearInterval(pollRef.current);
         if (tickRef.current) window.clearInterval(tickRef.current);
+        try { sessionStorage.removeItem(SYNC_KEY); } catch {}
         toast.success("Email đã xác thực — đang đưa bạn vào hệ thống");
         setTimeout(() => nav({ to: "/onboarding", replace: true }), 800);
       }
@@ -86,15 +134,25 @@ function VerifyEmailPage() {
     }
   };
 
-  // Initial + polling check (server-driven)
+  // Initial fetch + 1s tick that derives countdown from server timestamp and auto-refetches at 0
   useEffect(() => {
     if (!email) return;
-    runCheck(false);
-    pollRef.current = window.setInterval(() => runCheck(true), POLL_SECONDS * 1000);
-    tickRef.current = window.setInterval(
-      () => setNextCheckIn((n) => (n <= 1 ? POLL_SECONDS : n - 1)),
-      1000,
-    );
+    // If we have a fresh sync from sessionStorage, don't immediately refetch; wait until countdown hits 0
+    const s = syncRef.current;
+    if (!s || s.nextCheckAt - Date.now() <= 0) {
+      runCheck(false);
+    }
+    tickRef.current = window.setInterval(() => {
+      const sync = syncRef.current;
+      if (!sync) { setNextCheckIn((n) => Math.max(0, n - 1)); return; }
+      const remaining = Math.max(0, Math.ceil((sync.nextCheckAt - Date.now()) / 1000));
+      setNextCheckIn(remaining);
+      if (remaining <= 0 && !redirectedRef.current) {
+        // Push nextCheckAt forward optimistically to avoid double-fire while request is in flight
+        sync.nextCheckAt = Date.now() + sync.pollSeconds * 1000;
+        runCheck(true);
+      }
+    }, 1000);
     return () => {
       if (pollRef.current) window.clearInterval(pollRef.current);
       if (tickRef.current) window.clearInterval(tickRef.current);
@@ -251,7 +309,7 @@ function VerifyEmailPage() {
                 <div className="h-1.5 w-full rounded-full bg-[#EEF2FF] overflow-hidden">
                   <div
                     className="h-full bg-[linear-gradient(90deg,#3730A3,#06B6D4)] transition-all duration-1000 ease-linear"
-                    style={{ width: `${((POLL_SECONDS - nextCheckIn) / POLL_SECONDS) * 100}%` }}
+                    style={{ width: `${Math.min(100, Math.max(0, ((pollSeconds - nextCheckIn) / pollSeconds) * 100))}%` }}
                   />
                 </div>
               </div>
