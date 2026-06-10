@@ -185,9 +185,13 @@ function VerifyEmailPage() {
     try {
       const redirectTo = `${window.location.origin}/verify-email?email=${encodeURIComponent(email)}`;
       const r = await resendFn({ data: { email, redirectTo } });
-      if (!r.ok) throw new Error(r.message);
+      if (!r.ok) {
+        const wait = (r as any).retryAfter ?? 0;
+        if (wait > 0) setCooldown(wait);
+        throw new Error(r.message);
+      }
       toast.success("Đã gửi lại email xác thực");
-      setCooldown(45);
+      setCooldown((r as any).minIntervalSec ?? 45);
     } catch (e: any) {
       toast.error(e?.message ?? "Không gửi lại được email");
     } finally {
