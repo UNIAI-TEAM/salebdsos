@@ -210,13 +210,52 @@ function VerifyEmailPage() {
           <div className="rounded-3xl border border-[#E2E8F0] bg-white/90 backdrop-blur-xl p-7 sm:p-9 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.18)]">
             <StatusHeader status={status} checking={checking} />
 
-            <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 mb-5">
-              <div className="text-xs font-medium text-[#64748B] mb-1">Email</div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#0F172A] break-all">
-                <Mail className="h-4 w-4 text-[#3730A3] shrink-0" />
-                {email || "—"}
+            <div className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 mb-5 space-y-3">
+              <div>
+                <div className="text-xs font-medium text-[#64748B] mb-1">Email</div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#0F172A] break-all">
+                  <Mail className="h-4 w-4 text-[#3730A3] shrink-0" />
+                  {serverUser?.email ?? email ?? "—"}
+                </div>
               </div>
+              {(serverUser?.username || serverUser?.fullName) && (
+                <div className="pt-3 border-t border-[#E2E8F0]">
+                  <div className="text-xs font-medium text-[#64748B] mb-1">
+                    {serverUser?.username ? "Tên đăng nhập" : "Họ tên"}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-[#0F172A]">
+                    <UserIcon className="h-4 w-4 text-[#3730A3] shrink-0" />
+                    {serverUser?.username ?? serverUser?.fullName}
+                  </div>
+                </div>
+              )}
+              {serverUser?.createdAt && (
+                <div className="pt-3 border-t border-[#E2E8F0] flex items-center gap-2 text-xs text-[#64748B]">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  Tạo {new Date(serverUser.createdAt).toLocaleString("vi-VN")}
+                </div>
+              )}
             </div>
+
+            {isPending && !isVerified && (
+              <div className="mb-5 rounded-xl border border-[#C7D2FE] bg-white p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-[#3730A3] inline-flex items-center gap-1.5">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Đang chờ bạn xác thực email
+                  </span>
+                  <span className="text-xs font-mono tabular-nums text-[#475569]">
+                    Tự kiểm tra sau {nextCheckIn}s
+                  </span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-[#EEF2FF] overflow-hidden">
+                  <div
+                    className="h-full bg-[linear-gradient(90deg,#3730A3,#06B6D4)] transition-all duration-1000 ease-linear"
+                    style={{ width: `${((POLL_SECONDS - nextCheckIn) / POLL_SECONDS) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             <StatusBanner
               status={status}
