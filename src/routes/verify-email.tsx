@@ -309,7 +309,7 @@ function VerifyEmailPage() {
                 <div className="h-1.5 w-full rounded-full bg-[#EEF2FF] overflow-hidden">
                   <div
                     className="h-full bg-[linear-gradient(90deg,#3730A3,#06B6D4)] transition-all duration-1000 ease-linear"
-                    style={{ width: `${((POLL_SECONDS - nextCheckIn) / POLL_SECONDS) * 100}%` }}
+                    style={{ width: `${Math.min(100, Math.max(0, ((pollSeconds - nextCheckIn) / pollSeconds) * 100))}%` }}
                   />
                 </div>
               </div>
