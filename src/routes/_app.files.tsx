@@ -1436,7 +1436,22 @@ function AuditDrawer({
               );
             })}
           </ul>
-
+          {allRows.length > 0 && (
+            <div ref={sentinelRef} className="px-5 py-4 text-center text-[12px] text-muted-foreground">
+              {q.isFetching && !q.isLoading
+                ? "Đang tải thêm…"
+                : reachedCap
+                  ? (pageSize >= SERVER_CAP ? "Đã đạt giới hạn 2000 bản ghi. Hãy thu hẹp bộ lọc." : "Đã hiển thị tất cả bản ghi.")
+                  : (
+                    <button
+                      onClick={() => setPageSize((n) => Math.min(SERVER_CAP, n + PAGE_STEP))}
+                      className="h-8 px-3 rounded-md border border-border bg-card hover:bg-muted"
+                    >
+                      Tải thêm {PAGE_STEP}
+                    </button>
+                  )}
+            </div>
+          )}
         </div>
       </div>
     </div>
