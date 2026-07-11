@@ -33,17 +33,19 @@ function AppLayout() {
 
   return (
     <SidebarCollapsedProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
-          <AppTopbar />
-          <main className="flex-1 overflow-x-hidden">
-            <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-[1600px] mx-auto w-full">
-              <Outlet />
-            </div>
-          </main>
+      <MobileDrawerProvider>
+        <div className="min-h-screen flex w-full bg-background">
+          <AppSidebar />
+          <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
+            <AppTopbar />
+            <main className="flex-1 overflow-x-hidden">
+              <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-[1600px] mx-auto w-full">
+                <Outlet />
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
+      </MobileDrawerProvider>
     </SidebarCollapsedProvider>
   );
 }
