@@ -101,6 +101,12 @@ function FilesPage() {
     onSuccess: () => { toast.success("Đã xoá vĩnh viễn"); invalidate(); },
     onError: (e: any) => toast.error(e.message ?? "Lỗi"),
   });
+  const bulkM = useMutation({
+    mutationFn: (input: { ids: string[]; folder?: string | null; tag?: string | null }) =>
+      bulkFn({ data: { tenantId, ...input } }),
+    onSuccess: (r) => { toast.success(`Đã cập nhật ${r.updated} tệp`); invalidate(); setSelected(new Set()); },
+    onError: (e: any) => toast.error(e.message ?? "Lỗi"),
+  });
 
   const doDownload = async (id: string) => {
     try {
