@@ -247,26 +247,44 @@ function SidebarBody({
               <ul className="space-y-0.5">
                 {items.map((it) => {
                   const active = pathname.startsWith(it.to);
+                  const iconOnly = variant === "desktop" && collapsed;
                   const link = (
                     <Link
                       to={it.to}
                       onClick={onNavigate}
+                      aria-current={active ? "page" : undefined}
                       className={[
-                        "group flex items-center rounded-lg text-[13px] font-medium transition active:scale-[0.98]",
+                        "group relative flex items-center rounded-lg text-[13px] font-medium transition active:scale-[0.98]",
                         showLabels
                           ? (isMobile ? "gap-3 px-3 py-3 min-h-11" : "gap-2.5 px-3 py-2")
                           : "justify-center p-2.5",
                         active
-                          ? "bg-sidebar-accent text-white"
+                          ? (iconOnly
+                              ? "bg-sidebar-accent text-white ring-1 ring-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_6px_18px_-6px_hsl(var(--primary)/0.55)]"
+                              : "bg-sidebar-accent text-white")
                           : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 active:bg-sidebar-accent/70 hover:text-white",
                       ].join(" ")}
                     >
+                      {/* Active indicator bar — visible in both expanded and icon-only modes */}
+                      {active && (
+                        <span
+                          aria-hidden
+                          className={[
+                            "absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full bg-primary",
+                            iconOnly ? "h-6" : "h-5",
+                          ].join(" ")}
+                        />
+                      )}
                       <it.icon className={["h-4 w-4 shrink-0 transition-transform duration-300", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-white", showLabels ? "scale-100" : "scale-110"].join(" ")} />
                       <span className={[
                         "flex-1 truncate transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
                         showLabels ? "opacity-100 max-w-[180px] translate-x-0" : "opacity-0 max-w-0 -translate-x-2",
                         isMobile ? "text-[14px]" : "",
                       ].join(" ")}>{it.label}</span>
+                      {/* Active dot when icon-only (in place of hidden badge) */}
+                      {iconOnly && active && (
+                        <span aria-hidden className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
+                      )}
                       {it.badge && (
                         <span className={[
                           "text-[10px] px-1.5 py-0.5 rounded-md font-semibold transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
