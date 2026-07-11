@@ -1022,6 +1022,20 @@ const ZIP_PHASE_META: Record<ZipPhase, { label: string; tone: string; status: st
   canceled:{ label: "Đã huỷ",       tone: "bg-slate-100 text-slate-700 border-slate-200", status: "Đã huỷ", itemTone: "bg-slate-100 text-slate-700" },
   error:   { label: "Lỗi",          tone: "bg-rose-50 text-rose-700 border-rose-200", status: "Lỗi", itemTone: "bg-rose-50 text-rose-700" },
 };
+
+type ZipMeta = {
+  startedAt?: string;
+  endedAt?: string;
+  durationMs?: number;
+  running: boolean;
+  percent: number;
+  ok: number;
+  failed: number;
+  requested: number;
+  batchId: string;      // short display id for the batch
+  skipRow?: boolean;    // true = paired start row, hide in favor of terminal
+};
+
 function getZipPhase(diff: any): ZipPhase {
   const p = diff?.phase;
   if (p === "zipping" || p === "done" || p === "canceled" || p === "error") return p;
