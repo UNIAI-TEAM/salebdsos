@@ -37,9 +37,12 @@ function FilesPage() {
 
   const [q, setQ] = useState("");
   const [folder, setFolder] = useState<string>("all");
+  const [tagF, setTagF] = useState<string>("all");
   const [leadId, setLeadId] = useState<string>("all");
   const [includeDeleted, setIncludeDeleted] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const list = useServerFn(listFiles);
   const facets = useServerFn(listFileFacets);
@@ -49,6 +52,11 @@ function FilesPage() {
   const hardDel = useServerFn(hardDeleteFile);
   const signed = useServerFn(getFileSignedUrl);
   const leadsFn = useServerFn(listLeads);
+  const bulkFn = useServerFn(bulkUpdateFiles);
+  const renameFolderFn = useServerFn(renameFolder);
+  const deleteFolderFn = useServerFn(deleteFolder);
+  const renameTagFn = useServerFn(renameTag);
+  const deleteTagFn = useServerFn(deleteTag);
 
   const listQ = useQuery({
     queryKey: ["files", tenantId, q, folder, leadId, includeDeleted],
