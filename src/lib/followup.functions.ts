@@ -178,3 +178,47 @@ export const deleteFollowup = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// Create a follow-up entry (manual log or draft).
+export const createFollowup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        customerId: z.string().uuid().optional(),
+        leadId: z.string().uuid().optional(),
+        channel: z.string().trim().min(1).max(32).optional(),
+        subject: z.string().trim().max(200).optional(),
+        output: z.string().trim().max(8000).optional(),
+        prompt: z.string().trim().max(4000).optional(),
+        scenario: z.enum(SCENARIOS).optional(),
+        status: z.enum(FOLLOWUP_STATUSES).default("draft"),
+        scheduledAt: z.string().datetime().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const insert: any = {
+      tenant_id: data.tenantId,
+      owner_user_id: userId,
+      customer_id: data.customerId ?? null,
+      lead_id: data.leadId ?? null,
+      channel: data.channel ?? null,
+      subject: data.subject ?? null,
+      output: data.output ?? null,
+      prompt: data.prompt ?? null,
+      scenario: data.scenario ?? null,
+      status: data.status,
+      scheduled_at: data.scheduledAt ?? null,
+      sent_at: data.status === "sent" ? new Date().toISOString() : null,
+    };
+    const { data: row, error } = await supabase
+      .from("ai_followups")
+      .insert(insert)
+      .select(FU_SELECT)
+      .single();
+    if (error) throw new Error(error.message);
+    return { ok: true, followup: row };
+  });
