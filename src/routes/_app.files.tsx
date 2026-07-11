@@ -42,6 +42,7 @@ function FilesPage() {
   const [includeDeleted, setIncludeDeleted] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
+  const [auditOpen, setAuditOpen] = useState<null | { fileId?: string; title: string }>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const list = useServerFn(listFiles);
