@@ -303,9 +303,26 @@ function FilesPage() {
       )}
 
       <SectionCard
-        title={includeDeleted ? "Danh sách tệp (gồm thùng rác)" : "Danh sách tệp"}
+        title={scope === "trash" ? "Thùng rác" : "Danh sách tệp"}
         action={
           <div className="flex items-center gap-2 flex-wrap">
+            <div className="inline-flex rounded-md border border-border bg-muted/40 p-0.5 text-[12px] font-semibold">
+              {([
+                { v: "active", l: "Đang hoạt động" },
+                { v: "trash", l: "Thùng rác" },
+              ] as const).map((t) => (
+                <button
+                  key={t.v}
+                  onClick={() => { setScope(t.v); setSelected(new Set()); }}
+                  className={[
+                    "h-7 px-3 rounded",
+                    scope === t.v ? "bg-card shadow-soft text-foreground" : "text-muted-foreground hover:text-foreground",
+                  ].join(" ")}
+                >
+                  {t.l}
+                </button>
+              ))}
+            </div>
             <div className="relative">
               <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -327,14 +344,6 @@ function FilesPage() {
                 <option key={l.id} value={l.id}>{l.full_name || l.phone || "Khách hàng"}</option>
               ))}
             </select>
-            <label className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground cursor-pointer">
-              <input
-                type="checkbox"
-                checked={includeDeleted}
-                onChange={(e) => setIncludeDeleted(e.target.checked)}
-              />
-              Hiện thùng rác
-            </label>
           </div>
         }
       >
