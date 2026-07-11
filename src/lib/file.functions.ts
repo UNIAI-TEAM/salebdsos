@@ -54,6 +54,7 @@ export const listFiles = createServerFn({ method: "GET" })
       tag?: string;
       leadId?: string;
       includeDeleted?: boolean;
+      scope?: "active" | "trash" | "all";
       page?: number;
       pageSize?: number;
     }) => d,
@@ -72,7 +73,9 @@ export const listFiles = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .range(from, to);
 
-    if (!data.includeDeleted) q = q.is("deleted_at", null);
+    const scope = data.scope ?? (data.includeDeleted ? "all" : "active");
+    if (scope === "active") q = q.is("deleted_at", null);
+    else if (scope === "trash") q = q.not("deleted_at", "is", null);
     if (data.folder && data.folder !== "all") q = q.eq("folder", data.folder);
     if (data.tag && data.tag !== "all") q = q.eq("tag", data.tag);
     if (data.leadId && data.leadId !== "all") {
