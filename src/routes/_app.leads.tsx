@@ -27,6 +27,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getLeadScore, explainLeadScoreAI, bandFromScore, SCORE_LABEL, type ScoreBand } from "@/lib/lead-score.functions";
 
 export const Route = createFileRoute("/_app/leads")({ component: LeadsPage });
