@@ -301,6 +301,11 @@ function FilesPage() {
           <table className="w-full text-[13px]">
             <thead className="bg-muted/50 text-muted-foreground">
               <tr className="text-left">
+                <th className="px-3 py-2.5 w-9">
+                  <button onClick={toggleAll} className="text-muted-foreground hover:text-foreground" title="Chọn tất cả">
+                    {allSelected ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                  </button>
+                </th>
                 <th className="px-4 py-2.5 font-medium">Tên tệp</th>
                 <th className="px-3 py-2.5 font-medium">Khách hàng</th>
                 <th className="px-3 py-2.5 font-medium">Thư mục</th>
