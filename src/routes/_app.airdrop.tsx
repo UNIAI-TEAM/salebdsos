@@ -4,6 +4,7 @@ import {
   Radio, Wifi, Smartphone, Laptop, Tablet, Watch, RefreshCw, Settings2, Shield,
   Check, X, Clock, Send, Inbox, BadgeCheck, Eye, EyeOff, Users2,
   AlertCircle, IdCard, Trash2, ExternalLink, Copy, Ruler, StickyNote, User2, RotateCw,
+  Search, Calendar, ChevronLeft, ChevronRight, FilterX,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
