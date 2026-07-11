@@ -1506,10 +1506,21 @@ function AuditDrawer({
                       </span>
                       {r.action === "file.bulk_download" && (() => {
                         const zp = ZIP_PHASE_META[getZipPhase(r.diff)];
+                        const zm = zipMeta.get(r.id);
                         return (
-                          <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${zp.tone}`}>
-                            {zp.label}
-                          </span>
+                          <>
+                            <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${zp.tone}`}>
+                              {zp.label}
+                            </span>
+                            {zm?.batchId && (
+                              <span
+                                className="inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold border border-border bg-muted/50 text-muted-foreground"
+                                title="Mã lô tải ZIP"
+                              >
+                                #{zm.batchId}
+                              </span>
+                            )}
+                          </>
                         );
                       })()}
                       <div className="min-w-0 flex-1">
