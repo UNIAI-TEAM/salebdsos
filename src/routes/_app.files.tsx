@@ -1030,6 +1030,18 @@ function getZipPhase(diff: any): ZipPhase {
   return "done";
 }
 
+function formatDurationMs(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0) return "—";
+  if (ms < 1000) return `${ms} ms`;
+  const s = ms / 1000;
+  if (s < 60) return `${s.toFixed(s < 10 ? 2 : 1)} s`;
+  const m = Math.floor(s / 60);
+  const rs = Math.floor(s % 60);
+  return `${m}m ${rs.toString().padStart(2, "0")}s`;
+}
+
+
+
 function csvEscape(v: unknown): string {
   const s = v === null || v === undefined ? "" : String(v);
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -1209,6 +1221,47 @@ function AuditDrawer({
   });
   const allRows = (q.data?.rows ?? []) as any[];
   const reachedCap = allRows.length < pageSize || pageSize >= SERVER_CAP;
+
+  // Pair ZIP start (phase=zipping) with its terminal entry (done/canceled/error)
+  // by matching ids-set. Computes startedAt / endedAt / durationMs / percent /
+  // running for each bulk_download row.
+  type ZipMeta = { startedAt?: string; endedAt?: string; durationMs?: number; running: boolean; percent: number; ok: number; failed: number; requested: number };
+  const zipMeta = useMemo(() => {
+    const m = new Map<string, ZipMeta>();
+    const bulk = allRows
+      .filter((r) => r.action === "file.bulk_download")
+      .slice()
+      .sort((a, b) => new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime());
+    const keyOf = (r: any) => {
+      const ids = Array.isArray(r.diff?.ids) ? [...r.diff.ids].sort() : [];
+      return ids.join("|");
+    };
+    const openStarts = new Map<string, any>();
+    for (const r of bulk) {
+      const phase = getZipPhase(r.diff);
+      const requested = Number(r.diff?.requested ?? (Array.isArray(r.diff?.ids) ? r.diff.ids.length : 0));
+      const ok = Number(r.diff?.ok ?? 0);
+      const failed = Number(r.diff?.failed ?? 0);
+      const k = keyOf(r);
+      if (phase === "zipping") {
+        openStarts.set(k, r);
+        m.set(r.id, { startedAt: r.occurred_at, running: true, percent: 0, ok: 0, failed: 0, requested });
+      } else {
+        const start = openStarts.get(k);
+        const percent = phase === "done" ? 100 : requested > 0 ? Math.round((ok / requested) * 100) : 0;
+        if (start) {
+          const durationMs = new Date(r.occurred_at).getTime() - new Date(start.occurred_at).getTime();
+          const shared = { startedAt: start.occurred_at, endedAt: r.occurred_at, durationMs, running: false, percent, ok, failed, requested };
+          m.set(r.id, shared);
+          m.set(start.id, shared);
+          openStarts.delete(k);
+        } else {
+          m.set(r.id, { endedAt: r.occurred_at, running: false, percent, ok, failed, requested });
+        }
+      }
+    }
+    return m;
+  }, [allRows]);
 
   // Derive actor options from returned rows (deduped).
   const actorOptions = useMemo(() => {
@@ -1440,6 +1493,37 @@ function AuditDrawer({
                           {targetName && <span className="text-muted-foreground"> · {targetName}</span>}
                         </div>
                         {summary && <div className="text-[12px] text-muted-foreground mt-0.5 break-words">{summary}</div>}
+                        {r.action === "file.bulk_download" && (() => {
+                          const zm = zipMeta.get(r.id);
+                          if (!zm) return null;
+                          const phase = getZipPhase(r.diff);
+                          const pct = zm.running ? Math.max(8, Math.min(100, zm.percent || 0)) : zm.percent;
+                          const barTone =
+                            phase === "error" ? "bg-rose-500" :
+                            phase === "canceled" ? "bg-slate-400" :
+                            phase === "done" ? "bg-emerald-500" :
+                            "bg-amber-500";
+                          const durText = zm.durationMs != null
+                            ? formatDurationMs(zm.durationMs)
+                            : zm.running && zm.startedAt
+                              ? `${formatDurationMs(Date.now() - new Date(zm.startedAt).getTime())} (đang chạy)`
+                              : null;
+                          return (
+                            <div className="mt-2 max-w-md">
+                              <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                                <div
+                                  className={`h-full transition-all duration-300 ${barTone} ${zm.running ? "animate-pulse" : ""}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+                                <span>{zm.ok}/{zm.requested} tệp</span>
+                                {zm.failed > 0 && <span className="text-rose-600">Lỗi {zm.failed}</span>}
+                                {durText && <span>· {durText}</span>}
+                              </div>
+                            </div>
+                          );
+                        })()}
                         <div className="text-[11px] text-muted-foreground mt-1 inline-flex items-center gap-2">
                           <span className="inline-flex items-center gap-1">
                             <Clock className="h-3 w-3" />
