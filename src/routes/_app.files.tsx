@@ -990,6 +990,17 @@ function summarizeDiff(action: string, diff: any): string {
     }
     if (action === "file.soft_delete" || action === "file.restore" || action === "file.hard_delete") return diff.name ?? "";
     if (action === "file.bulk_update") return `${diff.affected ?? 0} tệp · ${JSON.stringify(diff.patch ?? {})}`;
+    if (action === "file.bulk_soft_delete" || action === "file.bulk_restore" || action === "file.bulk_hard_delete") {
+      const names: string[] = Array.isArray(diff.names) ? diff.names : [];
+      const preview = names.slice(0, 3).join(", ");
+      const more = names.length > 3 ? ` +${names.length - 3}` : "";
+      return `${diff.affected ?? names.length} tệp${preview ? ` · ${preview}${more}` : ""}`;
+    }
+    if (action === "file.bulk_download") {
+      const mb = diff.bytes ? ` · ${(Number(diff.bytes) / 1024 / 1024).toFixed(1)} MB` : "";
+      const cx = diff.canceled ? " · đã huỷ" : "";
+      return `${diff.ok ?? 0}/${diff.requested ?? 0} tệp${mb}${cx}`;
+    }
     if (action === "folder.rename" || action === "tag.rename") return `${diff.from} → ${diff.to} (${diff.affected ?? 0})`;
     if (action === "folder.delete") return `${diff.folder}${diff.moveTo ? ` → ${diff.moveTo}` : ""} (${diff.affected ?? 0})`;
     if (action === "tag.delete") return `${diff.tag} (${diff.affected ?? 0})`;
