@@ -1051,6 +1051,89 @@ function exportAuditRowsToCsv(rows: any[], fileMap: Map<string, string>, title: 
   URL.revokeObjectURL(url);
 }
 
+type AuditDetailItem = { id?: string; name: string; status: string; tone: string };
+type AuditDetails = { info?: string; items: AuditDetailItem[] };
+
+function buildAuditDetails(r: any, fileMap: Map<string, string>): AuditDetails {
+  const diff = r?.diff ?? {};
+  const ids: string[] = Array.isArray(diff.ids) ? diff.ids : [];
+  const names: string[] = Array.isArray(diff.names) ? diff.names : [];
+  const nameFor = (id: string, i: number) =>
+    names[i] || fileMap.get(id) || "(tệp không còn tồn tại)";
+
+  const OK = { status: "OK", tone: "bg-emerald-50 text-emerald-700" };
+  const DELETED = { status: "Đã xoá", tone: "bg-rose-50 text-rose-700" };
+  const RESTORED = { status: "Khôi phục", tone: "bg-emerald-50 text-emerald-700" };
+  const HARD = { status: "Xoá vĩnh viễn", tone: "bg-rose-100 text-rose-800" };
+  const REQ = { status: "Yêu cầu", tone: "bg-blue-50 text-blue-700" };
+  const UNK = { status: "—", tone: "bg-muted text-foreground" };
+
+  const map = (badge: { status: string; tone: string }) =>
+    ids.map((id, i) => ({ id, name: nameFor(id, i), status: badge.status, tone: badge.tone }));
+
+  switch (r?.action) {
+    case "file.bulk_soft_delete":
+      return { items: map(DELETED) };
+    case "file.bulk_restore":
+      return { items: map(RESTORED) };
+    case "file.bulk_hard_delete":
+      return { items: map(HARD) };
+    case "file.bulk_update":
+      return {
+        info: `Áp dụng: ${JSON.stringify(diff.patch ?? {})}`,
+        items: map(OK),
+      };
+    case "file.bulk_download": {
+      const info = [
+        `${diff.ok ?? 0}/${diff.requested ?? ids.length} thành công`,
+        diff.failed ? `${diff.failed} lỗi` : null,
+        diff.bytes ? `${(Number(diff.bytes) / 1024 / 1024).toFixed(1)} MB` : null,
+        diff.canceled ? "đã huỷ" : null,
+      ].filter(Boolean).join(" · ");
+      return { info, items: map(REQ) };
+    }
+    case "folder.rename":
+    case "tag.rename":
+      return {
+        info: `${diff.from ?? "?"} → ${diff.to ?? "?"} · ${diff.affected ?? 0} tệp bị ảnh hưởng`,
+        items: [],
+      };
+    case "folder.delete":
+      return {
+        info: `Xoá thư mục ${diff.folder ?? ""}${diff.moveTo ? ` → ${diff.moveTo}` : ""} · ${diff.affected ?? 0} tệp`,
+        items: [],
+      };
+    case "tag.delete":
+      return { info: `Xoá nhãn ${diff.tag ?? ""} · ${diff.affected ?? 0} tệp`, items: [] };
+    case "file.upload":
+    case "file.download":
+    case "file.soft_delete":
+    case "file.restore":
+    case "file.hard_delete": {
+      const id = r?.entity_id;
+      const name = diff.name || (id ? fileMap.get(id) : null) || "(tệp)";
+      const badge =
+        r.action === "file.soft_delete" ? DELETED :
+        r.action === "file.hard_delete" ? HARD :
+        r.action === "file.restore" ? RESTORED : OK;
+      return { items: id ? [{ id, name, status: badge.status, tone: badge.tone }] : [] };
+    }
+    case "file.update": {
+      const id = r?.entity_id;
+      const before = diff.before ?? {}; const after = diff.after ?? {};
+      const changed = Object.keys(after).filter((k) => before[k] !== after[k]);
+      return {
+        info: changed.length ? `Thay đổi: ${changed.join(", ")}` : undefined,
+        items: id ? [{ id, name: fileMap.get(id) ?? "(tệp)", status: OK.status, tone: OK.tone }] : [],
+      };
+    }
+    default:
+      return { items: [] };
+  }
+}
+
+
+
 
 
 function AuditDrawer({
@@ -1068,6 +1151,8 @@ function AuditDrawer({
   const [actorFilter, setActorFilter] = useState<string>("all");
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
 
   const fromIso = fromDate ? new Date(fromDate + "T00:00:00").toISOString() : undefined;
   const toIso = toDate ? new Date(toDate + "T23:59:59.999").toISOString() : undefined;
@@ -1222,28 +1307,73 @@ function AuditDrawer({
               const summary = summarizeDiff(r.action, r.diff);
               const actor = r.actor?.name || r.actor?.email || (r.actor_user_id ? "Người dùng" : "Hệ thống");
               const targetName = r.entity === "file" && r.entity_id ? fileMap.get(r.entity_id) : null;
+              const isOpen = expandedId === r.id;
+              const details = buildAuditDetails(r, fileMap);
+              const canExpand = details.items.length > 0 || !!details.info;
               return (
-                <li key={r.id} className="px-5 py-3.5 hover:bg-muted/40">
-                  <div className="flex items-start gap-3">
-                    <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${meta.tone}`}>
-                      {meta.label}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[13px] text-foreground">
-                        <span className="font-medium">{actor}</span>
-                        {targetName && <span className="text-muted-foreground"> · {targetName}</span>}
-                      </div>
-                      {summary && <div className="text-[12px] text-muted-foreground mt-0.5 break-words">{summary}</div>}
-                      <div className="text-[11px] text-muted-foreground mt-1 inline-flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {new Date(r.occurred_at).toLocaleString("vi-VN")}
+                <li key={r.id} className="hover:bg-muted/40">
+                  <button
+                    type="button"
+                    onClick={() => canExpand && setExpandedId(isOpen ? null : r.id)}
+                    className="w-full text-left px-5 py-3.5"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${meta.tone}`}>
+                        {meta.label}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13px] text-foreground">
+                          <span className="font-medium">{actor}</span>
+                          {targetName && <span className="text-muted-foreground"> · {targetName}</span>}
+                        </div>
+                        {summary && <div className="text-[12px] text-muted-foreground mt-0.5 break-words">{summary}</div>}
+                        <div className="text-[11px] text-muted-foreground mt-1 inline-flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(r.occurred_at).toLocaleString("vi-VN")}
+                          </span>
+                          {canExpand && (
+                            <span className="text-primary/80">
+                              {isOpen ? "Ẩn chi tiết ▲" : `Xem chi tiết (${details.items.length || "•"}) ▼`}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-4 -mt-1">
+                      <div className="rounded-md border border-border bg-muted/30 p-3">
+                        {details.info && (
+                          <div className="text-[12px] text-muted-foreground mb-2">{details.info}</div>
+                        )}
+                        {details.items.length > 0 && (
+                          <ul className="divide-y divide-border/70 max-h-[280px] overflow-y-auto">
+                            {details.items.map((it, i) => (
+                              <li key={`${it.id ?? i}`} className="py-1.5 flex items-center gap-2">
+                                <span className={`inline-flex shrink-0 items-center px-1.5 py-0.5 rounded text-[10.5px] font-semibold ${it.tone}`}>
+                                  {it.status}
+                                </span>
+                                <span className="text-[12.5px] text-foreground truncate flex-1" title={it.name}>
+                                  {it.name}
+                                </span>
+                                {it.id && (
+                                  <code className="text-[10.5px] text-muted-foreground font-mono truncate max-w-[160px]" title={it.id}>
+                                    {it.id.slice(0, 8)}…
+                                  </code>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </li>
               );
             })}
           </ul>
+
         </div>
       </div>
     </div>
