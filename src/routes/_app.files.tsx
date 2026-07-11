@@ -259,6 +259,14 @@ function FilesPage() {
                       </div>
                       {f.mime && <div className="text-[11px] text-muted-foreground mt-0.5 ml-6">{f.mime}</div>}
                     </td>
+                    <td className="px-3 py-3 text-[12.5px]">
+                      {f.related_type === "lead" && f.related_id ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11.5px] font-medium bg-indigo-50 text-indigo-700 max-w-[180px]">
+                          <User className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{leadMap.get(f.related_id) ?? "Khách hàng"}</span>
+                        </span>
+                      ) : <span className="text-muted-foreground text-[12px]">—</span>}
+                    </td>
                     <td className="px-3 py-3 text-[12.5px] text-muted-foreground">{f.folder ?? "—"}</td>
                     <td className="px-3 py-3">
                       {f.tag ? (
