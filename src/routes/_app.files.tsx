@@ -1584,14 +1584,32 @@ function AuditDrawer({
                         </div>
                       </div>
                       {r.action === "file.bulk_download" && r.batch_id && (
-                        <div className="shrink-0 w-[90px] flex flex-col items-end gap-0.5">
+                        <div className="shrink-0 w-[110px] flex flex-col items-end gap-1">
                           <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Mã lô</span>
                           <span
-                            className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold border border-border bg-muted/50 text-muted-foreground"
-                            title="Mã lô tải ZIP"
+                            role="button"
+                            tabIndex={canExpand ? 0 : -1}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (canExpand) setExpandedId(isOpen ? null : r.id);
+                            }}
+                            onKeyDown={(e) => {
+                              if (!canExpand) return;
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setExpandedId(isOpen ? null : r.id);
+                              }
+                            }}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold border border-border bg-muted/50 text-muted-foreground ${canExpand ? "hover:bg-primary/10 hover:text-primary hover:border-primary/40 cursor-pointer" : ""}`}
+                            title={canExpand ? (isOpen ? "Ẩn danh sách tệp trong lô" : "Xem danh sách tệp trong lô") : "Mã lô tải ZIP"}
                           >
                             #{r.batch_id}
+                            {canExpand && <span className="text-[9px]">{isOpen ? "▲" : "▼"}</span>}
                           </span>
+                          {canExpand && details.items.length > 0 && (
+                            <span className="text-[10px] text-muted-foreground">{details.items.length} tệp</span>
+                          )}
                         </div>
                       )}
                     </div>
