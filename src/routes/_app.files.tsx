@@ -1021,7 +1021,7 @@ function summarizeDiff(action: string, diff: any): string {
   } catch { return ""; }
 }
 
-type ZipPhase = "zipping" | "done" | "canceled" | "error";
+type ZipPhase = _ZipPhase;
 const ZIP_PHASE_META: Record<ZipPhase, { label: string; tone: string; status: string; itemTone: string }> = {
   zipping: { label: "Đang đóng gói", tone: "bg-amber-50 text-amber-700 border-amber-200", status: "Đóng gói", itemTone: "bg-amber-50 text-amber-700" },
   done:    { label: "Hoàn tất",     tone: "bg-emerald-50 text-emerald-700 border-emerald-200", status: "Hoàn tất", itemTone: "bg-emerald-50 text-emerald-700" },
@@ -1042,13 +1042,7 @@ type ZipMeta = {
   skipRow?: boolean;    // true = paired start row, hide in favor of terminal
 };
 
-function getZipPhase(diff: any): ZipPhase {
-  const p = diff?.phase;
-  if (p === "zipping" || p === "done" || p === "canceled" || p === "error") return p;
-  if (diff?.canceled) return "canceled";
-  if ((diff?.ok ?? 0) === 0 && (diff?.requested ?? 0) > 0) return "error";
-  return "done";
-}
+const getZipPhase = _getZipPhase;
 
 function formatDurationMs(ms: number): string {
   if (!Number.isFinite(ms) || ms < 0) return "—";
