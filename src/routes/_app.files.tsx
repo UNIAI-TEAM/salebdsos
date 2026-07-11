@@ -76,6 +76,93 @@ function FilesPage() {
   const bulkHardDelFn = useServerFn(bulkHardDeleteFiles);
   const logBulkDlFn = useServerFn(logBulkDownload);
 
+  // Shared ZIP download runner — used by bulk toolbar and "Thử lại" from audit log.
+  async function runZipDownload(ids: string[]) {
+    if (!ids || ids.length === 0) return;
+    if (ids.length === 1) {
+      try {
+        const r = await signed({ data: { id: ids[0] } });
+        const a = document.createElement("a");
+        a.href = r.url; a.download = r.name; a.rel = "noopener";
+        document.body.appendChild(a); a.click(); a.remove();
+        toast.success(`Đã tải ${r.name}`);
+      } catch (e: any) {
+        toast.error(e?.message || "Lỗi tải tệp");
+      }
+      return;
+    }
+    dlCancelRef.current = false;
+    setDl({ total: ids.length, done: 0, failed: 0, phase: "fetching", bytes: 0 });
+    logBulkDlFn({ data: { tenantId, ids, phase: "zipping" } }).catch(() => {});
+    try {
+      const { default: JSZip } = await import("jszip");
+      const zip = new JSZip();
+      const used = new Map<string, number>();
+      let ok = 0;
+      let failed = 0;
+      let bytes = 0;
+      for (let i = 0; i < ids.length; i++) {
+        if (dlCancelRef.current) break;
+        const id = ids[i];
+        let currentName = `file-${id}`;
+        try {
+          const r = await signed({ data: { id } });
+          currentName = r.name || currentName;
+          setDl((s) => s && { ...s, currentName });
+          const resp = await fetch(r.url);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const blob = await resp.blob();
+          let name = r.name || `file-${id}`;
+          if (used.has(name)) {
+            const n = (used.get(name) || 1) + 1;
+            used.set(name, n);
+            const dot = name.lastIndexOf(".");
+            name = dot > 0 ? `${name.slice(0, dot)} (${n})${name.slice(dot)}` : `${name} (${n})`;
+          } else {
+            used.set(name, 1);
+          }
+          zip.file(name, blob);
+          ok++;
+          bytes += blob.size;
+        } catch {
+          failed++;
+        }
+        setDl((s) => s && { ...s, done: ok, failed, bytes, currentName });
+      }
+      if (dlCancelRef.current) {
+        setDl((s) => s && { ...s, phase: "canceled", message: "Đã huỷ" });
+        toast.info(`Đã huỷ tải xuống (${ok}/${ids.length})`);
+        logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true, phase: "canceled" } }).catch(() => {});
+        setTimeout(() => setDl(null), 3000);
+        return;
+      }
+      if (ok === 0) {
+        setDl((s) => s && { ...s, phase: "error", message: "Không tải được tệp nào" });
+        toast.error("Không tải được tệp nào");
+        logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, phase: "error" } }).catch(() => {});
+        setTimeout(() => setDl(null), 4000);
+        return;
+      }
+      setDl((s) => s && { ...s, phase: "zipping", currentName: undefined });
+      const content = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+      const url = URL.createObjectURL(content);
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+      const a = document.createElement("a");
+      a.href = url; a.download = `files-${stamp}.zip`; a.rel = "noopener";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      setDl((s) => s && { ...s, phase: "done", bytes: content.size, message: `Đã tải ZIP (${ok}/${ids.length})` });
+      toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`);
+      logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size, phase: "done" } }).catch(() => {});
+      setTimeout(() => setDl(null), 4000);
+    } catch (e: any) {
+      setDl((s) => s && { ...s, phase: "error", message: e?.message || "Lỗi đóng gói ZIP" });
+      toast.error(e?.message || "Lỗi đóng gói ZIP");
+      logBulkDlFn({ data: { tenantId, ids, phase: "error" } }).catch(() => {});
+      setTimeout(() => setDl(null), 5000);
+    }
+  }
+
   const listQ = useQuery({
     queryKey: ["files", tenantId, q, folder, tagF, leadId, scope],
     queryFn: () =>
@@ -282,94 +369,7 @@ function FilesPage() {
           onClear={() => setSelected(new Set())}
           onApplyFolder={(f: string) => bulkM.mutate({ ids: selectedActiveIds, folder: f || null })}
           onApplyTag={(t: string) => bulkM.mutate({ ids: selectedActiveIds, tag: t || null })}
-          onDownload={async () => {
-            const ids = selectedActiveIds;
-            if (ids.length === 0) return;
-            // Single file: direct download, no zip, no progress card
-            if (ids.length === 1) {
-              try {
-                const r = await signed({ data: { id: ids[0] } });
-                const a = document.createElement("a");
-                a.href = r.url; a.download = r.name; a.rel = "noopener";
-                document.body.appendChild(a); a.click(); a.remove();
-                toast.success(`Đã tải ${r.name}`);
-              } catch (e: any) {
-                toast.error(e?.message || "Lỗi tải tệp");
-              }
-              return;
-            }
-            dlCancelRef.current = false;
-            setDl({ total: ids.length, done: 0, failed: 0, phase: "fetching", bytes: 0 });
-            // Log start of ZIP session so users can filter "Đang đóng gói" in the audit trail.
-            logBulkDlFn({ data: { tenantId, ids, phase: "zipping" } }).catch(() => {});
-            try {
-              const { default: JSZip } = await import("jszip");
-              const zip = new JSZip();
-              const used = new Map<string, number>();
-              let ok = 0;
-              let failed = 0;
-              let bytes = 0;
-              for (let i = 0; i < ids.length; i++) {
-                if (dlCancelRef.current) break;
-                const id = ids[i];
-                let currentName = `file-${id}`;
-                try {
-                  const r = await signed({ data: { id } });
-                  currentName = r.name || currentName;
-                  setDl((s) => s && { ...s, currentName });
-                  const resp = await fetch(r.url);
-                  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                  const blob = await resp.blob();
-                  let name = r.name || `file-${id}`;
-                  if (used.has(name)) {
-                    const n = (used.get(name) || 1) + 1;
-                    used.set(name, n);
-                    const dot = name.lastIndexOf(".");
-                    name = dot > 0 ? `${name.slice(0, dot)} (${n})${name.slice(dot)}` : `${name} (${n})`;
-                  } else {
-                    used.set(name, 1);
-                  }
-                  zip.file(name, blob);
-                  ok++;
-                  bytes += blob.size;
-                } catch (e: any) {
-                  failed++;
-                }
-                setDl((s) => s && { ...s, done: ok, failed, bytes, currentName });
-              }
-              if (dlCancelRef.current) {
-                setDl((s) => s && { ...s, phase: "canceled", message: "Đã huỷ" });
-                toast.info(`Đã huỷ tải xuống (${ok}/${ids.length})`);
-                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true, phase: "canceled" } }).catch(() => {});
-                setTimeout(() => setDl(null), 3000);
-                return;
-              }
-              if (ok === 0) {
-                setDl((s) => s && { ...s, phase: "error", message: "Không tải được tệp nào" });
-                toast.error("Không tải được tệp nào");
-                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, phase: "error" } }).catch(() => {});
-                setTimeout(() => setDl(null), 4000);
-                return;
-              }
-              setDl((s) => s && { ...s, phase: "zipping", currentName: undefined });
-              const content = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
-              const url = URL.createObjectURL(content);
-              const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-              const a = document.createElement("a");
-              a.href = url; a.download = `files-${stamp}.zip`; a.rel = "noopener";
-              document.body.appendChild(a); a.click(); a.remove();
-              setTimeout(() => URL.revokeObjectURL(url), 5000);
-              setDl((s) => s && { ...s, phase: "done", bytes: content.size, message: `Đã tải ZIP (${ok}/${ids.length})` });
-              toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`);
-              logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size, phase: "done" } }).catch(() => {});
-              setTimeout(() => setDl(null), 4000);
-            } catch (e: any) {
-              setDl((s) => s && { ...s, phase: "error", message: e?.message || "Lỗi đóng gói ZIP" });
-              toast.error(e?.message || "Lỗi đóng gói ZIP");
-              logBulkDlFn({ data: { tenantId, ids, phase: "error" } }).catch(() => {});
-              setTimeout(() => setDl(null), 5000);
-            }
-          }}
+          onDownload={() => runZipDownload(selectedActiveIds)}
 
 
           onSoftDelete={() => {
@@ -591,6 +591,7 @@ function FilesPage() {
           title={auditOpen.title}
           fileMap={new Map(items.map((f: any) => [f.id, f.name]))}
           onClose={() => setAuditOpen(null)}
+          onRetryZip={(ids) => runZipDownload(ids)}
         />
       )}
       {dl && (
@@ -1161,13 +1162,14 @@ function buildAuditDetails(r: any, fileMap: Map<string, string>): AuditDetails {
 
 
 function AuditDrawer({
-  tenantId, fileId, title, fileMap, onClose,
+  tenantId, fileId, title, fileMap, onClose, onRetryZip,
 }: {
   tenantId: string;
   fileId?: string;
   title: string;
   fileMap: Map<string, string>;
   onClose: () => void;
+  onRetryZip?: (ids: string[]) => void;
 }) {
   const auditFn = useServerFn(listFileAudit);
   const [actionFilter, setActionFilter] = useState<string>("all");
@@ -1452,6 +1454,24 @@ function AuditDrawer({
                       </div>
                     </div>
                   </button>
+                  {r.action === "file.bulk_download" && getZipPhase(r.diff) === "error" && onRetryZip && (() => {
+                    const ids: string[] = Array.isArray(r.diff?.ids) ? r.diff.ids.filter((x: any) => typeof x === "string") : [];
+                    if (ids.length === 0) return null;
+                    return (
+                      <div className="px-5 pb-3 -mt-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); onRetryZip(ids); }}
+                          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-border bg-card text-[12px] font-medium text-foreground hover:bg-muted"
+                          title={`Thử lại tải ZIP cho ${ids.length} tệp`}
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          Thử lại ({ids.length})
+                        </button>
+                        <span className="text-[11px] text-muted-foreground">Đóng gói lại lô ZIP bị lỗi</span>
+                      </div>
+                    );
+                  })()}
                   {isOpen && (
                     <div className="px-5 pb-4 -mt-1">
                       <div className="rounded-md border border-border bg-muted/30 p-3">
