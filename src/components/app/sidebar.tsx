@@ -199,10 +199,14 @@ export function AppSidebar() {
           if (items.length === 0) return null;
           return (
             <div key={g.label} className="mb-3">
-              {!collapsed && (
-                <div className="px-3 pt-2 pb-1.5 text-[10.5px] uppercase tracking-wider font-semibold text-sidebar-foreground/45">{g.label}</div>
-              )}
-              {collapsed && <div className="mx-3 my-2 border-t border-sidebar-border/60" />}
+              <div className={[
+                "px-3 pt-2 pb-1.5 text-[10.5px] uppercase tracking-wider font-semibold text-sidebar-foreground/45 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                collapsed ? "opacity-0 max-h-0 py-0" : "opacity-100 max-h-8",
+              ].join(" ")}>{g.label}</div>
+              <div className={[
+                "border-t border-sidebar-border/60 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                collapsed ? "opacity-100 my-2 mx-3" : "opacity-0 max-h-0 my-0 mx-3",
+              ].join(" ")} />
               <ul className="space-y-0.5">
                 {items.map((it) => {
                   const active = pathname.startsWith(it.to);
@@ -217,19 +221,19 @@ export function AppSidebar() {
                           : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-white",
                       ].join(" ")}
                     >
-                      <it.icon className={["h-4 w-4 shrink-0", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-white"].join(" ")} />
-                      {!collapsed && (
-                        <>
-                          <span className="flex-1 truncate">{it.label}</span>
-                          {it.badge && (
-                            <span className={[
-                              "text-[10px] px-1.5 py-0.5 rounded-md font-semibold",
-                              it.badge === "AI"
-                                ? "bg-brand-gradient text-white"
-                                : "bg-sidebar-accent text-sidebar-foreground/80",
-                            ].join(" ")}>{it.badge}</span>
-                          )}
-                        </>
+                      <it.icon className={["h-4 w-4 shrink-0 transition-transform duration-300", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-white", collapsed ? "scale-110" : "scale-100"].join(" ")} />
+                      <span className={[
+                        "flex-1 truncate transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
+                        collapsed ? "opacity-0 max-w-0 -translate-x-2" : "opacity-100 max-w-[180px] translate-x-0",
+                      ].join(" ")}>{it.label}</span>
+                      {it.badge && (
+                        <span className={[
+                          "text-[10px] px-1.5 py-0.5 rounded-md font-semibold transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
+                          it.badge === "AI"
+                            ? "bg-brand-gradient text-white"
+                            : "bg-sidebar-accent text-sidebar-foreground/80",
+                          collapsed ? "opacity-0 max-w-0 scale-75" : "opacity-100 max-w-12 scale-100",
+                        ].join(" ")}>{it.badge}</span>
                       )}
                     </Link>
                   );
@@ -253,24 +257,25 @@ export function AppSidebar() {
         })}
       </nav>
 
-      {!collapsed && (
-        <div className="p-3">
-          <div className="rounded-xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-primary/20 p-3.5">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Crown className="h-4 w-4 text-yellow-400" />
-              <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
-                {currentTenant?.plan ?? "Free"}
-              </div>
+      <div className={[
+        "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
+        collapsed ? "opacity-0 max-h-0 p-0" : "opacity-100 max-h-[200px] p-3",
+      ].join(" ")}>
+        <div className="rounded-xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-primary/20 p-3.5">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Crown className="h-4 w-4 text-yellow-400" />
+            <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
+              {currentTenant?.plan ?? "Free"}
             </div>
-            <p className="text-[11.5px] text-sidebar-foreground/70 leading-relaxed">
-              Mở khoá AI Follow-up không giới hạn & báo cáo nâng cao.
-            </p>
-            <button className="mt-2.5 w-full rounded-lg bg-white text-sidebar text-[12px] font-semibold py-1.5 hover:bg-white/90 transition">
-              Nâng cấp ngay
-            </button>
           </div>
+          <p className="text-[11.5px] text-sidebar-foreground/70 leading-relaxed">
+            Mở khoá AI Follow-up không giới hạn & báo cáo nâng cao.
+          </p>
+          <button className="mt-2.5 w-full rounded-lg bg-white text-sidebar text-[12px] font-semibold py-1.5 hover:bg-white/90 transition">
+            Nâng cấp ngay
+          </button>
         </div>
-      )}
+      </div>
 
     </aside>
     </TooltipProvider>
