@@ -1079,13 +1079,24 @@ function AuditDrawer({
         className="w-full max-w-2xl h-full bg-background border-l border-border shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <div>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border gap-2">
+          <div className="min-w-0">
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Audit trail</div>
-            <div className="text-[15px] font-semibold text-foreground truncate max-w-[400px]">{title}</div>
+            <div className="text-[15px] font-semibold text-foreground truncate max-w-[360px]">{title}</div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted"><X className="h-4 w-4" /></button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => exportAuditRowsToCsv(rows, fileMap, title)}
+              disabled={rows.length === 0}
+              className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px] hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+              title="Xuất CSV bản ghi đang hiển thị"
+            >
+              <Download className="h-3.5 w-3.5" /> Xuất CSV
+            </button>
+            <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted"><X className="h-4 w-4" /></button>
+          </div>
         </div>
+
 
         <div className="px-5 py-3 border-b border-border space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
