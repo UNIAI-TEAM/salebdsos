@@ -114,7 +114,7 @@ export const getAirdropCards = createServerFn({ method: "GET" })
     z.object({ tenantId: z.string().uuid(), ids: z.array(z.string().uuid()).max(200) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    if (data.ids.length === 0) return { items: [] as Array<Record<string, unknown>> };
+    if (data.ids.length === 0) return { items: [] };
     const { data: items, error } = await context.supabase
       .from("cards")
       .select("id,slug,display_name,title,company,avatar_url,is_published")
