@@ -1105,13 +1105,16 @@ function buildAuditDetails(r: any, fileMap: Map<string, string>): AuditDetails {
         items: map(OK),
       };
     case "file.bulk_download": {
+      const p = getZipPhase(diff);
+      const meta = ZIP_PHASE_META[p];
       const info = [
+        `Trạng thái: ${meta.label}`,
         `${diff.ok ?? 0}/${diff.requested ?? ids.length} thành công`,
         diff.failed ? `${diff.failed} lỗi` : null,
         diff.bytes ? `${(Number(diff.bytes) / 1024 / 1024).toFixed(1)} MB` : null,
-        diff.canceled ? "đã huỷ" : null,
       ].filter(Boolean).join(" · ");
-      return { info, items: map(REQ) };
+      const badge = { status: meta.status, tone: meta.itemTone };
+      return { info, items: ids.map((id, i) => ({ id, name: nameFor(id, i), status: badge.status, tone: badge.tone })) };
     }
     case "folder.rename":
     case "tag.rename":
