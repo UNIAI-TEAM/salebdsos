@@ -5,6 +5,7 @@ import { AppTopbar } from "@/components/app/topbar";
 import { useAuth } from "@/hooks/use-auth";
 import { SidebarCollapsedProvider } from "@/hooks/use-sidebar-collapsed";
 import { MobileDrawerProvider } from "@/hooks/use-mobile-drawer";
+import { useSidebarShortcut } from "@/hooks/use-sidebar-shortcut";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
