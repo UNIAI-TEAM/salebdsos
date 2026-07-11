@@ -581,7 +581,7 @@ function TagPill({
 }
 
 function BulkToolbar({
-  count, activeCount, deletedCount, folders, tags, busy, onClear, onApplyFolder, onApplyTag, onDownload, onSoftDelete, onRestore,
+  count, activeCount, deletedCount, folders, tags, busy, onClear, onApplyFolder, onApplyTag, onDownload, onSoftDelete, onRestore, onHardDelete,
 }: {
   count: number;
   activeCount: number;
@@ -595,7 +595,9 @@ function BulkToolbar({
   onDownload: () => void;
   onSoftDelete: () => void;
   onRestore: () => void;
+  onHardDelete: () => void;
 }) {
+
   const [f, setF] = useState("");
   const [t, setT] = useState("");
   return (
