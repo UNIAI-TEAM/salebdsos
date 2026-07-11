@@ -1070,7 +1070,6 @@ function exportAuditRowsToCsv(
   rows: any[],
   fileMap: Map<string, string>,
   title: string,
-  zipMeta: Map<string, ZipMeta>,
 ) {
   if (!rows.length) return;
   const header = [
@@ -1082,7 +1081,7 @@ function exportAuditRowsToCsv(
     const meta = ACTION_LABELS[r.action];
     const entityName = r.entity === "file" && r.entity_id ? fileMap.get(r.entity_id) ?? "" : "";
     const phase = r.action === "file.bulk_download" ? getZipPhase(r.diff) : "";
-    const batchId = r.action === "file.bulk_download" ? (zipMeta.get(r.id)?.batchId ?? "") : "";
+    const batchId = r.action === "file.bulk_download" ? (r.batch_id ?? "") : "";
     lines.push([
       new Date(r.occurred_at).toISOString(),
       r.action,
@@ -1377,7 +1376,7 @@ function AuditDrawer({
           </div>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => exportAuditRowsToCsv(rows, fileMap, title, zipMeta)}
+              onClick={() => exportAuditRowsToCsv(rows, fileMap, title)}
               disabled={rows.length === 0}
               className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px] hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
               title="Xuất CSV bản ghi đang hiển thị"
