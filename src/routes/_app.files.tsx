@@ -1082,3 +1082,107 @@ function AuditDrawer({
     </div>
   );
 }
+
+function DownloadProgressCard({
+  state,
+  onCancel,
+  onClose,
+}: {
+  state: {
+    total: number;
+    done: number;
+    failed: number;
+    phase: "fetching" | "zipping" | "done" | "error" | "canceled";
+    currentName?: string;
+    bytes: number;
+    message?: string;
+  };
+  onCancel: () => void;
+  onClose: () => void;
+}) {
+  const { total, done, failed, phase, currentName, bytes, message } = state;
+  const processed = done + failed;
+  const pct = phase === "zipping" || phase === "done"
+    ? 100
+    : total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0;
+  const isActive = phase === "fetching" || phase === "zipping";
+  const tone =
+    phase === "error" ? "border-red-300 bg-red-50" :
+    phase === "done" ? "border-emerald-300 bg-emerald-50" :
+    phase === "canceled" ? "border-muted bg-card" :
+    "border-primary/30 bg-card";
+  const barTone =
+    phase === "error" ? "bg-red-500" :
+    phase === "done" ? "bg-emerald-500" :
+    phase === "canceled" ? "bg-muted-foreground/60" :
+    "bg-primary";
+  const label =
+    phase === "fetching" ? `Đang tải ${processed}/${total}` :
+    phase === "zipping" ? `Đang tạo file ZIP…` :
+    phase === "done" ? (message || `Hoàn tất ${done}/${total}`) :
+    phase === "canceled" ? (message || "Đã huỷ") :
+    (message || "Lỗi");
+
+  return (
+    <div className={`fixed bottom-4 right-4 z-50 w-[360px] max-w-[calc(100vw-2rem)] rounded-xl border shadow-lg ${tone}`}>
+      <div className="flex items-start gap-3 px-4 pt-3 pb-2">
+        <div className="mt-0.5">
+          {phase === "done" ? (
+            <div className="h-8 w-8 rounded-full bg-emerald-500 text-white grid place-items-center text-[13px] font-bold">✓</div>
+          ) : phase === "error" ? (
+            <div className="h-8 w-8 rounded-full bg-red-500 text-white grid place-items-center text-[13px] font-bold">!</div>
+          ) : (
+            <Download className={`h-6 w-6 ${isActive ? "text-primary animate-pulse" : "text-muted-foreground"}`} />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[13px] font-semibold truncate">
+              {phase === "fetching" || phase === "zipping" ? "Đang tải xuống hàng loạt" : "Tải xuống hàng loạt"}
+            </div>
+            <button
+              onClick={onClose}
+              className="h-6 w-6 grid place-items-center rounded-md text-muted-foreground hover:bg-muted"
+              aria-label="Đóng"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="mt-0.5 text-[11.5px] text-muted-foreground truncate">
+            {label}
+            {currentName && isActive && phase === "fetching" && (
+              <span className="text-foreground/80"> · {currentName}</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 pb-2">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={`h-full transition-all duration-200 ${barTone} ${phase === "zipping" ? "animate-pulse" : ""}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+          <span>
+            {processed}/{total} tệp
+            {failed > 0 && <span className="text-red-600"> · {failed} lỗi</span>}
+          </span>
+          <span>{humanSize(bytes)} · {pct}%</span>
+        </div>
+      </div>
+
+      {isActive && (
+        <div className="flex justify-end border-t border-border/60 px-3 py-2">
+          <button
+            onClick={onCancel}
+            className="h-7 px-2.5 rounded-md text-[12px] font-medium text-muted-foreground hover:bg-muted"
+          >
+            Huỷ
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
