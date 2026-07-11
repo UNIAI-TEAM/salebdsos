@@ -34,6 +34,7 @@ export const listFollowups = createServerFn({ method: "GET" })
     status?: FollowupStatus | "all";
     scenario?: Scenario | "all";
     leadId?: string;
+    customerId?: string;
     page?: number;
     pageSize?: number;
   }) => d)
