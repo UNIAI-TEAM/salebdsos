@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  listAirdropShares, airdropStats, createAirdropShare, deleteAirdropShare,
+  listAirdropShares, airdropStats, createAirdropShare, deleteAirdropShare, getAirdropCards,
 } from "@/lib/airdrop.functions";
 import { toast } from "sonner";
 
