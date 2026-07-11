@@ -329,6 +329,8 @@ function FilesPage() {
       {uploadOpen && (
         <UploadDialog
           folderList={folderList}
+          leads={leads}
+          defaultLeadId={leadId !== "all" && leadId !== "none" ? leadId : ""}
           onClose={() => setUploadOpen(false)}
           onUpload={async (file, meta) => {
             await doUpload(file, meta);
