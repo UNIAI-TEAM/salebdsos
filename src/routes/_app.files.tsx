@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -1152,13 +1152,21 @@ function AuditDrawer({
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
+  const [searchText, setSearchText] = useState<string>("");
+  const [pageSize, setPageSize] = useState<number>(100);
+  const PAGE_STEP = 100;
+  const SERVER_CAP = 2000;
 
   const fromIso = fromDate ? new Date(fromDate + "T00:00:00").toISOString() : undefined;
   const toIso = toDate ? new Date(toDate + "T23:59:59.999").toISOString() : undefined;
 
+  // Reset paging when filters change.
+  useEffect(() => {
+    setPageSize(100);
+  }, [actionFilter, actorFilter, fromIso, toIso, fileId]);
+
   const q = useQuery({
-    queryKey: ["file-audit", tenantId, fileId ?? "all", actionFilter, actorFilter, fromIso ?? "", toIso ?? ""],
+    queryKey: ["file-audit", tenantId, fileId ?? "all", actionFilter, actorFilter, fromIso ?? "", toIso ?? "", pageSize],
     queryFn: () => auditFn({
       data: {
         tenantId, fileId,
@@ -1166,12 +1174,14 @@ function AuditDrawer({
         actorUserId: actorFilter === "all" ? undefined : actorFilter,
         fromDate: fromIso,
         toDate: toIso,
-        limit: 200,
+        limit: pageSize,
       },
     }),
     enabled: !!tenantId,
+    placeholderData: (prev) => prev,
   });
   const allRows = (q.data?.rows ?? []) as any[];
+  const reachedCap = allRows.length < pageSize || pageSize >= SERVER_CAP;
 
   // Derive actor options from returned rows (deduped).
   const actorOptions = useMemo(() => {
@@ -1184,15 +1194,45 @@ function AuditDrawer({
     return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
   }, [allRows]);
 
-  // Client-side actor text search (on top of server filters).
+  // Client-side text search across actor, action label, target file name, and summary.
   const rows = useMemo(() => {
-    const s = actorQuery.trim().toLowerCase();
-    if (!s) return allRows;
+    const actorS = actorQuery.trim().toLowerCase();
+    const s = searchText.trim().toLowerCase();
+    if (!actorS && !s) return allRows;
     return allRows.filter((r) => {
-      const label = (r.actor?.name || r.actor?.email || "").toLowerCase();
-      return label.includes(s);
+      const actorLabel = (r.actor?.name || r.actor?.email || "").toLowerCase();
+      if (actorS && !actorLabel.includes(actorS)) return false;
+      if (!s) return true;
+      const meta = ACTION_LABELS[r.action];
+      const actionLabel = (meta?.label ?? r.action ?? "").toLowerCase();
+      const targetName = (r.entity === "file" && r.entity_id ? fileMap.get(r.entity_id) : "") || "";
+      const summary = summarizeDiff(r.action, r.diff) || "";
+      const diffStr = r.diff ? JSON.stringify(r.diff).toLowerCase() : "";
+      return (
+        actorLabel.includes(s) ||
+        actionLabel.includes(s) ||
+        targetName.toLowerCase().includes(s) ||
+        summary.toLowerCase().includes(s) ||
+        (r.entity_id ?? "").toLowerCase().includes(s) ||
+        diffStr.includes(s)
+      );
     });
-  }, [allRows, actorQuery]);
+  }, [allRows, actorQuery, searchText, fileMap]);
+
+  // Infinite scroll sentinel.
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      const first = entries[0];
+      if (first?.isIntersecting && !q.isFetching && !reachedCap) {
+        setPageSize((n) => Math.min(SERVER_CAP, n + PAGE_STEP));
+      }
+    }, { root: null, rootMargin: "200px", threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [q.isFetching, reachedCap]);
 
   const actionGroups: Array<{ label: string; keys: string[] }> = [
     { label: "Tệp", keys: ["file.upload", "file.download", "file.update", "file.soft_delete", "file.restore", "file.hard_delete"] },
@@ -1201,7 +1241,7 @@ function AuditDrawer({
   ];
 
   const hasFilters =
-    actionFilter !== "all" || actorFilter !== "all" || actorQuery || fromDate || toDate;
+    actionFilter !== "all" || actorFilter !== "all" || actorQuery || fromDate || toDate || searchText;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
@@ -1283,14 +1323,37 @@ function AuditDrawer({
               <button
                 onClick={() => {
                   setActionFilter("all"); setActorFilter("all"); setActorQuery("");
-                  setFromDate(""); setToDate("");
+                  setFromDate(""); setToDate(""); setSearchText("");
                 }}
                 className="h-8 px-2.5 rounded-md border border-border bg-card text-[12px] hover:bg-muted"
               >
                 Xoá bộ lọc
               </button>
             )}
-            <span className="ml-auto text-[12px] text-muted-foreground">{rows.length} bản ghi</span>
+            <span className="ml-auto text-[12px] text-muted-foreground">
+              {rows.length}{rows.length !== allRows.length ? `/${allRows.length}` : ""} bản ghi
+              {!reachedCap && " • cuộn để tải thêm"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="Tìm trong nhật ký (hành động, tên tệp, tóm tắt, id, diff)…"
+                className="h-8 pl-8 pr-2.5 rounded-md border border-border bg-card text-[12.5px] w-full"
+              />
+            </div>
+            {searchText && (
+              <button
+                onClick={() => setSearchText("")}
+                className="h-8 px-2.5 rounded-md border border-border bg-card text-[12px] hover:bg-muted"
+              >
+                Xoá
+              </button>
+            )}
           </div>
         </div>
 
@@ -1373,7 +1436,22 @@ function AuditDrawer({
               );
             })}
           </ul>
-
+          {allRows.length > 0 && (
+            <div ref={sentinelRef} className="px-5 py-4 text-center text-[12px] text-muted-foreground">
+              {q.isFetching && !q.isLoading
+                ? "Đang tải thêm…"
+                : reachedCap
+                  ? (pageSize >= SERVER_CAP ? "Đã đạt giới hạn 2000 bản ghi. Hãy thu hẹp bộ lọc." : "Đã hiển thị tất cả bản ghi.")
+                  : (
+                    <button
+                      onClick={() => setPageSize((n) => Math.min(SERVER_CAP, n + PAGE_STEP))}
+                      className="h-8 px-3 rounded-md border border-border bg-card hover:bg-muted"
+                    >
+                      Tải thêm {PAGE_STEP}
+                    </button>
+                  )}
+            </div>
+          )}
         </div>
       </div>
     </div>
