@@ -402,6 +402,13 @@ function FilesPage() {
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setAuditOpen({ fileId: f.id, title: `Lịch sử: ${f.name}` })}
+                          title="Xem lịch sử thao tác"
+                          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                        >
+                          <History className="h-4 w-4" />
+                        </button>
                         {!isDeleted && (
                           <button
                             onClick={() => doDownload(f.id)}
