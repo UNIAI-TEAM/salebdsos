@@ -1,6 +1,7 @@
 import { Bell, HelpCircle, Search, ChevronDown, Menu, PanelLeft } from "lucide-react";
 import { useRouterState } from "@tanstack/react-router";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
+import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
 
 const titles: Record<string, { title: string; sub: string }> = {
   "/dashboard": { title: "Tổng quan", sub: "Chào mừng bạn quay trở lại hệ thống" },
@@ -28,11 +29,16 @@ export function AppTopbar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const meta = Object.entries(titles).find(([k]) => pathname.startsWith(k))?.[1] ?? titles["/dashboard"];
   const { collapsed, toggle } = useSidebarCollapsed();
+  const { toggle: toggleDrawer } = useMobileDrawer();
 
   return (
     <header className="sticky top-0 z-30 glass border-b border-border">
-      <div className="flex items-center gap-4 px-4 lg:px-8 h-16">
-        <button className="lg:hidden p-2 rounded-lg hover:bg-muted">
+      <div className="flex items-center gap-2 lg:gap-4 px-3 lg:px-8 h-16">
+        <button
+          onClick={toggleDrawer}
+          className="lg:hidden inline-flex items-center justify-center h-11 w-11 rounded-xl hover:bg-muted active:bg-muted active:scale-95 transition text-foreground"
+          aria-label="Mở menu"
+        >
           <Menu className="h-5 w-5" />
         </button>
         <button
