@@ -480,12 +480,14 @@ function AirdropPage() {
 }
 
 function ShareDetailDrawer({
-  share, card, onClose, onDelete,
+  share, card, onClose, onDelete, onResend, canResend,
 }: {
   share: ShareRow | null;
   card: NonNullable<CardBrief> | null;
   onClose: () => void;
   onDelete: (id: string) => void;
+  onResend: (h: ShareRow) => void;
+  canResend: (h: ShareRow) => boolean;
 }) {
   if (!share) return null;
   const Icon = DEVICE_ICON[share.device_kind];
