@@ -87,6 +87,14 @@ function AirdropPage() {
   const [history, setHistory] = useState<ShareRow[]>(HISTORY_EMPTY);
   const [stats, setStats] = useState({ sent: 0, received: 0, delivered: 0, total: 0, rate: 0 });
   const [filter, setFilter] = useState<"all" | "sent" | "received">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "delivered" | "declined" | "canceled">("all");
+  const [dateFrom, setDateFrom] = useState<string>(""); // yyyy-mm-dd
+  const [dateTo, setDateTo] = useState<string>("");
+  const [deviceQuery, setDeviceQuery] = useState<string>("");
+  const [deviceQueryDebounced, setDeviceQueryDebounced] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
   const [cardMap, setCardMap] = useState<Record<string, NonNullable<CardBrief>>>({});
   const [detailId, setDetailId] = useState<string | null>(null);
 
@@ -96,15 +104,34 @@ function AirdropPage() {
   const remove = useServerFn(deleteAirdropShare);
   const fetchCards = useServerFn(getAirdropCards);
 
+  // debounce device query
+  useEffect(() => {
+    const t = setTimeout(() => setDeviceQueryDebounced(deviceQuery.trim()), 300);
+    return () => clearTimeout(t);
+  }, [deviceQuery]);
+
+  // reset về trang 1 khi bộ lọc đổi
+  useEffect(() => { setPage(1); }, [filter, statusFilter, dateFrom, dateTo, deviceQueryDebounced, pageSize]);
+
   const refresh = useCallback(async () => {
     if (!tenantId) return;
     try {
+      const fromIso = dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : null;
+      const toIso = dateTo ? new Date(`${dateTo}T23:59:59.999`).toISOString() : null;
       const [h, s] = await Promise.all([
-        list({ data: { tenantId, direction: filter, pageSize: 30 } }),
+        list({
+          data: {
+            tenantId, direction: filter, status: statusFilter,
+            page, pageSize,
+            from: fromIso, to: toIso,
+            deviceQuery: deviceQueryDebounced || null,
+          },
+        }),
         statsFn({ data: { tenantId } }),
       ]);
       const rows = (h.items ?? []) as ShareRow[];
       setHistory(rows);
+      setTotal(h.total ?? 0);
       setStats(s);
       const ids = Array.from(new Set(rows.map((r) => r.card_id).filter((x): x is string => !!x && !cardMap[x])));
       if (ids.length) {
@@ -118,7 +145,7 @@ function AirdropPage() {
     } catch (e) {
       console.error(e);
     }
-  }, [tenantId, filter, list, statsFn, fetchCards, cardMap]);
+  }, [tenantId, filter, statusFilter, dateFrom, dateTo, deviceQueryDebounced, page, pageSize, list, statsFn, fetchCards, cardMap]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
