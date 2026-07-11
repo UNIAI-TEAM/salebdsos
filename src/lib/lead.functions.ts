@@ -128,10 +128,95 @@ export const updateLeadStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid(), status: StatusEnum }).parse(d))
   .handler(async ({ data, context }) => {
+    const { data: prev } = await context.supabase
+      .from("leads").select("status, tenant_id").eq("id", data.id).maybeSingle();
     const { error } = await context.supabase
       .from("leads").update({ status: data.status }).eq("id", data.id);
     if (error) throw error;
+    if (prev?.tenant_id && prev.status !== data.status) {
+      await context.supabase.from("audit_logs").insert({
+        tenant_id: prev.tenant_id,
+        actor_user_id: context.userId,
+        action: "status_change",
+        entity: "lead",
+        entity_id: data.id,
+        diff: { from: prev.status, to: data.status },
+      });
+    }
     return { ok: true };
+  });
+
+export const updateLeadNotes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({
+    id: z.string().uuid(),
+    notes: z.string().trim().max(5000),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: prev } = await context.supabase
+      .from("leads").select("tenant_id").eq("id", data.id).maybeSingle();
+    const { error } = await context.supabase
+      .from("leads").update({ notes: data.notes || null }).eq("id", data.id);
+    if (error) throw error;
+    if (prev?.tenant_id) {
+      await context.supabase.from("audit_logs").insert({
+        tenant_id: prev.tenant_id,
+        actor_user_id: context.userId,
+        action: "notes_update",
+        entity: "lead",
+        entity_id: data.id,
+        diff: { preview: (data.notes || "").slice(0, 160) },
+      });
+    }
+    return { ok: true };
+  });
+
+export const getLeadTimeline = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { leadId: string; tenantId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const [audits, follows] = await Promise.all([
+      context.supabase
+        .from("audit_logs")
+        .select("id, action, diff, occurred_at")
+        .eq("tenant_id", data.tenantId)
+        .eq("entity", "lead")
+        .eq("entity_id", data.leadId)
+        .order("occurred_at", { ascending: false })
+        .limit(100),
+      context.supabase
+        .from("ai_followups")
+        .select("id, channel, scenario, subject, output, status, scheduled_at, sent_at, created_at")
+        .eq("tenant_id", data.tenantId)
+        .eq("lead_id", data.leadId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(50),
+    ]);
+    const events: Array<{
+      id: string; kind: "audit" | "followup"; at: string; title: string; detail?: string; meta?: any;
+    }> = [];
+    for (const a of (audits.data ?? []) as any[]) {
+      events.push({
+        id: `a-${a.id}`,
+        kind: "audit",
+        at: a.occurred_at,
+        title: a.action as string,
+        meta: a.diff,
+      });
+    }
+    for (const f of (follows.data ?? []) as any[]) {
+      events.push({
+        id: `f-${f.id}`,
+        kind: "followup",
+        at: f.sent_at || f.scheduled_at || f.created_at,
+        title: `Follow-up · ${f.channel || "—"}`,
+        detail: f.subject || (f.output ? String(f.output).slice(0, 200) : undefined),
+        meta: { status: f.status, scenario: f.scenario, channel: f.channel },
+      });
+    }
+    events.sort((a, b) => (a.at < b.at ? 1 : -1));
+    return events;
   });
 
 export const softDeleteLead = createServerFn({ method: "POST" })
