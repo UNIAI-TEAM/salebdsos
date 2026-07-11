@@ -168,6 +168,12 @@ function FilesPage() {
         action={
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setManageOpen(true)}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-card text-[13px] font-medium hover:bg-muted"
+            >
+              <Settings2 className="h-4 w-4" /> Quản lý thư mục & nhãn
+            </button>
+            <button
               onClick={() => invalidate()}
               className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-card text-[13px] font-medium hover:bg-muted"
             >
