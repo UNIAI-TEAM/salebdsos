@@ -591,6 +591,7 @@ function FilesPage() {
           title={auditOpen.title}
           fileMap={new Map(items.map((f: any) => [f.id, f.name]))}
           onClose={() => setAuditOpen(null)}
+          onRetryZip={(ids) => runZipDownload(ids)}
         />
       )}
       {dl && (
