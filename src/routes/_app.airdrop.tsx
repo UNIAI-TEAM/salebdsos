@@ -472,6 +472,8 @@ function AirdropPage() {
         })()}
         onClose={() => setDetailId(null)}
         onDelete={async (id) => { await removeHistory(id); setDetailId(null); }}
+        onResend={(h) => { resendShare(h); setDetailId(null); }}
+        canResend={(h) => canResend(h)}
       />
     </div>
   );
