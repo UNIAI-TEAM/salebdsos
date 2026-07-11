@@ -195,6 +195,31 @@ function AirdropPage() {
     catch { toast.error("Không xoá được"); }
   };
 
+  const isToday = (iso: string) => {
+    const d = new Date(iso); const n = new Date();
+    return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+  };
+
+  const canResend = (h: ShareRow) =>
+    h.direction === "sent" && h.status !== "delivered" && isToday(h.created_at);
+
+  const resendShare = (h: ShareRow) => {
+    // Tái tạo Device từ bản ghi lịch sử để dùng lại luồng gửi (animation + lưu bản ghi mới)
+    const tone =
+      DEVICES.find((x) => x.name === h.device_name)?.tone
+      ?? "from-slate-400 to-slate-600";
+    const device: Device = {
+      id: `resend-${h.id}`,
+      name: h.device_name,
+      owner: h.recipient_name ?? h.device_name,
+      kind: h.device_kind,
+      distance: h.distance_m != null ? `${h.distance_m} m` : "—",
+      tone,
+    };
+    sendTo(device);
+    toast.success("Đang gửi lại danh thiếp…");
+  };
+
   return (
     <div className="space-y-5">
       <PageHeader
