@@ -1362,7 +1362,7 @@ function AuditDrawer({
   ];
 
   const hasFilters =
-    actionFilter !== "all" || actorFilter !== "all" || actorQuery || fromDate || toDate || searchText || zipPhaseFilter !== "all";
+    actionFilter !== "all" || actorFilter !== "all" || actorQuery || batchFilter || fromDate || toDate || searchText || zipPhaseFilter !== "all";
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
@@ -1452,10 +1452,18 @@ function AuditDrawer({
               <option value="canceled">ZIP: Đã huỷ</option>
               <option value="error">ZIP: Lỗi</option>
             </select>
+            <input
+              type="text"
+              value={batchFilter}
+              onChange={(e) => setBatchFilter(e.target.value.toUpperCase().replace(/[^A-F0-9]/g, ""))}
+              placeholder="Mã lô #A1B2C3"
+              className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px] w-[130px] font-mono"
+              title="Lọc theo mã lô ZIP"
+            />
             {hasFilters && (
               <button
                 onClick={() => {
-                  setActionFilter("all"); setActorFilter("all"); setActorQuery("");
+                  setActionFilter("all"); setActorFilter("all"); setActorQuery(""); setBatchFilter("");
                   setFromDate(""); setToDate(""); setSearchText(""); setZipPhaseFilter("all");
                 }}
                 className="h-8 px-2.5 rounded-md border border-border bg-card text-[12px] hover:bg-muted"
