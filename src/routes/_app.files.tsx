@@ -300,6 +300,8 @@ function FilesPage() {
             }
             dlCancelRef.current = false;
             setDl({ total: ids.length, done: 0, failed: 0, phase: "fetching", bytes: 0 });
+            // Log start of ZIP session so users can filter "Đang đóng gói" in the audit trail.
+            logBulkDlFn({ data: { tenantId, ids, phase: "zipping" } }).catch(() => {});
             try {
               const { default: JSZip } = await import("jszip");
               const zip = new JSZip();
@@ -338,14 +340,14 @@ function FilesPage() {
               if (dlCancelRef.current) {
                 setDl((s) => s && { ...s, phase: "canceled", message: "Đã huỷ" });
                 toast.info(`Đã huỷ tải xuống (${ok}/${ids.length})`);
-                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true } }).catch(() => {});
+                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true, phase: "canceled" } }).catch(() => {});
                 setTimeout(() => setDl(null), 3000);
                 return;
               }
               if (ok === 0) {
                 setDl((s) => s && { ...s, phase: "error", message: "Không tải được tệp nào" });
                 toast.error("Không tải được tệp nào");
-                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes } }).catch(() => {});
+                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, phase: "error" } }).catch(() => {});
                 setTimeout(() => setDl(null), 4000);
                 return;
               }
@@ -359,11 +361,12 @@ function FilesPage() {
               setTimeout(() => URL.revokeObjectURL(url), 5000);
               setDl((s) => s && { ...s, phase: "done", bytes: content.size, message: `Đã tải ZIP (${ok}/${ids.length})` });
               toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`);
-              logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size } }).catch(() => {});
+              logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size, phase: "done" } }).catch(() => {});
               setTimeout(() => setDl(null), 4000);
             } catch (e: any) {
               setDl((s) => s && { ...s, phase: "error", message: e?.message || "Lỗi đóng gói ZIP" });
               toast.error(e?.message || "Lỗi đóng gói ZIP");
+              logBulkDlFn({ data: { tenantId, ids, phase: "error" } }).catch(() => {});
               setTimeout(() => setDl(null), 5000);
             }
           }}
@@ -997,15 +1000,33 @@ function summarizeDiff(action: string, diff: any): string {
       return `${diff.affected ?? names.length} tệp${preview ? ` · ${preview}${more}` : ""}`;
     }
     if (action === "file.bulk_download") {
+      const p = getZipPhase(diff);
+      const meta = ZIP_PHASE_META[p];
       const mb = diff.bytes ? ` · ${(Number(diff.bytes) / 1024 / 1024).toFixed(1)} MB` : "";
-      const cx = diff.canceled ? " · đã huỷ" : "";
-      return `${diff.ok ?? 0}/${diff.requested ?? 0} tệp${mb}${cx}`;
+      const okTxt = (diff.ok ?? 0) || (diff.requested ?? 0)
+        ? `${diff.ok ?? 0}/${diff.requested ?? 0} tệp` : `${diff.requested ?? 0} tệp`;
+      return `${meta.label} · ${okTxt}${mb}${diff.failed ? ` · ${diff.failed} lỗi` : ""}`;
     }
     if (action === "folder.rename" || action === "tag.rename") return `${diff.from} → ${diff.to} (${diff.affected ?? 0})`;
     if (action === "folder.delete") return `${diff.folder}${diff.moveTo ? ` → ${diff.moveTo}` : ""} (${diff.affected ?? 0})`;
     if (action === "tag.delete") return `${diff.tag} (${diff.affected ?? 0})`;
     return JSON.stringify(diff);
   } catch { return ""; }
+}
+
+type ZipPhase = "zipping" | "done" | "canceled" | "error";
+const ZIP_PHASE_META: Record<ZipPhase, { label: string; tone: string; status: string; itemTone: string }> = {
+  zipping: { label: "Đang đóng gói", tone: "bg-amber-50 text-amber-700 border-amber-200", status: "Đóng gói", itemTone: "bg-amber-50 text-amber-700" },
+  done:    { label: "Hoàn tất",     tone: "bg-emerald-50 text-emerald-700 border-emerald-200", status: "Hoàn tất", itemTone: "bg-emerald-50 text-emerald-700" },
+  canceled:{ label: "Đã huỷ",       tone: "bg-slate-100 text-slate-700 border-slate-200", status: "Đã huỷ", itemTone: "bg-slate-100 text-slate-700" },
+  error:   { label: "Lỗi",          tone: "bg-rose-50 text-rose-700 border-rose-200", status: "Lỗi", itemTone: "bg-rose-50 text-rose-700" },
+};
+function getZipPhase(diff: any): ZipPhase {
+  const p = diff?.phase;
+  if (p === "zipping" || p === "done" || p === "canceled" || p === "error") return p;
+  if (diff?.canceled) return "canceled";
+  if ((diff?.ok ?? 0) === 0 && (diff?.requested ?? 0) > 0) return "error";
+  return "done";
 }
 
 function csvEscape(v: unknown): string {
@@ -1065,7 +1086,7 @@ function buildAuditDetails(r: any, fileMap: Map<string, string>): AuditDetails {
   const DELETED = { status: "Đã xoá", tone: "bg-rose-50 text-rose-700" };
   const RESTORED = { status: "Khôi phục", tone: "bg-emerald-50 text-emerald-700" };
   const HARD = { status: "Xoá vĩnh viễn", tone: "bg-rose-100 text-rose-800" };
-  const REQ = { status: "Yêu cầu", tone: "bg-blue-50 text-blue-700" };
+  
   const UNK = { status: "—", tone: "bg-muted text-foreground" };
 
   const map = (badge: { status: string; tone: string }) =>
@@ -1084,13 +1105,16 @@ function buildAuditDetails(r: any, fileMap: Map<string, string>): AuditDetails {
         items: map(OK),
       };
     case "file.bulk_download": {
+      const p = getZipPhase(diff);
+      const meta = ZIP_PHASE_META[p];
       const info = [
+        `Trạng thái: ${meta.label}`,
         `${diff.ok ?? 0}/${diff.requested ?? ids.length} thành công`,
         diff.failed ? `${diff.failed} lỗi` : null,
         diff.bytes ? `${(Number(diff.bytes) / 1024 / 1024).toFixed(1)} MB` : null,
-        diff.canceled ? "đã huỷ" : null,
       ].filter(Boolean).join(" · ");
-      return { info, items: map(REQ) };
+      const badge = { status: meta.status, tone: meta.itemTone };
+      return { info, items: ids.map((id, i) => ({ id, name: nameFor(id, i), status: badge.status, tone: badge.tone })) };
     }
     case "folder.rename":
     case "tag.rename":
@@ -1153,6 +1177,7 @@ function AuditDrawer({
   const [toDate, setToDate] = useState<string>("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>("");
+  const [zipPhaseFilter, setZipPhaseFilter] = useState<"all" | ZipPhase>("all");
   const [pageSize, setPageSize] = useState<number>(100);
   const PAGE_STEP = 100;
   const SERVER_CAP = 2000;
@@ -1198,8 +1223,11 @@ function AuditDrawer({
   const rows = useMemo(() => {
     const actorS = actorQuery.trim().toLowerCase();
     const s = searchText.trim().toLowerCase();
-    if (!actorS && !s) return allRows;
     return allRows.filter((r) => {
+      if (zipPhaseFilter !== "all") {
+        if (r.action !== "file.bulk_download") return false;
+        if (getZipPhase(r.diff) !== zipPhaseFilter) return false;
+      }
       const actorLabel = (r.actor?.name || r.actor?.email || "").toLowerCase();
       if (actorS && !actorLabel.includes(actorS)) return false;
       if (!s) return true;
@@ -1217,7 +1245,7 @@ function AuditDrawer({
         diffStr.includes(s)
       );
     });
-  }, [allRows, actorQuery, searchText, fileMap]);
+  }, [allRows, actorQuery, searchText, fileMap, zipPhaseFilter]);
 
   // Infinite scroll sentinel.
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -1241,7 +1269,7 @@ function AuditDrawer({
   ];
 
   const hasFilters =
-    actionFilter !== "all" || actorFilter !== "all" || actorQuery || fromDate || toDate || searchText;
+    actionFilter !== "all" || actorFilter !== "all" || actorQuery || fromDate || toDate || searchText || zipPhaseFilter !== "all";
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
@@ -1319,11 +1347,23 @@ function AuditDrawer({
               onChange={(e) => setToDate(e.target.value)}
               className="h-8 px-2 rounded-md border border-border bg-card text-[12.5px]"
             />
+            <select
+              value={zipPhaseFilter}
+              onChange={(e) => setZipPhaseFilter(e.target.value as "all" | ZipPhase)}
+              className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px]"
+              title="Trạng thái ZIP"
+            >
+              <option value="all">Tất cả trạng thái ZIP</option>
+              <option value="zipping">ZIP: Đang đóng gói</option>
+              <option value="done">ZIP: Hoàn tất</option>
+              <option value="canceled">ZIP: Đã huỷ</option>
+              <option value="error">ZIP: Lỗi</option>
+            </select>
             {hasFilters && (
               <button
                 onClick={() => {
                   setActionFilter("all"); setActorFilter("all"); setActorQuery("");
-                  setFromDate(""); setToDate(""); setSearchText("");
+                  setFromDate(""); setToDate(""); setSearchText(""); setZipPhaseFilter("all");
                 }}
                 className="h-8 px-2.5 rounded-md border border-border bg-card text-[12px] hover:bg-muted"
               >
@@ -1384,6 +1424,14 @@ function AuditDrawer({
                       <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${meta.tone}`}>
                         {meta.label}
                       </span>
+                      {r.action === "file.bulk_download" && (() => {
+                        const zp = ZIP_PHASE_META[getZipPhase(r.diff)];
+                        return (
+                          <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${zp.tone}`}>
+                            {zp.label}
+                          </span>
+                        );
+                      })()}
                       <div className="min-w-0 flex-1">
                         <div className="text-[13px] text-foreground">
                           <span className="font-medium">{actor}</span>

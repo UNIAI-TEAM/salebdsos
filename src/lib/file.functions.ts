@@ -457,10 +457,11 @@ export const logBulkDownload = createServerFn({ method: "POST" })
       .object({
         tenantId: z.string().uuid(),
         ids: z.array(z.string().uuid()).min(1).max(1000),
-        ok: z.number().int().min(0),
-        failed: z.number().int().min(0),
+        ok: z.number().int().min(0).optional(),
+        failed: z.number().int().min(0).optional(),
         bytes: z.number().int().min(0).optional(),
         canceled: z.boolean().optional(),
+        phase: z.enum(["zipping", "done", "canceled", "error"]).optional(),
       })
       .parse(d),
   )
@@ -469,10 +470,11 @@ export const logBulkDownload = createServerFn({ method: "POST" })
     await logAudit(supabase, data.tenantId, userId, "file.bulk_download", null, {
       ids: data.ids,
       requested: data.ids.length,
-      ok: data.ok,
-      failed: data.failed,
+      ok: data.ok ?? 0,
+      failed: data.failed ?? 0,
       bytes: data.bytes ?? 0,
       canceled: !!data.canceled,
+      phase: data.phase ?? (data.canceled ? "canceled" : (data.ok ?? 0) === 0 ? "error" : "done"),
     });
     return { ok: true };
   });
