@@ -338,12 +338,14 @@ function FilesPage() {
               if (dlCancelRef.current) {
                 setDl((s) => s && { ...s, phase: "canceled", message: "Đã huỷ" });
                 toast.info(`Đã huỷ tải xuống (${ok}/${ids.length})`);
+                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true } }).catch(() => {});
                 setTimeout(() => setDl(null), 3000);
                 return;
               }
               if (ok === 0) {
                 setDl((s) => s && { ...s, phase: "error", message: "Không tải được tệp nào" });
                 toast.error("Không tải được tệp nào");
+                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes } }).catch(() => {});
                 setTimeout(() => setDl(null), 4000);
                 return;
               }
@@ -357,6 +359,7 @@ function FilesPage() {
               setTimeout(() => URL.revokeObjectURL(url), 5000);
               setDl((s) => s && { ...s, phase: "done", bytes: content.size, message: `Đã tải ZIP (${ok}/${ids.length})` });
               toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`);
+              logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size } }).catch(() => {});
               setTimeout(() => setDl(null), 4000);
             } catch (e: any) {
               setDl((s) => s && { ...s, phase: "error", message: e?.message || "Lỗi đóng gói ZIP" });
