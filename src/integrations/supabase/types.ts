@@ -380,6 +380,7 @@ export type Database = {
         Row: {
           action: string
           actor_user_id: string | null
+          batch_id: string | null
           diff: Json | null
           entity: string
           entity_id: string | null
@@ -392,6 +393,7 @@ export type Database = {
         Insert: {
           action: string
           actor_user_id?: string | null
+          batch_id?: string | null
           diff?: Json | null
           entity: string
           entity_id?: string | null
@@ -404,6 +406,7 @@ export type Database = {
         Update: {
           action?: string
           actor_user_id?: string | null
+          batch_id?: string | null
           diff?: Json | null
           entity?: string
           entity_id?: string | null

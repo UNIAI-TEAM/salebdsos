@@ -31,6 +31,10 @@ function humanSize(n: number) {
   return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
+function makeBatchId() {
+  return crypto.randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
+}
+
 function FilesPage() {
   const { currentTenant, user } = useAuth();
   const tenantId = currentTenant?.id ?? "";
@@ -77,7 +81,7 @@ function FilesPage() {
   const logBulkDlFn = useServerFn(logBulkDownload);
 
   // Shared ZIP download runner — used by bulk toolbar and "Thử lại" from audit log.
-  async function runZipDownload(ids: string[]) {
+  async function runZipDownload(ids: string[], reuseBatchId?: string) {
     if (!ids || ids.length === 0) return;
     if (ids.length === 1) {
       try {
@@ -91,9 +95,10 @@ function FilesPage() {
       }
       return;
     }
+    const batchId = reuseBatchId || makeBatchId();
     dlCancelRef.current = false;
     setDl({ total: ids.length, done: 0, failed: 0, phase: "fetching", bytes: 0 });
-    logBulkDlFn({ data: { tenantId, ids, phase: "zipping" } }).catch(() => {});
+    logBulkDlFn({ data: { tenantId, ids, phase: "zipping", batchId } }).catch(() => {});
     try {
       const { default: JSZip } = await import("jszip");
       const zip = new JSZip();
@@ -132,14 +137,14 @@ function FilesPage() {
       if (dlCancelRef.current) {
         setDl((s) => s && { ...s, phase: "canceled", message: "Đã huỷ" });
         toast.info(`Đã huỷ tải xuống (${ok}/${ids.length})`);
-        logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true, phase: "canceled" } }).catch(() => {});
+        logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true, phase: "canceled", batchId } }).catch(() => {});
         setTimeout(() => setDl(null), 3000);
         return;
       }
       if (ok === 0) {
         setDl((s) => s && { ...s, phase: "error", message: "Không tải được tệp nào" });
         toast.error("Không tải được tệp nào");
-        logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, phase: "error" } }).catch(() => {});
+        logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, phase: "error", batchId } }).catch(() => {});
         setTimeout(() => setDl(null), 4000);
         return;
       }
@@ -153,12 +158,12 @@ function FilesPage() {
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       setDl((s) => s && { ...s, phase: "done", bytes: content.size, message: `Đã tải ZIP (${ok}/${ids.length})` });
       toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`);
-      logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size, phase: "done" } }).catch(() => {});
+      logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size, phase: "done", batchId } }).catch(() => {});
       setTimeout(() => setDl(null), 4000);
     } catch (e: any) {
       setDl((s) => s && { ...s, phase: "error", message: e?.message || "Lỗi đóng gói ZIP" });
       toast.error(e?.message || "Lỗi đóng gói ZIP");
-      logBulkDlFn({ data: { tenantId, ids, phase: "error" } }).catch(() => {});
+      logBulkDlFn({ data: { tenantId, ids, phase: "error", batchId } }).catch(() => {});
       setTimeout(() => setDl(null), 5000);
     }
   }
@@ -1065,7 +1070,6 @@ function exportAuditRowsToCsv(
   rows: any[],
   fileMap: Map<string, string>,
   title: string,
-  zipMeta: Map<string, ZipMeta>,
 ) {
   if (!rows.length) return;
   const header = [
@@ -1077,7 +1081,7 @@ function exportAuditRowsToCsv(
     const meta = ACTION_LABELS[r.action];
     const entityName = r.entity === "file" && r.entity_id ? fileMap.get(r.entity_id) ?? "" : "";
     const phase = r.action === "file.bulk_download" ? getZipPhase(r.diff) : "";
-    const batchId = r.action === "file.bulk_download" ? (zipMeta.get(r.id)?.batchId ?? "") : "";
+    const batchId = r.action === "file.bulk_download" ? (r.batch_id ?? "") : "";
     lines.push([
       new Date(r.occurred_at).toISOString(),
       r.action,
@@ -1210,6 +1214,7 @@ function AuditDrawer({
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [actorQuery, setActorQuery] = useState<string>("");
   const [actorFilter, setActorFilter] = useState<string>("all");
+  const [batchFilter, setBatchFilter] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -1221,19 +1226,21 @@ function AuditDrawer({
 
   const fromIso = fromDate ? new Date(fromDate + "T00:00:00").toISOString() : undefined;
   const toIso = toDate ? new Date(toDate + "T23:59:59.999").toISOString() : undefined;
+  const batchIdQuery = batchFilter.trim().replace(/^#/, "").toUpperCase();
 
   // Reset paging when filters change.
   useEffect(() => {
     setPageSize(100);
-  }, [actionFilter, actorFilter, fromIso, toIso, fileId]);
+  }, [actionFilter, actorFilter, batchIdQuery, fromIso, toIso, fileId]);
 
   const q = useQuery({
-    queryKey: ["file-audit", tenantId, fileId ?? "all", actionFilter, actorFilter, fromIso ?? "", toIso ?? "", pageSize],
+    queryKey: ["file-audit", tenantId, fileId ?? "all", actionFilter, actorFilter, batchIdQuery, fromIso ?? "", toIso ?? "", pageSize],
     queryFn: () => auditFn({
       data: {
         tenantId, fileId,
         action: actionFilter === "all" ? undefined : actionFilter,
         actorUserId: actorFilter === "all" ? undefined : actorFilter,
+        batchId: batchIdQuery || undefined,
         fromDate: fromIso,
         toDate: toIso,
         limit: pageSize,
@@ -1246,50 +1253,44 @@ function AuditDrawer({
   const reachedCap = allRows.length < pageSize || pageSize >= SERVER_CAP;
 
   // Pair ZIP start (phase=zipping) with its terminal entry (done/canceled/error)
-  // by matching ids-set. One "batch" = one paired start+terminal (or an
-  // unfinished start). Rows sharing the same batch collapse into a single
-  // entry so users can expand once to see all affected files.
+  // by batch_id. One "batch" = one paired start+terminal (or an unfinished
+  // start). Rows sharing the same batch collapse into a single entry so users
+  // can expand once to see all affected files.
   const zipMeta = useMemo(() => {
     const m = new Map<string, ZipMeta>();
     const bulk = allRows
       .filter((r) => r.action === "file.bulk_download")
       .slice()
       .sort((a, b) => new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime());
-    const keyOf = (r: any) => {
-      const ids = Array.isArray(r.diff?.ids) ? [...r.diff.ids].sort() : [];
-      return ids.join("|");
-    };
-    const shortId = (id: string) => (id ? id.replace(/-/g, "").slice(0, 6).toUpperCase() : "—");
     const openStarts = new Map<string, any>();
     for (const r of bulk) {
       const phase = getZipPhase(r.diff);
       const requested = Number(r.diff?.requested ?? (Array.isArray(r.diff?.ids) ? r.diff.ids.length : 0));
       const ok = Number(r.diff?.ok ?? 0);
       const failed = Number(r.diff?.failed ?? 0);
-      const k = keyOf(r);
+      const batchId = r.batch_id || r.id;
       if (phase === "zipping") {
-        openStarts.set(k, r);
+        openStarts.set(batchId, r);
         m.set(r.id, {
           startedAt: r.occurred_at, running: true, percent: 0,
-          ok: 0, failed: 0, requested, batchId: shortId(r.id),
+          ok: 0, failed: 0, requested, batchId,
         });
       } else {
-        const start = openStarts.get(k);
+        const start = openStarts.get(batchId);
         const percent = phase === "done" ? 100 : requested > 0 ? Math.round((ok / requested) * 100) : 0;
         if (start) {
           const durationMs = new Date(r.occurred_at).getTime() - new Date(start.occurred_at).getTime();
-          const batchId = shortId(start.id);
           const shared: ZipMeta = {
             startedAt: start.occurred_at, endedAt: r.occurred_at, durationMs,
             running: false, percent, ok, failed, requested, batchId,
           };
           m.set(r.id, shared);
           m.set(start.id, { ...shared, skipRow: true });
-          openStarts.delete(k);
+          openStarts.delete(batchId);
         } else {
           m.set(r.id, {
             endedAt: r.occurred_at, running: false, percent,
-            ok, failed, requested, batchId: shortId(r.id),
+            ok, failed, requested, batchId,
           });
         }
       }
@@ -1360,7 +1361,7 @@ function AuditDrawer({
   ];
 
   const hasFilters =
-    actionFilter !== "all" || actorFilter !== "all" || actorQuery || fromDate || toDate || searchText || zipPhaseFilter !== "all";
+    actionFilter !== "all" || actorFilter !== "all" || actorQuery || batchFilter || fromDate || toDate || searchText || zipPhaseFilter !== "all";
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
@@ -1375,7 +1376,7 @@ function AuditDrawer({
           </div>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => exportAuditRowsToCsv(rows, fileMap, title, zipMeta)}
+              onClick={() => exportAuditRowsToCsv(rows, fileMap, title)}
               disabled={rows.length === 0}
               className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px] hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
               title="Xuất CSV bản ghi đang hiển thị"
@@ -1450,10 +1451,18 @@ function AuditDrawer({
               <option value="canceled">ZIP: Đã huỷ</option>
               <option value="error">ZIP: Lỗi</option>
             </select>
+            <input
+              type="text"
+              value={batchFilter}
+              onChange={(e) => setBatchFilter(e.target.value.toUpperCase().replace(/[^A-F0-9]/g, ""))}
+              placeholder="Mã lô #A1B2C3"
+              className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px] w-[130px] font-mono"
+              title="Lọc theo mã lô ZIP"
+            />
             {hasFilters && (
               <button
                 onClick={() => {
-                  setActionFilter("all"); setActorFilter("all"); setActorQuery("");
+                  setActionFilter("all"); setActorFilter("all"); setActorQuery(""); setBatchFilter("");
                   setFromDate(""); setToDate(""); setSearchText(""); setZipPhaseFilter("all");
                 }}
                 className="h-8 px-2.5 rounded-md border border-border bg-card text-[12px] hover:bg-muted"
@@ -1512,28 +1521,19 @@ function AuditDrawer({
                     className="w-full text-left px-5 py-3.5"
                   >
                     <div className="flex items-start gap-3">
-                      <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${meta.tone}`}>
-                        {meta.label}
-                      </span>
-                      {r.action === "file.bulk_download" && (() => {
-                        const zp = ZIP_PHASE_META[getZipPhase(r.diff)];
-                        const zm = zipMeta.get(r.id);
-                        return (
-                          <>
-                            <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${zp.tone}`}>
+                      <div className="flex flex-col gap-1.5 shrink-0 w-[110px]">
+                        <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${meta.tone}`}>
+                          {meta.label}
+                        </span>
+                        {r.action === "file.bulk_download" && (() => {
+                          const zp = ZIP_PHASE_META[getZipPhase(r.diff)];
+                          return (
+                            <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${zp.tone}`}>
                               {zp.label}
                             </span>
-                            {zm?.batchId && (
-                              <span
-                                className="inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold border border-border bg-muted/50 text-muted-foreground"
-                                title="Mã lô tải ZIP"
-                              >
-                                #{zm.batchId}
-                              </span>
-                            )}
-                          </>
-                        );
-                      })()}
+                          );
+                        })()}
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-[13px] text-foreground">
                           <span className="font-medium">{actor}</span>
@@ -1583,6 +1583,17 @@ function AuditDrawer({
                           )}
                         </div>
                       </div>
+                      {r.action === "file.bulk_download" && r.batch_id && (
+                        <div className="shrink-0 w-[90px] flex flex-col items-end gap-0.5">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Mã lô</span>
+                          <span
+                            className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold border border-border bg-muted/50 text-muted-foreground"
+                            title="Mã lô tải ZIP"
+                          >
+                            #{r.batch_id}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </button>
                   {r.action === "file.bulk_download" && getZipPhase(r.diff) === "error" && onRetryZip && (() => {

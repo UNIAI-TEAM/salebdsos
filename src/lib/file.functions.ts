@@ -28,6 +28,7 @@ async function logAudit(
   entityId: string | null | undefined,
   diff: Record<string, unknown> | null = null,
   entity: string = "file",
+  batchId?: string | null,
 ) {
   if (!tenantId) return;
   try {
@@ -38,6 +39,7 @@ async function logAudit(
       entity,
       entity_id: entityId ? String(entityId) : null,
       diff: diff ?? null,
+      batch_id: batchId ?? null,
     });
   } catch {
     /* swallow */
@@ -462,20 +464,30 @@ export const logBulkDownload = createServerFn({ method: "POST" })
         bytes: z.number().int().min(0).optional(),
         canceled: z.boolean().optional(),
         phase: z.enum(["zipping", "done", "canceled", "error"]).optional(),
+        batchId: z.string().trim().min(1).max(32).optional(),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await logAudit(supabase, data.tenantId, userId, "file.bulk_download", null, {
-      ids: data.ids,
-      requested: data.ids.length,
-      ok: data.ok ?? 0,
-      failed: data.failed ?? 0,
-      bytes: data.bytes ?? 0,
-      canceled: !!data.canceled,
-      phase: data.phase ?? (data.canceled ? "canceled" : (data.ok ?? 0) === 0 ? "error" : "done"),
-    });
+    await logAudit(
+      supabase,
+      data.tenantId,
+      userId,
+      "file.bulk_download",
+      null,
+      {
+        ids: data.ids,
+        requested: data.ids.length,
+        ok: data.ok ?? 0,
+        failed: data.failed ?? 0,
+        bytes: data.bytes ?? 0,
+        canceled: !!data.canceled,
+        phase: data.phase ?? (data.canceled ? "canceled" : (data.ok ?? 0) === 0 ? "error" : "done"),
+      },
+      "file",
+      data.batchId,
+    );
     return { ok: true };
   });
 
@@ -491,6 +503,7 @@ export const listFileAudit = createServerFn({ method: "GET" })
       fileId?: string;
       action?: string;
       actorUserId?: string;
+      batchId?: string;
       fromDate?: string;
       toDate?: string;
       limit?: number;
@@ -502,7 +515,7 @@ export const listFileAudit = createServerFn({ method: "GET" })
 
     let q = supabase
       .from("audit_logs")
-      .select("id,tenant_id,actor_user_id,action,entity,entity_id,diff,occurred_at")
+      .select("id,tenant_id,actor_user_id,action,entity,entity_id,diff,batch_id,occurred_at")
       .eq("tenant_id", data.tenantId)
       .in("entity", FILE_AUDIT_ENTITIES)
       .order("occurred_at", { ascending: false })
@@ -511,6 +524,7 @@ export const listFileAudit = createServerFn({ method: "GET" })
     if (data.fileId) q = q.eq("entity", "file").eq("entity_id", data.fileId);
     if (data.action) q = q.eq("action", data.action);
     if (data.actorUserId) q = q.eq("actor_user_id", data.actorUserId);
+    if (data.batchId) q = q.eq("batch_id", data.batchId);
     if (data.fromDate) q = q.gte("occurred_at", data.fromDate);
     if (data.toDate) q = q.lte("occurred_at", data.toDate);
 
