@@ -332,11 +332,9 @@ function FilesPage() {
                 return (
                   <tr key={f.id} className={["hover:bg-muted/40", isDeleted && "opacity-60", isSel && "bg-primary-soft/30"].filter(Boolean).join(" ")}>
                     <td className="px-3 py-3">
-                      {!isDeleted && (
-                        <button onClick={() => toggleOne(f.id)} className="text-muted-foreground hover:text-primary">
-                          {isSel ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
-                        </button>
-                      )}
+                      <button onClick={() => toggleOne(f.id)} className="text-muted-foreground hover:text-primary">
+                        {isSel ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
+                      </button>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
