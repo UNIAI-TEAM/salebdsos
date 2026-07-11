@@ -1022,6 +1022,20 @@ const ZIP_PHASE_META: Record<ZipPhase, { label: string; tone: string; status: st
   canceled:{ label: "Đã huỷ",       tone: "bg-slate-100 text-slate-700 border-slate-200", status: "Đã huỷ", itemTone: "bg-slate-100 text-slate-700" },
   error:   { label: "Lỗi",          tone: "bg-rose-50 text-rose-700 border-rose-200", status: "Lỗi", itemTone: "bg-rose-50 text-rose-700" },
 };
+
+type ZipMeta = {
+  startedAt?: string;
+  endedAt?: string;
+  durationMs?: number;
+  running: boolean;
+  percent: number;
+  ok: number;
+  failed: number;
+  requested: number;
+  batchId: string;      // short display id for the batch
+  skipRow?: boolean;    // true = paired start row, hide in favor of terminal
+};
+
 function getZipPhase(diff: any): ZipPhase {
   const p = diff?.phase;
   if (p === "zipping" || p === "done" || p === "canceled" || p === "error") return p;
@@ -1047,17 +1061,23 @@ function csvEscape(v: unknown): string {
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-function exportAuditRowsToCsv(rows: any[], fileMap: Map<string, string>, title: string) {
+function exportAuditRowsToCsv(
+  rows: any[],
+  fileMap: Map<string, string>,
+  title: string,
+  zipMeta: Map<string, ZipMeta>,
+) {
   if (!rows.length) return;
   const header = [
     "occurred_at", "action", "action_label", "actor_name", "actor_email",
-    "actor_user_id", "entity", "entity_id", "entity_name", "summary", "phase", "diff_json",
+    "actor_user_id", "entity", "entity_id", "entity_name", "summary", "phase", "batch_id", "diff_json",
   ];
   const lines = [header.join(",")];
   for (const r of rows) {
     const meta = ACTION_LABELS[r.action];
     const entityName = r.entity === "file" && r.entity_id ? fileMap.get(r.entity_id) ?? "" : "";
     const phase = r.action === "file.bulk_download" ? getZipPhase(r.diff) : "";
+    const batchId = r.action === "file.bulk_download" ? (zipMeta.get(r.id)?.batchId ?? "") : "";
     lines.push([
       new Date(r.occurred_at).toISOString(),
       r.action,
@@ -1070,6 +1090,7 @@ function exportAuditRowsToCsv(rows: any[], fileMap: Map<string, string>, title: 
       entityName,
       summarizeDiff(r.action, r.diff),
       phase,
+      batchId,
       r.diff ? JSON.stringify(r.diff) : "",
     ].map(csvEscape).join(","));
   }
@@ -1228,18 +1249,6 @@ function AuditDrawer({
   // by matching ids-set. One "batch" = one paired start+terminal (or an
   // unfinished start). Rows sharing the same batch collapse into a single
   // entry so users can expand once to see all affected files.
-  type ZipMeta = {
-    startedAt?: string;
-    endedAt?: string;
-    durationMs?: number;
-    running: boolean;
-    percent: number;
-    ok: number;
-    failed: number;
-    requested: number;
-    batchId: string;      // short display id for the batch
-    skipRow?: boolean;    // true = paired start row, hide in favor of terminal
-  };
   const zipMeta = useMemo(() => {
     const m = new Map<string, ZipMeta>();
     const bulk = allRows
@@ -1366,7 +1375,7 @@ function AuditDrawer({
           </div>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => exportAuditRowsToCsv(rows, fileMap, title)}
+              onClick={() => exportAuditRowsToCsv(rows, fileMap, title, zipMeta)}
               disabled={rows.length === 0}
               className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px] hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
               title="Xuất CSV bản ghi đang hiển thị"
