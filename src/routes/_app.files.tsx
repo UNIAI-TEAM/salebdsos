@@ -44,6 +44,18 @@ function FilesPage() {
   const [manageOpen, setManageOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState<null | { fileId?: string; title: string }>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  type DlProgress = {
+    total: number;
+    done: number;
+    failed: number;
+    phase: "fetching" | "zipping" | "done" | "error" | "canceled";
+    currentName?: string;
+    bytes: number;
+    message?: string;
+  };
+  const [dl, setDl] = useState<DlProgress | null>(null);
+  const dlCancelRef = useRef(false);
+
 
   const list = useServerFn(listFiles);
   const facets = useServerFn(listFileFacets);
