@@ -1086,7 +1086,7 @@ function buildAuditDetails(r: any, fileMap: Map<string, string>): AuditDetails {
   const DELETED = { status: "Đã xoá", tone: "bg-rose-50 text-rose-700" };
   const RESTORED = { status: "Khôi phục", tone: "bg-emerald-50 text-emerald-700" };
   const HARD = { status: "Xoá vĩnh viễn", tone: "bg-rose-100 text-rose-800" };
-  const REQ = { status: "Yêu cầu", tone: "bg-blue-50 text-blue-700" };
+  
   const UNK = { status: "—", tone: "bg-muted text-foreground" };
 
   const map = (badge: { status: string; tone: string }) =>
