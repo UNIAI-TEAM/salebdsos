@@ -1,4 +1,4 @@
-// Files — metadata CRUD server functions.
+// Files — metadata CRUD + audit trail server functions.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -18,6 +18,31 @@ const CreateInput = z.object({
   related_type: z.string().trim().max(40).optional().nullable(),
   related_id: z.string().uuid().optional().nullable(),
 });
+
+// Helper: append an audit_logs row. Never throws — audit failure must not block the action.
+async function logAudit(
+  supabase: any,
+  tenantId: string | null | undefined,
+  userId: string | null | undefined,
+  action: string,
+  entityId: string | null | undefined,
+  diff: Record<string, unknown> | null = null,
+  entity: string = "file",
+) {
+  if (!tenantId) return;
+  try {
+    await supabase.from("audit_logs").insert({
+      tenant_id: tenantId,
+      actor_user_id: userId ?? null,
+      action,
+      entity,
+      entity_id: entityId ? String(entityId) : null,
+      diff: diff ?? null,
+    });
+  } catch {
+    /* swallow */
+  }
+}
 
 export const listFiles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -76,6 +101,10 @@ export const createFileRecord = createServerFn({ method: "POST" })
       .select(SELECT)
       .single();
     if (error) throw new Error(error.message);
+    await logAudit(supabase, tenantId, userId, "file.upload", row.id, {
+      name: row.name, size: row.size, folder: row.folder, tag: row.tag,
+      related_type: row.related_type, related_id: row.related_id,
+    });
     return row;
   });
 
@@ -92,14 +121,21 @@ export const updateFileMeta = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
     const { id, ...patch } = data;
-    const { data: row, error } = await context.supabase
+    const { data: before } = await supabase
+      .from("files")
+      .select("tenant_id,name,folder,tag")
+      .eq("id", id)
+      .single();
+    const { data: row, error } = await supabase
       .from("files")
       .update(patch)
       .eq("id", id)
       .select(SELECT)
       .single();
     if (error) throw new Error(error.message);
+    await logAudit(supabase, row.tenant_id, userId, "file.update", id, { before, after: patch });
     return row;
   });
 
@@ -107,11 +143,15 @@ export const softDeleteFile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
       .from("files")
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", data.id);
+      .eq("id", data.id)
+      .select("id,tenant_id,name")
+      .single();
     if (error) throw new Error(error.message);
+    await logAudit(supabase, row?.tenant_id, userId, "file.soft_delete", data.id, { name: row?.name });
     return { ok: true };
   });
 
@@ -119,11 +159,15 @@ export const restoreFile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
       .from("files")
       .update({ deleted_at: null })
-      .eq("id", data.id);
+      .eq("id", data.id)
+      .select("id,tenant_id,name")
+      .single();
     if (error) throw new Error(error.message);
+    await logAudit(supabase, row?.tenant_id, userId, "file.restore", data.id, { name: row?.name });
     return { ok: true };
   });
 
@@ -131,10 +175,10 @@ export const hardDeleteFile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { data: row, error: e1 } = await supabase
       .from("files")
-      .select("bucket,path")
+      .select("bucket,path,name,tenant_id")
       .eq("id", data.id)
       .single();
     if (e1) throw new Error(e1.message);
@@ -143,6 +187,7 @@ export const hardDeleteFile = createServerFn({ method: "POST" })
     }
     const { error } = await supabase.from("files").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAudit(supabase, row?.tenant_id, userId, "file.hard_delete", data.id, { name: row?.name, path: row?.path });
     return { ok: true };
   });
 
@@ -150,10 +195,10 @@ export const getFileSignedUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { data: row, error } = await supabase
       .from("files")
-      .select("bucket,path,name")
+      .select("bucket,path,name,tenant_id")
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
@@ -161,6 +206,7 @@ export const getFileSignedUrl = createServerFn({ method: "POST" })
       .from(row.bucket)
       .createSignedUrl(row.path, 60 * 10, { download: row.name });
     if (e2) throw new Error(e2.message);
+    await logAudit(supabase, row.tenant_id, userId, "file.download", data.id, { name: row.name });
     return { url: signed.signedUrl, name: row.name };
   });
 
@@ -203,15 +249,19 @@ export const bulkUpdateFiles = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
     const patch: { folder?: string | null; tag?: string | null } = {};
     if (data.folder !== undefined) patch.folder = data.folder || null;
     if (data.tag !== undefined) patch.tag = data.tag || null;
-    const { error, count } = await context.supabase
+    const { error, count } = await supabase
       .from("files")
       .update(patch, { count: "exact" })
       .eq("tenant_id", data.tenantId)
       .in("id", data.ids);
     if (error) throw new Error(error.message);
+    await logAudit(supabase, data.tenantId, userId, "file.bulk_update", null, {
+      ids: data.ids, patch, affected: count ?? 0,
+    });
     return { ok: true, updated: count ?? 0 };
   });
 
@@ -227,13 +277,17 @@ export const renameFolder = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
     if (data.from === data.to) return { ok: true, updated: 0 };
-    const { error, count } = await context.supabase
+    const { error, count } = await supabase
       .from("files")
       .update({ folder: data.to }, { count: "exact" })
       .eq("tenant_id", data.tenantId)
       .eq("folder", data.from);
     if (error) throw new Error(error.message);
+    await logAudit(supabase, data.tenantId, userId, "folder.rename", null, {
+      from: data.from, to: data.to, affected: count ?? 0,
+    }, "files.folder");
     return { ok: true, updated: count ?? 0 };
   });
 
@@ -249,12 +303,16 @@ export const deleteFolder = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { error, count } = await context.supabase
+    const { supabase, userId } = context;
+    const { error, count } = await supabase
       .from("files")
       .update({ folder: data.moveTo || null }, { count: "exact" })
       .eq("tenant_id", data.tenantId)
       .eq("folder", data.folder);
     if (error) throw new Error(error.message);
+    await logAudit(supabase, data.tenantId, userId, "folder.delete", null, {
+      folder: data.folder, moveTo: data.moveTo ?? null, affected: count ?? 0,
+    }, "files.folder");
     return { ok: true, updated: count ?? 0 };
   });
 
@@ -270,13 +328,17 @@ export const renameTag = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
     if (data.from === data.to) return { ok: true, updated: 0 };
-    const { error, count } = await context.supabase
+    const { error, count } = await supabase
       .from("files")
       .update({ tag: data.to }, { count: "exact" })
       .eq("tenant_id", data.tenantId)
       .eq("tag", data.from);
     if (error) throw new Error(error.message);
+    await logAudit(supabase, data.tenantId, userId, "tag.rename", null, {
+      from: data.from, to: data.to, affected: count ?? 0,
+    }, "files.tag");
     return { ok: true, updated: count ?? 0 };
   });
 
@@ -291,12 +353,71 @@ export const deleteTag = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { error, count } = await context.supabase
+    const { supabase, userId } = context;
+    const { error, count } = await supabase
       .from("files")
       .update({ tag: null }, { count: "exact" })
       .eq("tenant_id", data.tenantId)
       .eq("tag", data.tag);
     if (error) throw new Error(error.message);
+    await logAudit(supabase, data.tenantId, userId, "tag.delete", null, {
+      tag: data.tag, affected: count ?? 0,
+    }, "files.tag");
     return { ok: true, updated: count ?? 0 };
   });
 
+// ---------- Audit trail ----------
+
+const FILE_AUDIT_ENTITIES = ["file", "files.folder", "files.tag"];
+
+export const listFileAudit = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: {
+      tenantId: string;
+      fileId?: string;
+      action?: string;
+      actorUserId?: string;
+      limit?: number;
+    }) => d,
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const limit = Math.min(Math.max(1, data.limit ?? 100), 500);
+
+    let q = supabase
+      .from("audit_logs")
+      .select("id,tenant_id,actor_user_id,action,entity,entity_id,diff,occurred_at")
+      .eq("tenant_id", data.tenantId)
+      .in("entity", FILE_AUDIT_ENTITIES)
+      .order("occurred_at", { ascending: false })
+      .limit(limit);
+
+    if (data.fileId) q = q.eq("entity", "file").eq("entity_id", data.fileId);
+    if (data.action) q = q.eq("action", data.action);
+    if (data.actorUserId) q = q.eq("actor_user_id", data.actorUserId);
+
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+
+    // Enrich with actor display name/email via profiles.
+    const actorIds = Array.from(
+      new Set((rows ?? []).map((r: any) => r.actor_user_id).filter(Boolean)),
+    ) as string[];
+    let actors: Record<string, { name: string | null; email: string | null }> = {};
+    if (actorIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id,full_name,email")
+        .in("user_id", actorIds);
+      for (const p of profs ?? []) {
+        actors[p.user_id] = { name: p.full_name ?? null, email: p.email ?? null };
+      }
+    }
+    return {
+      rows: (rows ?? []).map((r: any) => ({
+        ...r,
+        actor: r.actor_user_id ? actors[r.actor_user_id] ?? null : null,
+      })),
+    };
+  });
