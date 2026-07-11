@@ -31,6 +31,10 @@ function humanSize(n: number) {
   return `${(n / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
+function makeBatchId() {
+  return crypto.randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
+}
+
 function FilesPage() {
   const { currentTenant, user } = useAuth();
   const tenantId = currentTenant?.id ?? "";
