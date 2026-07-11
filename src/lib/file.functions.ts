@@ -489,6 +489,8 @@ export const listFileAudit = createServerFn({ method: "GET" })
       fileId?: string;
       action?: string;
       actorUserId?: string;
+      fromDate?: string;
+      toDate?: string;
       limit?: number;
     }) => d,
   )
@@ -507,6 +509,8 @@ export const listFileAudit = createServerFn({ method: "GET" })
     if (data.fileId) q = q.eq("entity", "file").eq("entity_id", data.fileId);
     if (data.action) q = q.eq("action", data.action);
     if (data.actorUserId) q = q.eq("actor_user_id", data.actorUserId);
+    if (data.fromDate) q = q.gte("occurred_at", data.fromDate);
+    if (data.toDate) q = q.lte("occurred_at", data.toDate);
 
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
