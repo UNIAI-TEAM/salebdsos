@@ -415,6 +415,171 @@ function AirdropPage() {
           </div>
         </div>
       </div>
+
+      <ShareDetailDrawer
+        share={detailId ? history.find((h) => h.id === detailId) ?? null : null}
+        card={(() => {
+          const s = detailId ? history.find((h) => h.id === detailId) : null;
+          return s?.card_id ? cardMap[s.card_id] ?? null : null;
+        })()}
+        onClose={() => setDetailId(null)}
+        onDelete={async (id) => { await removeHistory(id); setDetailId(null); }}
+      />
+    </div>
+  );
+}
+
+function ShareDetailDrawer({
+  share, card, onClose, onDelete,
+}: {
+  share: ShareRow | null;
+  card: NonNullable<CardBrief> | null;
+  onClose: () => void;
+  onDelete: (id: string) => void;
+}) {
+  if (!share) return null;
+  const Icon = DEVICE_ICON[share.device_kind];
+  const cardPath = card?.slug ? `/c/${card.slug}` : null;
+  const cardUrl = cardPath ? `${typeof window !== "undefined" ? window.location.origin : ""}${cardPath}` : null;
+  const statusTone =
+    share.status === "delivered" ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+    : share.status === "declined" ? "bg-rose-50 text-rose-700 ring-rose-200"
+    : share.status === "canceled" ? "bg-slate-100 text-slate-700 ring-slate-200"
+    : "bg-amber-50 text-amber-700 ring-amber-200";
+  const statusLabel =
+    share.status === "delivered" ? "Đã nhận"
+    : share.status === "declined" ? "Bị từ chối"
+    : share.status === "canceled" ? "Đã huỷ" : "Đang chờ";
+
+  return (
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in" onClick={onClose} />
+      <aside className="absolute right-0 top-0 h-full w-full max-w-md bg-card border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right">
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+          <div className="min-w-0">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold">Chi tiết chia sẻ</div>
+            <h3 className="text-[15px] font-bold mt-0.5 truncate">{share.recipient_name ?? share.device_name}</h3>
+          </div>
+          <button onClick={onClose} className="h-8 w-8 grid place-items-center rounded-lg hover:bg-muted text-muted-foreground">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          {/* Status */}
+          <div className="flex items-center justify-between">
+            <span className={["inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-semibold ring-1", statusTone].join(" ")}>
+              {share.status === "delivered" ? <Check className="h-3.5 w-3.5" />
+                : share.status === "declined" ? <AlertCircle className="h-3.5 w-3.5" />
+                : <Clock className="h-3.5 w-3.5" />}
+              {statusLabel}
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-[11.5px] font-semibold text-muted-foreground">
+              {share.direction === "sent" ? <><Send className="h-3 w-3" /> Gửi đi</> : <><Inbox className="h-3 w-3" /> Nhận về</>}
+            </span>
+          </div>
+
+          {/* Device */}
+          <section className="rounded-xl border border-border p-4">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold mb-2">Thiết bị</div>
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 grid place-items-center shrink-0">
+                <Icon className="h-5 w-5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[13.5px] font-semibold truncate">{share.device_name}</div>
+                <div className="text-[11.5px] text-muted-foreground capitalize">{share.device_kind}</div>
+              </div>
+            </div>
+            {share.recipient_name && (
+              <div className="mt-3 flex items-center gap-2 text-[12.5px]">
+                <User2 className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">Người nhận:</span>
+                <span className="font-semibold">{share.recipient_name}</span>
+              </div>
+            )}
+            {share.distance_m != null && (
+              <div className="mt-1.5 flex items-center gap-2 text-[12.5px]">
+                <Ruler className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">Khoảng cách:</span>
+                <span className="font-semibold">{share.distance_m} m</span>
+              </div>
+            )}
+          </section>
+
+          {/* Timing */}
+          <section className="rounded-xl border border-border p-4">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold mb-2">Thời gian</div>
+            <div className="text-[13px] font-semibold">{new Date(share.created_at).toLocaleString("vi-VN")}</div>
+            <div className="text-[11.5px] text-muted-foreground mt-0.5">{timeAgo(share.created_at)}</div>
+          </section>
+
+          {/* Card */}
+          <section className="rounded-xl border border-border p-4">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold mb-2">Nội dung danh thiếp</div>
+            {card ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="h-11 w-11 rounded-full bg-gradient-to-br from-slate-300 to-slate-500 grid place-items-center overflow-hidden shrink-0">
+                    {card.avatar_url
+                      ? <img src={card.avatar_url} alt={card.display_name ?? ""} className="h-full w-full object-cover" />
+                      : <IdCard className="h-5 w-5 text-white/80" />}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1">
+                      <div className="text-[13.5px] font-semibold truncate">{card.display_name ?? "(Chưa đặt tên)"}</div>
+                      {card.is_published && <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />}
+                    </div>
+                    <div className="text-[11.5px] text-muted-foreground truncate">{[card.title, card.company].filter(Boolean).join(" · ") || "—"}</div>
+                  </div>
+                </div>
+                {cardUrl && (
+                  <div className="mt-3 space-y-2">
+                    <div className="text-[11px] font-mono text-muted-foreground truncate bg-muted/50 rounded-lg px-2.5 py-1.5">{cardUrl}</div>
+                    <div className="flex items-center gap-2">
+                      <Link to="/c/$slug" params={{ slug: card.slug }} target="_blank"
+                        className="flex-1 h-9 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-primary/90">
+                        <ExternalLink className="h-3.5 w-3.5" /> Mở danh thiếp
+                      </Link>
+                      <button onClick={async () => {
+                          try { await navigator.clipboard.writeText(cardUrl); toast.success("Đã sao chép liên kết"); }
+                          catch { toast.error("Không sao chép được"); }
+                        }}
+                        className="h-9 px-3 rounded-xl border border-border text-[12.5px] font-semibold inline-flex items-center gap-1.5 hover:bg-muted/40">
+                        <Copy className="h-3.5 w-3.5" /> Sao chép
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-[12.5px] text-muted-foreground">
+                {share.card_id ? "Danh thiếp không còn khả dụng hoặc đã bị xoá." : "Không có danh thiếp gắn với lượt chia sẻ này."}
+              </div>
+            )}
+          </section>
+
+          {/* Notes */}
+          {share.notes && (
+            <section className="rounded-xl border border-border p-4">
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold mb-2 inline-flex items-center gap-1.5">
+                <StickyNote className="h-3.5 w-3.5" /> Ghi chú
+              </div>
+              <div className="text-[12.5px] whitespace-pre-wrap">{share.notes}</div>
+            </section>
+          )}
+        </div>
+
+        <div className="px-5 py-3 border-t border-border flex items-center justify-between">
+          <button onClick={() => onDelete(share.id)}
+            className="h-9 px-3 rounded-xl text-[12.5px] font-semibold text-rose-600 hover:bg-rose-50 inline-flex items-center gap-1.5">
+            <Trash2 className="h-3.5 w-3.5" /> Xoá lịch sử
+          </button>
+          <button onClick={onClose} className="h-9 px-3 rounded-xl border border-border text-[12.5px] font-semibold hover:bg-muted/40">
+            Đóng
+          </button>
+        </div>
+      </aside>
     </div>
   );
 }
