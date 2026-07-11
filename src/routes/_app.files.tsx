@@ -362,15 +362,18 @@ function FolderChip({
 }
 
 function UploadDialog({
-  folderList, onClose, onUpload,
+  folderList, leads, defaultLeadId, onClose, onUpload,
 }: {
   folderList: string[];
+  leads: Array<{ id: string; full_name: string | null; phone: string | null }>;
+  defaultLeadId: string;
   onClose: () => void;
-  onUpload: (file: File, meta: { folder: string; tag: string }) => Promise<void>;
+  onUpload: (file: File, meta: { folder: string; tag: string; leadId: string }) => Promise<void>;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [folder, setFolder] = useState<string>(folderList[0] ?? "");
   const [tag, setTag] = useState("");
+  const [leadId, setLeadId] = useState<string>(defaultLeadId);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -379,7 +382,7 @@ function UploadDialog({
     if (!file) { toast.error("Vui lòng chọn tệp"); return; }
     setBusy(true);
     try {
-      await onUpload(file, { folder, tag: tag.trim() });
+      await onUpload(file, { folder, tag: tag.trim(), leadId });
       toast.success("Tải lên thành công");
       onClose();
     } catch (e: any) {
