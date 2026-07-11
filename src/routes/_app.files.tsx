@@ -192,6 +192,12 @@ function FilesPage() {
         action={
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setAuditOpen({ title: "Nhật ký hoạt động tài liệu" })}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-card text-[13px] font-medium hover:bg-muted"
+            >
+              <History className="h-4 w-4" /> Nhật ký
+            </button>
+            <button
               onClick={() => setManageOpen(true)}
               className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-card text-[13px] font-medium hover:bg-muted"
             >
