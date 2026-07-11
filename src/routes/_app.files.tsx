@@ -1051,12 +1051,13 @@ function exportAuditRowsToCsv(rows: any[], fileMap: Map<string, string>, title: 
   if (!rows.length) return;
   const header = [
     "occurred_at", "action", "action_label", "actor_name", "actor_email",
-    "actor_user_id", "entity", "entity_id", "entity_name", "summary", "diff_json",
+    "actor_user_id", "entity", "entity_id", "entity_name", "summary", "phase", "diff_json",
   ];
   const lines = [header.join(",")];
   for (const r of rows) {
     const meta = ACTION_LABELS[r.action];
     const entityName = r.entity === "file" && r.entity_id ? fileMap.get(r.entity_id) ?? "" : "";
+    const phase = r.action === "file.bulk_download" ? getZipPhase(r.diff) : "";
     lines.push([
       new Date(r.occurred_at).toISOString(),
       r.action,
@@ -1068,6 +1069,7 @@ function exportAuditRowsToCsv(rows: any[], fileMap: Map<string, string>, title: 
       r.entity_id ?? "",
       entityName,
       summarizeDiff(r.action, r.diff),
+      phase,
       r.diff ? JSON.stringify(r.diff) : "",
     ].map(csvEscape).join(","));
   }
