@@ -28,6 +28,7 @@ async function logAudit(
   entityId: string | null | undefined,
   diff: Record<string, unknown> | null = null,
   entity: string = "file",
+  batchId?: string | null,
 ) {
   if (!tenantId) return;
   try {
@@ -38,6 +39,7 @@ async function logAudit(
       entity,
       entity_id: entityId ? String(entityId) : null,
       diff: diff ?? null,
+      batch_id: batchId ?? null,
     });
   } catch {
     /* swallow */
