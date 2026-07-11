@@ -487,31 +487,38 @@ function TagPill({
 }
 
 function BulkToolbar({
-  count, folders, tags, busy, onClear, onApplyFolder, onApplyTag, onSoftDelete,
+  count, activeCount, deletedCount, folders, tags, busy, onClear, onApplyFolder, onApplyTag, onDownload, onSoftDelete, onRestore,
 }: {
   count: number;
+  activeCount: number;
+  deletedCount: number;
   folders: string[];
   tags: string[];
   busy: boolean;
   onClear: () => void;
   onApplyFolder: (f: string) => void;
   onApplyTag: (t: string) => void;
+  onDownload: () => void;
   onSoftDelete: () => void;
+  onRestore: () => void;
 }) {
   const [f, setF] = useState("");
   const [t, setT] = useState("");
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary-soft/50 px-3 py-2">
-      <div className="text-[12.5px] font-semibold text-primary">Đã chọn {count} tệp</div>
+      <div className="text-[12.5px] font-semibold text-primary">
+        Đã chọn {count} tệp
+        {deletedCount > 0 && <span className="text-muted-foreground font-normal"> · {activeCount} thường / {deletedCount} thùng rác</span>}
+      </div>
       <div className="mx-2 h-4 w-px bg-border" />
       <FolderInput className="h-3.5 w-3.5 text-muted-foreground" />
-      <select value={f} onChange={(e) => setF(e.target.value)} className="h-7 px-2 rounded-md border border-border bg-card text-[12px]">
+      <select value={f} onChange={(e) => setF(e.target.value)} className="h-7 px-2 rounded-md border border-border bg-card text-[12px]" disabled={activeCount === 0}>
         <option value="">— Chọn thư mục —</option>
         <option value="__none__">(Bỏ thư mục)</option>
         {folders.map((x) => <option key={x} value={x}>{x}</option>)}
       </select>
       <button
-        disabled={busy || !f}
+        disabled={busy || !f || activeCount === 0}
         onClick={() => onApplyFolder(f === "__none__" ? "" : f)}
         className="h-7 px-2.5 rounded-md bg-card border border-border text-[12px] font-medium hover:bg-muted disabled:opacity-50"
       >Áp dụng</button>
@@ -522,20 +529,33 @@ function BulkToolbar({
         onChange={(e) => setT(e.target.value)}
         placeholder="Nhãn"
         list="bulk-tag-list"
-        className="h-7 px-2 rounded-md border border-border bg-card text-[12px] w-32"
+        disabled={activeCount === 0}
+        className="h-7 px-2 rounded-md border border-border bg-card text-[12px] w-32 disabled:opacity-50"
       />
       <datalist id="bulk-tag-list">
         {tags.map((x) => <option key={x} value={x} />)}
       </datalist>
       <button
-        disabled={busy}
+        disabled={busy || activeCount === 0}
         onClick={() => onApplyTag(t.trim())}
         className="h-7 px-2.5 rounded-md bg-card border border-border text-[12px] font-medium hover:bg-muted disabled:opacity-50"
       >Áp nhãn</button>
       <div className="ml-auto flex items-center gap-2">
-        <button onClick={onSoftDelete} className="h-7 px-2.5 rounded-md text-[12px] font-medium text-red-600 hover:bg-red-50 inline-flex items-center gap-1">
-          <Trash2 className="h-3.5 w-3.5" /> Xoá
-        </button>
+        {activeCount > 0 && (
+          <button onClick={onDownload} disabled={busy} className="h-7 px-2.5 rounded-md text-[12px] font-medium text-primary hover:bg-primary-soft inline-flex items-center gap-1 disabled:opacity-50">
+            <Download className="h-3.5 w-3.5" /> Tải xuống ({activeCount})
+          </button>
+        )}
+        {deletedCount > 0 && (
+          <button onClick={onRestore} disabled={busy} className="h-7 px-2.5 rounded-md text-[12px] font-medium text-emerald-600 hover:bg-emerald-50 inline-flex items-center gap-1 disabled:opacity-50">
+            <RotateCcw className="h-3.5 w-3.5" /> Khôi phục ({deletedCount})
+          </button>
+        )}
+        {activeCount > 0 && (
+          <button onClick={onSoftDelete} disabled={busy} className="h-7 px-2.5 rounded-md text-[12px] font-medium text-red-600 hover:bg-red-50 inline-flex items-center gap-1 disabled:opacity-50">
+            <Trash2 className="h-3.5 w-3.5" /> Xoá ({activeCount})
+          </button>
+        )}
         <button onClick={onClear} className="h-7 px-2 rounded-md text-[12px] text-muted-foreground hover:bg-muted">Bỏ chọn</button>
       </div>
     </div>
