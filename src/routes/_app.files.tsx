@@ -1223,8 +1223,11 @@ function AuditDrawer({
   const rows = useMemo(() => {
     const actorS = actorQuery.trim().toLowerCase();
     const s = searchText.trim().toLowerCase();
-    if (!actorS && !s) return allRows;
     return allRows.filter((r) => {
+      if (zipPhaseFilter !== "all") {
+        if (r.action !== "file.bulk_download") return false;
+        if (getZipPhase(r.diff) !== zipPhaseFilter) return false;
+      }
       const actorLabel = (r.actor?.name || r.actor?.email || "").toLowerCase();
       if (actorS && !actorLabel.includes(actorS)) return false;
       if (!s) return true;
@@ -1242,7 +1245,7 @@ function AuditDrawer({
         diffStr.includes(s)
       );
     });
-  }, [allRows, actorQuery, searchText, fileMap]);
+  }, [allRows, actorQuery, searchText, fileMap, zipPhaseFilter]);
 
   // Infinite scroll sentinel.
   const sentinelRef = useRef<HTMLDivElement | null>(null);
