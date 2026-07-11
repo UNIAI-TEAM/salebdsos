@@ -35,6 +35,7 @@ function FilesPage() {
 
   const [q, setQ] = useState("");
   const [folder, setFolder] = useState<string>("all");
+  const [leadId, setLeadId] = useState<string>("all");
   const [includeDeleted, setIncludeDeleted] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
@@ -45,11 +46,12 @@ function FilesPage() {
   const restore = useServerFn(restoreFile);
   const hardDel = useServerFn(hardDeleteFile);
   const signed = useServerFn(getFileSignedUrl);
+  const leadsFn = useServerFn(listLeads);
 
   const listQ = useQuery({
-    queryKey: ["files", tenantId, q, folder, includeDeleted],
+    queryKey: ["files", tenantId, q, folder, leadId, includeDeleted],
     queryFn: () =>
-      list({ data: { tenantId, q: q || undefined, folder, includeDeleted, page: 1, pageSize: 200 } }),
+      list({ data: { tenantId, q: q || undefined, folder, leadId, includeDeleted, page: 1, pageSize: 200 } }),
     enabled: !!tenantId,
   });
   const facetQ = useQuery({
@@ -57,6 +59,17 @@ function FilesPage() {
     queryFn: () => facets({ data: { tenantId } }),
     enabled: !!tenantId,
   });
+  const leadsQ = useQuery({
+    queryKey: ["files-leads", tenantId],
+    queryFn: () => leadsFn({ data: { tenantId, page: 1, pageSize: 100 } }),
+    enabled: !!tenantId,
+  });
+  const leads = (leadsQ.data?.rows ?? []) as Array<{ id: string; full_name: string | null; phone: string | null }>;
+  const leadMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const l of leads) m.set(l.id, l.full_name || l.phone || "Khách hàng");
+    return m;
+  }, [leads]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["files", tenantId] });
