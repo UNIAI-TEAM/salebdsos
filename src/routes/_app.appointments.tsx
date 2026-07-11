@@ -3,7 +3,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { CalendarClock, Plus, Pencil, Trash2, MapPin, User } from "lucide-react";
-import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
+import { PageHeader, SectionCard } from "@/components/app/ui";
+
+function MiniKpi({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-card border border-border p-4 shadow-soft">
+      <div className="text-[12px] text-muted-foreground font-medium mb-1">{label}</div>
+      <div className="text-[24px] font-bold tracking-tight leading-none">{value}</div>
+    </div>
+  );
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
