@@ -317,15 +317,23 @@ function FilesPage() {
             </thead>
             <tbody className="divide-y divide-border bg-card">
               {listQ.isLoading && (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">Đang tải...</td></tr>
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">Đang tải...</td></tr>
               )}
               {!listQ.isLoading && items.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">Chưa có tệp nào. Bấm "Tải lên" để bắt đầu.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">Chưa có tệp nào. Bấm "Tải lên" để bắt đầu.</td></tr>
               )}
               {items.map((f: any) => {
                 const isDeleted = !!f.deleted_at;
+                const isSel = selected.has(f.id);
                 return (
-                  <tr key={f.id} className={["hover:bg-muted/40", isDeleted && "opacity-60"].filter(Boolean).join(" ")}>
+                  <tr key={f.id} className={["hover:bg-muted/40", isDeleted && "opacity-60", isSel && "bg-primary-soft/30"].filter(Boolean).join(" ")}>
+                    <td className="px-3 py-3">
+                      {!isDeleted && (
+                        <button onClick={() => toggleOne(f.id)} className="text-muted-foreground hover:text-primary">
+                          {isSel ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
+                        </button>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
