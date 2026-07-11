@@ -235,18 +235,15 @@ function WalletPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {items.map((w) => (
-            <SectionCard
-              key={w.id}
-              title={
-                <span className="inline-flex items-center gap-2">
+            <div key={w.id} className="rounded-2xl bg-card border border-border shadow-soft p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="inline-flex items-center gap-2 text-[14px] font-semibold text-foreground">
                   {w.platform === "apple" ? <Apple className="h-4 w-4" /> : <Wallet className="h-4 w-4" />}
                   {w.platform === "apple" ? "Apple Wallet" : "Google Wallet"}
                   <span className="text-[10.5px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
                     {w.install_count.toLocaleString("vi-VN")} cài
                   </span>
                 </span>
-              }
-              action={
                 <div className="flex items-center gap-1">
                   {w.pass_url && (
                     <a href={w.pass_url} target="_blank" rel="noopener noreferrer"
@@ -267,8 +264,7 @@ function WalletPage() {
                     <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>
                 </div>
-              }
-            >
+              </div>
               {w.platform === "apple" ? <ApplePass w={w} /> : <GooglePass w={w} />}
               <div className="mt-3 flex items-center justify-between text-[11.5px] text-muted-foreground">
                 <span>Serial: <span className="font-mono">{w.serial_number ?? "—"}</span></span>
@@ -276,7 +272,7 @@ function WalletPage() {
                   {w.last_updated_at ? `Cập nhật ${new Date(w.last_updated_at).toLocaleDateString("vi-VN")}` : "Chưa cập nhật"}
                 </span>
               </div>
-            </SectionCard>
+            </div>
           ))}
         </div>
       )}
