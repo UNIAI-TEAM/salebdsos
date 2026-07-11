@@ -291,15 +291,15 @@ function LeadsPage() {
 
       {/* Detail drawer */}
       <Sheet open={!!openId} onOpenChange={(o) => !o && setOpenId(null)}>
-        <SheetContent className="sm:max-w-[480px] overflow-y-auto">
+        <SheetContent className="sm:max-w-[520px] overflow-y-auto">
           {lead && (
             <LeadDetail
               lead={lead}
+              tenantId={tenantId}
               ownerName={ownersQ.data?.find((o) => o.user_id === lead.owner_user_id)?.full_name}
               projectName={projectsQ.data?.find((p) => p.id === lead.project_id)?.name}
               onEdit={() => openEdit(lead)}
               onDelete={() => { if (confirm("Xoá lead này?")) deleteM.mutate(lead.id); }}
-              onStatusChange={(s) => upsertM.mutate({ ...lead, status: s, tags: lead.tags ?? [] })}
             />
           )}
         </SheetContent>
