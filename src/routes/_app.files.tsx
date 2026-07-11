@@ -81,7 +81,7 @@ function FilesPage() {
   const logBulkDlFn = useServerFn(logBulkDownload);
 
   // Shared ZIP download runner — used by bulk toolbar and "Thử lại" from audit log.
-  async function runZipDownload(ids: string[]) {
+  async function runZipDownload(ids: string[], reuseBatchId?: string) {
     if (!ids || ids.length === 0) return;
     if (ids.length === 1) {
       try {
@@ -95,9 +95,10 @@ function FilesPage() {
       }
       return;
     }
+    const batchId = reuseBatchId || makeBatchId();
     dlCancelRef.current = false;
     setDl({ total: ids.length, done: 0, failed: 0, phase: "fetching", bytes: 0 });
-    logBulkDlFn({ data: { tenantId, ids, phase: "zipping" } }).catch(() => {});
+    logBulkDlFn({ data: { tenantId, ids, phase: "zipping", batchId } }).catch(() => {});
     try {
       const { default: JSZip } = await import("jszip");
       const zip = new JSZip();
@@ -136,14 +137,14 @@ function FilesPage() {
       if (dlCancelRef.current) {
         setDl((s) => s && { ...s, phase: "canceled", message: "Đã huỷ" });
         toast.info(`Đã huỷ tải xuống (${ok}/${ids.length})`);
-        logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true, phase: "canceled" } }).catch(() => {});
+        logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true, phase: "canceled", batchId } }).catch(() => {});
         setTimeout(() => setDl(null), 3000);
         return;
       }
       if (ok === 0) {
         setDl((s) => s && { ...s, phase: "error", message: "Không tải được tệp nào" });
         toast.error("Không tải được tệp nào");
-        logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, phase: "error" } }).catch(() => {});
+        logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, phase: "error", batchId } }).catch(() => {});
         setTimeout(() => setDl(null), 4000);
         return;
       }
@@ -157,12 +158,12 @@ function FilesPage() {
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       setDl((s) => s && { ...s, phase: "done", bytes: content.size, message: `Đã tải ZIP (${ok}/${ids.length})` });
       toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`);
-      logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size, phase: "done" } }).catch(() => {});
+      logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size, phase: "done", batchId } }).catch(() => {});
       setTimeout(() => setDl(null), 4000);
     } catch (e: any) {
       setDl((s) => s && { ...s, phase: "error", message: e?.message || "Lỗi đóng gói ZIP" });
       toast.error(e?.message || "Lỗi đóng gói ZIP");
-      logBulkDlFn({ data: { tenantId, ids, phase: "error" } }).catch(() => {});
+      logBulkDlFn({ data: { tenantId, ids, phase: "error", batchId } }).catch(() => {});
       setTimeout(() => setDl(null), 5000);
     }
   }
