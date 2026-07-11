@@ -434,6 +434,22 @@ function UploadDialog({
             />
           </div>
 
+          <div>
+            <div className="text-[11.5px] font-semibold text-muted-foreground mb-1">Khách hàng liên quan (tuỳ chọn)</div>
+            <select
+              value={leadId}
+              onChange={(e) => setLeadId(e.target.value)}
+              className="w-full h-9 px-3 rounded-lg border border-border bg-card text-[13px]"
+            >
+              <option value="">— Không gắn khách hàng —</option>
+              {leads.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {(l.full_name || "Khách hàng")}{l.phone ? ` · ${l.phone}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <div className="text-[11.5px] font-semibold text-muted-foreground mb-1">Thư mục</div>
