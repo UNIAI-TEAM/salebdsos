@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { AppSidebar } from "@/components/app/sidebar";
 import { AppTopbar } from "@/components/app/topbar";
 import { useAuth } from "@/hooks/use-auth";
+import { SidebarCollapsedProvider } from "@/hooks/use-sidebar-collapsed";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
