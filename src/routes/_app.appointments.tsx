@@ -138,7 +138,7 @@ function AppointmentsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const items = (list.data?.items ?? []) as Row[];
+  const items = (list.data?.items ?? []) as unknown as Row[];
   const kpi = useMemo(() => {
     const now = Date.now();
     const upcoming = items.filter((i) => new Date(i.starts_at).getTime() > now && i.status === "scheduled").length;
@@ -169,10 +169,10 @@ function AppointmentsPage() {
         } />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Tổng" value={kpi.total.toString()} />
-        <KpiCard label="Sắp tới" value={kpi.upcoming.toString()} />
-        <KpiCard label="Hoàn tất" value={kpi.done.toString()} />
-        <KpiCard label="Hủy / Không đến" value={kpi.canceled.toString()} />
+        <MiniKpi label="Tổng" value={kpi.total.toString()} />
+        <MiniKpi label="Sắp tới" value={kpi.upcoming.toString()} />
+        <MiniKpi label="Hoàn tất" value={kpi.done.toString()} />
+        <MiniKpi label="Hủy / Không đến" value={kpi.canceled.toString()} />
       </div>
 
       <SectionCard title="Danh sách" action={
