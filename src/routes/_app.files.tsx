@@ -1008,6 +1008,51 @@ function summarizeDiff(action: string, diff: any): string {
   } catch { return ""; }
 }
 
+function csvEscape(v: unknown): string {
+  const s = v === null || v === undefined ? "" : String(v);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function exportAuditRowsToCsv(rows: any[], fileMap: Map<string, string>, title: string) {
+  if (!rows.length) return;
+  const header = [
+    "occurred_at", "action", "action_label", "actor_name", "actor_email",
+    "actor_user_id", "entity", "entity_id", "entity_name", "summary", "diff_json",
+  ];
+  const lines = [header.join(",")];
+  for (const r of rows) {
+    const meta = ACTION_LABELS[r.action];
+    const entityName = r.entity === "file" && r.entity_id ? fileMap.get(r.entity_id) ?? "" : "";
+    lines.push([
+      new Date(r.occurred_at).toISOString(),
+      r.action,
+      meta?.label ?? r.action,
+      r.actor?.name ?? "",
+      r.actor?.email ?? "",
+      r.actor_user_id ?? "",
+      r.entity ?? "",
+      r.entity_id ?? "",
+      entityName,
+      summarizeDiff(r.action, r.diff),
+      r.diff ? JSON.stringify(r.diff) : "",
+    ].map(csvEscape).join(","));
+  }
+  // BOM for Excel UTF-8.
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const safeTitle = title.replace(/[^\p{L}\p{N}_-]+/gu, "_").slice(0, 40) || "audit";
+  a.href = url;
+  a.download = `${safeTitle}-${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+
+
 function AuditDrawer({
   tenantId, fileId, title, fileMap, onClose,
 }: {
