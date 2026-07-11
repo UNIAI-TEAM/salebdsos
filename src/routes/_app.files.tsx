@@ -76,6 +76,93 @@ function FilesPage() {
   const bulkHardDelFn = useServerFn(bulkHardDeleteFiles);
   const logBulkDlFn = useServerFn(logBulkDownload);
 
+  // Shared ZIP download runner — used by bulk toolbar and "Thử lại" from audit log.
+  async function runZipDownload(ids: string[]) {
+    if (!ids || ids.length === 0) return;
+    if (ids.length === 1) {
+      try {
+        const r = await signed({ data: { id: ids[0] } });
+        const a = document.createElement("a");
+        a.href = r.url; a.download = r.name; a.rel = "noopener";
+        document.body.appendChild(a); a.click(); a.remove();
+        toast.success(`Đã tải ${r.name}`);
+      } catch (e: any) {
+        toast.error(e?.message || "Lỗi tải tệp");
+      }
+      return;
+    }
+    dlCancelRef.current = false;
+    setDl({ total: ids.length, done: 0, failed: 0, phase: "fetching", bytes: 0 });
+    logBulkDlFn({ data: { tenantId, ids, phase: "zipping" } }).catch(() => {});
+    try {
+      const { default: JSZip } = await import("jszip");
+      const zip = new JSZip();
+      const used = new Map<string, number>();
+      let ok = 0;
+      let failed = 0;
+      let bytes = 0;
+      for (let i = 0; i < ids.length; i++) {
+        if (dlCancelRef.current) break;
+        const id = ids[i];
+        let currentName = `file-${id}`;
+        try {
+          const r = await signed({ data: { id } });
+          currentName = r.name || currentName;
+          setDl((s) => s && { ...s, currentName });
+          const resp = await fetch(r.url);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const blob = await resp.blob();
+          let name = r.name || `file-${id}`;
+          if (used.has(name)) {
+            const n = (used.get(name) || 1) + 1;
+            used.set(name, n);
+            const dot = name.lastIndexOf(".");
+            name = dot > 0 ? `${name.slice(0, dot)} (${n})${name.slice(dot)}` : `${name} (${n})`;
+          } else {
+            used.set(name, 1);
+          }
+          zip.file(name, blob);
+          ok++;
+          bytes += blob.size;
+        } catch {
+          failed++;
+        }
+        setDl((s) => s && { ...s, done: ok, failed, bytes, currentName });
+      }
+      if (dlCancelRef.current) {
+        setDl((s) => s && { ...s, phase: "canceled", message: "Đã huỷ" });
+        toast.info(`Đã huỷ tải xuống (${ok}/${ids.length})`);
+        logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true, phase: "canceled" } }).catch(() => {});
+        setTimeout(() => setDl(null), 3000);
+        return;
+      }
+      if (ok === 0) {
+        setDl((s) => s && { ...s, phase: "error", message: "Không tải được tệp nào" });
+        toast.error("Không tải được tệp nào");
+        logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, phase: "error" } }).catch(() => {});
+        setTimeout(() => setDl(null), 4000);
+        return;
+      }
+      setDl((s) => s && { ...s, phase: "zipping", currentName: undefined });
+      const content = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+      const url = URL.createObjectURL(content);
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+      const a = document.createElement("a");
+      a.href = url; a.download = `files-${stamp}.zip`; a.rel = "noopener";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      setDl((s) => s && { ...s, phase: "done", bytes: content.size, message: `Đã tải ZIP (${ok}/${ids.length})` });
+      toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`);
+      logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size, phase: "done" } }).catch(() => {});
+      setTimeout(() => setDl(null), 4000);
+    } catch (e: any) {
+      setDl((s) => s && { ...s, phase: "error", message: e?.message || "Lỗi đóng gói ZIP" });
+      toast.error(e?.message || "Lỗi đóng gói ZIP");
+      logBulkDlFn({ data: { tenantId, ids, phase: "error" } }).catch(() => {});
+      setTimeout(() => setDl(null), 5000);
+    }
+  }
+
   const listQ = useQuery({
     queryKey: ["files", tenantId, q, folder, tagF, leadId, scope],
     queryFn: () =>
