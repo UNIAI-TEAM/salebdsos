@@ -1223,9 +1223,21 @@ function AuditDrawer({
   const reachedCap = allRows.length < pageSize || pageSize >= SERVER_CAP;
 
   // Pair ZIP start (phase=zipping) with its terminal entry (done/canceled/error)
-  // by matching ids-set. Computes startedAt / endedAt / durationMs / percent /
-  // running for each bulk_download row.
-  type ZipMeta = { startedAt?: string; endedAt?: string; durationMs?: number; running: boolean; percent: number; ok: number; failed: number; requested: number };
+  // by matching ids-set. One "batch" = one paired start+terminal (or an
+  // unfinished start). Rows sharing the same batch collapse into a single
+  // entry so users can expand once to see all affected files.
+  type ZipMeta = {
+    startedAt?: string;
+    endedAt?: string;
+    durationMs?: number;
+    running: boolean;
+    percent: number;
+    ok: number;
+    failed: number;
+    requested: number;
+    batchId: string;      // short display id for the batch
+    skipRow?: boolean;    // true = paired start row, hide in favor of terminal
+  };
   const zipMeta = useMemo(() => {
     const m = new Map<string, ZipMeta>();
     const bulk = allRows
@@ -1236,6 +1248,7 @@ function AuditDrawer({
       const ids = Array.isArray(r.diff?.ids) ? [...r.diff.ids].sort() : [];
       return ids.join("|");
     };
+    const shortId = (id: string) => (id ? id.replace(/-/g, "").slice(0, 6).toUpperCase() : "—");
     const openStarts = new Map<string, any>();
     for (const r of bulk) {
       const phase = getZipPhase(r.diff);
@@ -1245,18 +1258,28 @@ function AuditDrawer({
       const k = keyOf(r);
       if (phase === "zipping") {
         openStarts.set(k, r);
-        m.set(r.id, { startedAt: r.occurred_at, running: true, percent: 0, ok: 0, failed: 0, requested });
+        m.set(r.id, {
+          startedAt: r.occurred_at, running: true, percent: 0,
+          ok: 0, failed: 0, requested, batchId: shortId(r.id),
+        });
       } else {
         const start = openStarts.get(k);
         const percent = phase === "done" ? 100 : requested > 0 ? Math.round((ok / requested) * 100) : 0;
         if (start) {
           const durationMs = new Date(r.occurred_at).getTime() - new Date(start.occurred_at).getTime();
-          const shared = { startedAt: start.occurred_at, endedAt: r.occurred_at, durationMs, running: false, percent, ok, failed, requested };
+          const batchId = shortId(start.id);
+          const shared: ZipMeta = {
+            startedAt: start.occurred_at, endedAt: r.occurred_at, durationMs,
+            running: false, percent, ok, failed, requested, batchId,
+          };
           m.set(r.id, shared);
-          m.set(start.id, shared);
+          m.set(start.id, { ...shared, skipRow: true });
           openStarts.delete(k);
         } else {
-          m.set(r.id, { endedAt: r.occurred_at, running: false, percent, ok, failed, requested });
+          m.set(r.id, {
+            endedAt: r.occurred_at, running: false, percent,
+            ok, failed, requested, batchId: shortId(r.id),
+          });
         }
       }
     }
@@ -1279,6 +1302,8 @@ function AuditDrawer({
     const actorS = actorQuery.trim().toLowerCase();
     const s = searchText.trim().toLowerCase();
     return allRows.filter((r) => {
+      // Collapse paired ZIP start rows — the terminal row shows the full batch.
+      if (r.action === "file.bulk_download" && zipMeta.get(r.id)?.skipRow) return false;
       if (zipPhaseFilter !== "all") {
         if (r.action !== "file.bulk_download") return false;
         if (getZipPhase(r.diff) !== zipPhaseFilter) return false;
@@ -1300,7 +1325,7 @@ function AuditDrawer({
         diffStr.includes(s)
       );
     });
-  }, [allRows, actorQuery, searchText, fileMap, zipPhaseFilter]);
+  }, [allRows, actorQuery, searchText, fileMap, zipPhaseFilter, zipMeta]);
 
   // Infinite scroll sentinel.
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -1481,10 +1506,21 @@ function AuditDrawer({
                       </span>
                       {r.action === "file.bulk_download" && (() => {
                         const zp = ZIP_PHASE_META[getZipPhase(r.diff)];
+                        const zm = zipMeta.get(r.id);
                         return (
-                          <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${zp.tone}`}>
-                            {zp.label}
-                          </span>
+                          <>
+                            <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${zp.tone}`}>
+                              {zp.label}
+                            </span>
+                            {zm?.batchId && (
+                              <span
+                                className="inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold border border-border bg-muted/50 text-muted-foreground"
+                                title="Mã lô tải ZIP"
+                              >
+                                #{zm.batchId}
+                              </span>
+                            )}
+                          </>
                         );
                       })()}
                       <div className="min-w-0 flex-1">
