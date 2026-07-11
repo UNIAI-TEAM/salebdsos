@@ -1030,6 +1030,18 @@ function getZipPhase(diff: any): ZipPhase {
   return "done";
 }
 
+function formatDurationMs(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0) return "—";
+  if (ms < 1000) return `${ms} ms`;
+  const s = ms / 1000;
+  if (s < 60) return `${s.toFixed(s < 10 ? 2 : 1)} s`;
+  const m = Math.floor(s / 60);
+  const rs = Math.floor(s % 60);
+  return `${m}m ${rs.toString().padStart(2, "0")}s`;
+}
+
+
+
 function csvEscape(v: unknown): string {
   const s = v === null || v === undefined ? "" : String(v);
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
