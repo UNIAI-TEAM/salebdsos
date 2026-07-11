@@ -1,388 +1,357 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
-  Radio, QrCode, Send, Zap, Users2, UserPlus, Clock, CheckCircle2, AlertTriangle,
-  Settings, ChevronRight, Plus, Filter, Search, MoreHorizontal, ArrowRight,
-  Smartphone, MapPin, Calendar, Sparkles, Shield, Bell, Activity, RefreshCw,
+  Plus, Search, UserPlus, Users2, Sparkles, Trash2, RefreshCw, X,
 } from "lucide-react";
-import { useState } from "react";
+import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  listLeads, upsertLead, updateLeadStatus, softDeleteLead, getLeadStats,
+  LEAD_STATUSES, type LeadStatus,
+} from "@/lib/lead.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/lead-capture")({ component: LeadCapturePage });
 
-type Channel = "NFC" | "QR" | "AirDrop";
-type Status = "Mới" | "Đã gán" | "Đang xử lý" | "Đã liên hệ" | "Chuyển CRM" | "Bỏ qua";
-
-const CHANNEL_META: Record<Channel, { icon: any; tone: string; label: string }> = {
-  NFC: { icon: Radio, tone: "bg-primary-soft text-primary", label: "NFC Tap" },
-  QR: { icon: QrCode, tone: "bg-blue-50 text-blue-600", label: "QR Scan" },
-  AirDrop: { icon: Send, tone: "bg-violet-50 text-violet-600", label: "AirDrop" },
+const STATUS_LABEL: Record<LeadStatus, string> = {
+  new: "Mới",
+  contacted: "Đã liên hệ",
+  consulting: "Đang tư vấn",
+  quoted: "Đã báo giá",
+  deposit: "Đặt cọc",
+  won: "Thành công",
+  lost: "Thất bại",
+};
+const STATUS_TONE: Record<LeadStatus, string> = {
+  new: "bg-amber-50 text-amber-700 ring-1 ring-amber-100",
+  contacted: "bg-cyan-50 text-cyan-700 ring-1 ring-cyan-100",
+  consulting: "bg-violet-50 text-violet-700 ring-1 ring-violet-100",
+  quoted: "bg-blue-50 text-blue-700 ring-1 ring-blue-100",
+  deposit: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100",
+  won: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100",
+  lost: "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
 };
 
-const STATUS_TONE: Record<Status, string> = {
-  "Mới": "bg-amber-50 text-amber-700 ring-1 ring-amber-100",
-  "Đã gán": "bg-blue-50 text-blue-700 ring-1 ring-blue-100",
-  "Đang xử lý": "bg-violet-50 text-violet-700 ring-1 ring-violet-100",
-  "Đã liên hệ": "bg-cyan-50 text-cyan-700 ring-1 ring-cyan-100",
-  "Chuyển CRM": "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100",
-  "Bỏ qua": "bg-slate-100 text-slate-600 ring-1 ring-slate-200",
-};
-
-type Capture = {
-  id: number;
-  channel: Channel;
-  card: string;
-  visitor: string;
-  device: string;
-  location: string;
-  capturedAt: string;
-  duration: string;
-  status: Status;
-  owner?: string;
-  score: number;
-  saved: boolean;
-};
-
-const CAPTURES: Capture[] = [
-  { id: 1, channel: "NFC", card: "Nguyễn Văn A · Sales Mgr", visitor: "Trần Minh Đức", device: "iPhone 15 Pro", location: "Showroom Q.1, HCM", capturedAt: "2 phút trước", duration: "3m 42s", status: "Mới", score: 86, saved: true },
-  { id: 2, channel: "QR", card: "Lê Thu Hương · Sales", visitor: "Khách ẩn danh", device: "Samsung S24", location: "Sự kiện Vinhomes OP2", capturedAt: "8 phút trước", duration: "1m 18s", status: "Đã gán", owner: "Lê Thu Hương", score: 64, saved: false },
-  { id: 3, channel: "AirDrop", card: "Phạm Tuấn Anh · Senior", visitor: "Nguyễn Hải Yến", device: "iPhone 14", location: "Coffee meet, Q.3", capturedAt: "15 phút trước", duration: "5m 02s", status: "Đang xử lý", owner: "Phạm Tuấn Anh", score: 78, saved: true },
-  { id: 4, channel: "NFC", card: "Nguyễn Văn A · Sales Mgr", visitor: "Đỗ Quốc Bảo", device: "iPhone 13", location: "Showroom Q.7, HCM", capturedAt: "32 phút trước", duration: "2m 11s", status: "Đã liên hệ", owner: "Nguyễn Văn A", score: 71, saved: true },
-  { id: 5, channel: "QR", card: "Bùi Thị Ngọc · CSKH", visitor: "Khách ẩn danh", device: "Xiaomi 13", location: "Brochure Lumi Hanoi", capturedAt: "1 giờ trước", duration: "0m 48s", status: "Bỏ qua", score: 32, saved: false },
-  { id: 6, channel: "AirDrop", card: "Hoàng Minh Long · Marketing", visitor: "Lưu Thanh Tâm", device: "iPhone 15", location: "Open House Eaton Park", capturedAt: "2 giờ trước", duration: "4m 28s", status: "Chuyển CRM", owner: "Hoàng Minh Long", score: 82, saved: true },
-  { id: 7, channel: "NFC", card: "Đỗ Quốc Bảo · Senior", visitor: "Võ Hoàng Nam", device: "iPhone 12", location: "Showroom Q.2, HCM", capturedAt: "3 giờ trước", duration: "6m 15s", status: "Đã gán", owner: "Đỗ Quốc Bảo", score: 74, saved: true },
-  { id: 8, channel: "QR", card: "Lê Thu Hương · Sales", visitor: "Nguyễn Văn Tùng", device: "Pixel 8", location: "Standee Masteri WF", capturedAt: "4 giờ trước", duration: "2m 50s", status: "Đang xử lý", owner: "Lê Thu Hương", score: 69, saved: true },
-];
-
-const STAFF = ["Nguyễn Văn A", "Lê Thu Hương", "Phạm Tuấn Anh", "Đỗ Quốc Bảo", "Hoàng Minh Long", "Bùi Thị Ngọc"];
-
-const RULES = [
-  { id: 1, name: "NFC Tap → Sales Owner của card", channel: "NFC" as Channel, mode: "Theo chủ thẻ", active: true, hits: 124 },
-  { id: 2, name: "QR Scan trên Brochure Lumi Hanoi", channel: "QR" as Channel, mode: "Round-robin · Phòng Kinh doanh 1", active: true, hits: 87 },
-  { id: 3, name: "AirDrop tại Sự kiện Open House", channel: "AirDrop" as Channel, mode: "Gán cho host sự kiện", active: true, hits: 36 },
-  { id: 4, name: "QR Scan ngoài giờ HC", channel: "QR" as Channel, mode: "Hàng đợi · Phân bổ sáng hôm sau", active: false, hits: 12 },
-];
-
-function ChannelChip({ channel }: { channel: Channel }) {
-  const m = CHANNEL_META[channel];
-  return (
-    <span className={["inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold", m.tone].join(" ")}>
-      <m.icon className="h-3 w-3" />
-      {m.label}
-    </span>
-  );
-}
-
-function Avatar({ name }: { name: string }) {
-  const initials = name.split(" ").slice(-2).map((s) => s[0]).join("");
-  return (
-    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary/80 to-indigo-500 grid place-items-center text-white text-[10.5px] font-bold">
-      {initials}
-    </div>
-  );
-}
+const SOURCES = ["NFC Tap", "QR Scan", "AirDrop", "Landing Page", "Sự kiện", "Referral", "Khác"];
 
 function LeadCapturePage() {
-  const [items, setItems] = useState<Capture[]>(CAPTURES);
-  const [tab, setTab] = useState<"all" | Channel>("all");
-  const [openId, setOpenId] = useState<number | null>(1);
-  const filtered = items.filter((c) => tab === "all" || c.channel === tab);
-  const selected = items.find((c) => c.id === openId);
+  const { currentTenant } = useAuth();
+  const tenantId = currentTenant?.id ?? "";
+  const qc = useQueryClient();
 
-  const updateItem = (id: number, patch: Partial<Capture>) =>
-    setItems((arr) => arr.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState<LeadStatus | "">("");
+  const [page, setPage] = useState(1);
+  const [openForm, setOpenForm] = useState(false);
+
+  const list = useServerFn(listLeads);
+  const stats = useServerFn(getLeadStats);
+  const upsert = useServerFn(upsertLead);
+  const setStatusFn = useServerFn(updateLeadStatus);
+  const softDelete = useServerFn(softDeleteLead);
+
+  const listQ = useQuery({
+    queryKey: ["lead-capture", tenantId, q, status, page],
+    queryFn: () => list({ data: { tenantId, q: q || undefined, status: status || undefined, page, pageSize: 20 } }),
+    enabled: !!tenantId,
+  });
+  const statsQ = useQuery({
+    queryKey: ["lead-capture-stats", tenantId],
+    queryFn: () => stats({ data: { tenantId } }),
+    enabled: !!tenantId,
+  });
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["lead-capture", tenantId] });
+    qc.invalidateQueries({ queryKey: ["lead-capture-stats", tenantId] });
+  };
+
+  const createM = useMutation({
+    mutationFn: (payload: any) => upsert({ data: { ...payload, tenant_id: tenantId } }),
+    onSuccess: () => { toast.success("Đã tạo lead"); setOpenForm(false); invalidate(); },
+    onError: (e: any) => toast.error(e.message ?? "Lỗi tạo lead"),
+  });
+  const statusM = useMutation({
+    mutationFn: (v: { id: string; status: LeadStatus }) => setStatusFn({ data: v }),
+    onSuccess: () => { toast.success("Đã cập nhật trạng thái"); invalidate(); },
+    onError: (e: any) => toast.error(e.message ?? "Lỗi"),
+  });
+  const deleteM = useMutation({
+    mutationFn: (id: string) => softDelete({ data: { id } }),
+    onSuccess: () => { toast.success("Đã xoá"); invalidate(); },
+    onError: (e: any) => toast.error(e.message ?? "Lỗi"),
+  });
+
+  const rows = listQ.data?.rows ?? [];
+  const total = listQ.data?.total ?? 0;
+  const pageSize = listQ.data?.pageSize ?? 20;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const counts = statsQ.data?.counts ?? {};
+  const kpis = useMemo(() => ({
+    total: statsQ.data?.total ?? 0,
+    last30: statsQ.data?.last30 ?? 0,
+    new: counts["new"] ?? 0,
+    won: statsQ.data?.won ?? 0,
+  }), [statsQ.data, counts]);
 
   return (
     <div>
       <PageHeader
-        title="Tự động tạo Lead"
-        sub="Mỗi lượt NFC Tap, QR Scan hay AirDrop xem danh thiếp đều tự động ghi nhận và phân bổ cho nhân viên phụ trách."
+        title="Thu Lead"
+        sub="Tạo lead mới nhanh, tìm kiếm và quản lý danh sách theo trạng thái pipeline."
         action={
           <div className="flex items-center gap-2">
-            <button className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-card text-[13px] font-medium hover:bg-muted">
-              <Settings className="h-4 w-4" /> Cấu hình quy tắc
+            <button
+              onClick={() => invalidate()}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-card text-[13px] font-medium hover:bg-muted"
+            >
+              <RefreshCw className="h-4 w-4" /> Làm mới
             </button>
-            <button className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-primary text-primary-foreground text-[13px] font-semibold hover:bg-primary/90">
-              <Plus className="h-4 w-4" /> Tạo quy tắc mới
+            <button
+              onClick={() => setOpenForm(true)}
+              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-primary text-primary-foreground text-[13px] font-semibold hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" /> Tạo lead mới
             </button>
           </div>
         }
       />
 
-      {/* KPI strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
-        <KpiCard icon={Zap} label="Lead tự động hôm nay" value="38" delta={24.5} deltaLabel="so với hôm qua" tone="primary" />
-        <KpiCard icon={Radio} label="NFC Tap" value="124" delta={12.3} tone="indigo" />
-        <KpiCard icon={QrCode} label="QR Scan" value="87" delta={8.7} tone="blue" />
-        <KpiCard icon={Send} label="AirDrop" value="36" delta={18.2} tone="rose" />
-        <KpiCard icon={CheckCircle2} label="Tỷ lệ chuyển CRM" value="62.4%" delta={4.1} tone="green" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <KpiCard icon={Users2} label="Tổng lead" value={String(kpis.total)} delta={0} deltaLabel="" tone="primary" />
+        <KpiCard icon={Sparkles} label="30 ngày qua" value={String(kpis.last30)} delta={0} deltaLabel="" tone="indigo" />
+        <KpiCard icon={UserPlus} label="Lead mới" value={String(kpis.new)} delta={0} deltaLabel="" tone="amber" />
+        <KpiCard icon={Users2} label="Thành công" value={String(kpis.won)} delta={0} deltaLabel="" tone="green" />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
-        {/* Main column */}
-        <div className="space-y-6">
-          {/* Realtime feed */}
-          <SectionCard
-            title="Hoạt động ghi nhận"
-            action={
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-[11.5px] text-emerald-600 font-medium">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
-                </span>
-                <button className="inline-flex items-center gap-1 h-8 px-2.5 rounded-md border border-border text-[12px] hover:bg-muted">
-                  <RefreshCw className="h-3.5 w-3.5" /> Làm mới
-                </button>
-              </div>
-            }
-          >
-            {/* Tabs + filters */}
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-              <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-muted">
-                {([
-                  { k: "all", label: "Tất cả" },
-                  { k: "NFC", label: "NFC Tap" },
-                  { k: "QR", label: "QR Scan" },
-                  { k: "AirDrop", label: "AirDrop" },
-                ] as const).map((t) => (
-                  <button
-                    key={t.k}
-                    onClick={() => setTab(t.k as any)}
-                    className={[
-                      "px-3 h-7 rounded-md text-[12.5px] font-medium transition",
-                      tab === t.k ? "bg-card shadow-soft text-foreground" : "text-muted-foreground hover:text-foreground",
-                    ].join(" ")}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input placeholder="Tìm theo khách / thẻ" className="h-8 pl-7 pr-3 rounded-md border border-border bg-card text-[12.5px] w-56 focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                </div>
-                <button className="inline-flex items-center gap-1 h-8 px-2.5 rounded-md border border-border text-[12px] hover:bg-muted">
-                  <Filter className="h-3.5 w-3.5" /> Bộ lọc
-                </button>
-              </div>
+      <SectionCard
+        title="Danh sách lead"
+        action={
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={q}
+                onChange={(e) => { setQ(e.target.value); setPage(1); }}
+                placeholder="Tìm theo tên/email/SĐT"
+                className="h-8 pl-7 pr-3 rounded-md border border-border bg-card text-[12.5px] w-64 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
             </div>
-
-            {/* Table */}
-            <div className="overflow-hidden rounded-xl border border-border">
-              <table className="w-full text-[13px]">
-                <thead className="bg-muted/50 text-muted-foreground">
-                  <tr className="text-left">
-                    <th className="px-4 py-2.5 font-medium">Khách / Thiết bị</th>
-                    <th className="px-3 py-2.5 font-medium">Kênh</th>
-                    <th className="px-3 py-2.5 font-medium">Danh thiếp</th>
-                    <th className="px-3 py-2.5 font-medium">Score</th>
-                    <th className="px-3 py-2.5 font-medium">Phụ trách</th>
-                    <th className="px-3 py-2.5 font-medium">Trạng thái</th>
-                    <th className="px-3 py-2.5 font-medium text-right">Thời gian</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border bg-card">
-                  {filtered.map((c) => (
-                    <tr
-                      key={c.id}
-                      onClick={() => setOpenId(c.id)}
-                      className={["cursor-pointer transition", openId === c.id ? "bg-primary-soft/40" : "hover:bg-muted/40"].join(" ")}
-                    >
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-foreground">{c.visitor}</div>
-                        <div className="text-[11.5px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                          <Smartphone className="h-3 w-3" /> {c.device} · {c.duration}
-                        </div>
-                      </td>
-                      <td className="px-3 py-3"><ChannelChip channel={c.channel} /></td>
-                      <td className="px-3 py-3 text-foreground/80">{c.card}</td>
-                      <td className="px-3 py-3">
-                        <span className={[
-                          "inline-flex items-center px-2 py-0.5 rounded-md text-[11.5px] font-bold",
-                          c.score >= 80 ? "bg-emerald-50 text-emerald-700" : c.score >= 60 ? "bg-amber-50 text-amber-700" : "bg-slate-100 text-slate-600",
-                        ].join(" ")}>{c.score}</span>
-                      </td>
-                      <td className="px-3 py-3">
-                        {c.owner ? (
-                          <div className="inline-flex items-center gap-1.5"><Avatar name={c.owner} /><span className="text-[12.5px]">{c.owner}</span></div>
-                        ) : (
-                          <span className="text-[12px] text-muted-foreground italic">Chưa gán</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className={["inline-flex px-2 py-0.5 rounded-md text-[11.5px] font-semibold", STATUS_TONE[c.status]].join(" ")}>
-                          {c.status}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-right text-[12px] text-muted-foreground">{c.capturedAt}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </SectionCard>
-
-          {/* Rules */}
-          <SectionCard
-            title="Quy tắc tự động phân bổ"
-            action={
-              <button className="inline-flex items-center gap-1 text-[12.5px] font-medium text-primary hover:underline">
-                <Plus className="h-3.5 w-3.5" /> Thêm quy tắc
-              </button>
-            }
-          >
-            <div className="space-y-2.5">
-              {RULES.map((r) => (
-                <div key={r.id} className="flex items-center gap-4 p-3.5 rounded-xl border border-border hover:border-primary/40 hover:shadow-soft transition">
-                  <div className={["h-9 w-9 rounded-lg grid place-items-center", CHANNEL_META[r.channel].tone].join(" ")}>
-                    {(() => { const I = CHANNEL_META[r.channel].icon; return <I className="h-4 w-4" />; })()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13.5px] font-semibold text-foreground truncate">{r.name}</div>
-                    <div className="text-[11.5px] text-muted-foreground mt-0.5 flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1"><Users2 className="h-3 w-3" /> {r.mode}</span>
-                      <span>·</span>
-                      <span>{r.hits} lead đã tạo / 30 ngày</span>
-                    </div>
-                  </div>
-                  <button
-                    className={[
-                      "relative h-5 w-9 rounded-full transition",
-                      r.active ? "bg-primary" : "bg-slate-300",
-                    ].join(" ")}
-                    title="Bật/tắt"
-                  >
-                    <span className={["absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition", r.active ? "left-4" : "left-0.5"].join(" ")} />
-                  </button>
-                  <button className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></button>
-                </div>
+            <select
+              value={status}
+              onChange={(e) => { setStatus(e.target.value as any); setPage(1); }}
+              className="h-8 px-2 rounded-md border border-border bg-card text-[12.5px]"
+            >
+              <option value="">Tất cả trạng thái</option>
+              {LEAD_STATUSES.map((s) => (
+                <option key={s} value={s}>{STATUS_LABEL[s]}</option>
               ))}
-            </div>
-          </SectionCard>
+            </select>
+          </div>
+        }
+      >
+        <div className="overflow-hidden rounded-xl border border-border">
+          <table className="w-full text-[13px]">
+            <thead className="bg-muted/50 text-muted-foreground">
+              <tr className="text-left">
+                <th className="px-4 py-2.5 font-medium">Khách hàng</th>
+                <th className="px-3 py-2.5 font-medium">Liên hệ</th>
+                <th className="px-3 py-2.5 font-medium">Nguồn</th>
+                <th className="px-3 py-2.5 font-medium">Trạng thái</th>
+                <th className="px-3 py-2.5 font-medium text-right">Tạo lúc</th>
+                <th className="px-3 py-2.5 font-medium text-right w-10"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border bg-card">
+              {listQ.isLoading && (
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Đang tải...</td></tr>
+              )}
+              {!listQ.isLoading && rows.length === 0 && (
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Chưa có lead nào. Bấm "Tạo lead mới" để bắt đầu.</td></tr>
+              )}
+              {rows.map((l: any) => (
+                <tr key={l.id} className="hover:bg-muted/40">
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-foreground">{l.full_name}</div>
+                    {l.budget && <div className="text-[11.5px] text-muted-foreground mt-0.5">Ngân sách: {l.budget}</div>}
+                  </td>
+                  <td className="px-3 py-3 text-[12.5px] text-foreground/80">
+                    {l.phone && <div>{l.phone}</div>}
+                    {l.email && <div className="text-muted-foreground">{l.email}</div>}
+                    {!l.phone && !l.email && <span className="text-muted-foreground italic">—</span>}
+                  </td>
+                  <td className="px-3 py-3 text-[12.5px] text-muted-foreground">{l.source ?? "—"}</td>
+                  <td className="px-3 py-3">
+                    <select
+                      value={l.status}
+                      onChange={(e) => statusM.mutate({ id: l.id, status: e.target.value as LeadStatus })}
+                      className={["h-7 px-2 rounded-md text-[11.5px] font-semibold border-0 focus:ring-2 focus:ring-primary/30", STATUS_TONE[l.status as LeadStatus]].join(" ")}
+                    >
+                      {LEAD_STATUSES.map((s) => (
+                        <option key={s} value={s}>{STATUS_LABEL[s]}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-3 py-3 text-right text-[12px] text-muted-foreground">
+                    {new Date(l.created_at).toLocaleString("vi-VN")}
+                  </td>
+                  <td className="px-3 py-3 text-right">
+                    <button
+                      onClick={() => { if (confirm("Xoá lead này?")) deleteM.mutate(l.id); }}
+                      className="p-1.5 rounded-md hover:bg-rose-50 text-muted-foreground hover:text-rose-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
-        {/* Detail panel */}
-        {selected ? (
-          <aside className="rounded-2xl bg-card border border-border shadow-soft overflow-hidden h-fit sticky top-4">
-            <div className="p-5 border-b border-border bg-gradient-to-br from-primary-soft/60 to-card">
-              <div className="flex items-center justify-between mb-3">
-                <ChannelChip channel={selected.channel} />
-                <span className={["inline-flex px-2 py-0.5 rounded-md text-[11.5px] font-semibold", STATUS_TONE[selected.status]].join(" ")}>
-                  {selected.status}
-                </span>
-              </div>
-              <div className="text-[18px] font-bold text-foreground">{selected.visitor}</div>
-              <div className="text-[12.5px] text-muted-foreground mt-0.5">
-                Đã xem danh thiếp <span className="font-medium text-foreground">{selected.card}</span>
-              </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4 text-[12.5px]">
+            <div className="text-muted-foreground">
+              Trang {page} / {totalPages} · {total} lead
             </div>
-
-            <div className="p-5 space-y-4">
-              {/* Meta */}
-              <div className="grid grid-cols-2 gap-3 text-[12.5px]">
-                <div className="flex items-start gap-2"><Smartphone className="h-3.5 w-3.5 text-muted-foreground mt-0.5" /><div><div className="text-muted-foreground">Thiết bị</div><div className="font-medium">{selected.device}</div></div></div>
-                <div className="flex items-start gap-2"><Clock className="h-3.5 w-3.5 text-muted-foreground mt-0.5" /><div><div className="text-muted-foreground">Thời lượng xem</div><div className="font-medium">{selected.duration}</div></div></div>
-                <div className="flex items-start gap-2 col-span-2"><MapPin className="h-3.5 w-3.5 text-muted-foreground mt-0.5" /><div><div className="text-muted-foreground">Vị trí ghi nhận</div><div className="font-medium">{selected.location}</div></div></div>
-                <div className="flex items-start gap-2 col-span-2"><Calendar className="h-3.5 w-3.5 text-muted-foreground mt-0.5" /><div><div className="text-muted-foreground">Ghi nhận lúc</div><div className="font-medium">{selected.capturedAt}</div></div></div>
-              </div>
-
-              {/* AI Score */}
-              <div className="rounded-xl border border-border p-3.5 bg-gradient-to-br from-violet-50/50 to-card">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="h-3.5 w-3.5 text-violet-600" />
-                  <div className="text-[12px] font-semibold text-foreground">AI Lead Score</div>
-                  <div className="ml-auto text-[18px] font-bold text-violet-600">{selected.score}</div>
-                </div>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-violet-500 to-primary" style={{ width: `${selected.score}%` }} />
-                </div>
-                <div className="text-[11.5px] text-muted-foreground mt-2">
-                  Tín hiệu: {selected.saved ? "Lưu danh bạ +25 · " : ""}Xem brochure +15 · Click số điện thoại +20
-                </div>
-              </div>
-
-              {/* Assignment */}
-              <div>
-                <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Gán nhân viên phụ trách</div>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={selected.owner ?? ""}
-                    onChange={(e) => updateItem(selected.id, { owner: e.target.value, status: e.target.value ? "Đã gán" : "Mới" })}
-                    className="flex-1 h-9 px-3 rounded-lg border border-border bg-card text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  >
-                    <option value="">— Chưa gán —</option>
-                    {STAFF.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <button className="h-9 w-9 grid place-items-center rounded-lg border border-border hover:bg-muted" title="Tự động gán theo quy tắc">
-                    <Zap className="h-4 w-4 text-primary" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Status */}
-              <div>
-                <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2">Trạng thái xử lý</div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {(["Mới", "Đã gán", "Đang xử lý", "Đã liên hệ", "Chuyển CRM", "Bỏ qua"] as Status[]).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => updateItem(selected.id, { status: s })}
-                      className={[
-                        "h-8 rounded-lg text-[12px] font-medium transition border",
-                        selected.status === s
-                          ? "border-primary bg-primary-soft text-primary"
-                          : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/40",
-                      ].join(" ")}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <button className="inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-border text-[12.5px] font-medium hover:bg-muted">
-                  <Bell className="h-3.5 w-3.5" /> Nhắc lịch
-                </button>
-                <button className="inline-flex items-center justify-center gap-1.5 h-9 rounded-lg bg-primary text-primary-foreground text-[12.5px] font-semibold hover:bg-primary/90">
-                  Chuyển sang CRM <ArrowRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
-
-              {/* Mini timeline */}
-              <div>
-                <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-2 flex items-center gap-1.5"><Activity className="h-3 w-3" /> Nhật ký xử lý</div>
-                <ol className="relative ml-2 border-l border-border space-y-3">
-                  <li className="pl-3.5 relative">
-                    <span className="absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-card" />
-                    <div className="text-[12.5px] font-medium">Tự động tạo lead từ {CHANNEL_META[selected.channel].label}</div>
-                    <div className="text-[11.5px] text-muted-foreground">{selected.capturedAt} · {selected.location}</div>
-                  </li>
-                  {selected.owner && (
-                    <li className="pl-3.5 relative">
-                      <span className="absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-card" />
-                      <div className="text-[12.5px] font-medium">Gán cho {selected.owner}</div>
-                      <div className="text-[11.5px] text-muted-foreground">Theo quy tắc · NFC Owner</div>
-                    </li>
-                  )}
-                  {selected.status === "Đã liên hệ" || selected.status === "Chuyển CRM" ? (
-                    <li className="pl-3.5 relative">
-                      <span className="absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
-                      <div className="text-[12.5px] font-medium">Đã liên hệ qua Zalo</div>
-                      <div className="text-[11.5px] text-muted-foreground">Phản hồi tích cực, hẹn xem nhà mẫu</div>
-                    </li>
-                  ) : null}
-                </ol>
-              </div>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+                className="h-8 px-3 rounded-md border border-border bg-card disabled:opacity-40 hover:bg-muted"
+              >Trước</button>
+              <button
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+                className="h-8 px-3 rounded-md border border-border bg-card disabled:opacity-40 hover:bg-muted"
+              >Sau</button>
             </div>
-          </aside>
-        ) : (
-          <aside className="rounded-2xl bg-card border border-border border-dashed p-8 text-center text-[13px] text-muted-foreground h-fit">
-            <Shield className="h-8 w-8 mx-auto text-muted-foreground/60 mb-2" />
-            Chọn một lead để xem chi tiết và phân bổ.
-          </aside>
+          </div>
         )}
-      </div>
+      </SectionCard>
+
+      {openForm && (
+        <LeadFormDialog
+          onClose={() => setOpenForm(false)}
+          onSubmit={(v) => createM.mutate(v)}
+          submitting={createM.isPending}
+        />
+      )}
     </div>
+  );
+}
+
+function LeadFormDialog({
+  onClose, onSubmit, submitting,
+}: { onClose: () => void; onSubmit: (v: any) => void; submitting: boolean }) {
+  const [form, setForm] = useState({
+    full_name: "",
+    phone: "",
+    email: "",
+    source: "NFC Tap",
+    status: "new" as LeadStatus,
+    budget: "",
+    need_type: "" as "" | "buy" | "rent" | "invest",
+    timeline: "",
+    notes: "",
+  });
+  const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.full_name.trim()) { toast.error("Tên khách bắt buộc"); return; }
+    onSubmit({
+      full_name: form.full_name.trim(),
+      phone: form.phone.trim() || null,
+      email: form.email.trim() || null,
+      source: form.source || null,
+      status: form.status,
+      budget: form.budget.trim() || null,
+      need_type: form.need_type || null,
+      timeline: form.timeline.trim() || null,
+      notes: form.notes.trim() || null,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 backdrop-blur-sm p-4" onClick={onClose}>
+      <form
+        onSubmit={submit}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg rounded-2xl bg-card border border-border shadow-2xl overflow-hidden"
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div className="text-[15px] font-semibold">Tạo lead mới</div>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-md hover:bg-muted"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
+          <Field label="Họ và tên *">
+            <input required value={form.full_name} onChange={(e) => set("full_name", e.target.value)} className={inputCls} placeholder="Nguyễn Văn A" />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Số điện thoại">
+              <input value={form.phone} onChange={(e) => set("phone", e.target.value)} className={inputCls} placeholder="09xx xxx xxx" />
+            </Field>
+            <Field label="Email">
+              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls} placeholder="a@example.com" />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Nguồn">
+              <select value={form.source} onChange={(e) => set("source", e.target.value)} className={inputCls}>
+                {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </Field>
+            <Field label="Trạng thái">
+              <select value={form.status} onChange={(e) => set("status", e.target.value as LeadStatus)} className={inputCls}>
+                {LEAD_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+              </select>
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Ngân sách">
+              <input value={form.budget} onChange={(e) => set("budget", e.target.value)} className={inputCls} placeholder="3 - 5 tỷ" />
+            </Field>
+            <Field label="Nhu cầu">
+              <select value={form.need_type} onChange={(e) => set("need_type", e.target.value as any)} className={inputCls}>
+                <option value="">—</option>
+                <option value="buy">Mua</option>
+                <option value="rent">Thuê</option>
+                <option value="invest">Đầu tư</option>
+              </select>
+            </Field>
+          </div>
+          <Field label="Thời gian dự kiến">
+            <input value={form.timeline} onChange={(e) => set("timeline", e.target.value)} className={inputCls} placeholder="Trong 3 tháng" />
+          </Field>
+          <Field label="Ghi chú">
+            <textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={3} className={inputCls} placeholder="Thông tin bổ sung..." />
+          </Field>
+        </div>
+        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-border bg-muted/30">
+          <button type="button" onClick={onClose} className="h-9 px-4 rounded-lg border border-border bg-card text-[13px] font-medium hover:bg-muted">Huỷ</button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-[13px] font-semibold hover:bg-primary/90 disabled:opacity-60"
+          >
+            {submitting ? "Đang lưu..." : "Tạo lead"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+const inputCls = "w-full h-9 px-3 rounded-lg border border-border bg-card text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/30";
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <div className="text-[11.5px] font-semibold text-muted-foreground mb-1">{label}</div>
+      {children}
+    </label>
   );
 }
