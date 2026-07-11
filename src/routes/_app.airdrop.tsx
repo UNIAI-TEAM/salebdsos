@@ -73,10 +73,54 @@ const HISTORY = [
   { name: "Phạm Quỳnh Mai", device: "iPhone 14", at: "2 giờ trước", direction: "received" as const, status: "delivered" as Status },
 ];
 
+const HISTORY_EMPTY: ShareRow[] = [];
+
 function AirdropPage() {
+  const { currentTenant } = useAuth();
+  const tenantId = currentTenant?.id;
   const [discovering, setDiscovering] = useState(true);
   const [visibility, setVisibility] = useState<"all" | "contacts" | "off">("all");
   const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [history, setHistory] = useState<ShareRow[]>(HISTORY_EMPTY);
+  const [stats, setStats] = useState({ sent: 0, received: 0, delivered: 0, total: 0, rate: 0 });
+  const [filter, setFilter] = useState<"all" | "sent" | "received">("all");
+
+  const list = useServerFn(listAirdropShares);
+  const statsFn = useServerFn(airdropStats);
+  const create = useServerFn(createAirdropShare);
+  const remove = useServerFn(deleteAirdropShare);
+
+  const refresh = useCallback(async () => {
+    if (!tenantId) return;
+    try {
+      const [h, s] = await Promise.all([
+        list({ data: { tenantId, direction: filter, pageSize: 30 } }),
+        statsFn({ data: { tenantId } }),
+      ]);
+      setHistory((h.items ?? []) as ShareRow[]);
+      setStats(s);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [tenantId, filter, list, statsFn]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const persistShare = useCallback(async (d: Device, status: "delivered" | "declined") => {
+    if (!tenantId) return;
+    try {
+      await create({
+        data: {
+          tenantId, device_name: d.name, device_kind: d.kind,
+          direction: "sent", status, recipient_name: d.owner, distance_m: parseFloat(d.distance),
+        },
+      });
+      refresh();
+    } catch (e) {
+      toast.error("Không thể lưu lịch sử chia sẻ");
+      console.error(e);
+    }
+  }, [tenantId, create, refresh]);
 
   // Animate transfer progress
   useEffect(() => {
@@ -88,14 +132,18 @@ function AirdropPage() {
           }
           if (tr.status === "sending") {
             const np = Math.min(100, tr.progress + 7 + Math.random() * 6);
-            return { ...tr, progress: np, status: np >= 100 ? "delivered" : "sending" };
+            const nextStatus: Status = np >= 100 ? "delivered" : "sending";
+            if (nextStatus === "delivered" && tr.status !== "delivered") {
+              persistShare(tr.device, "delivered");
+            }
+            return { ...tr, progress: np, status: nextStatus };
           }
           return tr;
         })
       );
     }, 350);
     return () => clearInterval(t);
-  }, []);
+  }, [persistShare]);
 
   const sendTo = (d: Device) => {
     if (transfers.some((t) => t.device.id === d.id && t.status !== "delivered" && t.status !== "declined")) return;
@@ -105,7 +153,18 @@ function AirdropPage() {
     ]);
   };
 
-  const cancel = (id: string) => setTransfers((p) => p.map((t) => t.id === id ? { ...t, status: "declined" } : t));
+  const cancel = (id: string) => setTransfers((p) => p.map((t) => {
+    if (t.id === id) {
+      persistShare(t.device, "declined");
+      return { ...t, status: "declined" };
+    }
+    return t;
+  }));
+
+  const removeHistory = async (id: string) => {
+    try { await remove({ data: { id } }); refresh(); }
+    catch { toast.error("Không xoá được"); }
+  };
 
   return (
     <div className="space-y-5">
