@@ -107,3 +107,19 @@ export const deleteAirdropShare = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const getAirdropCards = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { tenantId: string; ids: string[] }) =>
+    z.object({ tenantId: z.string().uuid(), ids: z.array(z.string().uuid()).max(200) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    if (data.ids.length === 0) return { items: [] };
+    const { data: items, error } = await context.supabase
+      .from("cards")
+      .select("id,slug,display_name,title,company,avatar_url,is_published")
+      .eq("tenant_id", data.tenantId)
+      .in("id", data.ids);
+    if (error) throw new Error(error.message);
+    return { items: items ?? [] };
+  });
