@@ -250,8 +250,8 @@ function FilesPage() {
           tags={tagList}
           busy={bulkM.isPending}
           onClear={() => setSelected(new Set())}
-          onApplyFolder={(f) => bulkM.mutate({ ids: Array.from(selected), folder: f || null })}
-          onApplyTag={(t) => bulkM.mutate({ ids: Array.from(selected), tag: t || null })}
+          onApplyFolder={(f: string) => bulkM.mutate({ ids: Array.from(selected), folder: f || null })}
+          onApplyTag={(t: string) => bulkM.mutate({ ids: Array.from(selected), tag: t || null })}
           onSoftDelete={() => {
             if (!confirm(`Chuyển ${selected.size} tệp vào thùng rác?`)) return;
             Promise.all(Array.from(selected).map((id) => softDel({ data: { id } })))
