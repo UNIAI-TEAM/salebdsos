@@ -1019,18 +1019,59 @@ function AuditDrawer({
 }) {
   const auditFn = useServerFn(listFileAudit);
   const [actionFilter, setActionFilter] = useState<string>("all");
+  const [actorQuery, setActorQuery] = useState<string>("");
+  const [actorFilter, setActorFilter] = useState<string>("all");
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
+
+  const fromIso = fromDate ? new Date(fromDate + "T00:00:00").toISOString() : undefined;
+  const toIso = toDate ? new Date(toDate + "T23:59:59.999").toISOString() : undefined;
+
   const q = useQuery({
-    queryKey: ["file-audit", tenantId, fileId ?? "all", actionFilter],
+    queryKey: ["file-audit", tenantId, fileId ?? "all", actionFilter, actorFilter, fromIso ?? "", toIso ?? ""],
     queryFn: () => auditFn({
       data: {
         tenantId, fileId,
         action: actionFilter === "all" ? undefined : actionFilter,
+        actorUserId: actorFilter === "all" ? undefined : actorFilter,
+        fromDate: fromIso,
+        toDate: toIso,
         limit: 200,
       },
     }),
     enabled: !!tenantId,
   });
-  const rows = (q.data?.rows ?? []) as any[];
+  const allRows = (q.data?.rows ?? []) as any[];
+
+  // Derive actor options from returned rows (deduped).
+  const actorOptions = useMemo(() => {
+    const map = new Map<string, { id: string; label: string }>();
+    for (const r of allRows) {
+      if (!r.actor_user_id) continue;
+      const label = r.actor?.name || r.actor?.email || "Người dùng";
+      if (!map.has(r.actor_user_id)) map.set(r.actor_user_id, { id: r.actor_user_id, label });
+    }
+    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [allRows]);
+
+  // Client-side actor text search (on top of server filters).
+  const rows = useMemo(() => {
+    const s = actorQuery.trim().toLowerCase();
+    if (!s) return allRows;
+    return allRows.filter((r) => {
+      const label = (r.actor?.name || r.actor?.email || "").toLowerCase();
+      return label.includes(s);
+    });
+  }, [allRows, actorQuery]);
+
+  const actionGroups: Array<{ label: string; keys: string[] }> = [
+    { label: "Tệp", keys: ["file.upload", "file.download", "file.update", "file.soft_delete", "file.restore", "file.hard_delete"] },
+    { label: "Hàng loạt", keys: ["file.bulk_update", "file.bulk_soft_delete", "file.bulk_restore", "file.bulk_hard_delete", "file.bulk_download"] },
+    { label: "Thư mục & nhãn", keys: ["folder.rename", "folder.delete", "tag.rename", "tag.delete"] },
+  ];
+
+  const hasFilters =
+    actionFilter !== "all" || actorFilter !== "all" || actorQuery || fromDate || toDate;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
@@ -1046,24 +1087,78 @@ function AuditDrawer({
           <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted"><X className="h-4 w-4" /></button>
         </div>
 
-        <div className="px-5 py-3 border-b border-border flex items-center gap-2 flex-wrap">
-          <select
-            value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value)}
-            className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px]"
-          >
-            <option value="all">Tất cả hành động</option>
-            {Object.entries(ACTION_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v.label}</option>
-            ))}
-          </select>
-          <span className="text-[12px] text-muted-foreground">{rows.length} bản ghi</span>
+        <div className="px-5 py-3 border-b border-border space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value)}
+              className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px]"
+              title="Loại hành động"
+            >
+              <option value="all">Tất cả hành động</option>
+              {actionGroups.map((g) => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.keys.map((k) => (
+                    <option key={k} value={k}>{ACTION_LABELS[k]?.label ?? k}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <select
+              value={actorFilter}
+              onChange={(e) => setActorFilter(e.target.value)}
+              className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px] max-w-[180px]"
+              title="Người thực hiện"
+            >
+              <option value="all">Tất cả người dùng</option>
+              {actorOptions.map((a) => (
+                <option key={a.id} value={a.id}>{a.label}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={actorQuery}
+              onChange={(e) => setActorQuery(e.target.value)}
+              placeholder="Tìm tên/email…"
+              className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px] w-[160px]"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className="text-[11.5px] text-muted-foreground">Từ</label>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="h-8 px-2 rounded-md border border-border bg-card text-[12.5px]"
+            />
+            <label className="text-[11.5px] text-muted-foreground">Đến</label>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="h-8 px-2 rounded-md border border-border bg-card text-[12.5px]"
+            />
+            {hasFilters && (
+              <button
+                onClick={() => {
+                  setActionFilter("all"); setActorFilter("all"); setActorQuery("");
+                  setFromDate(""); setToDate("");
+                }}
+                className="h-8 px-2.5 rounded-md border border-border bg-card text-[12px] hover:bg-muted"
+              >
+                Xoá bộ lọc
+              </button>
+            )}
+            <span className="ml-auto text-[12px] text-muted-foreground">{rows.length} bản ghi</span>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {q.isLoading && <div className="p-8 text-center text-muted-foreground text-[13px]">Đang tải...</div>}
           {!q.isLoading && rows.length === 0 && (
-            <div className="p-10 text-center text-muted-foreground text-[13px]">Chưa có hoạt động nào.</div>
+            <div className="p-10 text-center text-muted-foreground text-[13px]">
+              {hasFilters ? "Không có bản ghi khớp bộ lọc." : "Chưa có hoạt động nào."}
+            </div>
           )}
           <ul className="divide-y divide-border">
             {rows.map((r) => {
@@ -1098,6 +1193,7 @@ function AuditDrawer({
     </div>
   );
 }
+
 
 function DownloadProgressCard({
   state,
