@@ -344,8 +344,25 @@ function FilesPage() {
               .then(() => { toast.success(`Đã khôi phục ${ids.length} tệp`); setSelected(new Set()); invalidate(); })
               .catch((e: any) => toast.error(e?.message || "Lỗi"));
           }}
+          onHardDelete={() => {
+            const ids = selectedDeletedIds;
+            if (ids.length === 0) return;
+            if (!confirm(`Xoá VĨNH VIỄN ${ids.length} tệp? Hành động này KHÔNG THỂ khôi phục.`)) return;
+            const toastId = toast.loading(`Đang xoá vĩnh viễn ${ids.length} tệp...`);
+            let ok = 0;
+            Promise.allSettled(ids.map((id) => hardDel({ data: { id } })))
+              .then((results) => {
+                ok = results.filter((r) => r.status === "fulfilled").length;
+                const failed = ids.length - ok;
+                if (failed === 0) toast.success(`Đã xoá vĩnh viễn ${ok} tệp`, { id: toastId });
+                else toast.error(`Xoá ${ok}/${ids.length} tệp — ${failed} lỗi`, { id: toastId });
+                setSelected(new Set());
+                invalidate();
+              });
+          }}
         />
       )}
+
 
       <SectionCard
         title={scope === "trash" ? "Thùng rác" : "Danh sách tệp"}
@@ -564,7 +581,7 @@ function TagPill({
 }
 
 function BulkToolbar({
-  count, activeCount, deletedCount, folders, tags, busy, onClear, onApplyFolder, onApplyTag, onDownload, onSoftDelete, onRestore,
+  count, activeCount, deletedCount, folders, tags, busy, onClear, onApplyFolder, onApplyTag, onDownload, onSoftDelete, onRestore, onHardDelete,
 }: {
   count: number;
   activeCount: number;
@@ -578,7 +595,9 @@ function BulkToolbar({
   onDownload: () => void;
   onSoftDelete: () => void;
   onRestore: () => void;
+  onHardDelete: () => void;
 }) {
+
   const [f, setF] = useState("");
   const [t, setT] = useState("");
   return (
@@ -628,6 +647,12 @@ function BulkToolbar({
             <RotateCcw className="h-3.5 w-3.5" /> Khôi phục ({deletedCount})
           </button>
         )}
+        {deletedCount > 0 && (
+          <button onClick={onHardDelete} disabled={busy} className="h-7 px-2.5 rounded-md text-[12px] font-semibold text-white bg-red-600 hover:bg-red-700 inline-flex items-center gap-1 disabled:opacity-50">
+            <Trash2 className="h-3.5 w-3.5" /> Xoá vĩnh viễn ({deletedCount})
+          </button>
+        )}
+
         {activeCount > 0 && (
           <button onClick={onSoftDelete} disabled={busy} className="h-7 px-2.5 rounded-md text-[12px] font-medium text-red-600 hover:bg-red-50 inline-flex items-center gap-1 disabled:opacity-50">
             <Trash2 className="h-3.5 w-3.5" /> Xoá ({activeCount})
