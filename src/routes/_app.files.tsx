@@ -1454,6 +1454,24 @@ function AuditDrawer({
                       </div>
                     </div>
                   </button>
+                  {r.action === "file.bulk_download" && getZipPhase(r.diff) === "error" && onRetryZip && (() => {
+                    const ids: string[] = Array.isArray(r.diff?.ids) ? r.diff.ids.filter((x: any) => typeof x === "string") : [];
+                    if (ids.length === 0) return null;
+                    return (
+                      <div className="px-5 pb-3 -mt-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); onRetryZip(ids); }}
+                          className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md border border-border bg-card text-[12px] font-medium text-foreground hover:bg-muted"
+                          title={`Thử lại tải ZIP cho ${ids.length} tệp`}
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          Thử lại ({ids.length})
+                        </button>
+                        <span className="text-[11px] text-muted-foreground">Đóng gói lại lô ZIP bị lỗi</span>
+                      </div>
+                    );
+                  })()}
                   {isOpen && (
                     <div className="px-5 pb-4 -mt-1">
                       <div className="rounded-md border border-border bg-muted/30 p-3">
