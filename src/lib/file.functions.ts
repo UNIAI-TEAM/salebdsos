@@ -496,7 +496,7 @@ export const listFileAudit = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const limit = Math.min(Math.max(1, data.limit ?? 100), 500);
+    const limit = Math.min(Math.max(1, data.limit ?? 100), 2000);
 
     let q = supabase
       .from("audit_logs")
