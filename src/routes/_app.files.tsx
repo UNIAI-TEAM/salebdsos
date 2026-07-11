@@ -1210,6 +1210,47 @@ function AuditDrawer({
   const allRows = (q.data?.rows ?? []) as any[];
   const reachedCap = allRows.length < pageSize || pageSize >= SERVER_CAP;
 
+  // Pair ZIP start (phase=zipping) with its terminal entry (done/canceled/error)
+  // by matching ids-set. Computes startedAt / endedAt / durationMs / percent /
+  // running for each bulk_download row.
+  type ZipMeta = { startedAt?: string; endedAt?: string; durationMs?: number; running: boolean; percent: number; ok: number; failed: number; requested: number };
+  const zipMeta = useMemo(() => {
+    const m = new Map<string, ZipMeta>();
+    const bulk = allRows
+      .filter((r) => r.action === "file.bulk_download")
+      .slice()
+      .sort((a, b) => new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime());
+    const keyOf = (r: any) => {
+      const ids = Array.isArray(r.diff?.ids) ? [...r.diff.ids].sort() : [];
+      return ids.join("|");
+    };
+    const openStarts = new Map<string, any>();
+    for (const r of bulk) {
+      const phase = getZipPhase(r.diff);
+      const requested = Number(r.diff?.requested ?? (Array.isArray(r.diff?.ids) ? r.diff.ids.length : 0));
+      const ok = Number(r.diff?.ok ?? 0);
+      const failed = Number(r.diff?.failed ?? 0);
+      const k = keyOf(r);
+      if (phase === "zipping") {
+        openStarts.set(k, r);
+        m.set(r.id, { startedAt: r.occurred_at, running: true, percent: 0, ok: 0, failed: 0, requested });
+      } else {
+        const start = openStarts.get(k);
+        const percent = phase === "done" ? 100 : requested > 0 ? Math.round((ok / requested) * 100) : 0;
+        if (start) {
+          const durationMs = new Date(r.occurred_at).getTime() - new Date(start.occurred_at).getTime();
+          const shared = { startedAt: start.occurred_at, endedAt: r.occurred_at, durationMs, running: false, percent, ok, failed, requested };
+          m.set(r.id, shared);
+          m.set(start.id, shared);
+          openStarts.delete(k);
+        } else {
+          m.set(r.id, { endedAt: r.occurred_at, running: false, percent, ok, failed, requested });
+        }
+      }
+    }
+    return m;
+  }, [allRows]);
+
   // Derive actor options from returned rows (deduped).
   const actorOptions = useMemo(() => {
     const map = new Map<string, { id: string; label: string }>();
