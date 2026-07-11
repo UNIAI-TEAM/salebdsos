@@ -153,12 +153,31 @@ function FilesPage() {
 
   const items = listQ.data?.items ?? [];
   const folders = facetQ.data?.folders ?? {};
+  const tagsCounts = facetQ.data?.tags ?? {};
   const totalSize = facetQ.data?.totalSize ?? 0;
 
   const folderList = useMemo(() => {
     const all = new Set<string>([...FOLDER_PRESETS, ...Object.keys(folders)]);
     return Array.from(all);
   }, [folders]);
+  const tagList = useMemo(() => Object.keys(tagsCounts).sort(), [tagsCounts]);
+  const visibleIds = useMemo(() => items.filter((f: any) => !f.deleted_at).map((f: any) => f.id as string), [items]);
+  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
+  const toggleAll = () => {
+    setSelected((prev) => {
+      if (allSelected) return new Set();
+      const next = new Set(prev);
+      for (const id of visibleIds) next.add(id);
+      return next;
+    });
+  };
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   return (
     <div>
