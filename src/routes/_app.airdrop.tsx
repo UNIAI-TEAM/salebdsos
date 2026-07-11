@@ -4,6 +4,7 @@ import {
   Radio, Wifi, Smartphone, Laptop, Tablet, Watch, RefreshCw, Settings2, Shield,
   Check, X, Clock, Send, Inbox, BadgeCheck, Eye, EyeOff, Users2,
   AlertCircle, IdCard, Trash2, ExternalLink, Copy, Ruler, StickyNote, User2, RotateCw,
+  Search, Calendar, ChevronLeft, ChevronRight, FilterX,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -86,6 +87,14 @@ function AirdropPage() {
   const [history, setHistory] = useState<ShareRow[]>(HISTORY_EMPTY);
   const [stats, setStats] = useState({ sent: 0, received: 0, delivered: 0, total: 0, rate: 0 });
   const [filter, setFilter] = useState<"all" | "sent" | "received">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "delivered" | "declined" | "canceled">("all");
+  const [dateFrom, setDateFrom] = useState<string>(""); // yyyy-mm-dd
+  const [dateTo, setDateTo] = useState<string>("");
+  const [deviceQuery, setDeviceQuery] = useState<string>("");
+  const [deviceQueryDebounced, setDeviceQueryDebounced] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
   const [cardMap, setCardMap] = useState<Record<string, NonNullable<CardBrief>>>({});
   const [detailId, setDetailId] = useState<string | null>(null);
 
@@ -95,15 +104,34 @@ function AirdropPage() {
   const remove = useServerFn(deleteAirdropShare);
   const fetchCards = useServerFn(getAirdropCards);
 
+  // debounce device query
+  useEffect(() => {
+    const t = setTimeout(() => setDeviceQueryDebounced(deviceQuery.trim()), 300);
+    return () => clearTimeout(t);
+  }, [deviceQuery]);
+
+  // reset về trang 1 khi bộ lọc đổi
+  useEffect(() => { setPage(1); }, [filter, statusFilter, dateFrom, dateTo, deviceQueryDebounced, pageSize]);
+
   const refresh = useCallback(async () => {
     if (!tenantId) return;
     try {
+      const fromIso = dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : null;
+      const toIso = dateTo ? new Date(`${dateTo}T23:59:59.999`).toISOString() : null;
       const [h, s] = await Promise.all([
-        list({ data: { tenantId, direction: filter, pageSize: 30 } }),
+        list({
+          data: {
+            tenantId, direction: filter, status: statusFilter,
+            page, pageSize,
+            from: fromIso, to: toIso,
+            deviceQuery: deviceQueryDebounced || null,
+          },
+        }),
         statsFn({ data: { tenantId } }),
       ]);
       const rows = (h.items ?? []) as ShareRow[];
       setHistory(rows);
+      setTotal(h.total ?? 0);
       setStats(s);
       const ids = Array.from(new Set(rows.map((r) => r.card_id).filter((x): x is string => !!x && !cardMap[x])));
       if (ids.length) {
@@ -117,7 +145,7 @@ function AirdropPage() {
     } catch (e) {
       console.error(e);
     }
-  }, [tenantId, filter, list, statsFn, fetchCards, cardMap]);
+  }, [tenantId, filter, statusFilter, dateFrom, dateTo, deviceQueryDebounced, page, pageSize, list, statsFn, fetchCards, cardMap]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -415,13 +443,69 @@ function AirdropPage() {
                 ))}
               </div>
             </div>
+
+            {/* Filters */}
+            <div className="mb-3 space-y-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={deviceQuery}
+                  onChange={(e) => setDeviceQuery(e.target.value)}
+                  placeholder="Tên thiết bị / người nhận / ID"
+                  className="w-full h-8 pl-8 pr-7 rounded-lg border border-border bg-background text-[12px] focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+                {deviceQuery && (
+                  <button onClick={() => setDeviceQuery("")}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 h-5 w-5 grid place-items-center rounded text-muted-foreground hover:bg-muted">
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="relative">
+                  <Calendar className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                  <input type="date" value={dateFrom} max={dateTo || undefined}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="w-full h-8 pl-7 pr-2 rounded-lg border border-border bg-background text-[11.5px] focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                </label>
+                <label className="relative">
+                  <Calendar className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                  <input type="date" value={dateTo} min={dateFrom || undefined}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="w-full h-8 pl-7 pr-2 rounded-lg border border-border bg-background text-[11.5px] focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                  className="h-8 px-2 rounded-lg border border-border bg-background text-[11.5px] flex-1 focus:outline-none focus:ring-2 focus:ring-primary/30">
+                  <option value="all">Mọi trạng thái</option>
+                  <option value="delivered">Đã nhận</option>
+                  <option value="pending">Đang chờ</option>
+                  <option value="declined">Từ chối</option>
+                  <option value="canceled">Đã huỷ</option>
+                </select>
+                <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}
+                  className="h-8 px-2 rounded-lg border border-border bg-background text-[11.5px] focus:outline-none focus:ring-2 focus:ring-primary/30">
+                  {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n}/trang</option>)}
+                </select>
+                {(deviceQuery || dateFrom || dateTo || statusFilter !== "all" || filter !== "all") && (
+                  <button onClick={() => { setDeviceQuery(""); setDateFrom(""); setDateTo(""); setStatusFilter("all"); setFilter("all"); }}
+                    title="Xoá bộ lọc"
+                    className="h-8 px-2 rounded-lg border border-border text-[11.5px] font-semibold text-muted-foreground hover:bg-muted/40 inline-flex items-center gap-1">
+                    <FilterX className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
             {history.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-5 text-center text-[12px] text-muted-foreground">
-                Chưa có lịch sử chia sẻ.
+                Không có bản ghi khớp bộ lọc.
               </div>
             ) : (
               <ul className="space-y-3">
-                {history.slice(0, 12).map((h) => (
+                {history.map((h) => (
                   <li key={h.id} className="group">
                     <button type="button" onClick={() => setDetailId(h.id)}
                       className="w-full flex items-center gap-3 text-left rounded-lg -mx-1 px-1 py-1 hover:bg-muted/40 transition">
@@ -459,6 +543,29 @@ function AirdropPage() {
                   </li>
                 ))}
               </ul>
+            )}
+
+            {/* Pagination */}
+            {total > 0 && (
+              <div className="mt-4 flex items-center justify-between text-[11.5px] text-muted-foreground">
+                <div>
+                  {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} / {total}
+                </div>
+                <div className="inline-flex items-center gap-1">
+                  <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+                    className="h-7 w-7 grid place-items-center rounded-lg border border-border disabled:opacity-40 hover:bg-muted/40">
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="px-2 font-semibold text-foreground">
+                    {page} / {Math.max(1, Math.ceil(total / pageSize))}
+                  </span>
+                  <button onClick={() => setPage((p) => (p * pageSize < total ? p + 1 : p))}
+                    disabled={page * pageSize >= total}
+                    className="h-7 w-7 grid place-items-center rounded-lg border border-border disabled:opacity-40 hover:bg-muted/40">
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
