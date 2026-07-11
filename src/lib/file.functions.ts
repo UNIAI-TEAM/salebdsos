@@ -184,3 +184,119 @@ export const listFileFacets = createServerFn({ method: "GET" })
     }
     return { folders, tags, totalFiles: rows?.length ?? 0, totalSize };
   });
+
+// ---------- Bulk & taxonomy CRUD ----------
+
+export const bulkUpdateFiles = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        ids: z.array(z.string().uuid()).min(1).max(500),
+        folder: z.string().trim().max(120).nullable().optional(),
+        tag: z.string().trim().max(60).nullable().optional(),
+      })
+      .refine((v) => v.folder !== undefined || v.tag !== undefined, {
+        message: "Cần chỉ định folder hoặc tag",
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const patch: { folder?: string | null; tag?: string | null } = {};
+    if (data.folder !== undefined) patch.folder = data.folder || null;
+    if (data.tag !== undefined) patch.tag = data.tag || null;
+    const { error, count } = await context.supabase
+      .from("files")
+      .update(patch, { count: "exact" })
+      .eq("tenant_id", data.tenantId)
+      .in("id", data.ids);
+    if (error) throw new Error(error.message);
+    return { ok: true, updated: count ?? 0 };
+  });
+
+export const renameFolder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        from: z.string().trim().min(1).max(120),
+        to: z.string().trim().min(1).max(120),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    if (data.from === data.to) return { ok: true, updated: 0 };
+    const { error, count } = await context.supabase
+      .from("files")
+      .update({ folder: data.to }, { count: "exact" })
+      .eq("tenant_id", data.tenantId)
+      .eq("folder", data.from);
+    if (error) throw new Error(error.message);
+    return { ok: true, updated: count ?? 0 };
+  });
+
+export const deleteFolder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        folder: z.string().trim().min(1).max(120),
+        moveTo: z.string().trim().max(120).nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error, count } = await context.supabase
+      .from("files")
+      .update({ folder: data.moveTo || null }, { count: "exact" })
+      .eq("tenant_id", data.tenantId)
+      .eq("folder", data.folder);
+    if (error) throw new Error(error.message);
+    return { ok: true, updated: count ?? 0 };
+  });
+
+export const renameTag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        from: z.string().trim().min(1).max(60),
+        to: z.string().trim().min(1).max(60),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    if (data.from === data.to) return { ok: true, updated: 0 };
+    const { error, count } = await context.supabase
+      .from("files")
+      .update({ tag: data.to }, { count: "exact" })
+      .eq("tenant_id", data.tenantId)
+      .eq("tag", data.from);
+    if (error) throw new Error(error.message);
+    return { ok: true, updated: count ?? 0 };
+  });
+
+export const deleteTag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        tag: z.string().trim().min(1).max(60),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error, count } = await context.supabase
+      .from("files")
+      .update({ tag: null }, { count: "exact" })
+      .eq("tenant_id", data.tenantId)
+      .eq("tag", data.tag);
+    if (error) throw new Error(error.message);
+    return { ok: true, updated: count ?? 0 };
+  });
+
