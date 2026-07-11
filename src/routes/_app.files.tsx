@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Upload, Download, Trash2, RotateCcw, Search, Folder, FileText, RefreshCw, X, Tag, User,
-  Pencil, Settings2, FolderInput, CheckSquare, Square,
+  Pencil, Settings2, FolderInput, CheckSquare, Square, History, Clock,
 } from "lucide-react";
 import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   listFiles, createFileRecord, softDeleteFile, restoreFile, hardDeleteFile,
   getFileSignedUrl, listFileFacets, bulkUpdateFiles, renameFolder, deleteFolder,
-  renameTag, deleteTag,
+  renameTag, deleteTag, listFileAudit,
 } from "@/lib/file.functions";
 import { listLeads } from "@/lib/lead.functions";
 import { toast } from "sonner";
