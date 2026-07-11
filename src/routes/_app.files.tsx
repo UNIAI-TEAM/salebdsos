@@ -477,6 +477,15 @@ function FilesPage() {
           onDeleteTag={async (name) => { await deleteTagFn({ data: { tenantId, tag: name } }); invalidate(); }}
         />
       )}
+      {auditOpen && (
+        <AuditDrawer
+          tenantId={tenantId}
+          fileId={auditOpen.fileId}
+          title={auditOpen.title}
+          fileMap={new Map(items.map((f: any) => [f.id, f.name]))}
+          onClose={() => setAuditOpen(null)}
+        />
+      )}
       {!user && null}
     </div>
   );
