@@ -44,6 +44,18 @@ function FilesPage() {
   const [manageOpen, setManageOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState<null | { fileId?: string; title: string }>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  type DlProgress = {
+    total: number;
+    done: number;
+    failed: number;
+    phase: "fetching" | "zipping" | "done" | "error" | "canceled";
+    currentName?: string;
+    bytes: number;
+    message?: string;
+  };
+  const [dl, setDl] = useState<DlProgress | null>(null);
+  const dlCancelRef = useRef(false);
+
 
   const list = useServerFn(listFiles);
   const facets = useServerFn(listFileFacets);
@@ -268,7 +280,7 @@ function FilesPage() {
           onDownload={async () => {
             const ids = selectedActiveIds;
             if (ids.length === 0) return;
-            // Single file: direct download, no zip
+            // Single file: direct download, no zip, no progress card
             if (ids.length === 1) {
               try {
                 const r = await signed({ data: { id: ids[0] } });
@@ -281,20 +293,26 @@ function FilesPage() {
               }
               return;
             }
-            const toastId = toast.loading(`Đang đóng gói ${ids.length} tệp...`);
+            dlCancelRef.current = false;
+            setDl({ total: ids.length, done: 0, failed: 0, phase: "fetching", bytes: 0 });
             try {
               const { default: JSZip } = await import("jszip");
               const zip = new JSZip();
               const used = new Map<string, number>();
               let ok = 0;
+              let failed = 0;
+              let bytes = 0;
               for (let i = 0; i < ids.length; i++) {
+                if (dlCancelRef.current) break;
                 const id = ids[i];
+                let currentName = `file-${id}`;
                 try {
                   const r = await signed({ data: { id } });
+                  currentName = r.name || currentName;
+                  setDl((s) => s && { ...s, currentName });
                   const resp = await fetch(r.url);
                   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                   const blob = await resp.blob();
-                  // De-duplicate filenames within the zip
                   let name = r.name || `file-${id}`;
                   if (used.has(name)) {
                     const n = (used.get(name) || 1) + 1;
@@ -306,16 +324,25 @@ function FilesPage() {
                   }
                   zip.file(name, blob);
                   ok++;
-                  toast.loading(`Đang đóng gói ${ok}/${ids.length} tệp...`, { id: toastId });
+                  bytes += blob.size;
                 } catch (e: any) {
-                  toast.error(`Lỗi tệp ${id}: ${e?.message || ""}`);
+                  failed++;
                 }
+                setDl((s) => s && { ...s, done: ok, failed, bytes, currentName });
               }
-              if (ok === 0) {
-                toast.error("Không tải được tệp nào", { id: toastId });
+              if (dlCancelRef.current) {
+                setDl((s) => s && { ...s, phase: "canceled", message: "Đã huỷ" });
+                toast.info(`Đã huỷ tải xuống (${ok}/${ids.length})`);
+                setTimeout(() => setDl(null), 3000);
                 return;
               }
-              toast.loading(`Đang tạo file ZIP...`, { id: toastId });
+              if (ok === 0) {
+                setDl((s) => s && { ...s, phase: "error", message: "Không tải được tệp nào" });
+                toast.error("Không tải được tệp nào");
+                setTimeout(() => setDl(null), 4000);
+                return;
+              }
+              setDl((s) => s && { ...s, phase: "zipping", currentName: undefined });
               const content = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
               const url = URL.createObjectURL(content);
               const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
@@ -323,11 +350,16 @@ function FilesPage() {
               a.href = url; a.download = `files-${stamp}.zip`; a.rel = "noopener";
               document.body.appendChild(a); a.click(); a.remove();
               setTimeout(() => URL.revokeObjectURL(url), 5000);
-              toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`, { id: toastId });
+              setDl((s) => s && { ...s, phase: "done", bytes: content.size, message: `Đã tải ZIP (${ok}/${ids.length})` });
+              toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`);
+              setTimeout(() => setDl(null), 4000);
             } catch (e: any) {
-              toast.error(e?.message || "Lỗi đóng gói ZIP", { id: toastId });
+              setDl((s) => s && { ...s, phase: "error", message: e?.message || "Lỗi đóng gói ZIP" });
+              toast.error(e?.message || "Lỗi đóng gói ZIP");
+              setTimeout(() => setDl(null), 5000);
             }
           }}
+
 
           onSoftDelete={() => {
             const ids = selectedActiveIds;
@@ -557,8 +589,16 @@ function FilesPage() {
           onClose={() => setAuditOpen(null)}
         />
       )}
+      {dl && (
+        <DownloadProgressCard
+          state={dl}
+          onCancel={() => { dlCancelRef.current = true; }}
+          onClose={() => setDl(null)}
+        />
+      )}
       {!user && null}
     </div>
+
   );
 }
 
@@ -1039,6 +1079,110 @@ function AuditDrawer({
           </ul>
         </div>
       </div>
+    </div>
+  );
+}
+
+function DownloadProgressCard({
+  state,
+  onCancel,
+  onClose,
+}: {
+  state: {
+    total: number;
+    done: number;
+    failed: number;
+    phase: "fetching" | "zipping" | "done" | "error" | "canceled";
+    currentName?: string;
+    bytes: number;
+    message?: string;
+  };
+  onCancel: () => void;
+  onClose: () => void;
+}) {
+  const { total, done, failed, phase, currentName, bytes, message } = state;
+  const processed = done + failed;
+  const pct = phase === "zipping" || phase === "done"
+    ? 100
+    : total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0;
+  const isActive = phase === "fetching" || phase === "zipping";
+  const tone =
+    phase === "error" ? "border-red-300 bg-red-50" :
+    phase === "done" ? "border-emerald-300 bg-emerald-50" :
+    phase === "canceled" ? "border-muted bg-card" :
+    "border-primary/30 bg-card";
+  const barTone =
+    phase === "error" ? "bg-red-500" :
+    phase === "done" ? "bg-emerald-500" :
+    phase === "canceled" ? "bg-muted-foreground/60" :
+    "bg-primary";
+  const label =
+    phase === "fetching" ? `Đang tải ${processed}/${total}` :
+    phase === "zipping" ? `Đang tạo file ZIP…` :
+    phase === "done" ? (message || `Hoàn tất ${done}/${total}`) :
+    phase === "canceled" ? (message || "Đã huỷ") :
+    (message || "Lỗi");
+
+  return (
+    <div className={`fixed bottom-4 right-4 z-50 w-[360px] max-w-[calc(100vw-2rem)] rounded-xl border shadow-lg ${tone}`}>
+      <div className="flex items-start gap-3 px-4 pt-3 pb-2">
+        <div className="mt-0.5">
+          {phase === "done" ? (
+            <div className="h-8 w-8 rounded-full bg-emerald-500 text-white grid place-items-center text-[13px] font-bold">✓</div>
+          ) : phase === "error" ? (
+            <div className="h-8 w-8 rounded-full bg-red-500 text-white grid place-items-center text-[13px] font-bold">!</div>
+          ) : (
+            <Download className={`h-6 w-6 ${isActive ? "text-primary animate-pulse" : "text-muted-foreground"}`} />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[13px] font-semibold truncate">
+              {phase === "fetching" || phase === "zipping" ? "Đang tải xuống hàng loạt" : "Tải xuống hàng loạt"}
+            </div>
+            <button
+              onClick={onClose}
+              className="h-6 w-6 grid place-items-center rounded-md text-muted-foreground hover:bg-muted"
+              aria-label="Đóng"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="mt-0.5 text-[11.5px] text-muted-foreground truncate">
+            {label}
+            {currentName && isActive && phase === "fetching" && (
+              <span className="text-foreground/80"> · {currentName}</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 pb-2">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={`h-full transition-all duration-200 ${barTone} ${phase === "zipping" ? "animate-pulse" : ""}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+          <span>
+            {processed}/{total} tệp
+            {failed > 0 && <span className="text-red-600"> · {failed} lỗi</span>}
+          </span>
+          <span>{humanSize(bytes)} · {pct}%</span>
+        </div>
+      </div>
+
+      {isActive && (
+        <div className="flex justify-end border-t border-border/60 px-3 py-2">
+          <button
+            onClick={onCancel}
+            className="h-7 px-2.5 rounded-md text-[12px] font-medium text-muted-foreground hover:bg-muted"
+          >
+            Huỷ
+          </button>
+        </div>
+      )}
     </div>
   );
 }
