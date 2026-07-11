@@ -836,3 +836,130 @@ function UploadDialog({
     </div>
   );
 }
+
+// ---------- Audit drawer ----------
+
+const ACTION_LABELS: Record<string, { label: string; tone: string }> = {
+  "file.upload": { label: "Tải lên", tone: "bg-emerald-50 text-emerald-700" },
+  "file.download": { label: "Tải xuống", tone: "bg-blue-50 text-blue-700" },
+  "file.update": { label: "Cập nhật", tone: "bg-amber-50 text-amber-700" },
+  "file.soft_delete": { label: "Xoá (thùng rác)", tone: "bg-rose-50 text-rose-700" },
+  "file.restore": { label: "Khôi phục", tone: "bg-emerald-50 text-emerald-700" },
+  "file.hard_delete": { label: "Xoá vĩnh viễn", tone: "bg-rose-100 text-rose-800" },
+  "file.bulk_update": { label: "Cập nhật hàng loạt", tone: "bg-indigo-50 text-indigo-700" },
+  "folder.rename": { label: "Đổi tên thư mục", tone: "bg-slate-100 text-slate-700" },
+  "folder.delete": { label: "Xoá thư mục", tone: "bg-slate-100 text-slate-700" },
+  "tag.rename": { label: "Đổi tên nhãn", tone: "bg-slate-100 text-slate-700" },
+  "tag.delete": { label: "Xoá nhãn", tone: "bg-slate-100 text-slate-700" },
+};
+
+function summarizeDiff(action: string, diff: any): string {
+  if (!diff) return "";
+  try {
+    if (action === "file.upload") return `${diff.name ?? ""}${diff.folder ? ` · ${diff.folder}` : ""}${diff.tag ? ` · #${diff.tag}` : ""}`;
+    if (action === "file.download") return diff.name ?? "";
+    if (action === "file.update") {
+      const parts: string[] = [];
+      const b = diff.before ?? {}; const a = diff.after ?? {};
+      for (const k of Object.keys(a)) if (b[k] !== a[k]) parts.push(`${k}: ${b[k] ?? "∅"} → ${a[k] ?? "∅"}`);
+      return parts.join(" · ");
+    }
+    if (action === "file.soft_delete" || action === "file.restore" || action === "file.hard_delete") return diff.name ?? "";
+    if (action === "file.bulk_update") return `${diff.affected ?? 0} tệp · ${JSON.stringify(diff.patch ?? {})}`;
+    if (action === "folder.rename" || action === "tag.rename") return `${diff.from} → ${diff.to} (${diff.affected ?? 0})`;
+    if (action === "folder.delete") return `${diff.folder}${diff.moveTo ? ` → ${diff.moveTo}` : ""} (${diff.affected ?? 0})`;
+    if (action === "tag.delete") return `${diff.tag} (${diff.affected ?? 0})`;
+    return JSON.stringify(diff);
+  } catch { return ""; }
+}
+
+function AuditDrawer({
+  tenantId, fileId, title, fileMap, onClose,
+}: {
+  tenantId: string;
+  fileId?: string;
+  title: string;
+  fileMap: Map<string, string>;
+  onClose: () => void;
+}) {
+  const auditFn = useServerFn(listFileAudit);
+  const [actionFilter, setActionFilter] = useState<string>("all");
+  const q = useQuery({
+    queryKey: ["file-audit", tenantId, fileId ?? "all", actionFilter],
+    queryFn: () => auditFn({
+      data: {
+        tenantId, fileId,
+        action: actionFilter === "all" ? undefined : actionFilter,
+        limit: 200,
+      },
+    }),
+    enabled: !!tenantId,
+  });
+  const rows = (q.data?.rows ?? []) as any[];
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
+      <div
+        className="w-full max-w-2xl h-full bg-background border-l border-border shadow-2xl flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div>
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Audit trail</div>
+            <div className="text-[15px] font-semibold text-foreground truncate max-w-[400px]">{title}</div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted"><X className="h-4 w-4" /></button>
+        </div>
+
+        <div className="px-5 py-3 border-b border-border flex items-center gap-2 flex-wrap">
+          <select
+            value={actionFilter}
+            onChange={(e) => setActionFilter(e.target.value)}
+            className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px]"
+          >
+            <option value="all">Tất cả hành động</option>
+            {Object.entries(ACTION_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>{v.label}</option>
+            ))}
+          </select>
+          <span className="text-[12px] text-muted-foreground">{rows.length} bản ghi</span>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {q.isLoading && <div className="p-8 text-center text-muted-foreground text-[13px]">Đang tải...</div>}
+          {!q.isLoading && rows.length === 0 && (
+            <div className="p-10 text-center text-muted-foreground text-[13px]">Chưa có hoạt động nào.</div>
+          )}
+          <ul className="divide-y divide-border">
+            {rows.map((r) => {
+              const meta = ACTION_LABELS[r.action] ?? { label: r.action, tone: "bg-muted text-foreground" };
+              const summary = summarizeDiff(r.action, r.diff);
+              const actor = r.actor?.name || r.actor?.email || (r.actor_user_id ? "Người dùng" : "Hệ thống");
+              const targetName = r.entity === "file" && r.entity_id ? fileMap.get(r.entity_id) : null;
+              return (
+                <li key={r.id} className="px-5 py-3.5 hover:bg-muted/40">
+                  <div className="flex items-start gap-3">
+                    <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${meta.tone}`}>
+                      {meta.label}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13px] text-foreground">
+                        <span className="font-medium">{actor}</span>
+                        {targetName && <span className="text-muted-foreground"> · {targetName}</span>}
+                      </div>
+                      {summary && <div className="text-[12px] text-muted-foreground mt-0.5 break-words">{summary}</div>}
+                      <div className="text-[11px] text-muted-foreground mt-1 inline-flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {new Date(r.occurred_at).toLocaleString("vi-VN")}
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
