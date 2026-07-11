@@ -55,6 +55,7 @@ export const listFollowups = createServerFn({ method: "GET" })
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
     if (data.scenario && data.scenario !== "all") q = q.eq("scenario", data.scenario);
     if (data.leadId) q = q.eq("lead_id", data.leadId);
+    if (data.customerId) q = q.eq("customer_id", data.customerId);
 
     const { data: items, error, count } = await q;
     if (error) throw new Error(error.message);
