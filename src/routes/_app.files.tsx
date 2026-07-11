@@ -589,8 +589,16 @@ function FilesPage() {
           onClose={() => setAuditOpen(null)}
         />
       )}
+      {dl && (
+        <DownloadProgressCard
+          state={dl}
+          onCancel={() => { dlCancelRef.current = true; }}
+          onClose={() => setDl(null)}
+        />
+      )}
       {!user && null}
     </div>
+
   );
 }
 
