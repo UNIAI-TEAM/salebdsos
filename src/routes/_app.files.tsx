@@ -250,16 +250,46 @@ function FilesPage() {
       {selected.size > 0 && (
         <BulkToolbar
           count={selected.size}
+          activeCount={selectedActiveIds.length}
+          deletedCount={selectedDeletedIds.length}
           folders={folderList}
           tags={tagList}
           busy={bulkM.isPending}
           onClear={() => setSelected(new Set())}
-          onApplyFolder={(f: string) => bulkM.mutate({ ids: Array.from(selected), folder: f || null })}
-          onApplyTag={(t: string) => bulkM.mutate({ ids: Array.from(selected), tag: t || null })}
+          onApplyFolder={(f: string) => bulkM.mutate({ ids: selectedActiveIds, folder: f || null })}
+          onApplyTag={(t: string) => bulkM.mutate({ ids: selectedActiveIds, tag: t || null })}
+          onDownload={async () => {
+            const ids = selectedActiveIds;
+            if (ids.length === 0) return;
+            toast.info(`Đang chuẩn bị ${ids.length} tệp...`);
+            let ok = 0;
+            for (const id of ids) {
+              try {
+                const r = await signed({ data: { id } });
+                const a = document.createElement("a");
+                a.href = r.url; a.download = r.name; a.rel = "noopener";
+                document.body.appendChild(a); a.click(); a.remove();
+                ok++;
+                await new Promise((res) => setTimeout(res, 250));
+              } catch (e: any) {
+                toast.error(`Lỗi tải ${id}: ${e?.message || ""}`);
+              }
+            }
+            toast.success(`Đã tải ${ok}/${ids.length} tệp`);
+          }}
           onSoftDelete={() => {
-            if (!confirm(`Chuyển ${selected.size} tệp vào thùng rác?`)) return;
-            Promise.all(Array.from(selected).map((id) => softDel({ data: { id } })))
-              .then(() => { toast.success(`Đã chuyển ${selected.size} tệp vào thùng rác`); setSelected(new Set()); invalidate(); })
+            const ids = selectedActiveIds;
+            if (ids.length === 0) return;
+            if (!confirm(`Chuyển ${ids.length} tệp vào thùng rác?`)) return;
+            Promise.all(ids.map((id) => softDel({ data: { id } })))
+              .then(() => { toast.success(`Đã chuyển ${ids.length} tệp vào thùng rác`); setSelected(new Set()); invalidate(); })
+              .catch((e: any) => toast.error(e?.message || "Lỗi"));
+          }}
+          onRestore={() => {
+            const ids = selectedDeletedIds;
+            if (ids.length === 0) return;
+            Promise.all(ids.map((id) => restore({ data: { id } })))
+              .then(() => { toast.success(`Đã khôi phục ${ids.length} tệp`); setSelected(new Set()); invalidate(); })
               .catch((e: any) => toast.error(e?.message || "Lỗi"));
           }}
         />
