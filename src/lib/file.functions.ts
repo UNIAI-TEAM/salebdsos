@@ -369,6 +369,114 @@ export const deleteTag = createServerFn({ method: "POST" })
     return { ok: true, updated: count ?? 0 };
   });
 
+// ---------- Bulk lifecycle (server-side + rollup audit) ----------
+
+const BulkIds = z.object({
+  tenantId: z.string().uuid(),
+  ids: z.array(z.string().uuid()).min(1).max(500),
+});
+
+export const bulkSoftDeleteFiles = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => BulkIds.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: rows, error } = await supabase
+      .from("files")
+      .update({ deleted_at: new Date().toISOString() }, { count: "exact" })
+      .eq("tenant_id", data.tenantId)
+      .in("id", data.ids)
+      .is("deleted_at", null)
+      .select("id,name");
+    if (error) throw new Error(error.message);
+    await logAudit(supabase, data.tenantId, userId, "file.bulk_soft_delete", null, {
+      ids: (rows ?? []).map((r: any) => r.id),
+      names: (rows ?? []).map((r: any) => r.name),
+      affected: rows?.length ?? 0,
+    });
+    return { ok: true, affected: rows?.length ?? 0 };
+  });
+
+export const bulkRestoreFiles = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => BulkIds.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: rows, error } = await supabase
+      .from("files")
+      .update({ deleted_at: null }, { count: "exact" })
+      .eq("tenant_id", data.tenantId)
+      .in("id", data.ids)
+      .not("deleted_at", "is", null)
+      .select("id,name");
+    if (error) throw new Error(error.message);
+    await logAudit(supabase, data.tenantId, userId, "file.bulk_restore", null, {
+      ids: (rows ?? []).map((r: any) => r.id),
+      names: (rows ?? []).map((r: any) => r.name),
+      affected: rows?.length ?? 0,
+    });
+    return { ok: true, affected: rows?.length ?? 0 };
+  });
+
+export const bulkHardDeleteFiles = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => BulkIds.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: rows, error: e1 } = await supabase
+      .from("files")
+      .select("id,name,bucket,path")
+      .eq("tenant_id", data.tenantId)
+      .in("id", data.ids);
+    if (e1) throw new Error(e1.message);
+    const byBucket: Record<string, string[]> = {};
+    for (const r of rows ?? []) {
+      if (r.bucket && r.path) (byBucket[r.bucket] ??= []).push(r.path);
+    }
+    for (const [bucket, paths] of Object.entries(byBucket)) {
+      await supabase.storage.from(bucket).remove(paths);
+    }
+    const { error } = await supabase
+      .from("files")
+      .delete()
+      .eq("tenant_id", data.tenantId)
+      .in("id", data.ids);
+    if (error) throw new Error(error.message);
+    await logAudit(supabase, data.tenantId, userId, "file.bulk_hard_delete", null, {
+      ids: (rows ?? []).map((r: any) => r.id),
+      names: (rows ?? []).map((r: any) => r.name),
+      affected: rows?.length ?? 0,
+    });
+    return { ok: true, affected: rows?.length ?? 0 };
+  });
+
+export const logBulkDownload = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        ids: z.array(z.string().uuid()).min(1).max(1000),
+        ok: z.number().int().min(0),
+        failed: z.number().int().min(0),
+        bytes: z.number().int().min(0).optional(),
+        canceled: z.boolean().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await logAudit(supabase, data.tenantId, userId, "file.bulk_download", null, {
+      ids: data.ids,
+      requested: data.ids.length,
+      ok: data.ok,
+      failed: data.failed,
+      bytes: data.bytes ?? 0,
+      canceled: !!data.canceled,
+    });
+    return { ok: true };
+  });
+
 // ---------- Audit trail ----------
 
 const FILE_AUDIT_ENTITIES = ["file", "files.folder", "files.tag"];

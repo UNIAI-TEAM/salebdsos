@@ -13,6 +13,7 @@ import {
   listFiles, createFileRecord, softDeleteFile, restoreFile, hardDeleteFile,
   getFileSignedUrl, listFileFacets, bulkUpdateFiles, renameFolder, deleteFolder,
   renameTag, deleteTag, listFileAudit,
+  bulkSoftDeleteFiles, bulkRestoreFiles, bulkHardDeleteFiles, logBulkDownload,
 } from "@/lib/file.functions";
 import { listLeads } from "@/lib/lead.functions";
 import { toast } from "sonner";
@@ -70,6 +71,10 @@ function FilesPage() {
   const deleteFolderFn = useServerFn(deleteFolder);
   const renameTagFn = useServerFn(renameTag);
   const deleteTagFn = useServerFn(deleteTag);
+  const bulkSoftDelFn = useServerFn(bulkSoftDeleteFiles);
+  const bulkRestoreFn = useServerFn(bulkRestoreFiles);
+  const bulkHardDelFn = useServerFn(bulkHardDeleteFiles);
+  const logBulkDlFn = useServerFn(logBulkDownload);
 
   const listQ = useQuery({
     queryKey: ["files", tenantId, q, folder, tagF, leadId, scope],
@@ -333,12 +338,14 @@ function FilesPage() {
               if (dlCancelRef.current) {
                 setDl((s) => s && { ...s, phase: "canceled", message: "Đã huỷ" });
                 toast.info(`Đã huỷ tải xuống (${ok}/${ids.length})`);
+                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true } }).catch(() => {});
                 setTimeout(() => setDl(null), 3000);
                 return;
               }
               if (ok === 0) {
                 setDl((s) => s && { ...s, phase: "error", message: "Không tải được tệp nào" });
                 toast.error("Không tải được tệp nào");
+                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes } }).catch(() => {});
                 setTimeout(() => setDl(null), 4000);
                 return;
               }
@@ -352,6 +359,7 @@ function FilesPage() {
               setTimeout(() => URL.revokeObjectURL(url), 5000);
               setDl((s) => s && { ...s, phase: "done", bytes: content.size, message: `Đã tải ZIP (${ok}/${ids.length})` });
               toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`);
+              logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size } }).catch(() => {});
               setTimeout(() => setDl(null), 4000);
             } catch (e: any) {
               setDl((s) => s && { ...s, phase: "error", message: e?.message || "Lỗi đóng gói ZIP" });
@@ -365,15 +373,15 @@ function FilesPage() {
             const ids = selectedActiveIds;
             if (ids.length === 0) return;
             if (!confirm(`Chuyển ${ids.length} tệp vào thùng rác?`)) return;
-            Promise.all(ids.map((id) => softDel({ data: { id } })))
-              .then(() => { toast.success(`Đã chuyển ${ids.length} tệp vào thùng rác`); setSelected(new Set()); invalidate(); })
+            bulkSoftDelFn({ data: { tenantId, ids } })
+              .then((r) => { toast.success(`Đã chuyển ${r.affected} tệp vào thùng rác`); setSelected(new Set()); invalidate(); })
               .catch((e: any) => toast.error(e?.message || "Lỗi"));
           }}
           onRestore={() => {
             const ids = selectedDeletedIds;
             if (ids.length === 0) return;
-            Promise.all(ids.map((id) => restore({ data: { id } })))
-              .then(() => { toast.success(`Đã khôi phục ${ids.length} tệp`); setSelected(new Set()); invalidate(); })
+            bulkRestoreFn({ data: { tenantId, ids } })
+              .then((r) => { toast.success(`Đã khôi phục ${r.affected} tệp`); setSelected(new Set()); invalidate(); })
               .catch((e: any) => toast.error(e?.message || "Lỗi"));
           }}
           onHardDelete={() => {
@@ -381,16 +389,9 @@ function FilesPage() {
             if (ids.length === 0) return;
             if (!confirm(`Xoá VĨNH VIỄN ${ids.length} tệp? Hành động này KHÔNG THỂ khôi phục.`)) return;
             const toastId = toast.loading(`Đang xoá vĩnh viễn ${ids.length} tệp...`);
-            let ok = 0;
-            Promise.allSettled(ids.map((id) => hardDel({ data: { id } })))
-              .then((results) => {
-                ok = results.filter((r) => r.status === "fulfilled").length;
-                const failed = ids.length - ok;
-                if (failed === 0) toast.success(`Đã xoá vĩnh viễn ${ok} tệp`, { id: toastId });
-                else toast.error(`Xoá ${ok}/${ids.length} tệp — ${failed} lỗi`, { id: toastId });
-                setSelected(new Set());
-                invalidate();
-              });
+            bulkHardDelFn({ data: { tenantId, ids } })
+              .then((r) => { toast.success(`Đã xoá vĩnh viễn ${r.affected} tệp`, { id: toastId }); setSelected(new Set()); invalidate(); })
+              .catch((e: any) => toast.error(e?.message || "Lỗi xoá", { id: toastId }));
           }}
         />
       )}
@@ -966,6 +967,10 @@ const ACTION_LABELS: Record<string, { label: string; tone: string }> = {
   "file.restore": { label: "Khôi phục", tone: "bg-emerald-50 text-emerald-700" },
   "file.hard_delete": { label: "Xoá vĩnh viễn", tone: "bg-rose-100 text-rose-800" },
   "file.bulk_update": { label: "Cập nhật hàng loạt", tone: "bg-indigo-50 text-indigo-700" },
+  "file.bulk_soft_delete": { label: "Xoá hàng loạt (thùng rác)", tone: "bg-rose-50 text-rose-700" },
+  "file.bulk_restore": { label: "Khôi phục hàng loạt", tone: "bg-emerald-50 text-emerald-700" },
+  "file.bulk_hard_delete": { label: "Xoá vĩnh viễn hàng loạt", tone: "bg-rose-100 text-rose-800" },
+  "file.bulk_download": { label: "Tải ZIP hàng loạt", tone: "bg-blue-50 text-blue-700" },
   "folder.rename": { label: "Đổi tên thư mục", tone: "bg-slate-100 text-slate-700" },
   "folder.delete": { label: "Xoá thư mục", tone: "bg-slate-100 text-slate-700" },
   "tag.rename": { label: "Đổi tên nhãn", tone: "bg-slate-100 text-slate-700" },
@@ -985,6 +990,17 @@ function summarizeDiff(action: string, diff: any): string {
     }
     if (action === "file.soft_delete" || action === "file.restore" || action === "file.hard_delete") return diff.name ?? "";
     if (action === "file.bulk_update") return `${diff.affected ?? 0} tệp · ${JSON.stringify(diff.patch ?? {})}`;
+    if (action === "file.bulk_soft_delete" || action === "file.bulk_restore" || action === "file.bulk_hard_delete") {
+      const names: string[] = Array.isArray(diff.names) ? diff.names : [];
+      const preview = names.slice(0, 3).join(", ");
+      const more = names.length > 3 ? ` +${names.length - 3}` : "";
+      return `${diff.affected ?? names.length} tệp${preview ? ` · ${preview}${more}` : ""}`;
+    }
+    if (action === "file.bulk_download") {
+      const mb = diff.bytes ? ` · ${(Number(diff.bytes) / 1024 / 1024).toFixed(1)} MB` : "";
+      const cx = diff.canceled ? " · đã huỷ" : "";
+      return `${diff.ok ?? 0}/${diff.requested ?? 0} tệp${mb}${cx}`;
+    }
     if (action === "folder.rename" || action === "tag.rename") return `${diff.from} → ${diff.to} (${diff.affected ?? 0})`;
     if (action === "folder.delete") return `${diff.folder}${diff.moveTo ? ` → ${diff.moveTo}` : ""} (${diff.affected ?? 0})`;
     if (action === "tag.delete") return `${diff.tag} (${diff.affected ?? 0})`;
