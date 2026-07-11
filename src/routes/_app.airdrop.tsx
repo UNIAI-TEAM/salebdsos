@@ -2,12 +2,34 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/app/ui";
 import {
   Radio, Wifi, Smartphone, Laptop, Tablet, Watch, RefreshCw, Settings2, Shield,
-  Check, X, Clock, Send, Inbox, BadgeCheck, Eye, EyeOff, Users2, ChevronRight,
-  Share2, AlertCircle, MoreHorizontal, IdCard,
+  Check, X, Clock, Send, Inbox, BadgeCheck, Eye, EyeOff, Users2,
+  AlertCircle, IdCard, Trash2,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  listAirdropShares, airdropStats, createAirdropShare, deleteAirdropShare,
+} from "@/lib/airdrop.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/airdrop")({ component: AirdropPage });
+
+type ShareRow = {
+  id: string; device_name: string; device_kind: DeviceKind;
+  direction: "sent" | "received"; status: "pending" | "delivered" | "declined" | "canceled";
+  recipient_name: string | null; created_at: string;
+};
+
+function timeAgo(iso: string) {
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return `${s}s trước`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} phút trước`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} giờ trước`;
+  return `${Math.floor(h / 24)} ngày trước`;
+}
 
 type DeviceKind = "phone" | "tablet" | "laptop" | "watch";
 type Device = {
