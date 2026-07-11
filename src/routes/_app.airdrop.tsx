@@ -12,6 +12,7 @@ import {
   listAirdropShares, airdropStats, createAirdropShare, deleteAirdropShare, getAirdropCards,
 } from "@/lib/airdrop.functions";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_app/airdrop")({ component: AirdropPage });
 
@@ -119,6 +120,20 @@ function AirdropPage() {
   }, [tenantId, filter, list, statsFn, fetchCards, cardMap]);
 
   useEffect(() => { refresh(); }, [refresh]);
+
+  // Realtime: cập nhật tức thì khi có bản ghi chia sẻ mới/đổi trạng thái/bị xoá
+  useEffect(() => {
+    if (!tenantId) return;
+    const channel = supabase
+      .channel(`airdrop_shares:${tenantId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "airdrop_shares", filter: `tenant_id=eq.${tenantId}` },
+        () => { refresh(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [tenantId, refresh]);
 
   const persistShare = useCallback(async (d: Device, status: "delivered" | "declined") => {
     if (!tenantId) return;
