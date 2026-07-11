@@ -5,7 +5,7 @@ import { useState } from "react";
 import {
   Wallet, Apple, Smartphone, Plus, Sparkles, Eye, Radio, Pencil, Trash2, ExternalLink,
 } from "lucide-react";
-import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
+import { PageHeader, KpiCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
