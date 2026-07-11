@@ -17,6 +17,7 @@ import {
 } from "@/lib/file.functions";
 import { listLeads } from "@/lib/lead.functions";
 import { toast } from "sonner";
+import { getZipPhase as _getZipPhase, csvEscape as _csvEscape, validateAuditCsv, type ZipPhase as _ZipPhase } from "@/lib/audit-csv";
 
 export const Route = createFileRoute("/_app/files")({ component: FilesPage });
 
@@ -1020,7 +1021,7 @@ function summarizeDiff(action: string, diff: any): string {
   } catch { return ""; }
 }
 
-type ZipPhase = "zipping" | "done" | "canceled" | "error";
+type ZipPhase = _ZipPhase;
 const ZIP_PHASE_META: Record<ZipPhase, { label: string; tone: string; status: string; itemTone: string }> = {
   zipping: { label: "Đang đóng gói", tone: "bg-amber-50 text-amber-700 border-amber-200", status: "Đóng gói", itemTone: "bg-amber-50 text-amber-700" },
   done:    { label: "Hoàn tất",     tone: "bg-emerald-50 text-emerald-700 border-emerald-200", status: "Hoàn tất", itemTone: "bg-emerald-50 text-emerald-700" },
@@ -1041,13 +1042,7 @@ type ZipMeta = {
   skipRow?: boolean;    // true = paired start row, hide in favor of terminal
 };
 
-function getZipPhase(diff: any): ZipPhase {
-  const p = diff?.phase;
-  if (p === "zipping" || p === "done" || p === "canceled" || p === "error") return p;
-  if (diff?.canceled) return "canceled";
-  if ((diff?.ok ?? 0) === 0 && (diff?.requested ?? 0) > 0) return "error";
-  return "done";
-}
+const getZipPhase = _getZipPhase;
 
 function formatDurationMs(ms: number): string {
   if (!Number.isFinite(ms) || ms < 0) return "—";
@@ -1061,10 +1056,11 @@ function formatDurationMs(ms: number): string {
 
 
 
-function csvEscape(v: unknown): string {
-  const s = v === null || v === undefined ? "" : String(v);
-  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
+
+
+
+
+const csvEscape = _csvEscape;
 
 function exportAuditRowsToCsv(
   rows: any[],
@@ -1098,8 +1094,22 @@ function exportAuditRowsToCsv(
       r.diff ? JSON.stringify(r.diff) : "",
     ].map(csvEscape).join(","));
   }
+  const csvBody = lines.join("\r\n");
+  // Pre-download self-check: for every ZIP batch row the exported phase and
+  // batch_id must match what the audit drawer shows. Fail loudly instead of
+  // silently exporting inconsistent data.
+  const check = validateAuditCsv(csvBody, rows);
+  if (!check.ok) {
+    const first = check.errors[0];
+    const detail = first
+      ? ` (${first.reason}${first.expected ? `: expected "${first.expected}"` : ""}${first.got ? `, got "${first.got}"` : ""})`
+      : "";
+    toast.error(`Không thể tải CSV: dữ liệu batch_id/phase không khớp trạng thái hiển thị${detail}. Đã huỷ tải xuống.`);
+    if (typeof console !== "undefined") console.error("[audit-csv] validation failed", check.errors);
+    return;
+  }
   // BOM for Excel UTF-8.
-  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["\uFEFF" + csvBody], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
