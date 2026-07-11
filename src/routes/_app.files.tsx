@@ -59,9 +59,9 @@ function FilesPage() {
   const deleteTagFn = useServerFn(deleteTag);
 
   const listQ = useQuery({
-    queryKey: ["files", tenantId, q, folder, leadId, includeDeleted],
+    queryKey: ["files", tenantId, q, folder, tagF, leadId, includeDeleted],
     queryFn: () =>
-      list({ data: { tenantId, q: q || undefined, folder, leadId, includeDeleted, page: 1, pageSize: 200 } }),
+      list({ data: { tenantId, q: q || undefined, folder, tag: tagF, leadId, includeDeleted, page: 1, pageSize: 200 } }),
     enabled: !!tenantId,
   });
   const facetQ = useQuery({
