@@ -266,5 +266,7 @@ export function AppSidebar() {
       )}
 
     </aside>
+    </TooltipProvider>
   );
 }
+
