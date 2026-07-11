@@ -161,7 +161,11 @@ function FilesPage() {
     return Array.from(all);
   }, [folders]);
   const tagList = useMemo(() => Object.keys(tagsCounts).sort(), [tagsCounts]);
-  const visibleIds = useMemo(() => items.filter((f: any) => !f.deleted_at).map((f: any) => f.id as string), [items]);
+  const visibleIds = useMemo(() => items.map((f: any) => f.id as string), [items]);
+  const deletedIdSet = useMemo(() => new Set(items.filter((f: any) => !!f.deleted_at).map((f: any) => f.id as string)), [items]);
+  const selectedIds = useMemo(() => Array.from(selected), [selected]);
+  const selectedActiveIds = useMemo(() => selectedIds.filter((id) => !deletedIdSet.has(id)), [selectedIds, deletedIdSet]);
+  const selectedDeletedIds = useMemo(() => selectedIds.filter((id) => deletedIdSet.has(id)), [selectedIds, deletedIdSet]);
   const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
   const toggleAll = () => {
     setSelected((prev) => {
