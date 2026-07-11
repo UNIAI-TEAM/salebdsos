@@ -1241,7 +1241,7 @@ function AuditDrawer({
   ];
 
   const hasFilters =
-    actionFilter !== "all" || actorFilter !== "all" || actorQuery || fromDate || toDate;
+    actionFilter !== "all" || actorFilter !== "all" || actorQuery || fromDate || toDate || searchText;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
