@@ -2,12 +2,34 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/app/ui";
 import {
   Radio, Wifi, Smartphone, Laptop, Tablet, Watch, RefreshCw, Settings2, Shield,
-  Check, X, Clock, Send, Inbox, BadgeCheck, Eye, EyeOff, Users2, ChevronRight,
-  Share2, AlertCircle, MoreHorizontal, IdCard,
+  Check, X, Clock, Send, Inbox, BadgeCheck, Eye, EyeOff, Users2,
+  AlertCircle, IdCard, Trash2,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  listAirdropShares, airdropStats, createAirdropShare, deleteAirdropShare,
+} from "@/lib/airdrop.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/airdrop")({ component: AirdropPage });
+
+type ShareRow = {
+  id: string; device_name: string; device_kind: DeviceKind;
+  direction: "sent" | "received"; status: "pending" | "delivered" | "declined" | "canceled";
+  recipient_name: string | null; created_at: string;
+};
+
+function timeAgo(iso: string) {
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return `${s}s trước`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} phút trước`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} giờ trước`;
+  return `${Math.floor(h / 24)} ngày trước`;
+}
 
 type DeviceKind = "phone" | "tablet" | "laptop" | "watch";
 type Device = {
@@ -43,18 +65,55 @@ const STATUS_TONE: Record<Status, string> = {
   declined: "bg-rose-50 text-rose-700 ring-1 ring-rose-100",
 };
 
-const HISTORY = [
-  { name: "Vũ Khánh Linh", device: "iPhone 15 Pro", at: "2 phút trước", direction: "sent" as const, status: "delivered" as Status },
-  { name: "Nguyễn Tuấn Minh", device: "MacBook Air", at: "8 phút trước", direction: "received" as const, status: "delivered" as Status },
-  { name: "Trần Hồng Nhung", device: "iPad Pro", at: "32 phút trước", direction: "sent" as const, status: "declined" as Status },
-  { name: "Lê Đức Anh", device: "Galaxy Tab", at: "1 giờ trước", direction: "sent" as const, status: "delivered" as Status },
-  { name: "Phạm Quỳnh Mai", device: "iPhone 14", at: "2 giờ trước", direction: "received" as const, status: "delivered" as Status },
-];
+
+const HISTORY_EMPTY: ShareRow[] = [];
 
 function AirdropPage() {
+  const { currentTenant } = useAuth();
+  const tenantId = currentTenant?.id;
   const [discovering, setDiscovering] = useState(true);
   const [visibility, setVisibility] = useState<"all" | "contacts" | "off">("all");
   const [transfers, setTransfers] = useState<Transfer[]>([]);
+  const [history, setHistory] = useState<ShareRow[]>(HISTORY_EMPTY);
+  const [stats, setStats] = useState({ sent: 0, received: 0, delivered: 0, total: 0, rate: 0 });
+  const [filter, setFilter] = useState<"all" | "sent" | "received">("all");
+
+  const list = useServerFn(listAirdropShares);
+  const statsFn = useServerFn(airdropStats);
+  const create = useServerFn(createAirdropShare);
+  const remove = useServerFn(deleteAirdropShare);
+
+  const refresh = useCallback(async () => {
+    if (!tenantId) return;
+    try {
+      const [h, s] = await Promise.all([
+        list({ data: { tenantId, direction: filter, pageSize: 30 } }),
+        statsFn({ data: { tenantId } }),
+      ]);
+      setHistory((h.items ?? []) as ShareRow[]);
+      setStats(s);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [tenantId, filter, list, statsFn]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const persistShare = useCallback(async (d: Device, status: "delivered" | "declined") => {
+    if (!tenantId) return;
+    try {
+      await create({
+        data: {
+          tenantId, device_name: d.name, device_kind: d.kind,
+          direction: "sent", status, recipient_name: d.owner, distance_m: parseFloat(d.distance),
+        },
+      });
+      refresh();
+    } catch (e) {
+      toast.error("Không thể lưu lịch sử chia sẻ");
+      console.error(e);
+    }
+  }, [tenantId, create, refresh]);
 
   // Animate transfer progress
   useEffect(() => {
@@ -66,14 +125,18 @@ function AirdropPage() {
           }
           if (tr.status === "sending") {
             const np = Math.min(100, tr.progress + 7 + Math.random() * 6);
-            return { ...tr, progress: np, status: np >= 100 ? "delivered" : "sending" };
+            const nextStatus: Status = np >= 100 ? "delivered" : "sending";
+            if (nextStatus === "delivered") {
+              persistShare(tr.device, "delivered");
+            }
+            return { ...tr, progress: np, status: nextStatus };
           }
           return tr;
         })
       );
     }, 350);
     return () => clearInterval(t);
-  }, []);
+  }, [persistShare]);
 
   const sendTo = (d: Device) => {
     if (transfers.some((t) => t.device.id === d.id && t.status !== "delivered" && t.status !== "declined")) return;
@@ -83,7 +146,18 @@ function AirdropPage() {
     ]);
   };
 
-  const cancel = (id: string) => setTransfers((p) => p.map((t) => t.id === id ? { ...t, status: "declined" } : t));
+  const cancel = (id: string) => setTransfers((p) => p.map((t) => {
+    if (t.id === id) {
+      persistShare(t.device, "declined");
+      return { ...t, status: "declined" };
+    }
+    return t;
+  }));
+
+  const removeHistory = async (id: string) => {
+    try { await remove({ data: { id } }); refresh(); }
+    catch { toast.error("Không xoá được"); }
+  };
 
   return (
     <div className="space-y-5">
@@ -127,8 +201,8 @@ function AirdropPage() {
 
             <div className="px-6 pb-5 grid grid-cols-3 gap-3 text-center text-[11.5px]">
               <Stat label="Phát hiện" value={DEVICES.length.toString()} />
-              <Stat label="Đã gửi hôm nay" value="12" />
-              <Stat label="Tỷ lệ nhận" value="92%" />
+              <Stat label="Đã gửi hôm nay" value={stats.sent.toString()} />
+              <Stat label="Tỷ lệ nhận" value={`${stats.rate}%`} />
             </div>
           </div>
 
@@ -270,30 +344,49 @@ function AirdropPage() {
           {/* History */}
           <div className="rounded-2xl bg-card border border-border shadow-soft p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[14px] font-semibold">Lịch sử gần đây</h3>
-              <button className="text-[11.5px] font-semibold text-primary hover:underline">Xem tất cả</button>
+              <h3 className="text-[14px] font-semibold">Lịch sử chia sẻ</h3>
+              <div className="inline-flex rounded-lg border border-border p-0.5 bg-muted/30 text-[10.5px] font-semibold">
+                {(["all", "sent", "received"] as const).map((v) => (
+                  <button key={v} onClick={() => setFilter(v)}
+                    className={["h-6 px-2 rounded-md", filter === v ? "bg-card shadow-soft" : "text-muted-foreground"].join(" ")}>
+                    {v === "all" ? "Tất cả" : v === "sent" ? "Gửi" : "Nhận"}
+                  </button>
+                ))}
+              </div>
             </div>
-            <ul className="space-y-3">
-              {HISTORY.map((h, i) => (
-                <li key={i} className="flex items-center gap-3">
-                  <div className={["h-8 w-8 rounded-lg grid place-items-center shrink-0",
-                    h.direction === "sent" ? "bg-primary-soft text-primary" : "bg-emerald-50 text-emerald-600"].join(" ")}>
-                    {h.direction === "sent" ? <Send className="h-4 w-4" /> : <Inbox className="h-4 w-4" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12.5px] font-semibold truncate">{h.name}</div>
-                    <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {h.at} · {h.device}
+            {history.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border p-5 text-center text-[12px] text-muted-foreground">
+                Chưa có lịch sử chia sẻ.
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {history.slice(0, 12).map((h) => (
+                  <li key={h.id} className="flex items-center gap-3 group">
+                    <div className={["h-8 w-8 rounded-lg grid place-items-center shrink-0",
+                      h.direction === "sent" ? "bg-primary-soft text-primary" : "bg-emerald-50 text-emerald-600"].join(" ")}>
+                      {h.direction === "sent" ? <Send className="h-4 w-4" /> : <Inbox className="h-4 w-4" />}
                     </div>
-                  </div>
-                  {h.status === "delivered" ? (
-                    <span className="text-[11px] font-semibold text-emerald-600 inline-flex items-center gap-0.5"><Check className="h-3.5 w-3.5" /> Nhận</span>
-                  ) : (
-                    <span className="text-[11px] font-semibold text-rose-600 inline-flex items-center gap-0.5"><AlertCircle className="h-3.5 w-3.5" /> Từ chối</span>
-                  )}
-                </li>
-              ))}
-            </ul>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[12.5px] font-semibold truncate">{h.recipient_name ?? h.device_name}</div>
+                      <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {timeAgo(h.created_at)} · {h.device_name}
+                      </div>
+                    </div>
+                    {h.status === "delivered" ? (
+                      <span className="text-[11px] font-semibold text-emerald-600 inline-flex items-center gap-0.5"><Check className="h-3.5 w-3.5" /> Nhận</span>
+                    ) : h.status === "declined" ? (
+                      <span className="text-[11px] font-semibold text-rose-600 inline-flex items-center gap-0.5"><AlertCircle className="h-3.5 w-3.5" /> Từ chối</span>
+                    ) : (
+                      <span className="text-[11px] font-semibold text-slate-500">{h.status}</span>
+                    )}
+                    <button onClick={() => removeHistory(h.id)}
+                      className="opacity-0 group-hover:opacity-100 h-7 w-7 grid place-items-center rounded-lg text-muted-foreground hover:bg-muted transition">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </div>
