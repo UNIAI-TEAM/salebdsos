@@ -1177,6 +1177,7 @@ function AuditDrawer({
   const [toDate, setToDate] = useState<string>("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>("");
+  const [zipPhaseFilter, setZipPhaseFilter] = useState<"all" | ZipPhase>("all");
   const [pageSize, setPageSize] = useState<number>(100);
   const PAGE_STEP = 100;
   const SERVER_CAP = 2000;
