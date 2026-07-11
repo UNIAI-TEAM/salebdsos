@@ -1056,10 +1056,11 @@ function formatDurationMs(ms: number): string {
 
 
 
-function csvEscape(v: unknown): string {
-  const s = v === null || v === undefined ? "" : String(v);
-  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
+
+
+
+
+const csvEscape = _csvEscape;
 
 function exportAuditRowsToCsv(
   rows: any[],
