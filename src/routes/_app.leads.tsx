@@ -12,7 +12,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import {
   listLeads, getLeadStats, upsertLead, importLeads, softDeleteLead,
-  listTenantOwners, listProjectsLite, LEAD_STATUSES, type LeadStatus,
+  listTenantOwners, listProjectsLite, getLeadTimeline, updateLeadNotes, updateLeadStatus,
+  LEAD_STATUSES, type LeadStatus,
 } from "@/lib/lead.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
