@@ -1325,7 +1325,7 @@ function AuditDrawer({
         diffStr.includes(s)
       );
     });
-  }, [allRows, actorQuery, searchText, fileMap, zipPhaseFilter]);
+  }, [allRows, actorQuery, searchText, fileMap, zipPhaseFilter, zipMeta]);
 
   // Infinite scroll sentinel.
   const sentinelRef = useRef<HTMLDivElement | null>(null);
