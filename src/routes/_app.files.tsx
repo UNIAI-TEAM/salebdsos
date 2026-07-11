@@ -1249,18 +1249,6 @@ function AuditDrawer({
   // by matching ids-set. One "batch" = one paired start+terminal (or an
   // unfinished start). Rows sharing the same batch collapse into a single
   // entry so users can expand once to see all affected files.
-  type ZipMeta = {
-    startedAt?: string;
-    endedAt?: string;
-    durationMs?: number;
-    running: boolean;
-    percent: number;
-    ok: number;
-    failed: number;
-    requested: number;
-    batchId: string;      // short display id for the batch
-    skipRow?: boolean;    // true = paired start row, hide in favor of terminal
-  };
   const zipMeta = useMemo(() => {
     const m = new Map<string, ZipMeta>();
     const bulk = allRows
