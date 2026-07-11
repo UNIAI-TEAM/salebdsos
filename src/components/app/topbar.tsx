@@ -37,17 +37,21 @@ export function AppTopbar() {
         <button
           onClick={toggleDrawer}
           className="lg:hidden inline-flex items-center justify-center h-11 w-11 rounded-xl hover:bg-muted active:bg-muted active:scale-95 transition text-foreground"
-          aria-label="Mở menu"
+          aria-label="Mở menu (Ctrl+B)"
+          title="Mở menu (Ctrl+B)"
         >
           <Menu className="h-5 w-5" />
         </button>
         <button
           onClick={toggle}
-          className="hidden lg:inline-flex p-2 rounded-lg hover:bg-muted transition-all duration-200 active:scale-95 text-muted-foreground hover:text-foreground"
-          aria-label="Thu gọn / mở rộng menu"
-          title="Thu gọn / mở rộng menu"
+          className="hidden lg:inline-flex items-center gap-2 p-2 rounded-lg hover:bg-muted transition-all duration-200 active:scale-95 text-muted-foreground hover:text-foreground"
+          aria-label="Thu gọn / mở rộng menu (Ctrl+B)"
+          title="Thu gọn / mở rộng menu (Ctrl+B)"
         >
           <PanelLeft className={["h-5 w-5 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]", collapsed ? "rotate-180" : ""].join(" ")} />
+          <kbd className="hidden xl:inline-flex items-center gap-0.5 text-[10px] font-mono font-medium px-1.5 py-0.5 rounded border border-border bg-muted/50 text-muted-foreground">
+            <span className="text-[11px]">⌘</span>B
+          </kbd>
         </button>
         <div className="hidden md:block min-w-0">
           <h1 className="text-[17px] font-bold text-foreground leading-tight truncate">{meta.title}</h1>
