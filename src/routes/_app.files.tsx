@@ -1068,6 +1068,8 @@ function AuditDrawer({
   const [actorFilter, setActorFilter] = useState<string>("all");
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
 
   const fromIso = fromDate ? new Date(fromDate + "T00:00:00").toISOString() : undefined;
   const toIso = toDate ? new Date(toDate + "T23:59:59.999").toISOString() : undefined;
