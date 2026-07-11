@@ -1162,13 +1162,14 @@ function buildAuditDetails(r: any, fileMap: Map<string, string>): AuditDetails {
 
 
 function AuditDrawer({
-  tenantId, fileId, title, fileMap, onClose,
+  tenantId, fileId, title, fileMap, onClose, onRetryZip,
 }: {
   tenantId: string;
   fileId?: string;
   title: string;
   fileMap: Map<string, string>;
   onClose: () => void;
+  onRetryZip?: (ids: string[]) => void;
 }) {
   const auditFn = useServerFn(listFileAudit);
   const [actionFilter, setActionFilter] = useState<string>("all");
