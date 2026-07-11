@@ -1251,50 +1251,44 @@ function AuditDrawer({
   const reachedCap = allRows.length < pageSize || pageSize >= SERVER_CAP;
 
   // Pair ZIP start (phase=zipping) with its terminal entry (done/canceled/error)
-  // by matching ids-set. One "batch" = one paired start+terminal (or an
-  // unfinished start). Rows sharing the same batch collapse into a single
-  // entry so users can expand once to see all affected files.
+  // by batch_id. One "batch" = one paired start+terminal (or an unfinished
+  // start). Rows sharing the same batch collapse into a single entry so users
+  // can expand once to see all affected files.
   const zipMeta = useMemo(() => {
     const m = new Map<string, ZipMeta>();
     const bulk = allRows
       .filter((r) => r.action === "file.bulk_download")
       .slice()
       .sort((a, b) => new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime());
-    const keyOf = (r: any) => {
-      const ids = Array.isArray(r.diff?.ids) ? [...r.diff.ids].sort() : [];
-      return ids.join("|");
-    };
-    const shortId = (id: string) => (id ? id.replace(/-/g, "").slice(0, 6).toUpperCase() : "—");
     const openStarts = new Map<string, any>();
     for (const r of bulk) {
       const phase = getZipPhase(r.diff);
       const requested = Number(r.diff?.requested ?? (Array.isArray(r.diff?.ids) ? r.diff.ids.length : 0));
       const ok = Number(r.diff?.ok ?? 0);
       const failed = Number(r.diff?.failed ?? 0);
-      const k = keyOf(r);
+      const batchId = r.batch_id || r.id;
       if (phase === "zipping") {
-        openStarts.set(k, r);
+        openStarts.set(batchId, r);
         m.set(r.id, {
           startedAt: r.occurred_at, running: true, percent: 0,
-          ok: 0, failed: 0, requested, batchId: shortId(r.id),
+          ok: 0, failed: 0, requested, batchId,
         });
       } else {
-        const start = openStarts.get(k);
+        const start = openStarts.get(batchId);
         const percent = phase === "done" ? 100 : requested > 0 ? Math.round((ok / requested) * 100) : 0;
         if (start) {
           const durationMs = new Date(r.occurred_at).getTime() - new Date(start.occurred_at).getTime();
-          const batchId = shortId(start.id);
           const shared: ZipMeta = {
             startedAt: start.occurred_at, endedAt: r.occurred_at, durationMs,
             running: false, percent, ok, failed, requested, batchId,
           };
           m.set(r.id, shared);
           m.set(start.id, { ...shared, skipRow: true });
-          openStarts.delete(k);
+          openStarts.delete(batchId);
         } else {
           m.set(r.id, {
             endedAt: r.occurred_at, running: false, percent,
-            ok, failed, requested, batchId: shortId(r.id),
+            ok, failed, requested, batchId,
           });
         }
       }
