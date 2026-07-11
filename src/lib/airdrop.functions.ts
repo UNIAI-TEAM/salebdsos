@@ -4,7 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const SELECT =
-  "id,tenant_id,card_id,sender_id,recipient_name,device_name,device_kind,direction,status,distance_m,notes,created_at,updated_at";
+  "id,tenant_id,card_id,sender_id,recipient_name,device_name,device_kind,direction,status,distance_m,notes,created_at,updated_at,card:cards(id,slug,display_name,title,company,avatar_url,is_published)";
 
 const KindEnum = z.enum(["phone", "tablet", "laptop", "watch"]);
 const DirEnum = z.enum(["sent", "received"]);
