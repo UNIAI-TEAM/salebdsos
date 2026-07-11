@@ -280,7 +280,7 @@ function FilesPage() {
           onDownload={async () => {
             const ids = selectedActiveIds;
             if (ids.length === 0) return;
-            // Single file: direct download, no zip
+            // Single file: direct download, no zip, no progress card
             if (ids.length === 1) {
               try {
                 const r = await signed({ data: { id: ids[0] } });
@@ -293,20 +293,26 @@ function FilesPage() {
               }
               return;
             }
-            const toastId = toast.loading(`Đang đóng gói ${ids.length} tệp...`);
+            dlCancelRef.current = false;
+            setDl({ total: ids.length, done: 0, failed: 0, phase: "fetching", bytes: 0 });
             try {
               const { default: JSZip } = await import("jszip");
               const zip = new JSZip();
               const used = new Map<string, number>();
               let ok = 0;
+              let failed = 0;
+              let bytes = 0;
               for (let i = 0; i < ids.length; i++) {
+                if (dlCancelRef.current) break;
                 const id = ids[i];
+                let currentName = `file-${id}`;
                 try {
                   const r = await signed({ data: { id } });
+                  currentName = r.name || currentName;
+                  setDl((s) => s && { ...s, currentName });
                   const resp = await fetch(r.url);
                   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                   const blob = await resp.blob();
-                  // De-duplicate filenames within the zip
                   let name = r.name || `file-${id}`;
                   if (used.has(name)) {
                     const n = (used.get(name) || 1) + 1;
@@ -318,16 +324,25 @@ function FilesPage() {
                   }
                   zip.file(name, blob);
                   ok++;
-                  toast.loading(`Đang đóng gói ${ok}/${ids.length} tệp...`, { id: toastId });
+                  bytes += blob.size;
                 } catch (e: any) {
-                  toast.error(`Lỗi tệp ${id}: ${e?.message || ""}`);
+                  failed++;
                 }
+                setDl((s) => s && { ...s, done: ok, failed, bytes, currentName });
               }
-              if (ok === 0) {
-                toast.error("Không tải được tệp nào", { id: toastId });
+              if (dlCancelRef.current) {
+                setDl((s) => s && { ...s, phase: "canceled", message: "Đã huỷ" });
+                toast.info(`Đã huỷ tải xuống (${ok}/${ids.length})`);
+                setTimeout(() => setDl(null), 3000);
                 return;
               }
-              toast.loading(`Đang tạo file ZIP...`, { id: toastId });
+              if (ok === 0) {
+                setDl((s) => s && { ...s, phase: "error", message: "Không tải được tệp nào" });
+                toast.error("Không tải được tệp nào");
+                setTimeout(() => setDl(null), 4000);
+                return;
+              }
+              setDl((s) => s && { ...s, phase: "zipping", currentName: undefined });
               const content = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
               const url = URL.createObjectURL(content);
               const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
@@ -335,11 +350,16 @@ function FilesPage() {
               a.href = url; a.download = `files-${stamp}.zip`; a.rel = "noopener";
               document.body.appendChild(a); a.click(); a.remove();
               setTimeout(() => URL.revokeObjectURL(url), 5000);
-              toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`, { id: toastId });
+              setDl((s) => s && { ...s, phase: "done", bytes: content.size, message: `Đã tải ZIP (${ok}/${ids.length})` });
+              toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`);
+              setTimeout(() => setDl(null), 4000);
             } catch (e: any) {
-              toast.error(e?.message || "Lỗi đóng gói ZIP", { id: toastId });
+              setDl((s) => s && { ...s, phase: "error", message: e?.message || "Lỗi đóng gói ZIP" });
+              toast.error(e?.message || "Lỗi đóng gói ZIP");
+              setTimeout(() => setDl(null), 5000);
             }
           }}
+
 
           onSoftDelete={() => {
             const ids = selectedActiveIds;
