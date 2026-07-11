@@ -13,6 +13,7 @@ import {
   listFiles, createFileRecord, softDeleteFile, restoreFile, hardDeleteFile,
   getFileSignedUrl, listFileFacets, bulkUpdateFiles, renameFolder, deleteFolder,
   renameTag, deleteTag, listFileAudit,
+  bulkSoftDeleteFiles, bulkRestoreFiles, bulkHardDeleteFiles, logBulkDownload,
 } from "@/lib/file.functions";
 import { listLeads } from "@/lib/lead.functions";
 import { toast } from "sonner";
