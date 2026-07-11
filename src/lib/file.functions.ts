@@ -27,6 +27,7 @@ export const listFiles = createServerFn({ method: "GET" })
       q?: string;
       folder?: string;
       tag?: string;
+      leadId?: string;
       includeDeleted?: boolean;
       page?: number;
       pageSize?: number;
@@ -49,6 +50,10 @@ export const listFiles = createServerFn({ method: "GET" })
     if (!data.includeDeleted) q = q.is("deleted_at", null);
     if (data.folder && data.folder !== "all") q = q.eq("folder", data.folder);
     if (data.tag && data.tag !== "all") q = q.eq("tag", data.tag);
+    if (data.leadId && data.leadId !== "all") {
+      if (data.leadId === "none") q = q.is("related_id", null);
+      else q = q.eq("related_type", "lead").eq("related_id", data.leadId);
+    }
     if (data.q) {
       const term = data.q.replace(/[%,]/g, " ").trim();
       if (term) q = q.ilike("name", `%${term}%`);
