@@ -1323,14 +1323,37 @@ function AuditDrawer({
               <button
                 onClick={() => {
                   setActionFilter("all"); setActorFilter("all"); setActorQuery("");
-                  setFromDate(""); setToDate("");
+                  setFromDate(""); setToDate(""); setSearchText("");
                 }}
                 className="h-8 px-2.5 rounded-md border border-border bg-card text-[12px] hover:bg-muted"
               >
                 Xoá bộ lọc
               </button>
             )}
-            <span className="ml-auto text-[12px] text-muted-foreground">{rows.length} bản ghi</span>
+            <span className="ml-auto text-[12px] text-muted-foreground">
+              {rows.length}{rows.length !== allRows.length ? `/${allRows.length}` : ""} bản ghi
+              {!reachedCap && " • cuộn để tải thêm"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="Tìm trong nhật ký (hành động, tên tệp, tóm tắt, id, diff)…"
+                className="h-8 pl-8 pr-2.5 rounded-md border border-border bg-card text-[12.5px] w-full"
+              />
+            </div>
+            {searchText && (
+              <button
+                onClick={() => setSearchText("")}
+                className="h-8 px-2.5 rounded-md border border-border bg-card text-[12px] hover:bg-muted"
+              >
+                Xoá
+              </button>
+            )}
           </div>
         </div>
 
