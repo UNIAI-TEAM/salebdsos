@@ -300,6 +300,8 @@ function FilesPage() {
             }
             dlCancelRef.current = false;
             setDl({ total: ids.length, done: 0, failed: 0, phase: "fetching", bytes: 0 });
+            // Log start of ZIP session so users can filter "Đang đóng gói" in the audit trail.
+            logBulkDlFn({ data: { tenantId, ids, phase: "zipping" } }).catch(() => {});
             try {
               const { default: JSZip } = await import("jszip");
               const zip = new JSZip();
@@ -338,14 +340,14 @@ function FilesPage() {
               if (dlCancelRef.current) {
                 setDl((s) => s && { ...s, phase: "canceled", message: "Đã huỷ" });
                 toast.info(`Đã huỷ tải xuống (${ok}/${ids.length})`);
-                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true } }).catch(() => {});
+                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, canceled: true, phase: "canceled" } }).catch(() => {});
                 setTimeout(() => setDl(null), 3000);
                 return;
               }
               if (ok === 0) {
                 setDl((s) => s && { ...s, phase: "error", message: "Không tải được tệp nào" });
                 toast.error("Không tải được tệp nào");
-                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes } }).catch(() => {});
+                logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes, phase: "error" } }).catch(() => {});
                 setTimeout(() => setDl(null), 4000);
                 return;
               }
@@ -359,11 +361,12 @@ function FilesPage() {
               setTimeout(() => URL.revokeObjectURL(url), 5000);
               setDl((s) => s && { ...s, phase: "done", bytes: content.size, message: `Đã tải ZIP (${ok}/${ids.length})` });
               toast.success(`Đã tải ZIP (${ok}/${ids.length} tệp)`);
-              logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size } }).catch(() => {});
+              logBulkDlFn({ data: { tenantId, ids, ok, failed, bytes: content.size, phase: "done" } }).catch(() => {});
               setTimeout(() => setDl(null), 4000);
             } catch (e: any) {
               setDl((s) => s && { ...s, phase: "error", message: e?.message || "Lỗi đóng gói ZIP" });
               toast.error(e?.message || "Lỗi đóng gói ZIP");
+              logBulkDlFn({ data: { tenantId, ids, phase: "error" } }).catch(() => {});
               setTimeout(() => setDl(null), 5000);
             }
           }}
