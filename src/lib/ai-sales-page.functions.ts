@@ -1,0 +1,188 @@
+// AI Sales Page — generation via Lovable AI + history CRUD
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+const SELECT =
+  "id,tenant_id,owner_user_id,lead_id,customer_id,project_id,title,audience,tone,cta,prompt,output,model,tokens,status,created_at,updated_at";
+
+export const TONES = ["professional", "friendly", "luxury", "urgent"] as const;
+export const TONE_LABEL_VI: Record<(typeof TONES)[number], string> = {
+  professional: "Chuyên nghiệp",
+  friendly: "Thân thiện",
+  luxury: "Sang trọng",
+  urgent: "Khẩn cấp",
+};
+
+export const listSalesPages = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { tenantId: string; leadId?: string; customerId?: string; page?: number; pageSize?: number }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const page = data.page ?? 1;
+    const pageSize = Math.min(data.pageSize ?? 20, 50);
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    let q = supabase
+      .from("ai_sales_pages")
+      .select(SELECT, { count: "exact" })
+      .eq("tenant_id", data.tenantId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .range(from, to);
+    if (data.leadId) q = q.eq("lead_id", data.leadId);
+    if (data.customerId) q = q.eq("customer_id", data.customerId);
+    const { data: items, error, count } = await q;
+    if (error) throw new Error(error.message);
+    return { items: items ?? [], total: count ?? 0, page, pageSize };
+  });
+
+export const getSalesPage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("ai_sales_pages")
+      .select(SELECT)
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const deleteSalesPage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("ai_sales_pages")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const GenerateSchema = z.object({
+  tenantId: z.string().uuid(),
+  leadId: z.string().uuid().optional().nullable(),
+  customerId: z.string().uuid().optional().nullable(),
+  projectId: z.string().uuid().optional().nullable(),
+  title: z.string().trim().max(200).optional(),
+  audience: z.string().trim().max(400).optional(),
+  tone: z.enum(TONES).default("professional"),
+  cta: z.string().trim().max(200).optional(),
+  extra: z.string().trim().max(2000).optional(),
+});
+
+export const generateSalesPage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => GenerateSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Hydrate lead / customer / project context
+    let leadCtx = "";
+    if (data.leadId) {
+      const { data: l } = await supabase
+        .from("leads")
+        .select("full_name,phone,email,source,status,need_type,budget,timeline,score,project_id")
+        .eq("id", data.leadId)
+        .maybeSingle();
+      if (l) {
+        leadCtx = `Khách hàng tiềm năng: ${l.full_name || "?"}. Nguồn: ${l.source || "?"}. Nhu cầu: ${l.need_type || "?"}. Ngân sách: ${l.budget || "?"}. Thời gian: ${l.timeline || "?"}. Điểm AI: ${l.score ?? "?"}.`;
+        if (!data.projectId && l.project_id) data.projectId = l.project_id;
+      }
+    }
+    if (!leadCtx && data.customerId) {
+      const { data: c } = await supabase
+        .from("customers")
+        .select("full_name,phone,email,tags,notes")
+        .eq("id", data.customerId)
+        .maybeSingle();
+      if (c) leadCtx = `Khách hàng: ${c.full_name || "?"}. Tags: ${(c.tags || []).join(", ")}. Ghi chú: ${c.notes || "?"}.`;
+    }
+    let projectCtx = "";
+    if (data.projectId) {
+      const { data: p } = await supabase
+        .from("projects")
+        .select("name,location,city,description,price_from,price_to,currency,unit_highlights")
+        .eq("id", data.projectId)
+        .maybeSingle();
+      if (p) {
+        const price = p.price_from || p.price_to ? `${p.price_from ?? "?"} - ${p.price_to ?? "?"} ${p.currency || ""}` : "?";
+        const hl = Array.isArray(p.unit_highlights) ? p.unit_highlights.join("; ") : "";
+        projectCtx = `Dự án: ${p.name}. Vị trí: ${p.location || p.city || "?"}. Giá: ${price}. Mô tả: ${p.description || "?"}. Điểm nhấn: ${hl}.`;
+      }
+    }
+
+    const toneLabel = TONE_LABEL_VI[data.tone];
+    const prompt = `Bạn là copywriter bất động sản. Viết nội dung LANDING PAGE bán hàng cá nhân hoá bằng tiếng Việt, giọng ${toneLabel}.
+${leadCtx}
+${projectCtx}
+${data.audience ? `Đối tượng: ${data.audience}.` : ""}
+${data.cta ? `CTA mong muốn: ${data.cta}.` : ""}
+${data.extra ? `Yêu cầu thêm: ${data.extra}.` : ""}
+
+Trả về JSON với các trường:
+- headline: tiêu đề chính, ngắn gọn có cảm xúc
+- subheadline: 1 câu mô tả
+- benefits: mảng 3-5 lợi ích (mỗi cái 1 câu)
+- offer: chuỗi mô tả ưu đãi giới hạn
+- social_proof: 1 câu chứng thực xã hội
+- cta_primary: nút CTA chính
+- cta_secondary: nút CTA phụ
+- form_intro: 1 câu mời để lại thông tin
+Chỉ trả về JSON hợp lệ, không kèm chú thích.`;
+
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) throw new Error("AI Gateway chưa được cấu hình.");
+
+    const model = "google/gemini-2.5-flash";
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (res.status === 429) throw new Error("Vượt giới hạn AI, thử lại sau ít phút.");
+    if (res.status === 402) throw new Error("Hết credit AI. Vui lòng nạp thêm.");
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(`AI lỗi: ${res.status} ${t}`);
+    }
+    const json = await res.json();
+    const text: string = json.choices?.[0]?.message?.content || "{}";
+    let output: any;
+    try {
+      output = JSON.parse(text);
+    } catch {
+      output = { headline: "", subheadline: "", benefits: [], raw: text };
+    }
+    const tokens: number | null = json.usage?.total_tokens ?? null;
+
+    const { data: row, error } = await supabase
+      .from("ai_sales_pages")
+      .insert({
+        tenant_id: data.tenantId,
+        owner_user_id: userId,
+        lead_id: data.leadId ?? null,
+        customer_id: data.customerId ?? null,
+        project_id: data.projectId ?? null,
+        title: data.title || output?.headline || "AI Sales Page",
+        audience: data.audience ?? null,
+        tone: data.tone,
+        cta: data.cta ?? null,
+        prompt,
+        output,
+        model,
+        tokens,
+        status: "generated",
+      })
+      .select(SELECT)
+      .single();
+    if (error) throw new Error(error.message);
+    return { ok: true, page: row };
+  });

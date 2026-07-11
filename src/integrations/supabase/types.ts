@@ -147,6 +147,69 @@ export type Database = {
           },
         ]
       }
+      ai_sales_pages: {
+        Row: {
+          audience: string | null
+          created_at: string
+          cta: string | null
+          customer_id: string | null
+          deleted_at: string | null
+          id: string
+          lead_id: string | null
+          model: string | null
+          output: Json | null
+          owner_user_id: string | null
+          project_id: string | null
+          prompt: string | null
+          status: string
+          tenant_id: string
+          title: string | null
+          tokens: number | null
+          tone: string | null
+          updated_at: string
+        }
+        Insert: {
+          audience?: string | null
+          created_at?: string
+          cta?: string | null
+          customer_id?: string | null
+          deleted_at?: string | null
+          id?: string
+          lead_id?: string | null
+          model?: string | null
+          output?: Json | null
+          owner_user_id?: string | null
+          project_id?: string | null
+          prompt?: string | null
+          status?: string
+          tenant_id: string
+          title?: string | null
+          tokens?: number | null
+          tone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audience?: string | null
+          created_at?: string
+          cta?: string | null
+          customer_id?: string | null
+          deleted_at?: string | null
+          id?: string
+          lead_id?: string | null
+          model?: string | null
+          output?: Json | null
+          owner_user_id?: string | null
+          project_id?: string | null
+          prompt?: string | null
+          status?: string
+          tenant_id?: string
+          title?: string | null
+          tokens?: number | null
+          tone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       analytics_daily: {
         Row: {
           card_id: string
