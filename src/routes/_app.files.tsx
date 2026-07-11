@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Upload, Download, Trash2, RotateCcw, Search, Folder, FileText, RefreshCw, X, Tag,
+  Upload, Download, Trash2, RotateCcw, Search, Folder, FileText, RefreshCw, X, Tag, User,
 } from "lucide-react";
 import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,6 +12,7 @@ import {
   listFiles, createFileRecord, softDeleteFile, restoreFile, hardDeleteFile,
   getFileSignedUrl, listFileFacets,
 } from "@/lib/file.functions";
+import { listLeads } from "@/lib/lead.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/files")({ component: FilesPage });
@@ -34,6 +35,7 @@ function FilesPage() {
 
   const [q, setQ] = useState("");
   const [folder, setFolder] = useState<string>("all");
+  const [leadId, setLeadId] = useState<string>("all");
   const [includeDeleted, setIncludeDeleted] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
@@ -44,11 +46,12 @@ function FilesPage() {
   const restore = useServerFn(restoreFile);
   const hardDel = useServerFn(hardDeleteFile);
   const signed = useServerFn(getFileSignedUrl);
+  const leadsFn = useServerFn(listLeads);
 
   const listQ = useQuery({
-    queryKey: ["files", tenantId, q, folder, includeDeleted],
+    queryKey: ["files", tenantId, q, folder, leadId, includeDeleted],
     queryFn: () =>
-      list({ data: { tenantId, q: q || undefined, folder, includeDeleted, page: 1, pageSize: 200 } }),
+      list({ data: { tenantId, q: q || undefined, folder, leadId, includeDeleted, page: 1, pageSize: 200 } }),
     enabled: !!tenantId,
   });
   const facetQ = useQuery({
@@ -56,6 +59,17 @@ function FilesPage() {
     queryFn: () => facets({ data: { tenantId } }),
     enabled: !!tenantId,
   });
+  const leadsQ = useQuery({
+    queryKey: ["files-leads", tenantId],
+    queryFn: () => leadsFn({ data: { tenantId, page: 1, pageSize: 100 } }),
+    enabled: !!tenantId,
+  });
+  const leads = (leadsQ.data?.rows ?? []) as Array<{ id: string; full_name: string | null; phone: string | null }>;
+  const leadMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const l of leads) m.set(l.id, l.full_name || l.phone || "Khách hàng");
+    return m;
+  }, [leads]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["files", tenantId] });
@@ -93,11 +107,12 @@ function FilesPage() {
     }
   };
 
-  const doUpload = async (file: File, meta: { folder: string; tag: string }) => {
+  const doUpload = async (file: File, meta: { folder: string; tag: string; leadId: string }) => {
     if (!tenantId) throw new Error("Chưa chọn workspace");
     if (file.size > MAX_SIZE) throw new Error(`Tệp vượt ${humanSize(MAX_SIZE)}`);
     const safeName = file.name.replace(/[^\w.\-]+/g, "_");
-    const path = `${tenantId}/${Date.now()}_${safeName}`;
+    const scope = meta.leadId ? `leads/${meta.leadId}` : "shared";
+    const path = `${tenantId}/${scope}/${Date.now()}_${safeName}`;
     const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
       cacheControl: "3600",
       upsert: false,
@@ -114,6 +129,8 @@ function FilesPage() {
         mime: file.type || null,
         folder: meta.folder || null,
         tag: meta.tag || null,
+        related_type: meta.leadId ? "lead" : null,
+        related_id: meta.leadId || null,
       } as any,
     });
   };
@@ -178,7 +195,7 @@ function FilesPage() {
       <SectionCard
         title={includeDeleted ? "Danh sách tệp (gồm thùng rác)" : "Danh sách tệp"}
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="relative">
               <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -188,6 +205,18 @@ function FilesPage() {
                 className="h-8 pl-7 pr-3 rounded-md border border-border bg-card text-[12.5px] w-64 focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
+            <select
+              value={leadId}
+              onChange={(e) => setLeadId(e.target.value)}
+              className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px] max-w-[220px]"
+              title="Lọc theo khách hàng"
+            >
+              <option value="all">Tất cả khách hàng</option>
+              <option value="none">Không gắn khách hàng</option>
+              {leads.map((l) => (
+                <option key={l.id} value={l.id}>{l.full_name || l.phone || "Khách hàng"}</option>
+              ))}
+            </select>
             <label className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground cursor-pointer">
               <input
                 type="checkbox"
@@ -204,6 +233,7 @@ function FilesPage() {
             <thead className="bg-muted/50 text-muted-foreground">
               <tr className="text-left">
                 <th className="px-4 py-2.5 font-medium">Tên tệp</th>
+                <th className="px-3 py-2.5 font-medium">Khách hàng</th>
                 <th className="px-3 py-2.5 font-medium">Thư mục</th>
                 <th className="px-3 py-2.5 font-medium">Nhãn</th>
                 <th className="px-3 py-2.5 font-medium text-right">Kích thước</th>
@@ -213,10 +243,10 @@ function FilesPage() {
             </thead>
             <tbody className="divide-y divide-border bg-card">
               {listQ.isLoading && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Đang tải...</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">Đang tải...</td></tr>
               )}
               {!listQ.isLoading && items.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Chưa có tệp nào. Bấm "Tải lên" để bắt đầu.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">Chưa có tệp nào. Bấm "Tải lên" để bắt đầu.</td></tr>
               )}
               {items.map((f: any) => {
                 const isDeleted = !!f.deleted_at;
@@ -228,6 +258,14 @@ function FilesPage() {
                         <div className="font-medium text-foreground truncate max-w-[320px]" title={f.name}>{f.name}</div>
                       </div>
                       {f.mime && <div className="text-[11px] text-muted-foreground mt-0.5 ml-6">{f.mime}</div>}
+                    </td>
+                    <td className="px-3 py-3 text-[12.5px]">
+                      {f.related_type === "lead" && f.related_id ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11.5px] font-medium bg-indigo-50 text-indigo-700 max-w-[180px]">
+                          <User className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{leadMap.get(f.related_id) ?? "Khách hàng"}</span>
+                        </span>
+                      ) : <span className="text-muted-foreground text-[12px]">—</span>}
                     </td>
                     <td className="px-3 py-3 text-[12.5px] text-muted-foreground">{f.folder ?? "—"}</td>
                     <td className="px-3 py-3">
@@ -291,6 +329,8 @@ function FilesPage() {
       {uploadOpen && (
         <UploadDialog
           folderList={folderList}
+          leads={leads}
+          defaultLeadId={leadId !== "all" && leadId !== "none" ? leadId : ""}
           onClose={() => setUploadOpen(false)}
           onUpload={async (file, meta) => {
             await doUpload(file, meta);
@@ -322,15 +362,18 @@ function FolderChip({
 }
 
 function UploadDialog({
-  folderList, onClose, onUpload,
+  folderList, leads, defaultLeadId, onClose, onUpload,
 }: {
   folderList: string[];
+  leads: Array<{ id: string; full_name: string | null; phone: string | null }>;
+  defaultLeadId: string;
   onClose: () => void;
-  onUpload: (file: File, meta: { folder: string; tag: string }) => Promise<void>;
+  onUpload: (file: File, meta: { folder: string; tag: string; leadId: string }) => Promise<void>;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [folder, setFolder] = useState<string>(folderList[0] ?? "");
   const [tag, setTag] = useState("");
+  const [leadId, setLeadId] = useState<string>(defaultLeadId);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -339,7 +382,7 @@ function UploadDialog({
     if (!file) { toast.error("Vui lòng chọn tệp"); return; }
     setBusy(true);
     try {
-      await onUpload(file, { folder, tag: tag.trim() });
+      await onUpload(file, { folder, tag: tag.trim(), leadId });
       toast.success("Tải lên thành công");
       onClose();
     } catch (e: any) {
@@ -389,6 +432,22 @@ function UploadDialog({
               className="hidden"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
+          </div>
+
+          <div>
+            <div className="text-[11.5px] font-semibold text-muted-foreground mb-1">Khách hàng liên quan (tuỳ chọn)</div>
+            <select
+              value={leadId}
+              onChange={(e) => setLeadId(e.target.value)}
+              className="w-full h-9 px-3 rounded-lg border border-border bg-card text-[13px]"
+            >
+              <option value="">— Không gắn khách hàng —</option>
+              {leads.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {(l.full_name || "Khách hàng")}{l.phone ? ` · ${l.phone}` : ""}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
