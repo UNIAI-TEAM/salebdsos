@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/app/ui";
 import {
   Radio, Wifi, Smartphone, Laptop, Tablet, Watch, RefreshCw, Settings2, Shield,
   Check, X, Clock, Send, Inbox, BadgeCheck, Eye, EyeOff, Users2,
-  AlertCircle, IdCard, Trash2, ExternalLink, Copy, Ruler, StickyNote, User2,
+  AlertCircle, IdCard, Trash2, ExternalLink, Copy, Ruler, StickyNote, User2, RotateCw,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -193,6 +193,31 @@ function AirdropPage() {
   const removeHistory = async (id: string) => {
     try { await remove({ data: { id } }); refresh(); }
     catch { toast.error("Không xoá được"); }
+  };
+
+  const isToday = (iso: string) => {
+    const d = new Date(iso); const n = new Date();
+    return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+  };
+
+  const canResend = (h: ShareRow) =>
+    h.direction === "sent" && h.status !== "delivered" && isToday(h.created_at);
+
+  const resendShare = (h: ShareRow) => {
+    // Tái tạo Device từ bản ghi lịch sử để dùng lại luồng gửi (animation + lưu bản ghi mới)
+    const tone =
+      DEVICES.find((x) => x.name === h.device_name)?.tone
+      ?? "from-slate-400 to-slate-600";
+    const device: Device = {
+      id: `resend-${h.id}`,
+      name: h.device_name,
+      owner: h.recipient_name ?? h.device_name,
+      kind: h.device_kind,
+      distance: h.distance_m != null ? `${h.distance_m} m` : "—",
+      tone,
+    };
+    sendTo(device);
+    toast.success("Đang gửi lại danh thiếp…");
   };
 
   return (
@@ -417,6 +442,14 @@ function AirdropPage() {
                       ) : (
                         <span className="text-[11px] font-semibold text-slate-500">{h.status}</span>
                       )}
+                      {canResend(h) && (
+                        <span onClick={(e) => { e.stopPropagation(); resendShare(h); }}
+                          role="button" tabIndex={0}
+                          title="Gửi lại"
+                          className="h-7 px-2 grid place-items-center rounded-lg text-primary hover:bg-primary-soft transition inline-flex items-center gap-1 text-[11px] font-semibold">
+                          <RotateCw className="h-3.5 w-3.5" /> Gửi lại
+                        </span>
+                      )}
                       <span onClick={(e) => { e.stopPropagation(); removeHistory(h.id); }}
                         role="button" tabIndex={0}
                         className="opacity-0 group-hover:opacity-100 h-7 w-7 grid place-items-center rounded-lg text-muted-foreground hover:bg-muted transition">
@@ -439,18 +472,22 @@ function AirdropPage() {
         })()}
         onClose={() => setDetailId(null)}
         onDelete={async (id) => { await removeHistory(id); setDetailId(null); }}
+        onResend={(h) => { resendShare(h); setDetailId(null); }}
+        canResend={(h) => canResend(h)}
       />
     </div>
   );
 }
 
 function ShareDetailDrawer({
-  share, card, onClose, onDelete,
+  share, card, onClose, onDelete, onResend, canResend,
 }: {
   share: ShareRow | null;
   card: NonNullable<CardBrief> | null;
   onClose: () => void;
   onDelete: (id: string) => void;
+  onResend: (h: ShareRow) => void;
+  canResend: (h: ShareRow) => boolean;
 }) {
   if (!share) return null;
   const Icon = DEVICE_ICON[share.device_kind];
@@ -585,14 +622,22 @@ function ShareDetailDrawer({
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-border flex items-center justify-between">
+        <div className="px-5 py-3 border-t border-border flex items-center justify-between gap-2">
           <button onClick={() => onDelete(share.id)}
             className="h-9 px-3 rounded-xl text-[12.5px] font-semibold text-rose-600 hover:bg-rose-50 inline-flex items-center gap-1.5">
             <Trash2 className="h-3.5 w-3.5" /> Xoá lịch sử
           </button>
-          <button onClick={onClose} className="h-9 px-3 rounded-xl border border-border text-[12.5px] font-semibold hover:bg-muted/40">
-            Đóng
-          </button>
+          <div className="flex items-center gap-2">
+            {canResend(share) && (
+              <button onClick={() => onResend(share)}
+                className="h-9 px-3 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-semibold hover:bg-primary/90 inline-flex items-center gap-1.5 shadow-soft">
+                <RotateCw className="h-3.5 w-3.5" /> Gửi lại
+              </button>
+            )}
+            <button onClick={onClose} className="h-9 px-3 rounded-xl border border-border text-[12.5px] font-semibold hover:bg-muted/40">
+              Đóng
+            </button>
+          </div>
         </div>
       </aside>
     </div>
