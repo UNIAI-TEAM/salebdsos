@@ -161,7 +161,11 @@ function FilesPage() {
     return Array.from(all);
   }, [folders]);
   const tagList = useMemo(() => Object.keys(tagsCounts).sort(), [tagsCounts]);
-  const visibleIds = useMemo(() => items.filter((f: any) => !f.deleted_at).map((f: any) => f.id as string), [items]);
+  const visibleIds = useMemo(() => items.map((f: any) => f.id as string), [items]);
+  const deletedIdSet = useMemo(() => new Set(items.filter((f: any) => !!f.deleted_at).map((f: any) => f.id as string)), [items]);
+  const selectedIds = useMemo(() => Array.from(selected), [selected]);
+  const selectedActiveIds = useMemo(() => selectedIds.filter((id) => !deletedIdSet.has(id)), [selectedIds, deletedIdSet]);
+  const selectedDeletedIds = useMemo(() => selectedIds.filter((id) => deletedIdSet.has(id)), [selectedIds, deletedIdSet]);
   const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
   const toggleAll = () => {
     setSelected((prev) => {
@@ -246,16 +250,46 @@ function FilesPage() {
       {selected.size > 0 && (
         <BulkToolbar
           count={selected.size}
+          activeCount={selectedActiveIds.length}
+          deletedCount={selectedDeletedIds.length}
           folders={folderList}
           tags={tagList}
           busy={bulkM.isPending}
           onClear={() => setSelected(new Set())}
-          onApplyFolder={(f: string) => bulkM.mutate({ ids: Array.from(selected), folder: f || null })}
-          onApplyTag={(t: string) => bulkM.mutate({ ids: Array.from(selected), tag: t || null })}
+          onApplyFolder={(f: string) => bulkM.mutate({ ids: selectedActiveIds, folder: f || null })}
+          onApplyTag={(t: string) => bulkM.mutate({ ids: selectedActiveIds, tag: t || null })}
+          onDownload={async () => {
+            const ids = selectedActiveIds;
+            if (ids.length === 0) return;
+            toast.info(`Đang chuẩn bị ${ids.length} tệp...`);
+            let ok = 0;
+            for (const id of ids) {
+              try {
+                const r = await signed({ data: { id } });
+                const a = document.createElement("a");
+                a.href = r.url; a.download = r.name; a.rel = "noopener";
+                document.body.appendChild(a); a.click(); a.remove();
+                ok++;
+                await new Promise((res) => setTimeout(res, 250));
+              } catch (e: any) {
+                toast.error(`Lỗi tải ${id}: ${e?.message || ""}`);
+              }
+            }
+            toast.success(`Đã tải ${ok}/${ids.length} tệp`);
+          }}
           onSoftDelete={() => {
-            if (!confirm(`Chuyển ${selected.size} tệp vào thùng rác?`)) return;
-            Promise.all(Array.from(selected).map((id) => softDel({ data: { id } })))
-              .then(() => { toast.success(`Đã chuyển ${selected.size} tệp vào thùng rác`); setSelected(new Set()); invalidate(); })
+            const ids = selectedActiveIds;
+            if (ids.length === 0) return;
+            if (!confirm(`Chuyển ${ids.length} tệp vào thùng rác?`)) return;
+            Promise.all(ids.map((id) => softDel({ data: { id } })))
+              .then(() => { toast.success(`Đã chuyển ${ids.length} tệp vào thùng rác`); setSelected(new Set()); invalidate(); })
+              .catch((e: any) => toast.error(e?.message || "Lỗi"));
+          }}
+          onRestore={() => {
+            const ids = selectedDeletedIds;
+            if (ids.length === 0) return;
+            Promise.all(ids.map((id) => restore({ data: { id } })))
+              .then(() => { toast.success(`Đã khôi phục ${ids.length} tệp`); setSelected(new Set()); invalidate(); })
               .catch((e: any) => toast.error(e?.message || "Lỗi"));
           }}
         />
@@ -328,11 +362,9 @@ function FilesPage() {
                 return (
                   <tr key={f.id} className={["hover:bg-muted/40", isDeleted && "opacity-60", isSel && "bg-primary-soft/30"].filter(Boolean).join(" ")}>
                     <td className="px-3 py-3">
-                      {!isDeleted && (
-                        <button onClick={() => toggleOne(f.id)} className="text-muted-foreground hover:text-primary">
-                          {isSel ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
-                        </button>
-                      )}
+                      <button onClick={() => toggleOne(f.id)} className="text-muted-foreground hover:text-primary">
+                        {isSel ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4" />}
+                      </button>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -455,31 +487,38 @@ function TagPill({
 }
 
 function BulkToolbar({
-  count, folders, tags, busy, onClear, onApplyFolder, onApplyTag, onSoftDelete,
+  count, activeCount, deletedCount, folders, tags, busy, onClear, onApplyFolder, onApplyTag, onDownload, onSoftDelete, onRestore,
 }: {
   count: number;
+  activeCount: number;
+  deletedCount: number;
   folders: string[];
   tags: string[];
   busy: boolean;
   onClear: () => void;
   onApplyFolder: (f: string) => void;
   onApplyTag: (t: string) => void;
+  onDownload: () => void;
   onSoftDelete: () => void;
+  onRestore: () => void;
 }) {
   const [f, setF] = useState("");
   const [t, setT] = useState("");
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary-soft/50 px-3 py-2">
-      <div className="text-[12.5px] font-semibold text-primary">Đã chọn {count} tệp</div>
+      <div className="text-[12.5px] font-semibold text-primary">
+        Đã chọn {count} tệp
+        {deletedCount > 0 && <span className="text-muted-foreground font-normal"> · {activeCount} thường / {deletedCount} thùng rác</span>}
+      </div>
       <div className="mx-2 h-4 w-px bg-border" />
       <FolderInput className="h-3.5 w-3.5 text-muted-foreground" />
-      <select value={f} onChange={(e) => setF(e.target.value)} className="h-7 px-2 rounded-md border border-border bg-card text-[12px]">
+      <select value={f} onChange={(e) => setF(e.target.value)} className="h-7 px-2 rounded-md border border-border bg-card text-[12px]" disabled={activeCount === 0}>
         <option value="">— Chọn thư mục —</option>
         <option value="__none__">(Bỏ thư mục)</option>
         {folders.map((x) => <option key={x} value={x}>{x}</option>)}
       </select>
       <button
-        disabled={busy || !f}
+        disabled={busy || !f || activeCount === 0}
         onClick={() => onApplyFolder(f === "__none__" ? "" : f)}
         className="h-7 px-2.5 rounded-md bg-card border border-border text-[12px] font-medium hover:bg-muted disabled:opacity-50"
       >Áp dụng</button>
@@ -490,20 +529,33 @@ function BulkToolbar({
         onChange={(e) => setT(e.target.value)}
         placeholder="Nhãn"
         list="bulk-tag-list"
-        className="h-7 px-2 rounded-md border border-border bg-card text-[12px] w-32"
+        disabled={activeCount === 0}
+        className="h-7 px-2 rounded-md border border-border bg-card text-[12px] w-32 disabled:opacity-50"
       />
       <datalist id="bulk-tag-list">
         {tags.map((x) => <option key={x} value={x} />)}
       </datalist>
       <button
-        disabled={busy}
+        disabled={busy || activeCount === 0}
         onClick={() => onApplyTag(t.trim())}
         className="h-7 px-2.5 rounded-md bg-card border border-border text-[12px] font-medium hover:bg-muted disabled:opacity-50"
       >Áp nhãn</button>
       <div className="ml-auto flex items-center gap-2">
-        <button onClick={onSoftDelete} className="h-7 px-2.5 rounded-md text-[12px] font-medium text-red-600 hover:bg-red-50 inline-flex items-center gap-1">
-          <Trash2 className="h-3.5 w-3.5" /> Xoá
-        </button>
+        {activeCount > 0 && (
+          <button onClick={onDownload} disabled={busy} className="h-7 px-2.5 rounded-md text-[12px] font-medium text-primary hover:bg-primary-soft inline-flex items-center gap-1 disabled:opacity-50">
+            <Download className="h-3.5 w-3.5" /> Tải xuống ({activeCount})
+          </button>
+        )}
+        {deletedCount > 0 && (
+          <button onClick={onRestore} disabled={busy} className="h-7 px-2.5 rounded-md text-[12px] font-medium text-emerald-600 hover:bg-emerald-50 inline-flex items-center gap-1 disabled:opacity-50">
+            <RotateCcw className="h-3.5 w-3.5" /> Khôi phục ({deletedCount})
+          </button>
+        )}
+        {activeCount > 0 && (
+          <button onClick={onSoftDelete} disabled={busy} className="h-7 px-2.5 rounded-md text-[12px] font-medium text-red-600 hover:bg-red-50 inline-flex items-center gap-1 disabled:opacity-50">
+            <Trash2 className="h-3.5 w-3.5" /> Xoá ({activeCount})
+          </button>
+        )}
         <button onClick={onClear} className="h-7 px-2 rounded-md text-[12px] text-muted-foreground hover:bg-muted">Bỏ chọn</button>
       </div>
     </div>
