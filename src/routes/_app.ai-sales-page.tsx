@@ -101,7 +101,7 @@ function AISalesPage() {
                 className="w-full h-10 rounded-lg border border-border bg-card px-3 text-[13px]"
               >
                 <option value="">— Không gắn lead —</option>
-                {(leadsQ.data?.items ?? []).map((l: any) => (
+                {(leadsQ.data?.rows ?? []).map((l: any) => (
                   <option key={l.id} value={l.id}>
                     {l.full_name || l.phone || l.email || l.id.slice(0, 8)}
                   </option>
