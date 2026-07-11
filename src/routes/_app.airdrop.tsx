@@ -201,8 +201,8 @@ function AirdropPage() {
 
             <div className="px-6 pb-5 grid grid-cols-3 gap-3 text-center text-[11.5px]">
               <Stat label="Phát hiện" value={DEVICES.length.toString()} />
-              <Stat label="Đã gửi hôm nay" value="12" />
-              <Stat label="Tỷ lệ nhận" value="92%" />
+              <Stat label="Đã gửi hôm nay" value={stats.sent.toString()} />
+              <Stat label="Tỷ lệ nhận" value={`${stats.rate}%`} />
             </div>
           </div>
 
