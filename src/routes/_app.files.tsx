@@ -1051,6 +1051,89 @@ function exportAuditRowsToCsv(rows: any[], fileMap: Map<string, string>, title: 
   URL.revokeObjectURL(url);
 }
 
+type AuditDetailItem = { id?: string; name: string; status: string; tone: string };
+type AuditDetails = { info?: string; items: AuditDetailItem[] };
+
+function buildAuditDetails(r: any, fileMap: Map<string, string>): AuditDetails {
+  const diff = r?.diff ?? {};
+  const ids: string[] = Array.isArray(diff.ids) ? diff.ids : [];
+  const names: string[] = Array.isArray(diff.names) ? diff.names : [];
+  const nameFor = (id: string, i: number) =>
+    names[i] || fileMap.get(id) || "(tệp không còn tồn tại)";
+
+  const OK = { status: "OK", tone: "bg-emerald-50 text-emerald-700" };
+  const DELETED = { status: "Đã xoá", tone: "bg-rose-50 text-rose-700" };
+  const RESTORED = { status: "Khôi phục", tone: "bg-emerald-50 text-emerald-700" };
+  const HARD = { status: "Xoá vĩnh viễn", tone: "bg-rose-100 text-rose-800" };
+  const REQ = { status: "Yêu cầu", tone: "bg-blue-50 text-blue-700" };
+  const UNK = { status: "—", tone: "bg-muted text-foreground" };
+
+  const map = (badge: { status: string; tone: string }) =>
+    ids.map((id, i) => ({ id, name: nameFor(id, i), status: badge.status, tone: badge.tone }));
+
+  switch (r?.action) {
+    case "file.bulk_soft_delete":
+      return { items: map(DELETED) };
+    case "file.bulk_restore":
+      return { items: map(RESTORED) };
+    case "file.bulk_hard_delete":
+      return { items: map(HARD) };
+    case "file.bulk_update":
+      return {
+        info: `Áp dụng: ${JSON.stringify(diff.patch ?? {})}`,
+        items: map(OK),
+      };
+    case "file.bulk_download": {
+      const info = [
+        `${diff.ok ?? 0}/${diff.requested ?? ids.length} thành công`,
+        diff.failed ? `${diff.failed} lỗi` : null,
+        diff.bytes ? `${(Number(diff.bytes) / 1024 / 1024).toFixed(1)} MB` : null,
+        diff.canceled ? "đã huỷ" : null,
+      ].filter(Boolean).join(" · ");
+      return { info, items: map(REQ) };
+    }
+    case "folder.rename":
+    case "tag.rename":
+      return {
+        info: `${diff.from ?? "?"} → ${diff.to ?? "?"} · ${diff.affected ?? 0} tệp bị ảnh hưởng`,
+        items: [],
+      };
+    case "folder.delete":
+      return {
+        info: `Xoá thư mục ${diff.folder ?? ""}${diff.moveTo ? ` → ${diff.moveTo}` : ""} · ${diff.affected ?? 0} tệp`,
+        items: [],
+      };
+    case "tag.delete":
+      return { info: `Xoá nhãn ${diff.tag ?? ""} · ${diff.affected ?? 0} tệp`, items: [] };
+    case "file.upload":
+    case "file.download":
+    case "file.soft_delete":
+    case "file.restore":
+    case "file.hard_delete": {
+      const id = r?.entity_id;
+      const name = diff.name || (id ? fileMap.get(id) : null) || "(tệp)";
+      const badge =
+        r.action === "file.soft_delete" ? DELETED :
+        r.action === "file.hard_delete" ? HARD :
+        r.action === "file.restore" ? RESTORED : OK;
+      return { items: id ? [{ id, name, status: badge.status, tone: badge.tone }] : [] };
+    }
+    case "file.update": {
+      const id = r?.entity_id;
+      const before = diff.before ?? {}; const after = diff.after ?? {};
+      const changed = Object.keys(after).filter((k) => before[k] !== after[k]);
+      return {
+        info: changed.length ? `Thay đổi: ${changed.join(", ")}` : undefined,
+        items: id ? [{ id, name: fileMap.get(id) ?? "(tệp)", status: OK.status, tone: OK.tone }] : [],
+      };
+    }
+    default:
+      return { items: [] };
+  }
+}
+
+
+
 
 
 function AuditDrawer({
