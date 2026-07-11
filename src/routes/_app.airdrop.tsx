@@ -12,6 +12,7 @@ import {
   listAirdropShares, airdropStats, createAirdropShare, deleteAirdropShare, getAirdropCards,
 } from "@/lib/airdrop.functions";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_app/airdrop")({ component: AirdropPage });
 
