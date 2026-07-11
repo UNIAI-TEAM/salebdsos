@@ -1347,11 +1347,23 @@ function AuditDrawer({
               onChange={(e) => setToDate(e.target.value)}
               className="h-8 px-2 rounded-md border border-border bg-card text-[12.5px]"
             />
+            <select
+              value={zipPhaseFilter}
+              onChange={(e) => setZipPhaseFilter(e.target.value as "all" | ZipPhase)}
+              className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px]"
+              title="Trạng thái ZIP"
+            >
+              <option value="all">Tất cả trạng thái ZIP</option>
+              <option value="zipping">ZIP: Đang đóng gói</option>
+              <option value="done">ZIP: Hoàn tất</option>
+              <option value="canceled">ZIP: Đã huỷ</option>
+              <option value="error">ZIP: Lỗi</option>
+            </select>
             {hasFilters && (
               <button
                 onClick={() => {
                   setActionFilter("all"); setActorFilter("all"); setActorQuery("");
-                  setFromDate(""); setToDate(""); setSearchText("");
+                  setFromDate(""); setToDate(""); setSearchText(""); setZipPhaseFilter("all");
                 }}
                 className="h-8 px-2.5 rounded-md border border-border bg-card text-[12px] hover:bg-muted"
               >
