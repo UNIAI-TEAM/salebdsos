@@ -71,6 +71,10 @@ function FilesPage() {
   const deleteFolderFn = useServerFn(deleteFolder);
   const renameTagFn = useServerFn(renameTag);
   const deleteTagFn = useServerFn(deleteTag);
+  const bulkSoftDelFn = useServerFn(bulkSoftDeleteFiles);
+  const bulkRestoreFn = useServerFn(bulkRestoreFiles);
+  const bulkHardDelFn = useServerFn(bulkHardDeleteFiles);
+  const logBulkDlFn = useServerFn(logBulkDownload);
 
   const listQ = useQuery({
     queryKey: ["files", tenantId, q, folder, tagF, leadId, scope],
