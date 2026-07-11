@@ -353,7 +353,7 @@ function Dashboard() {
                   <div className="h-full grid place-items-center text-[12px] text-muted-foreground">Đang tải…</div>
                 ) : (
                   <ResponsiveContainer>
-                    <BarChart data={daily.slice(-14).map((d) => ({ day: d.day.slice(5), nfc: d.nfc, qr: d.qr }))} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
+                    <BarChart data={daily.slice(-14).map((d: any) => ({ day: d.day.slice(5), nfc: d.nfc ?? 0, qr: d.qr ?? 0 }))} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
                       <CartesianGrid stroke="oklch(0.93 0.008 265)" vertical={false} />
                       <XAxis dataKey="day" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
