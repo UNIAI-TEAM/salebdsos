@@ -647,6 +647,12 @@ function BulkToolbar({
             <RotateCcw className="h-3.5 w-3.5" /> Khôi phục ({deletedCount})
           </button>
         )}
+        {deletedCount > 0 && (
+          <button onClick={onHardDelete} disabled={busy} className="h-7 px-2.5 rounded-md text-[12px] font-semibold text-white bg-red-600 hover:bg-red-700 inline-flex items-center gap-1 disabled:opacity-50">
+            <Trash2 className="h-3.5 w-3.5" /> Xoá vĩnh viễn ({deletedCount})
+          </button>
+        )}
+
         {activeCount > 0 && (
           <button onClick={onSoftDelete} disabled={busy} className="h-7 px-2.5 rounded-md text-[12px] font-medium text-red-600 hover:bg-red-50 inline-flex items-center gap-1 disabled:opacity-50">
             <Trash2 className="h-3.5 w-3.5" /> Xoá ({activeCount})
