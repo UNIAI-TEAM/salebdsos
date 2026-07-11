@@ -1424,6 +1424,14 @@ function AuditDrawer({
                       <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${meta.tone}`}>
                         {meta.label}
                       </span>
+                      {r.action === "file.bulk_download" && (() => {
+                        const zp = ZIP_PHASE_META[getZipPhase(r.diff)];
+                        return (
+                          <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${zp.tone}`}>
+                            {zp.label}
+                          </span>
+                        );
+                      })()}
                       <div className="min-w-0 flex-1">
                         <div className="text-[13px] text-foreground">
                           <span className="font-medium">{actor}</span>
