@@ -370,15 +370,15 @@ function FilesPage() {
             const ids = selectedActiveIds;
             if (ids.length === 0) return;
             if (!confirm(`Chuyển ${ids.length} tệp vào thùng rác?`)) return;
-            Promise.all(ids.map((id) => softDel({ data: { id } })))
-              .then(() => { toast.success(`Đã chuyển ${ids.length} tệp vào thùng rác`); setSelected(new Set()); invalidate(); })
+            bulkSoftDelFn({ data: { tenantId, ids } })
+              .then((r) => { toast.success(`Đã chuyển ${r.affected} tệp vào thùng rác`); setSelected(new Set()); invalidate(); })
               .catch((e: any) => toast.error(e?.message || "Lỗi"));
           }}
           onRestore={() => {
             const ids = selectedDeletedIds;
             if (ids.length === 0) return;
-            Promise.all(ids.map((id) => restore({ data: { id } })))
-              .then(() => { toast.success(`Đã khôi phục ${ids.length} tệp`); setSelected(new Set()); invalidate(); })
+            bulkRestoreFn({ data: { tenantId, ids } })
+              .then((r) => { toast.success(`Đã khôi phục ${r.affected} tệp`); setSelected(new Set()); invalidate(); })
               .catch((e: any) => toast.error(e?.message || "Lỗi"));
           }}
           onHardDelete={() => {
@@ -386,16 +386,9 @@ function FilesPage() {
             if (ids.length === 0) return;
             if (!confirm(`Xoá VĨNH VIỄN ${ids.length} tệp? Hành động này KHÔNG THỂ khôi phục.`)) return;
             const toastId = toast.loading(`Đang xoá vĩnh viễn ${ids.length} tệp...`);
-            let ok = 0;
-            Promise.allSettled(ids.map((id) => hardDel({ data: { id } })))
-              .then((results) => {
-                ok = results.filter((r) => r.status === "fulfilled").length;
-                const failed = ids.length - ok;
-                if (failed === 0) toast.success(`Đã xoá vĩnh viễn ${ok} tệp`, { id: toastId });
-                else toast.error(`Xoá ${ok}/${ids.length} tệp — ${failed} lỗi`, { id: toastId });
-                setSelected(new Set());
-                invalidate();
-              });
+            bulkHardDelFn({ data: { tenantId, ids } })
+              .then((r) => { toast.success(`Đã xoá vĩnh viễn ${r.affected} tệp`, { id: toastId }); setSelected(new Set()); invalidate(); })
+              .catch((e: any) => toast.error(e?.message || "Lỗi xoá", { id: toastId }));
           }}
         />
       )}
