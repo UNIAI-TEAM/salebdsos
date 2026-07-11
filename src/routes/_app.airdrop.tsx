@@ -152,12 +152,38 @@ function AirdropPage() {
   // Realtime: cập nhật tức thì khi có bản ghi chia sẻ mới/đổi trạng thái/bị xoá
   useEffect(() => {
     if (!tenantId) return;
+    const STATUS_LABEL: Record<ShareRow["status"], string> = {
+      pending: "Đang chờ",
+      delivered: "Đã nhận",
+      declined: "Bị từ chối",
+      canceled: "Đã huỷ",
+    };
+    const shortTarget = (row: { device_name?: string | null; recipient_name?: string | null }) =>
+      row.recipient_name || row.device_name || "thiết bị";
     const channel = supabase
       .channel(`airdrop_shares:${tenantId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "airdrop_shares", filter: `tenant_id=eq.${tenantId}` },
-        () => { refresh(); }
+        (payload) => {
+          const n = payload.new as Partial<ShareRow> | undefined;
+          const o = payload.old as Partial<ShareRow> | undefined;
+          if (payload.eventType === "INSERT" && n) {
+            const target = shortTarget(n);
+            if (n.direction === "received") {
+              toast.success(`Đã nhận danh thiếp từ ${target}`);
+            } else if (n.status && n.status !== "pending") {
+              toast.message(`Chia sẻ tới ${target}: ${STATUS_LABEL[n.status]}`);
+            }
+          } else if (payload.eventType === "UPDATE" && n && o && n.status && n.status !== o.status) {
+            const target = shortTarget(n);
+            if (n.status === "delivered") toast.success(`${target} đã nhận danh thiếp`);
+            else if (n.status === "declined") toast.error(`${target} đã từ chối danh thiếp`);
+            else if (n.status === "canceled") toast.warning(`Chia sẻ tới ${target} đã bị huỷ`);
+            else toast.message(`${target}: ${STATUS_LABEL[n.status]}`);
+          }
+          refresh();
+        }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
