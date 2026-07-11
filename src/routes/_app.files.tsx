@@ -1215,6 +1215,7 @@ function AuditDrawer({
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [actorQuery, setActorQuery] = useState<string>("");
   const [actorFilter, setActorFilter] = useState<string>("all");
+  const [batchFilter, setBatchFilter] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -1226,19 +1227,21 @@ function AuditDrawer({
 
   const fromIso = fromDate ? new Date(fromDate + "T00:00:00").toISOString() : undefined;
   const toIso = toDate ? new Date(toDate + "T23:59:59.999").toISOString() : undefined;
+  const batchIdQuery = batchFilter.trim().replace(/^#/, "").toUpperCase();
 
   // Reset paging when filters change.
   useEffect(() => {
     setPageSize(100);
-  }, [actionFilter, actorFilter, fromIso, toIso, fileId]);
+  }, [actionFilter, actorFilter, batchIdQuery, fromIso, toIso, fileId]);
 
   const q = useQuery({
-    queryKey: ["file-audit", tenantId, fileId ?? "all", actionFilter, actorFilter, fromIso ?? "", toIso ?? "", pageSize],
+    queryKey: ["file-audit", tenantId, fileId ?? "all", actionFilter, actorFilter, batchIdQuery, fromIso ?? "", toIso ?? "", pageSize],
     queryFn: () => auditFn({
       data: {
         tenantId, fileId,
         action: actionFilter === "all" ? undefined : actionFilter,
         actorUserId: actorFilter === "all" ? undefined : actorFilter,
+        batchId: batchIdQuery || undefined,
         fromDate: fromIso,
         toDate: toIso,
         limit: pageSize,
