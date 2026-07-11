@@ -107,11 +107,12 @@ function FilesPage() {
     }
   };
 
-  const doUpload = async (file: File, meta: { folder: string; tag: string }) => {
+  const doUpload = async (file: File, meta: { folder: string; tag: string; leadId: string }) => {
     if (!tenantId) throw new Error("Chưa chọn workspace");
     if (file.size > MAX_SIZE) throw new Error(`Tệp vượt ${humanSize(MAX_SIZE)}`);
     const safeName = file.name.replace(/[^\w.\-]+/g, "_");
-    const path = `${tenantId}/${Date.now()}_${safeName}`;
+    const scope = meta.leadId ? `leads/${meta.leadId}` : "shared";
+    const path = `${tenantId}/${scope}/${Date.now()}_${safeName}`;
     const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
       cacheControl: "3600",
       upsert: false,
@@ -128,6 +129,8 @@ function FilesPage() {
         mime: file.type || null,
         folder: meta.folder || null,
         tag: meta.tag || null,
+        related_type: meta.leadId ? "lead" : null,
+        related_id: meta.leadId || null,
       } as any,
     });
   };
