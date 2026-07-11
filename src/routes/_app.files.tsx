@@ -344,8 +344,25 @@ function FilesPage() {
               .then(() => { toast.success(`Đã khôi phục ${ids.length} tệp`); setSelected(new Set()); invalidate(); })
               .catch((e: any) => toast.error(e?.message || "Lỗi"));
           }}
+          onHardDelete={() => {
+            const ids = selectedDeletedIds;
+            if (ids.length === 0) return;
+            if (!confirm(`Xoá VĨNH VIỄN ${ids.length} tệp? Hành động này KHÔNG THỂ khôi phục.`)) return;
+            const toastId = toast.loading(`Đang xoá vĩnh viễn ${ids.length} tệp...`);
+            let ok = 0;
+            Promise.allSettled(ids.map((id) => hardDel({ data: { id } })))
+              .then((results) => {
+                ok = results.filter((r) => r.status === "fulfilled").length;
+                const failed = ids.length - ok;
+                if (failed === 0) toast.success(`Đã xoá vĩnh viễn ${ok} tệp`, { id: toastId });
+                else toast.error(`Xoá ${ok}/${ids.length} tệp — ${failed} lỗi`, { id: toastId });
+                setSelected(new Set());
+                invalidate();
+              });
+          }}
         />
       )}
+
 
       <SectionCard
         title={scope === "trash" ? "Thùng rác" : "Danh sách tệp"}
