@@ -1302,6 +1302,8 @@ function AuditDrawer({
     const actorS = actorQuery.trim().toLowerCase();
     const s = searchText.trim().toLowerCase();
     return allRows.filter((r) => {
+      // Collapse paired ZIP start rows — the terminal row shows the full batch.
+      if (r.action === "file.bulk_download" && zipMeta.get(r.id)?.skipRow) return false;
       if (zipPhaseFilter !== "all") {
         if (r.action !== "file.bulk_download") return false;
         if (getZipPhase(r.diff) !== zipPhaseFilter) return false;
