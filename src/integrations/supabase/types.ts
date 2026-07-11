@@ -210,6 +210,54 @@ export type Database = {
         }
         Relationships: []
       }
+      airdrop_shares: {
+        Row: {
+          card_id: string | null
+          created_at: string
+          device_kind: string
+          device_name: string
+          direction: string
+          distance_m: number | null
+          id: string
+          notes: string | null
+          recipient_name: string | null
+          sender_id: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          card_id?: string | null
+          created_at?: string
+          device_kind?: string
+          device_name: string
+          direction?: string
+          distance_m?: number | null
+          id?: string
+          notes?: string | null
+          recipient_name?: string | null
+          sender_id?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          card_id?: string | null
+          created_at?: string
+          device_kind?: string
+          device_name?: string
+          direction?: string
+          distance_m?: number | null
+          id?: string
+          notes?: string | null
+          recipient_name?: string | null
+          sender_id?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       analytics_daily: {
         Row: {
           card_id: string
