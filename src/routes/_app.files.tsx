@@ -1224,28 +1224,73 @@ function AuditDrawer({
               const summary = summarizeDiff(r.action, r.diff);
               const actor = r.actor?.name || r.actor?.email || (r.actor_user_id ? "Người dùng" : "Hệ thống");
               const targetName = r.entity === "file" && r.entity_id ? fileMap.get(r.entity_id) : null;
+              const isOpen = expandedId === r.id;
+              const details = buildAuditDetails(r, fileMap);
+              const canExpand = details.items.length > 0 || !!details.info;
               return (
-                <li key={r.id} className="px-5 py-3.5 hover:bg-muted/40">
-                  <div className="flex items-start gap-3">
-                    <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${meta.tone}`}>
-                      {meta.label}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[13px] text-foreground">
-                        <span className="font-medium">{actor}</span>
-                        {targetName && <span className="text-muted-foreground"> · {targetName}</span>}
-                      </div>
-                      {summary && <div className="text-[12px] text-muted-foreground mt-0.5 break-words">{summary}</div>}
-                      <div className="text-[11px] text-muted-foreground mt-1 inline-flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {new Date(r.occurred_at).toLocaleString("vi-VN")}
+                <li key={r.id} className="hover:bg-muted/40">
+                  <button
+                    type="button"
+                    onClick={() => canExpand && setExpandedId(isOpen ? null : r.id)}
+                    className="w-full text-left px-5 py-3.5"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${meta.tone}`}>
+                        {meta.label}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13px] text-foreground">
+                          <span className="font-medium">{actor}</span>
+                          {targetName && <span className="text-muted-foreground"> · {targetName}</span>}
+                        </div>
+                        {summary && <div className="text-[12px] text-muted-foreground mt-0.5 break-words">{summary}</div>}
+                        <div className="text-[11px] text-muted-foreground mt-1 inline-flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(r.occurred_at).toLocaleString("vi-VN")}
+                          </span>
+                          {canExpand && (
+                            <span className="text-primary/80">
+                              {isOpen ? "Ẩn chi tiết ▲" : `Xem chi tiết (${details.items.length || "•"}) ▼`}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-4 -mt-1">
+                      <div className="rounded-md border border-border bg-muted/30 p-3">
+                        {details.info && (
+                          <div className="text-[12px] text-muted-foreground mb-2">{details.info}</div>
+                        )}
+                        {details.items.length > 0 && (
+                          <ul className="divide-y divide-border/70 max-h-[280px] overflow-y-auto">
+                            {details.items.map((it, i) => (
+                              <li key={`${it.id ?? i}`} className="py-1.5 flex items-center gap-2">
+                                <span className={`inline-flex shrink-0 items-center px-1.5 py-0.5 rounded text-[10.5px] font-semibold ${it.tone}`}>
+                                  {it.status}
+                                </span>
+                                <span className="text-[12.5px] text-foreground truncate flex-1" title={it.name}>
+                                  {it.name}
+                                </span>
+                                {it.id && (
+                                  <code className="text-[10.5px] text-muted-foreground font-mono truncate max-w-[160px]" title={it.id}>
+                                    {it.id.slice(0, 8)}…
+                                  </code>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </li>
               );
             })}
           </ul>
+
         </div>
       </div>
     </div>
