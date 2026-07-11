@@ -133,7 +133,7 @@ function AirdropPage() {
           if (tr.status === "sending") {
             const np = Math.min(100, tr.progress + 7 + Math.random() * 6);
             const nextStatus: Status = np >= 100 ? "delivered" : "sending";
-            if (nextStatus === "delivered" && tr.status !== "delivered") {
+            if (nextStatus === "delivered") {
               persistShare(tr.device, "delivered");
             }
             return { ...tr, progress: np, status: nextStatus };
