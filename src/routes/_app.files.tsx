@@ -1094,8 +1094,22 @@ function exportAuditRowsToCsv(
       r.diff ? JSON.stringify(r.diff) : "",
     ].map(csvEscape).join(","));
   }
+  const csvBody = lines.join("\r\n");
+  // Pre-download self-check: for every ZIP batch row the exported phase and
+  // batch_id must match what the audit drawer shows. Fail loudly instead of
+  // silently exporting inconsistent data.
+  const check = validateAuditCsv(csvBody, rows);
+  if (!check.ok) {
+    const first = check.errors[0];
+    const detail = first
+      ? ` (${first.reason}${first.expected ? `: expected "${first.expected}"` : ""}${first.got ? `, got "${first.got}"` : ""})`
+      : "";
+    toast.error(`Không thể tải CSV: dữ liệu batch_id/phase không khớp trạng thái hiển thị${detail}. Đã huỷ tải xuống.`);
+    if (typeof console !== "undefined") console.error("[audit-csv] validation failed", check.errors);
+    return;
+  }
   // BOM for Excel UTF-8.
-  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["\uFEFF" + csvBody], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
