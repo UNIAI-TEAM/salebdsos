@@ -188,7 +188,7 @@ function WalletPage() {
     onError: (e: any) => toast.error(e.message ?? "Lỗi"),
   });
 
-  const items = (list.data?.items ?? []) as WalletRow[];
+  const items = (list.data?.items ?? []) as unknown as WalletRow[];
   const cardOptions = cards.data ?? [];
   const s = stats.data;
 
