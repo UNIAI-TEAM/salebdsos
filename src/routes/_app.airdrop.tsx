@@ -622,14 +622,22 @@ function ShareDetailDrawer({
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-border flex items-center justify-between">
+        <div className="px-5 py-3 border-t border-border flex items-center justify-between gap-2">
           <button onClick={() => onDelete(share.id)}
             className="h-9 px-3 rounded-xl text-[12.5px] font-semibold text-rose-600 hover:bg-rose-50 inline-flex items-center gap-1.5">
             <Trash2 className="h-3.5 w-3.5" /> Xoá lịch sử
           </button>
-          <button onClick={onClose} className="h-9 px-3 rounded-xl border border-border text-[12.5px] font-semibold hover:bg-muted/40">
-            Đóng
-          </button>
+          <div className="flex items-center gap-2">
+            {canResend(share) && (
+              <button onClick={() => onResend(share)}
+                className="h-9 px-3 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-semibold hover:bg-primary/90 inline-flex items-center gap-1.5 shadow-soft">
+                <RotateCw className="h-3.5 w-3.5" /> Gửi lại
+              </button>
+            )}
+            <button onClick={onClose} className="h-9 px-3 rounded-xl border border-border text-[12.5px] font-semibold hover:bg-muted/40">
+              Đóng
+            </button>
+          </div>
         </div>
       </aside>
     </div>
