@@ -3,11 +3,12 @@ import {
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
   Wallet, QrCode, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeftClose, PanelLeftOpen, X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
+import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
@@ -16,7 +17,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 type Item = { to: string; label: string; icon: any; badge?: string; roles?: Role[]; platformOnly?: boolean };
 type Group = { label: string; items: Item[] };
 
-// roles undefined => all members can see; platform_admin always sees everything
 const groups: Group[] = [
   {
     label: "Tổng quan",
@@ -82,11 +82,28 @@ function initials(s: string) {
   return s.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 }
 
-export function AppSidebar() {
+/**
+ * Shared content for both desktop aside and mobile drawer.
+ * - `collapsed`: desktop icon-only mode (mobile always renders expanded).
+ * - `onNavigate`: called when a nav link is tapped (used to close mobile drawer).
+ * - `variant`: 'desktop' shows the collapse toggle; 'mobile' shows a close button.
+ */
+function SidebarBody({
+  collapsed,
+  onNavigate,
+  variant,
+  onCollapseToggle,
+  onClose,
+}: {
+  collapsed: boolean;
+  onNavigate?: () => void;
+  variant: "desktop" | "mobile";
+  onCollapseToggle?: () => void;
+  onClose?: () => void;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { tenants, currentTenant, currentRole, switchTenant, signOut, user, isPlatformAdmin } = useAuth();
-  const [open, setOpen] = useState(false);
-  const { collapsed, toggle } = useSidebarCollapsed();
+  const [wsOpen, setWsOpen] = useState(false);
 
   const can = (item: Item) => {
     if (item.platformOnly) return isPlatformAdmin;
@@ -95,63 +112,83 @@ export function AppSidebar() {
     return currentRole !== null && currentRole !== "viewer" && (item.roles as string[]).includes(currentRole);
   };
 
+  // Mobile: bigger tap targets, always expanded, no tooltip wrapping.
+  const isMobile = variant === "mobile";
+  const showLabels = isMobile || !collapsed;
+
   return (
     <TooltipProvider delayDuration={100}>
-    <aside className={[
-      "hidden lg:flex shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[width]",
-      collapsed ? "w-[72px]" : "w-[260px]",
-    ].join(" ")}>
-      <div className={["pt-5 pb-4 flex items-center", collapsed ? "px-3 justify-center" : "px-5 justify-between"].join(" ")}>
-        <Link to="/dashboard" className="flex items-center gap-2.5 min-w-0">
+      {/* Header */}
+      <div className={["pt-5 pb-4 flex items-center", showLabels ? "px-5 justify-between" : "px-3 justify-center"].join(" ")}>
+        <Link
+          to="/dashboard"
+          onClick={onNavigate}
+          className="flex items-center gap-2.5 min-w-0"
+        >
           <div className="h-9 w-9 rounded-xl bg-brand-gradient grid place-items-center shadow-glow shrink-0">
             <Radio className="h-4.5 w-4.5 text-white" strokeWidth={2.5} />
           </div>
           <div className={[
             "leading-tight min-w-0 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-            collapsed ? "opacity-0 max-w-0 -translate-x-2" : "opacity-100 max-w-[180px] translate-x-0",
+            showLabels ? "opacity-100 max-w-[180px] translate-x-0" : "opacity-0 max-w-0 -translate-x-2",
           ].join(" ")}>
             <div className="text-[15px] font-bold text-white truncate">SaleBDS OS</div>
             <div className="text-[11px] text-sidebar-foreground/60 truncate">Điều hành kinh doanh bằng điểm chạm</div>
           </div>
         </Link>
-        <button
-          onClick={toggle}
-          className={[
-            "rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-white transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-            collapsed ? "opacity-0 scale-90 pointer-events-none w-0 p-0 overflow-hidden" : "opacity-100 scale-100 p-1.5",
-          ].join(" ")}
-          aria-label="Thu gọn menu"
-        >
-          <PanelLeftClose className="h-4 w-4" />
-        </button>
+
+        {variant === "desktop" && (
+          <button
+            onClick={onCollapseToggle}
+            className={[
+              "rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-white transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              collapsed ? "opacity-0 scale-90 pointer-events-none w-0 p-0 overflow-hidden" : "opacity-100 scale-100 p-1.5",
+            ].join(" ")}
+            aria-label="Thu gọn menu"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
+        )}
+        {variant === "mobile" && (
+          <button
+            onClick={onClose}
+            className="inline-flex items-center justify-center h-10 w-10 rounded-xl hover:bg-sidebar-accent active:scale-95 text-sidebar-foreground/80 hover:text-white transition"
+            aria-label="Đóng menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
-      <div className={[
-        "px-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
-        collapsed ? "opacity-100 max-h-16 pb-2" : "opacity-0 max-h-0 pb-0",
-      ].join(" ")}>
-        <button
-          onClick={toggle}
-          className="w-full grid place-items-center h-9 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-white transition"
-          aria-label="Mở rộng menu"
-        >
-          <PanelLeftOpen className="h-4 w-4" />
-        </button>
-      </div>
+      {/* Expand button when desktop collapsed */}
+      {variant === "desktop" && (
+        <div className={[
+          "px-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
+          collapsed ? "opacity-100 max-h-16 pb-2" : "opacity-0 max-h-0 pb-0",
+        ].join(" ")}>
+          <button
+            onClick={onCollapseToggle}
+            className="w-full grid place-items-center h-9 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-white transition"
+            aria-label="Mở rộng menu"
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Workspace switcher */}
-      <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenu open={wsOpen} onOpenChange={setWsOpen}>
         <DropdownMenuTrigger asChild>
           <button className={[
             "mx-3 mb-3 rounded-xl bg-sidebar-accent/50 hover:bg-sidebar-accent transition flex items-center text-left",
-            collapsed ? "p-2 justify-center" : "px-3 py-2.5 gap-2.5",
+            showLabels ? (isMobile ? "px-3 py-3 gap-2.5" : "px-3 py-2.5 gap-2.5") : "p-2 justify-center",
           ].join(" ")}>
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 grid place-items-center text-white text-[11px] font-bold shrink-0">
               {currentTenant ? initials(currentTenant.name) : "—"}
             </div>
             <div className={[
               "flex-1 min-w-0 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              collapsed ? "opacity-0 max-w-0 -translate-x-2" : "opacity-100 max-w-[180px] translate-x-0",
+              showLabels ? "opacity-100 max-w-[180px] translate-x-0" : "opacity-0 max-w-0 -translate-x-2",
             ].join(" ")}>
               <div className="text-[13px] font-semibold text-white truncate">
                 {currentTenant?.name ?? (isPlatformAdmin ? "Platform Admin" : "Chưa có workspace")}
@@ -162,7 +199,7 @@ export function AppSidebar() {
             </div>
             <div className={[
               "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
-              collapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-4",
+              showLabels ? "opacity-100 max-w-4" : "opacity-0 max-w-0",
             ].join(" ")}>
               <ChevronDown className="h-4 w-4 text-sidebar-foreground/60" />
             </div>
@@ -184,7 +221,7 @@ export function AppSidebar() {
           ))}
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link to="/onboarding">+ Tạo agency mới</Link>
+            <Link to="/onboarding" onClick={onNavigate}>+ Tạo agency mới</Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
@@ -201,11 +238,11 @@ export function AppSidebar() {
             <div key={g.label} className="mb-3">
               <div className={[
                 "px-3 pt-2 pb-1.5 text-[10.5px] uppercase tracking-wider font-semibold text-sidebar-foreground/45 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                collapsed ? "opacity-0 max-h-0 py-0" : "opacity-100 max-h-8",
+                showLabels ? "opacity-100 max-h-8" : "opacity-0 max-h-0 py-0",
               ].join(" ")}>{g.label}</div>
               <div className={[
                 "border-t border-sidebar-border/60 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                collapsed ? "opacity-100 my-2 mx-3" : "opacity-0 max-h-0 my-0 mx-3",
+                showLabels ? "opacity-0 max-h-0 my-0 mx-3" : "opacity-100 my-2 mx-3",
               ].join(" ")} />
               <ul className="space-y-0.5">
                 {items.map((it) => {
@@ -213,18 +250,22 @@ export function AppSidebar() {
                   const link = (
                     <Link
                       to={it.to}
+                      onClick={onNavigate}
                       className={[
-                        "group flex items-center rounded-lg text-[13px] font-medium transition",
-                        collapsed ? "justify-center p-2.5" : "gap-2.5 px-3 py-2",
+                        "group flex items-center rounded-lg text-[13px] font-medium transition active:scale-[0.98]",
+                        showLabels
+                          ? (isMobile ? "gap-3 px-3 py-3 min-h-11" : "gap-2.5 px-3 py-2")
+                          : "justify-center p-2.5",
                         active
                           ? "bg-sidebar-accent text-white"
-                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-white",
+                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 active:bg-sidebar-accent/70 hover:text-white",
                       ].join(" ")}
                     >
-                      <it.icon className={["h-4 w-4 shrink-0 transition-transform duration-300", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-white", collapsed ? "scale-110" : "scale-100"].join(" ")} />
+                      <it.icon className={["h-4 w-4 shrink-0 transition-transform duration-300", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-white", showLabels ? "scale-100" : "scale-110"].join(" ")} />
                       <span className={[
                         "flex-1 truncate transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
-                        collapsed ? "opacity-0 max-w-0 -translate-x-2" : "opacity-100 max-w-[180px] translate-x-0",
+                        showLabels ? "opacity-100 max-w-[180px] translate-x-0" : "opacity-0 max-w-0 -translate-x-2",
+                        isMobile ? "text-[14px]" : "",
                       ].join(" ")}>{it.label}</span>
                       {it.badge && (
                         <span className={[
@@ -232,14 +273,14 @@ export function AppSidebar() {
                           it.badge === "AI"
                             ? "bg-brand-gradient text-white"
                             : "bg-sidebar-accent text-sidebar-foreground/80",
-                          collapsed ? "opacity-0 max-w-0 scale-75" : "opacity-100 max-w-12 scale-100",
+                          showLabels ? "opacity-100 max-w-12 scale-100" : "opacity-0 max-w-0 scale-75",
                         ].join(" ")}>{it.badge}</span>
                       )}
                     </Link>
                   );
                   return (
                     <li key={it.to}>
-                      {collapsed ? (
+                      {variant === "desktop" && collapsed ? (
                         <Tooltip>
                           <TooltipTrigger asChild>{link}</TooltipTrigger>
                           <TooltipContent side="right" className="flex items-center gap-2">
@@ -259,8 +300,10 @@ export function AppSidebar() {
 
       <div className={[
         "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
-        collapsed ? "opacity-0 max-h-0 p-0" : "opacity-100 max-h-[200px] p-3",
-      ].join(" ")}>
+        showLabels ? "opacity-100 max-h-[240px] p-3" : "opacity-0 max-h-0 p-0",
+      ].join(" ")}
+      style={isMobile ? { paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" } : undefined}
+      >
         <div className="rounded-xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-primary/20 p-3.5">
           <div className="flex items-center gap-2 mb-1.5">
             <Crown className="h-4 w-4 text-yellow-400" />
@@ -271,14 +314,82 @@ export function AppSidebar() {
           <p className="text-[11.5px] text-sidebar-foreground/70 leading-relaxed">
             Mở khoá AI Follow-up không giới hạn & báo cáo nâng cao.
           </p>
-          <button className="mt-2.5 w-full rounded-lg bg-white text-sidebar text-[12px] font-semibold py-1.5 hover:bg-white/90 transition">
+          <button className={[
+            "mt-2.5 w-full rounded-lg bg-white text-sidebar text-[12px] font-semibold hover:bg-white/90 active:scale-[0.98] transition",
+            isMobile ? "py-2.5" : "py-1.5",
+          ].join(" ")}>
             Nâng cấp ngay
           </button>
         </div>
       </div>
-
-    </aside>
     </TooltipProvider>
   );
 }
 
+export function AppSidebar() {
+  const { collapsed, toggle } = useSidebarCollapsed();
+  const { open, setOpen, close } = useMobileDrawer();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // Auto-close mobile drawer whenever the route changes.
+  useEffect(() => {
+    close();
+  }, [pathname, close]);
+
+  // Prevent body scroll when mobile drawer is open.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className={[
+        "hidden lg:flex shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[width]",
+        collapsed ? "w-[72px]" : "w-[260px]",
+      ].join(" ")}>
+        <SidebarBody variant="desktop" collapsed={collapsed} onCollapseToggle={toggle} />
+      </aside>
+
+      {/* Mobile drawer */}
+      <div
+        className={[
+          "lg:hidden fixed inset-0 z-50 transition-opacity duration-300",
+          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+        ].join(" ")}
+        aria-hidden={!open}
+      >
+        {/* Backdrop */}
+        <button
+          type="button"
+          aria-label="Đóng menu"
+          onClick={close}
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        />
+        {/* Panel */}
+        <aside
+          role="dialog"
+          aria-modal="true"
+          className={[
+            "absolute inset-y-0 left-0 flex flex-col w-[86%] max-w-[320px] bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-2xl",
+            "transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform",
+            open ? "translate-x-0" : "-translate-x-full",
+          ].join(" ")}
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
+        >
+          <SidebarBody
+            variant="mobile"
+            collapsed={false}
+            onNavigate={() => setOpen(false)}
+            onClose={close}
+          />
+        </aside>
+      </div>
+    </>
+  );
+}
