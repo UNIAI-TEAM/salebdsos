@@ -1493,6 +1493,37 @@ function AuditDrawer({
                           {targetName && <span className="text-muted-foreground"> · {targetName}</span>}
                         </div>
                         {summary && <div className="text-[12px] text-muted-foreground mt-0.5 break-words">{summary}</div>}
+                        {r.action === "file.bulk_download" && (() => {
+                          const zm = zipMeta.get(r.id);
+                          if (!zm) return null;
+                          const phase = getZipPhase(r.diff);
+                          const pct = zm.running ? Math.max(8, Math.min(100, zm.percent || 0)) : zm.percent;
+                          const barTone =
+                            phase === "error" ? "bg-rose-500" :
+                            phase === "canceled" ? "bg-slate-400" :
+                            phase === "done" ? "bg-emerald-500" :
+                            "bg-amber-500";
+                          const durText = zm.durationMs != null
+                            ? formatDurationMs(zm.durationMs)
+                            : zm.running && zm.startedAt
+                              ? `${formatDurationMs(Date.now() - new Date(zm.startedAt).getTime())} (đang chạy)`
+                              : null;
+                          return (
+                            <div className="mt-2 max-w-md">
+                              <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                                <div
+                                  className={`h-full transition-all duration-300 ${barTone} ${zm.running ? "animate-pulse" : ""}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+                                <span>{zm.ok}/{zm.requested} tệp</span>
+                                {zm.failed > 0 && <span className="text-rose-600">Lỗi {zm.failed}</span>}
+                                {durText && <span>· {durText}</span>}
+                              </div>
+                            </div>
+                          );
+                        })()}
                         <div className="text-[11px] text-muted-foreground mt-1 inline-flex items-center gap-2">
                           <span className="inline-flex items-center gap-1">
                             <Clock className="h-3 w-3" />
