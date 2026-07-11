@@ -65,13 +65,6 @@ const STATUS_TONE: Record<Status, string> = {
   declined: "bg-rose-50 text-rose-700 ring-1 ring-rose-100",
 };
 
-const HISTORY = [
-  { name: "Vũ Khánh Linh", device: "iPhone 15 Pro", at: "2 phút trước", direction: "sent" as const, status: "delivered" as Status },
-  { name: "Nguyễn Tuấn Minh", device: "MacBook Air", at: "8 phút trước", direction: "received" as const, status: "delivered" as Status },
-  { name: "Trần Hồng Nhung", device: "iPad Pro", at: "32 phút trước", direction: "sent" as const, status: "declined" as Status },
-  { name: "Lê Đức Anh", device: "Galaxy Tab", at: "1 giờ trước", direction: "sent" as const, status: "delivered" as Status },
-  { name: "Phạm Quỳnh Mai", device: "iPhone 14", at: "2 giờ trước", direction: "received" as const, status: "delivered" as Status },
-];
 
 const HISTORY_EMPTY: ShareRow[] = [];
 
