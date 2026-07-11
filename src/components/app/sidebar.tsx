@@ -98,7 +98,7 @@ export function AppSidebar() {
   return (
     <TooltipProvider delayDuration={100}>
     <aside className={[
-      "hidden lg:flex shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-[width] duration-200",
+      "hidden lg:flex shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-[width]",
       collapsed ? "w-[72px]" : "w-[260px]",
     ].join(" ")}>
       <div className={["pt-5 pb-4 flex items-center", collapsed ? "px-3 justify-center" : "px-5 justify-between"].join(" ")}>
@@ -106,35 +106,38 @@ export function AppSidebar() {
           <div className="h-9 w-9 rounded-xl bg-brand-gradient grid place-items-center shadow-glow shrink-0">
             <Radio className="h-4.5 w-4.5 text-white" strokeWidth={2.5} />
           </div>
-          {!collapsed && (
-            <div className="leading-tight min-w-0">
-              <div className="text-[15px] font-bold text-white truncate">SaleBDS OS</div>
-              <div className="text-[11px] text-sidebar-foreground/60 truncate">Điều hành kinh doanh bằng điểm chạm</div>
-            </div>
-          )}
+          <div className={[
+            "leading-tight min-w-0 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+            collapsed ? "opacity-0 max-w-0 -translate-x-2" : "opacity-100 max-w-[180px] translate-x-0",
+          ].join(" ")}>
+            <div className="text-[15px] font-bold text-white truncate">SaleBDS OS</div>
+            <div className="text-[11px] text-sidebar-foreground/60 truncate">Điều hành kinh doanh bằng điểm chạm</div>
+          </div>
         </Link>
-        {!collapsed && (
-          <button
-            onClick={toggle}
-            className="p-1.5 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-white transition"
-            aria-label="Thu gọn menu"
-          >
-            <PanelLeftClose className="h-4 w-4" />
-          </button>
-        )}
+        <button
+          onClick={toggle}
+          className={[
+            "rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-white transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+            collapsed ? "opacity-0 scale-90 pointer-events-none w-0 p-0 overflow-hidden" : "opacity-100 scale-100 p-1.5",
+          ].join(" ")}
+          aria-label="Thu gọn menu"
+        >
+          <PanelLeftClose className="h-4 w-4" />
+        </button>
       </div>
 
-      {collapsed && (
-        <div className="px-3 pb-2">
-          <button
-            onClick={toggle}
-            className="w-full grid place-items-center h-9 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-white transition"
-            aria-label="Mở rộng menu"
-          >
-            <PanelLeftOpen className="h-4 w-4" />
-          </button>
-        </div>
-      )}
+      <div className={[
+        "px-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
+        collapsed ? "opacity-100 max-h-16 pb-2" : "opacity-0 max-h-0 pb-0",
+      ].join(" ")}>
+        <button
+          onClick={toggle}
+          className="w-full grid place-items-center h-9 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-white transition"
+          aria-label="Mở rộng menu"
+        >
+          <PanelLeftOpen className="h-4 w-4" />
+        </button>
+      </div>
 
       {/* Workspace switcher */}
       <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -146,19 +149,23 @@ export function AppSidebar() {
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 grid place-items-center text-white text-[11px] font-bold shrink-0">
               {currentTenant ? initials(currentTenant.name) : "—"}
             </div>
-            {!collapsed && (
-              <>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-semibold text-white truncate">
-                    {currentTenant?.name ?? (isPlatformAdmin ? "Platform Admin" : "Chưa có workspace")}
-                  </div>
-                  <div className="text-[10.5px] text-sidebar-foreground/60">
-                    {currentRole ? roleLabel[currentRole] : "—"}
-                  </div>
-                </div>
-                <ChevronDown className="h-4 w-4 text-sidebar-foreground/60" />
-              </>
-            )}
+            <div className={[
+              "flex-1 min-w-0 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              collapsed ? "opacity-0 max-w-0 -translate-x-2" : "opacity-100 max-w-[180px] translate-x-0",
+            ].join(" ")}>
+              <div className="text-[13px] font-semibold text-white truncate">
+                {currentTenant?.name ?? (isPlatformAdmin ? "Platform Admin" : "Chưa có workspace")}
+              </div>
+              <div className="text-[10.5px] text-sidebar-foreground/60">
+                {currentRole ? roleLabel[currentRole] : "—"}
+              </div>
+            </div>
+            <div className={[
+              "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
+              collapsed ? "opacity-0 max-w-0" : "opacity-100 max-w-4",
+            ].join(" ")}>
+              <ChevronDown className="h-4 w-4 text-sidebar-foreground/60" />
+            </div>
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-64">
@@ -192,10 +199,14 @@ export function AppSidebar() {
           if (items.length === 0) return null;
           return (
             <div key={g.label} className="mb-3">
-              {!collapsed && (
-                <div className="px-3 pt-2 pb-1.5 text-[10.5px] uppercase tracking-wider font-semibold text-sidebar-foreground/45">{g.label}</div>
-              )}
-              {collapsed && <div className="mx-3 my-2 border-t border-sidebar-border/60" />}
+              <div className={[
+                "px-3 pt-2 pb-1.5 text-[10.5px] uppercase tracking-wider font-semibold text-sidebar-foreground/45 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                collapsed ? "opacity-0 max-h-0 py-0" : "opacity-100 max-h-8",
+              ].join(" ")}>{g.label}</div>
+              <div className={[
+                "border-t border-sidebar-border/60 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                collapsed ? "opacity-100 my-2 mx-3" : "opacity-0 max-h-0 my-0 mx-3",
+              ].join(" ")} />
               <ul className="space-y-0.5">
                 {items.map((it) => {
                   const active = pathname.startsWith(it.to);
@@ -210,19 +221,19 @@ export function AppSidebar() {
                           : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-white",
                       ].join(" ")}
                     >
-                      <it.icon className={["h-4 w-4 shrink-0", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-white"].join(" ")} />
-                      {!collapsed && (
-                        <>
-                          <span className="flex-1 truncate">{it.label}</span>
-                          {it.badge && (
-                            <span className={[
-                              "text-[10px] px-1.5 py-0.5 rounded-md font-semibold",
-                              it.badge === "AI"
-                                ? "bg-brand-gradient text-white"
-                                : "bg-sidebar-accent text-sidebar-foreground/80",
-                            ].join(" ")}>{it.badge}</span>
-                          )}
-                        </>
+                      <it.icon className={["h-4 w-4 shrink-0 transition-transform duration-300", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-white", collapsed ? "scale-110" : "scale-100"].join(" ")} />
+                      <span className={[
+                        "flex-1 truncate transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
+                        collapsed ? "opacity-0 max-w-0 -translate-x-2" : "opacity-100 max-w-[180px] translate-x-0",
+                      ].join(" ")}>{it.label}</span>
+                      {it.badge && (
+                        <span className={[
+                          "text-[10px] px-1.5 py-0.5 rounded-md font-semibold transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
+                          it.badge === "AI"
+                            ? "bg-brand-gradient text-white"
+                            : "bg-sidebar-accent text-sidebar-foreground/80",
+                          collapsed ? "opacity-0 max-w-0 scale-75" : "opacity-100 max-w-12 scale-100",
+                        ].join(" ")}>{it.badge}</span>
                       )}
                     </Link>
                   );
@@ -246,24 +257,25 @@ export function AppSidebar() {
         })}
       </nav>
 
-      {!collapsed && (
-        <div className="p-3">
-          <div className="rounded-xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-primary/20 p-3.5">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Crown className="h-4 w-4 text-yellow-400" />
-              <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
-                {currentTenant?.plan ?? "Free"}
-              </div>
+      <div className={[
+        "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
+        collapsed ? "opacity-0 max-h-0 p-0" : "opacity-100 max-h-[200px] p-3",
+      ].join(" ")}>
+        <div className="rounded-xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-primary/20 p-3.5">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Crown className="h-4 w-4 text-yellow-400" />
+            <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
+              {currentTenant?.plan ?? "Free"}
             </div>
-            <p className="text-[11.5px] text-sidebar-foreground/70 leading-relaxed">
-              Mở khoá AI Follow-up không giới hạn & báo cáo nâng cao.
-            </p>
-            <button className="mt-2.5 w-full rounded-lg bg-white text-sidebar text-[12px] font-semibold py-1.5 hover:bg-white/90 transition">
-              Nâng cấp ngay
-            </button>
           </div>
+          <p className="text-[11.5px] text-sidebar-foreground/70 leading-relaxed">
+            Mở khoá AI Follow-up không giới hạn & báo cáo nâng cao.
+          </p>
+          <button className="mt-2.5 w-full rounded-lg bg-white text-sidebar text-[12px] font-semibold py-1.5 hover:bg-white/90 transition">
+            Nâng cấp ngay
+          </button>
         </div>
-      )}
+      </div>
 
     </aside>
     </TooltipProvider>

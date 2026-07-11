@@ -27,7 +27,7 @@ const titles: Record<string, { title: string; sub: string }> = {
 export function AppTopbar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const meta = Object.entries(titles).find(([k]) => pathname.startsWith(k))?.[1] ?? titles["/dashboard"];
-  const { toggle } = useSidebarCollapsed();
+  const { collapsed, toggle } = useSidebarCollapsed();
 
   return (
     <header className="sticky top-0 z-30 glass border-b border-border">
@@ -37,11 +37,11 @@ export function AppTopbar() {
         </button>
         <button
           onClick={toggle}
-          className="hidden lg:inline-flex p-2 rounded-lg hover:bg-muted transition text-muted-foreground hover:text-foreground"
+          className="hidden lg:inline-flex p-2 rounded-lg hover:bg-muted transition-all duration-200 active:scale-95 text-muted-foreground hover:text-foreground"
           aria-label="Thu gọn / mở rộng menu"
           title="Thu gọn / mở rộng menu"
         >
-          <PanelLeft className="h-5 w-5" />
+          <PanelLeft className={["h-5 w-5 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]", collapsed ? "rotate-180" : ""].join(" ")} />
         </button>
         <div className="hidden md:block min-w-0">
           <h1 className="text-[17px] font-bold text-foreground leading-tight truncate">{meta.title}</h1>
