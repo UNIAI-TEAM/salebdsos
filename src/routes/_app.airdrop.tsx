@@ -85,11 +85,14 @@ function AirdropPage() {
   const [history, setHistory] = useState<ShareRow[]>(HISTORY_EMPTY);
   const [stats, setStats] = useState({ sent: 0, received: 0, delivered: 0, total: 0, rate: 0 });
   const [filter, setFilter] = useState<"all" | "sent" | "received">("all");
+  const [cardMap, setCardMap] = useState<Record<string, NonNullable<CardBrief>>>({});
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const list = useServerFn(listAirdropShares);
   const statsFn = useServerFn(airdropStats);
   const create = useServerFn(createAirdropShare);
   const remove = useServerFn(deleteAirdropShare);
+  const fetchCards = useServerFn(getAirdropCards);
 
   const refresh = useCallback(async () => {
     if (!tenantId) return;
@@ -98,12 +101,22 @@ function AirdropPage() {
         list({ data: { tenantId, direction: filter, pageSize: 30 } }),
         statsFn({ data: { tenantId } }),
       ]);
-      setHistory((h.items ?? []) as ShareRow[]);
+      const rows = (h.items ?? []) as ShareRow[];
+      setHistory(rows);
       setStats(s);
+      const ids = Array.from(new Set(rows.map((r) => r.card_id).filter((x): x is string => !!x && !cardMap[x])));
+      if (ids.length) {
+        const res = await fetchCards({ data: { tenantId, ids } });
+        setCardMap((prev) => {
+          const next = { ...prev };
+          for (const c of (res.items ?? []) as NonNullable<CardBrief>[]) next[c.id] = c;
+          return next;
+        });
+      }
     } catch (e) {
       console.error(e);
     }
-  }, [tenantId, filter, list, statsFn]);
+  }, [tenantId, filter, list, statsFn, fetchCards, cardMap]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
