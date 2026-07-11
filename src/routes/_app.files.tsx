@@ -1000,15 +1000,33 @@ function summarizeDiff(action: string, diff: any): string {
       return `${diff.affected ?? names.length} tệp${preview ? ` · ${preview}${more}` : ""}`;
     }
     if (action === "file.bulk_download") {
+      const p = getZipPhase(diff);
+      const meta = ZIP_PHASE_META[p];
       const mb = diff.bytes ? ` · ${(Number(diff.bytes) / 1024 / 1024).toFixed(1)} MB` : "";
-      const cx = diff.canceled ? " · đã huỷ" : "";
-      return `${diff.ok ?? 0}/${diff.requested ?? 0} tệp${mb}${cx}`;
+      const okTxt = (diff.ok ?? 0) || (diff.requested ?? 0)
+        ? `${diff.ok ?? 0}/${diff.requested ?? 0} tệp` : `${diff.requested ?? 0} tệp`;
+      return `${meta.label} · ${okTxt}${mb}${diff.failed ? ` · ${diff.failed} lỗi` : ""}`;
     }
     if (action === "folder.rename" || action === "tag.rename") return `${diff.from} → ${diff.to} (${diff.affected ?? 0})`;
     if (action === "folder.delete") return `${diff.folder}${diff.moveTo ? ` → ${diff.moveTo}` : ""} (${diff.affected ?? 0})`;
     if (action === "tag.delete") return `${diff.tag} (${diff.affected ?? 0})`;
     return JSON.stringify(diff);
   } catch { return ""; }
+}
+
+type ZipPhase = "zipping" | "done" | "canceled" | "error";
+const ZIP_PHASE_META: Record<ZipPhase, { label: string; tone: string; status: string; itemTone: string }> = {
+  zipping: { label: "Đang đóng gói", tone: "bg-amber-50 text-amber-700 border-amber-200", status: "Đóng gói", itemTone: "bg-amber-50 text-amber-700" },
+  done:    { label: "Hoàn tất",     tone: "bg-emerald-50 text-emerald-700 border-emerald-200", status: "Hoàn tất", itemTone: "bg-emerald-50 text-emerald-700" },
+  canceled:{ label: "Đã huỷ",       tone: "bg-slate-100 text-slate-700 border-slate-200", status: "Đã huỷ", itemTone: "bg-slate-100 text-slate-700" },
+  error:   { label: "Lỗi",          tone: "bg-rose-50 text-rose-700 border-rose-200", status: "Lỗi", itemTone: "bg-rose-50 text-rose-700" },
+};
+function getZipPhase(diff: any): ZipPhase {
+  const p = diff?.phase;
+  if (p === "zipping" || p === "done" || p === "canceled" || p === "error") return p;
+  if (diff?.canceled) return "canceled";
+  if ((diff?.ok ?? 0) === 0 && (diff?.requested ?? 0) > 0) return "error";
+  return "done";
 }
 
 function csvEscape(v: unknown): string {
