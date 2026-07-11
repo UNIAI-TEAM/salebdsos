@@ -442,6 +442,14 @@ function AirdropPage() {
                       ) : (
                         <span className="text-[11px] font-semibold text-slate-500">{h.status}</span>
                       )}
+                      {canResend(h) && (
+                        <span onClick={(e) => { e.stopPropagation(); resendShare(h); }}
+                          role="button" tabIndex={0}
+                          title="Gửi lại"
+                          className="h-7 px-2 grid place-items-center rounded-lg text-primary hover:bg-primary-soft transition inline-flex items-center gap-1 text-[11px] font-semibold">
+                          <RotateCw className="h-3.5 w-3.5" /> Gửi lại
+                        </span>
+                      )}
                       <span onClick={(e) => { e.stopPropagation(); removeHistory(h.id); }}
                         role="button" tabIndex={0}
                         className="opacity-0 group-hover:opacity-100 h-7 w-7 grid place-items-center rounded-lg text-muted-foreground hover:bg-muted transition">
