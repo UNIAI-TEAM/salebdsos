@@ -24,23 +24,45 @@ const Input = z.object({
 export const listAirdropShares = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (d: { tenantId: string; direction?: string; status?: string; page?: number; pageSize?: number }) => d,
+    (d: {
+      tenantId: string;
+      direction?: string;
+      status?: string;
+      page?: number;
+      pageSize?: number;
+      from?: string | null;
+      to?: string | null;
+      deviceQuery?: string | null;
+    }) => d,
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const page = Math.max(1, data.page ?? 1);
     const pageSize = Math.min(Math.max(1, data.pageSize ?? 50), 200);
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
+    const fromIdx = (page - 1) * pageSize;
+    const toIdx = fromIdx + pageSize - 1;
 
     let q = supabase
       .from("airdrop_shares")
       .select(SELECT, { count: "exact" })
       .eq("tenant_id", data.tenantId)
       .order("created_at", { ascending: false })
-      .range(from, to);
+      .range(fromIdx, toIdx);
     if (data.direction && data.direction !== "all") q = q.eq("direction", data.direction);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
+    if (data.from) q = q.gte("created_at", data.from);
+    if (data.to) q = q.lte("created_at", data.to);
+    const dq = data.deviceQuery?.trim();
+    if (dq) {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dq);
+      const escaped = dq.replace(/[,()]/g, " ");
+      const parts = [
+        `device_name.ilike.%${escaped}%`,
+        `recipient_name.ilike.%${escaped}%`,
+      ];
+      if (isUuid) parts.push(`id.eq.${dq}`);
+      q = q.or(parts.join(","));
+    }
 
     const { data: items, error, count } = await q;
     if (error) throw new Error(error.message);
