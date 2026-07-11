@@ -1521,28 +1521,19 @@ function AuditDrawer({
                     className="w-full text-left px-5 py-3.5"
                   >
                     <div className="flex items-start gap-3">
-                      <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${meta.tone}`}>
-                        {meta.label}
-                      </span>
-                      {r.action === "file.bulk_download" && (() => {
-                        const zp = ZIP_PHASE_META[getZipPhase(r.diff)];
-                        const zm = zipMeta.get(r.id);
-                        return (
-                          <>
-                            <span className={`inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${zp.tone}`}>
+                      <div className="flex flex-col gap-1.5 shrink-0 w-[110px]">
+                        <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${meta.tone}`}>
+                          {meta.label}
+                        </span>
+                        {r.action === "file.bulk_download" && (() => {
+                          const zp = ZIP_PHASE_META[getZipPhase(r.diff)];
+                          return (
+                            <span className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${zp.tone}`}>
                               {zp.label}
                             </span>
-                            {zm?.batchId && (
-                              <span
-                                className="inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold border border-border bg-muted/50 text-muted-foreground"
-                                title="Mã lô tải ZIP"
-                              >
-                                #{zm.batchId}
-                              </span>
-                            )}
-                          </>
-                        );
-                      })()}
+                          );
+                        })()}
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-[13px] text-foreground">
                           <span className="font-medium">{actor}</span>
@@ -1592,6 +1583,17 @@ function AuditDrawer({
                           )}
                         </div>
                       </div>
+                      {r.action === "file.bulk_download" && r.batch_id && (
+                        <div className="shrink-0 w-[90px] flex flex-col items-end gap-0.5">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Mã lô</span>
+                          <span
+                            className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold border border-border bg-muted/50 text-muted-foreground"
+                            title="Mã lô tải ZIP"
+                          >
+                            #{r.batch_id}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </button>
                   {r.action === "file.bulk_download" && getZipPhase(r.diff) === "error" && onRetryZip && (() => {
