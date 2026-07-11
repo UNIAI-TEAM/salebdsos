@@ -195,7 +195,7 @@ function FilesPage() {
       <SectionCard
         title={includeDeleted ? "Danh sách tệp (gồm thùng rác)" : "Danh sách tệp"}
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="relative">
               <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -205,6 +205,18 @@ function FilesPage() {
                 className="h-8 pl-7 pr-3 rounded-md border border-border bg-card text-[12.5px] w-64 focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
+            <select
+              value={leadId}
+              onChange={(e) => setLeadId(e.target.value)}
+              className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px] max-w-[220px]"
+              title="Lọc theo khách hàng"
+            >
+              <option value="all">Tất cả khách hàng</option>
+              <option value="none">Không gắn khách hàng</option>
+              {leads.map((l) => (
+                <option key={l.id} value={l.id}>{l.full_name || l.phone || "Khách hàng"}</option>
+              ))}
+            </select>
             <label className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground cursor-pointer">
               <input
                 type="checkbox"
@@ -221,6 +233,7 @@ function FilesPage() {
             <thead className="bg-muted/50 text-muted-foreground">
               <tr className="text-left">
                 <th className="px-4 py-2.5 font-medium">Tên tệp</th>
+                <th className="px-3 py-2.5 font-medium">Khách hàng</th>
                 <th className="px-3 py-2.5 font-medium">Thư mục</th>
                 <th className="px-3 py-2.5 font-medium">Nhãn</th>
                 <th className="px-3 py-2.5 font-medium text-right">Kích thước</th>
@@ -230,10 +243,10 @@ function FilesPage() {
             </thead>
             <tbody className="divide-y divide-border bg-card">
               {listQ.isLoading && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Đang tải...</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">Đang tải...</td></tr>
               )}
               {!listQ.isLoading && items.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Chưa có tệp nào. Bấm "Tải lên" để bắt đầu.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">Chưa có tệp nào. Bấm "Tải lên" để bắt đầu.</td></tr>
               )}
               {items.map((f: any) => {
                 const isDeleted = !!f.deleted_at;
