@@ -351,30 +351,49 @@ function AirdropPage() {
           {/* History */}
           <div className="rounded-2xl bg-card border border-border shadow-soft p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[14px] font-semibold">Lịch sử gần đây</h3>
-              <button className="text-[11.5px] font-semibold text-primary hover:underline">Xem tất cả</button>
+              <h3 className="text-[14px] font-semibold">Lịch sử chia sẻ</h3>
+              <div className="inline-flex rounded-lg border border-border p-0.5 bg-muted/30 text-[10.5px] font-semibold">
+                {(["all", "sent", "received"] as const).map((v) => (
+                  <button key={v} onClick={() => setFilter(v)}
+                    className={["h-6 px-2 rounded-md", filter === v ? "bg-card shadow-soft" : "text-muted-foreground"].join(" ")}>
+                    {v === "all" ? "Tất cả" : v === "sent" ? "Gửi" : "Nhận"}
+                  </button>
+                ))}
+              </div>
             </div>
-            <ul className="space-y-3">
-              {HISTORY.map((h, i) => (
-                <li key={i} className="flex items-center gap-3">
-                  <div className={["h-8 w-8 rounded-lg grid place-items-center shrink-0",
-                    h.direction === "sent" ? "bg-primary-soft text-primary" : "bg-emerald-50 text-emerald-600"].join(" ")}>
-                    {h.direction === "sent" ? <Send className="h-4 w-4" /> : <Inbox className="h-4 w-4" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12.5px] font-semibold truncate">{h.name}</div>
-                    <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {h.at} · {h.device}
+            {history.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border p-5 text-center text-[12px] text-muted-foreground">
+                Chưa có lịch sử chia sẻ.
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {history.slice(0, 12).map((h) => (
+                  <li key={h.id} className="flex items-center gap-3 group">
+                    <div className={["h-8 w-8 rounded-lg grid place-items-center shrink-0",
+                      h.direction === "sent" ? "bg-primary-soft text-primary" : "bg-emerald-50 text-emerald-600"].join(" ")}>
+                      {h.direction === "sent" ? <Send className="h-4 w-4" /> : <Inbox className="h-4 w-4" />}
                     </div>
-                  </div>
-                  {h.status === "delivered" ? (
-                    <span className="text-[11px] font-semibold text-emerald-600 inline-flex items-center gap-0.5"><Check className="h-3.5 w-3.5" /> Nhận</span>
-                  ) : (
-                    <span className="text-[11px] font-semibold text-rose-600 inline-flex items-center gap-0.5"><AlertCircle className="h-3.5 w-3.5" /> Từ chối</span>
-                  )}
-                </li>
-              ))}
-            </ul>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[12.5px] font-semibold truncate">{h.recipient_name ?? h.device_name}</div>
+                      <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {timeAgo(h.created_at)} · {h.device_name}
+                      </div>
+                    </div>
+                    {h.status === "delivered" ? (
+                      <span className="text-[11px] font-semibold text-emerald-600 inline-flex items-center gap-0.5"><Check className="h-3.5 w-3.5" /> Nhận</span>
+                    ) : h.status === "declined" ? (
+                      <span className="text-[11px] font-semibold text-rose-600 inline-flex items-center gap-0.5"><AlertCircle className="h-3.5 w-3.5" /> Từ chối</span>
+                    ) : (
+                      <span className="text-[11px] font-semibold text-slate-500">{h.status}</span>
+                    )}
+                    <button onClick={() => removeHistory(h.id)}
+                      className="opacity-0 group-hover:opacity-100 h-7 w-7 grid place-items-center rounded-lg text-muted-foreground hover:bg-muted transition">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </div>
