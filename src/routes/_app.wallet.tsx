@@ -226,12 +226,12 @@ function WalletPage() {
       {list.isLoading ? (
         <div className="p-8 text-sm text-muted-foreground text-center">Đang tải…</div>
       ) : items.length === 0 ? (
-        <SectionCard title="Chưa có Wallet Card">
+        <div className="rounded-2xl bg-card border border-border shadow-soft p-5">
           <div className="py-8 text-center text-sm text-muted-foreground">
             <Sparkles className="h-8 w-8 mx-auto mb-2 text-primary/60" />
             <p>Chưa có Wallet Card nào. Nhấn "Tạo Wallet Card" để bắt đầu.</p>
           </div>
-        </SectionCard>
+        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {items.map((w) => (
