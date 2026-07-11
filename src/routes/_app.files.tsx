@@ -233,6 +233,34 @@ function FilesPage() {
         ))}
       </div>
 
+      {(tagList.length > 0 || tagF !== "all") && (
+        <div className="flex flex-wrap items-center gap-1.5 mb-5">
+          <span className="text-[11.5px] font-semibold uppercase tracking-wider text-muted-foreground mr-1">Nhãn:</span>
+          <TagPill label="Tất cả" active={tagF === "all"} onClick={() => setTagF("all")} />
+          {tagList.map((t) => (
+            <TagPill key={t} label={t} count={tagsCounts[t]} active={tagF === t} onClick={() => setTagF(t)} />
+          ))}
+        </div>
+      )}
+
+      {selected.size > 0 && (
+        <BulkToolbar
+          count={selected.size}
+          folders={folderList}
+          tags={tagList}
+          busy={bulkM.isPending}
+          onClear={() => setSelected(new Set())}
+          onApplyFolder={(f) => bulkM.mutate({ ids: Array.from(selected), folder: f || null })}
+          onApplyTag={(t) => bulkM.mutate({ ids: Array.from(selected), tag: t || null })}
+          onSoftDelete={() => {
+            if (!confirm(`Chuyển ${selected.size} tệp vào thùng rác?`)) return;
+            Promise.all(Array.from(selected).map((id) => softDel({ data: { id } })))
+              .then(() => { toast.success(`Đã chuyển ${selected.size} tệp vào thùng rác`); setSelected(new Set()); invalidate(); })
+              .catch((e: any) => toast.error(e?.message || "Lỗi"));
+          }}
+        />
+      )}
+
       <SectionCard
         title={includeDeleted ? "Danh sách tệp (gồm thùng rác)" : "Danh sách tệp"}
         action={
