@@ -1,9 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/app/ui";
 import {
   Radio, Wifi, Smartphone, Laptop, Tablet, Watch, RefreshCw, Settings2, Shield,
   Check, X, Clock, Send, Inbox, BadgeCheck, Eye, EyeOff, Users2,
-  AlertCircle, IdCard, Trash2,
+  AlertCircle, IdCard, Trash2, ExternalLink, Copy, Ruler, StickyNote, User2,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -15,10 +15,18 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/airdrop")({ component: AirdropPage });
 
+type CardBrief = {
+  id: string; slug: string; display_name: string | null;
+  title: string | null; company: string | null;
+  avatar_url: string | null; is_published: boolean | null;
+} | null;
+
 type ShareRow = {
   id: string; device_name: string; device_kind: DeviceKind;
   direction: "sent" | "received"; status: "pending" | "delivered" | "declined" | "canceled";
   recipient_name: string | null; created_at: string;
+  distance_m: number | null; notes: string | null; card_id: string | null;
+  card?: CardBrief;
 };
 
 function timeAgo(iso: string) {
