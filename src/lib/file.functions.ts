@@ -203,7 +203,7 @@ export const bulkUpdateFiles = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, any> = {};
+    const patch: { folder?: string | null; tag?: string | null } = {};
     if (data.folder !== undefined) patch.folder = data.folder || null;
     if (data.tag !== undefined) patch.tag = data.tag || null;
     const { error, count } = await context.supabase
