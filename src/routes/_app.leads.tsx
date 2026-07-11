@@ -328,11 +328,42 @@ function LeadsPage() {
 }
 
 function LeadDetail({
-  lead, ownerName, projectName, onEdit, onDelete, onStatusChange,
+  lead, tenantId, ownerName, projectName, onEdit, onDelete,
 }: {
-  lead: Lead; ownerName?: string; projectName?: string;
-  onEdit: () => void; onDelete: () => void; onStatusChange: (s: LeadStatus) => void;
+  lead: Lead; tenantId: string; ownerName?: string; projectName?: string;
+  onEdit: () => void; onDelete: () => void;
 }) {
+  const qc = useQueryClient();
+  const fnTimeline = useServerFn(getLeadTimeline);
+  const fnNotes = useServerFn(updateLeadNotes);
+  const fnStatus = useServerFn(updateLeadStatus);
+
+  const timelineQ = useQuery({
+    queryKey: ["lead-timeline", lead.id],
+    queryFn: () => fnTimeline({ data: { leadId: lead.id, tenantId } }),
+  });
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["leads", tenantId] });
+    qc.invalidateQueries({ queryKey: ["lead-stats", tenantId] });
+    qc.invalidateQueries({ queryKey: ["lead-timeline", lead.id] });
+  };
+
+  const statusM = useMutation({
+    mutationFn: (s: LeadStatus) => fnStatus({ data: { id: lead.id, status: s } }),
+    onSuccess: () => { toast.success("Đã cập nhật trạng thái"); invalidate(); },
+    onError: (e: any) => toast.error(e?.message || "Cập nhật thất bại"),
+  });
+
+  const [notesDraft, setNotesDraft] = useState(lead.notes ?? "");
+  useEffect(() => { setNotesDraft(lead.notes ?? ""); }, [lead.id, lead.notes]);
+  const notesDirty = (notesDraft ?? "") !== (lead.notes ?? "");
+  const notesM = useMutation({
+    mutationFn: () => fnNotes({ data: { id: lead.id, notes: notesDraft } }),
+    onSuccess: () => { toast.success("Đã lưu ghi chú"); invalidate(); },
+    onError: (e: any) => toast.error(e?.message || "Lưu ghi chú thất bại"),
+  });
+
   return (
     <>
       <SheetHeader>
@@ -358,47 +389,102 @@ function LeadDetail({
           <button onClick={onEdit} className="h-10 rounded-lg bg-primary text-primary-foreground grid place-items-center hover:bg-primary/90"><Save className="h-4 w-4" /></button>
         </div>
 
+        {/* Quick status pills */}
+        <div>
+          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Cập nhật nhanh trạng thái</Label>
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
+            {LEAD_STATUSES.map((s) => {
+              const active = lead.status === s;
+              return (
+                <button
+                  key={s}
+                  disabled={statusM.isPending || active}
+                  onClick={() => statusM.mutate(s)}
+                  className={[
+                    "text-[11px] px-2.5 py-1 rounded-md font-semibold transition",
+                    active ? STATUS_TONE[s] : "bg-muted/60 text-muted-foreground hover:bg-muted",
+                    statusM.isPending && !active ? "opacity-60" : "",
+                  ].join(" ")}
+                >{STATUS_LABEL[s]}</button>
+              );
+            })}
+          </div>
+        </div>
+
         <LeadScorePanel leadId={lead.id} initialScore={lead.score ?? null} />
 
-        <div>
-          <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">Trạng thái</Label>
-          <Select value={lead.status} onValueChange={(v) => onStatusChange(v as LeadStatus)}>
-            <SelectTrigger className="h-9 mt-1.5"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {LEAD_STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid grid-cols-3 w-full">
+            <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+            <TabsTrigger value="timeline">Lịch sử</TabsTrigger>
+            <TabsTrigger value="notes">Ghi chú</TabsTrigger>
+          </TabsList>
 
-        <div>
-          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Thông tin</div>
-          <dl className="space-y-2 text-[12.5px]">
-            <Row k="SĐT" v={lead.phone || "—"} />
-            <Row k="Email" v={lead.email || "—"} />
-            <Row k="Nguồn" v={lead.source || "—"} />
-            <Row k="Nhu cầu" v={lead.need_type ? NEED_LABEL[lead.need_type] : "—"} />
-            <Row k="Ngân sách" v={lead.budget || "—"} />
-            <Row k="Thời gian" v={lead.timeline || "—"} />
-            <Row k="Phụ trách" v={ownerName || "Chưa gán"} />
-            <Row k="Ngày tạo" v={fmtDate(lead.created_at)} />
-          </dl>
-        </div>
-
-        {lead.tags && lead.tags.length > 0 && (
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Tags</div>
-            <div className="flex flex-wrap gap-1.5">
-              {lead.tags.map((t) => <Badge key={t} variant="secondary">{t}</Badge>)}
+          <TabsContent value="overview" className="mt-4 space-y-4">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Thông tin</div>
+              <dl className="space-y-2 text-[12.5px]">
+                <Row k="SĐT" v={lead.phone || "—"} />
+                <Row k="Email" v={lead.email || "—"} />
+                <Row k="Nguồn" v={lead.source || "—"} />
+                <Row k="Nhu cầu" v={lead.need_type ? NEED_LABEL[lead.need_type] : "—"} />
+                <Row k="Ngân sách" v={lead.budget || "—"} />
+                <Row k="Thời gian" v={lead.timeline || "—"} />
+                <Row k="Phụ trách" v={ownerName || "Chưa gán"} />
+                <Row k="Ngày tạo" v={fmtDate(lead.created_at)} />
+              </dl>
             </div>
-          </div>
-        )}
+            {lead.tags && lead.tags.length > 0 && (
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Tags</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {lead.tags.map((t) => <Badge key={t} variant="secondary">{t}</Badge>)}
+                </div>
+              </div>
+            )}
+          </TabsContent>
 
-        {lead.notes && (
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Ghi chú</div>
-            <p className="text-[12.5px] whitespace-pre-wrap text-foreground">{lead.notes}</p>
-          </div>
-        )}
+          <TabsContent value="timeline" className="mt-4">
+            {timelineQ.isLoading ? (
+              <div className="text-center py-8 text-muted-foreground text-[12.5px]"><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Đang tải…</div>
+            ) : (timelineQ.data ?? []).length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-[12.5px]">Chưa có tương tác nào được ghi lại.</div>
+            ) : (
+              <ol className="relative border-l border-border ml-2 space-y-4">
+                {(timelineQ.data ?? []).map((ev) => (
+                  <li key={ev.id} className="ml-4">
+                    <div className={[
+                      "absolute -left-[5px] mt-1 h-2.5 w-2.5 rounded-full ring-4 ring-background",
+                      ev.kind === "audit" ? "bg-primary" : "bg-emerald-500",
+                    ].join(" ")} />
+                    <div className="text-[11px] text-muted-foreground tabular-nums">{fmtDate(ev.at)}</div>
+                    <div className="text-[13px] font-semibold text-foreground capitalize">{prettyEvent(ev)}</div>
+                    {ev.detail && <div className="text-[12px] text-muted-foreground mt-0.5 line-clamp-3">{ev.detail}</div>}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </TabsContent>
+
+          <TabsContent value="notes" className="mt-4 space-y-3">
+            <Textarea
+              rows={8}
+              placeholder="Ghi chú về khách hàng, nhu cầu, các cuộc gọi gần nhất…"
+              value={notesDraft}
+              onChange={(e) => setNotesDraft(e.target.value)}
+              className="text-[12.5px]"
+            />
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] text-muted-foreground">{notesDraft.length}/5000</div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="ghost" disabled={!notesDirty} onClick={() => setNotesDraft(lead.notes ?? "")}>Hoàn tác</Button>
+                <Button size="sm" disabled={!notesDirty || notesM.isPending} onClick={() => notesM.mutate()}>
+                  {notesM.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Lưu ghi chú
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <div className="pt-2 border-t border-border flex justify-end">
           <Button variant="ghost" size="sm" className="text-rose-600 hover:text-rose-700" onClick={onDelete}>
@@ -408,6 +494,23 @@ function LeadDetail({
       </div>
     </>
   );
+}
+
+const EVENT_LABEL: Record<string, string> = {
+  status_change: "Đổi trạng thái",
+  notes_update: "Cập nhật ghi chú",
+};
+function prettyEvent(ev: { kind: "audit" | "followup"; title: string; meta?: any }) {
+  if (ev.kind === "audit") {
+    const base = EVENT_LABEL[ev.title] || ev.title;
+    if (ev.title === "status_change" && ev.meta?.from && ev.meta?.to) {
+      const from = STATUS_LABEL[ev.meta.from as LeadStatus] ?? ev.meta.from;
+      const to = STATUS_LABEL[ev.meta.to as LeadStatus] ?? ev.meta.to;
+      return `${base}: ${from} → ${to}`;
+    }
+    return base;
+  }
+  return ev.title;
 }
 
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
