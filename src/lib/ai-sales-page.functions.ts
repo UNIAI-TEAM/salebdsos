@@ -105,10 +105,14 @@ export const generateSalesPage = createServerFn({ method: "POST" })
     if (data.projectId) {
       const { data: p } = await supabase
         .from("projects")
-        .select("name,location,description,price_range,highlights")
+        .select("name,location,city,description,price_from,price_to,currency,unit_highlights")
         .eq("id", data.projectId)
         .maybeSingle();
-      if (p) projectCtx = `Dự án: ${p.name}. Vị trí: ${p.location || "?"}. Giá: ${p.price_range || "?"}. Mô tả: ${p.description || "?"}. Điểm nhấn: ${Array.isArray(p.highlights) ? p.highlights.join("; ") : ""}.`;
+      if (p) {
+        const price = p.price_from || p.price_to ? `${p.price_from ?? "?"} - ${p.price_to ?? "?"} ${p.currency || ""}` : "?";
+        const hl = Array.isArray(p.unit_highlights) ? p.unit_highlights.join("; ") : "";
+        projectCtx = `Dự án: ${p.name}. Vị trí: ${p.location || p.city || "?"}. Giá: ${price}. Mô tả: ${p.description || "?"}. Điểm nhấn: ${hl}.`;
+      }
     }
 
     const toneLabel = TONE_LABEL_VI[data.tone];
