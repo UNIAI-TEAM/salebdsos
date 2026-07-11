@@ -39,7 +39,7 @@ function FilesPage() {
   const [folder, setFolder] = useState<string>("all");
   const [tagF, setTagF] = useState<string>("all");
   const [leadId, setLeadId] = useState<string>("all");
-  const [includeDeleted, setIncludeDeleted] = useState(false);
+  const [scope, setScope] = useState<"active" | "trash">("active");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState<null | { fileId?: string; title: string }>(null);
