@@ -804,6 +804,68 @@ export type Database = {
           },
         ]
       }
+      files: {
+        Row: {
+          bucket: string
+          created_at: string
+          deleted_at: string | null
+          folder: string | null
+          id: string
+          mime: string | null
+          name: string
+          path: string
+          related_id: string | null
+          related_type: string | null
+          size: number
+          tag: string | null
+          tenant_id: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          bucket?: string
+          created_at?: string
+          deleted_at?: string | null
+          folder?: string | null
+          id?: string
+          mime?: string | null
+          name: string
+          path: string
+          related_id?: string | null
+          related_type?: string | null
+          size?: number
+          tag?: string | null
+          tenant_id: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          deleted_at?: string | null
+          folder?: string | null
+          id?: string
+          mime?: string | null
+          name?: string
+          path?: string
+          related_id?: string | null
+          related_type?: string | null
+          size?: number
+          tag?: string | null
+          tenant_id?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "files_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interaction_events: {
         Row: {
           browser: string | null
