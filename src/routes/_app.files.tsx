@@ -1387,7 +1387,7 @@ function AuditDrawer({
           </div>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => exportAuditRowsToCsv(rows, fileMap, title)}
+              onClick={() => exportAuditRowsToCsv(rows, fileMap, title, zipMeta)}
               disabled={rows.length === 0}
               className="h-8 px-2.5 rounded-md border border-border bg-card text-[12.5px] hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
               title="Xuất CSV bản ghi đang hiển thị"
