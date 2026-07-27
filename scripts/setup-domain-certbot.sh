@@ -165,7 +165,7 @@ server {
     location ^~ /.well-known/acme-challenge/ {
         root /var/www/html;
         allow all;
-        try_files $uri =404;
+        try_files \$uri =404;
     }
 
     location / {
