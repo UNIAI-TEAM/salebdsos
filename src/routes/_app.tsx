@@ -19,9 +19,16 @@ function AppLayout() {
     if (loading) return;
     if (!session) {
       nav({ to: "/login", replace: true });
-    } else if (tenants.length === 0 && !isPlatformAdmin) {
-      nav({ to: "/onboarding", replace: true });
+      return;
     }
+    if (tenants.length > 0 || isPlatformAdmin) return;
+    // Wait briefly for tenants to load before deciding to redirect to onboarding.
+    const t = setTimeout(() => {
+      if (tenants.length === 0 && !isPlatformAdmin) {
+        nav({ to: "/onboarding", replace: true });
+      }
+    }, 1500);
+    return () => clearTimeout(t);
   }, [loading, session, tenants.length, isPlatformAdmin, nav]);
 
   if (loading || !session) {
