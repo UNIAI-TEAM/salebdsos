@@ -39,7 +39,6 @@ import { Route as AppFilesRouteImport } from './routes/_app.files'
 import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
 import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
-import { Route as AppCustomersRouteImport } from './routes/_app.customers'
 import { Route as AppContentLibraryRouteImport } from './routes/_app.content-library'
 import { Route as AppCardDesignerRouteImport } from './routes/_app.card-designer'
 import { Route as AppAuthSettingsRouteImport } from './routes/_app.auth-settings'
@@ -49,6 +48,7 @@ import { Route as AppAirdropRouteImport } from './routes/_app.airdrop'
 import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
 import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
 import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
+import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.index'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
 import { Route as AppCustomersIdRouteImport } from './routes/_app.customers.$id'
 import { Route as AppAiFollowupCustomerIdRouteImport } from './routes/_app.ai-followup.$customerId'
@@ -206,11 +206,6 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCustomersRoute = AppCustomersRouteImport.update({
-  id: '/customers',
-  path: '/customers',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppContentLibraryRoute = AppContentLibraryRouteImport.update({
   id: '/content-library',
   path: '/content-library',
@@ -256,15 +251,20 @@ const AppAiFollowupRoute = AppAiFollowupRouteImport.update({
   path: '/ai-followup',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
+  id: '/customers/',
+  path: '/customers/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AppProjectsRoute,
 } as any)
 const AppCustomersIdRoute = AppCustomersIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppCustomersRoute,
+  id: '/customers/$id',
+  path: '/customers/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppAiFollowupCustomerIdRoute = AppAiFollowupCustomerIdRouteImport.update({
   id: '/$customerId',
@@ -308,7 +308,6 @@ export interface FileRoutesByFullPath {
   '/auth-settings': typeof AppAuthSettingsRoute
   '/card-designer': typeof AppCardDesignerRoute
   '/content-library': typeof AppContentLibraryRoute
-  '/customers': typeof AppCustomersRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/digital-card': typeof AppDigitalCardRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
@@ -335,6 +334,7 @@ export interface FileRoutesByFullPath {
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/customers/$id': typeof AppCustomersIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/customers/': typeof AppCustomersIndexRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
   '/api/public/sales-pages/$slug': typeof ApiPublicSalesPagesSlugRoute
@@ -356,7 +356,6 @@ export interface FileRoutesByTo {
   '/auth-settings': typeof AppAuthSettingsRoute
   '/card-designer': typeof AppCardDesignerRoute
   '/content-library': typeof AppContentLibraryRoute
-  '/customers': typeof AppCustomersRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/digital-card': typeof AppDigitalCardRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
@@ -383,6 +382,7 @@ export interface FileRoutesByTo {
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/customers/$id': typeof AppCustomersIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/customers': typeof AppCustomersIndexRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
   '/api/public/sales-pages/$slug': typeof ApiPublicSalesPagesSlugRoute
@@ -406,7 +406,6 @@ export interface FileRoutesById {
   '/_app/auth-settings': typeof AppAuthSettingsRoute
   '/_app/card-designer': typeof AppCardDesignerRoute
   '/_app/content-library': typeof AppContentLibraryRoute
-  '/_app/customers': typeof AppCustomersRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/digital-card': typeof AppDigitalCardRoute
   '/_app/dynamic-qr': typeof AppDynamicQrRoute
@@ -433,6 +432,7 @@ export interface FileRoutesById {
   '/_app/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/_app/customers/$id': typeof AppCustomersIdRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
+  '/_app/customers/': typeof AppCustomersIndexRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
   '/api/public/sales-pages/$slug': typeof ApiPublicSalesPagesSlugRoute
@@ -456,7 +456,6 @@ export interface FileRouteTypes {
     | '/auth-settings'
     | '/card-designer'
     | '/content-library'
-    | '/customers'
     | '/dashboard'
     | '/digital-card'
     | '/dynamic-qr'
@@ -483,6 +482,7 @@ export interface FileRouteTypes {
     | '/ai-followup/$customerId'
     | '/customers/$id'
     | '/projects/$id'
+    | '/customers/'
     | '/api/public/lead-forms/$slug'
     | '/api/public/q/$code'
     | '/api/public/sales-pages/$slug'
@@ -504,7 +504,6 @@ export interface FileRouteTypes {
     | '/auth-settings'
     | '/card-designer'
     | '/content-library'
-    | '/customers'
     | '/dashboard'
     | '/digital-card'
     | '/dynamic-qr'
@@ -531,6 +530,7 @@ export interface FileRouteTypes {
     | '/ai-followup/$customerId'
     | '/customers/$id'
     | '/projects/$id'
+    | '/customers'
     | '/api/public/lead-forms/$slug'
     | '/api/public/q/$code'
     | '/api/public/sales-pages/$slug'
@@ -553,7 +553,6 @@ export interface FileRouteTypes {
     | '/_app/auth-settings'
     | '/_app/card-designer'
     | '/_app/content-library'
-    | '/_app/customers'
     | '/_app/dashboard'
     | '/_app/digital-card'
     | '/_app/dynamic-qr'
@@ -580,6 +579,7 @@ export interface FileRouteTypes {
     | '/_app/ai-followup/$customerId'
     | '/_app/customers/$id'
     | '/_app/projects/$id'
+    | '/_app/customers/'
     | '/api/public/lead-forms/$slug'
     | '/api/public/q/$code'
     | '/api/public/sales-pages/$slug'
@@ -817,13 +817,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/customers': {
-      id: '/_app/customers'
-      path: '/customers'
-      fullPath: '/customers'
-      preLoaderRoute: typeof AppCustomersRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/content-library': {
       id: '/_app/content-library'
       path: '/content-library'
@@ -887,6 +880,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiFollowupRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/customers/': {
+      id: '/_app/customers/'
+      path: '/customers'
+      fullPath: '/customers/'
+      preLoaderRoute: typeof AppCustomersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/projects/$id': {
       id: '/_app/projects/$id'
       path: '/$id'
@@ -896,10 +896,10 @@ declare module '@tanstack/react-router' {
     }
     '/_app/customers/$id': {
       id: '/_app/customers/$id'
-      path: '/$id'
+      path: '/customers/$id'
       fullPath: '/customers/$id'
       preLoaderRoute: typeof AppCustomersIdRouteImport
-      parentRoute: typeof AppCustomersRoute
+      parentRoute: typeof AppRoute
     }
     '/_app/ai-followup/$customerId': {
       id: '/_app/ai-followup/$customerId'
@@ -951,18 +951,6 @@ const AppAiFollowupRouteWithChildren = AppAiFollowupRoute._addFileChildren(
   AppAiFollowupRouteChildren,
 )
 
-interface AppCustomersRouteChildren {
-  AppCustomersIdRoute: typeof AppCustomersIdRoute
-}
-
-const AppCustomersRouteChildren: AppCustomersRouteChildren = {
-  AppCustomersIdRoute: AppCustomersIdRoute,
-}
-
-const AppCustomersRouteWithChildren = AppCustomersRoute._addFileChildren(
-  AppCustomersRouteChildren,
-)
-
 interface AppProjectsRouteChildren {
   AppProjectsIdRoute: typeof AppProjectsIdRoute
 }
@@ -985,7 +973,6 @@ interface AppRouteChildren {
   AppAuthSettingsRoute: typeof AppAuthSettingsRoute
   AppCardDesignerRoute: typeof AppCardDesignerRoute
   AppContentLibraryRoute: typeof AppContentLibraryRoute
-  AppCustomersRoute: typeof AppCustomersRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppDigitalCardRoute: typeof AppDigitalCardRoute
   AppDynamicQrRoute: typeof AppDynamicQrRoute
@@ -1004,6 +991,8 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppTeamRoute: typeof AppTeamRoute
   AppWalletRoute: typeof AppWalletRoute
+  AppCustomersIdRoute: typeof AppCustomersIdRoute
+  AppCustomersIndexRoute: typeof AppCustomersIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -1016,7 +1005,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppAuthSettingsRoute: AppAuthSettingsRoute,
   AppCardDesignerRoute: AppCardDesignerRoute,
   AppContentLibraryRoute: AppContentLibraryRoute,
-  AppCustomersRoute: AppCustomersRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppDigitalCardRoute: AppDigitalCardRoute,
   AppDynamicQrRoute: AppDynamicQrRoute,
@@ -1035,6 +1023,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppTeamRoute: AppTeamRoute,
   AppWalletRoute: AppWalletRoute,
+  AppCustomersIdRoute: AppCustomersIdRoute,
+  AppCustomersIndexRoute: AppCustomersIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
