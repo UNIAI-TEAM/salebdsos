@@ -78,7 +78,7 @@ export function AppTopbar() {
             <HelpCircle className="h-5 w-5 text-muted-foreground" />
           </button>
           <div className="ml-2 flex items-center gap-2 pl-2 border-l border-border cursor-pointer hover:bg-muted rounded-lg pr-2 py-1 transition">
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-indigo-600 grid place-items-center text-white text-[13px] font-semibold">NA</div>
+            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-indigo-500 grid place-items-center text-primary-foreground text-[13px] font-semibold">NA</div>
             <div className="hidden md:block leading-tight">
               <div className="text-[13px] font-semibold">Nguyễn Văn A</div>
               <div className="text-[11px] text-muted-foreground">Sales Manager</div>
