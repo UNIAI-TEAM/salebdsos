@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { listMyTenants } from "@/lib/auth.functions";
 import type { Database } from "@/integrations/supabase/types";
+import { permissionsFor } from "@/lib/permissions";
 
 export type Role = Database["public"]["Enums"]["app_role"];
 
@@ -27,6 +28,12 @@ type AuthCtx = {
   refreshTenants: () => Promise<void>;
   signOut: () => Promise<void>;
   hasRole: (roles: Role | Role[]) => boolean;
+  /** Quyền xem dữ liệu workspace hiện tại */
+  canView: boolean;
+  /** Quyền chỉnh sửa dữ liệu workspace hiện tại */
+  canEdit: boolean;
+  /** Quyền quản lý thành viên & vai trò */
+  canManageMembers: boolean;
 };
 
 const Ctx = createContext<AuthCtx | null>(null);
@@ -115,6 +122,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const arr = Array.isArray(r) ? r : [r];
         return arr.includes(currentRole);
       },
+      canView: permissionsFor(currentRole).view,
+      canEdit: permissionsFor(currentRole).edit,
+      canManageMembers: permissionsFor(currentRole).manageMembers,
     };
   }, [session, loading, tenants, isPlatformAdmin, currentTenantId, switchTenant, refreshTenants, signOut]);
 
