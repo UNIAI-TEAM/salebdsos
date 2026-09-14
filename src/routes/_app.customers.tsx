@@ -32,7 +32,7 @@ type FormState = {
 const EMPTY: FormState = { full_name: "", email: "", phone: "", company: "", notes: "" };
 
 function CustomersPage() {
-  const { currentTenant } = useAuth();
+  const { currentTenant, canEdit } = useAuth();
   const tenantId = currentTenant?.id;
   const qc = useQueryClient();
 
@@ -117,10 +117,10 @@ function CustomersPage() {
           </form>
           <Button type="button" variant="outline" onClick={onSubmitSearch}>Tìm</Button>
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Button variant="outline" disabled={!canEdit} onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4" /> Import CSV
             </Button>
-            <Button onClick={() => setEditing({ ...EMPTY })}>
+            <Button disabled={!canEdit} onClick={() => setEditing({ ...EMPTY })}>
               <Plus className="h-4 w-4" /> Thêm khách hàng
             </Button>
           </div>
@@ -156,7 +156,7 @@ function CustomersPage() {
                   </td>
                   <td className="px-3 py-3">
                     <div className="flex items-center justify-end gap-1 pr-2">
-                      <Button size="icon" variant="ghost" onClick={() => setEditing({
+                      <Button size="icon" variant="ghost" disabled={!canEdit} onClick={() => setEditing({
                         id: r.id,
                         full_name: r.full_name,
                         email: r.email ?? "",
@@ -166,7 +166,7 @@ function CustomersPage() {
                       })}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setDeletingId(r.id)}>
+                      <Button size="icon" variant="ghost" disabled={!canEdit} onClick={() => setDeletingId(r.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>

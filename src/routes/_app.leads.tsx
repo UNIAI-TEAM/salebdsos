@@ -65,7 +65,7 @@ function fmtDate(s: string) {
 }
 
 function LeadsPage() {
-  const { currentTenant } = useAuth();
+  const { currentTenant, canEdit } = useAuth();
   const tenantId = currentTenant?.id;
   const qc = useQueryClient();
 
@@ -198,10 +198,10 @@ function LeadsPage() {
           </Select>
 
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-9" onClick={() => setImportOpen(true)}>
+            <Button variant="outline" size="sm" className="h-9" disabled={!canEdit} onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4" /> Import
             </Button>
-            <Button size="sm" className="h-9" onClick={openCreate}>
+            <Button size="sm" className="h-9" disabled={!canEdit} onClick={openCreate}>
               <Plus className="h-4 w-4" /> Thêm lead
             </Button>
           </div>
