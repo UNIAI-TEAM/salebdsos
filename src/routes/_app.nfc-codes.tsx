@@ -10,6 +10,8 @@ import {
   listShortCodes,
   createShortCode,
   toggleShortCode,
+  updateShortCode,
+  deleteShortCode,
 } from "@/lib/tracking.functions";
 import { QrCode } from "@/components/qr-code";
 import { PageHeader, SectionCard } from "@/components/app/ui";
@@ -20,7 +22,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Power, Plus, Radio, QrCode as QrIcon, Link2, Share2 } from "lucide-react";
+import { Copy, Power, Plus, Radio, QrCode as QrIcon, Link2, Share2, Pencil, Trash2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/nfc-codes")({
@@ -31,6 +33,8 @@ function NfcCodesPage() {
   const list = useServerFn(listShortCodes);
   const create = useServerFn(createShortCode);
   const toggle = useServerFn(toggleShortCode);
+  const updateCode = useServerFn(updateShortCode);
+  const removeCode = useServerFn(deleteShortCode);
   const qc = useQueryClient();
 
   const cards = useQuery({
@@ -58,6 +62,28 @@ function NfcCodesPage() {
     onSuccess: () => {
       toast.success("Đã tạo mã");
       setLabel("");
+      qc.invalidateQueries({ queryKey: ["short-codes"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Lỗi"),
+  });
+
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState("");
+
+  const updateMut = useMutation({
+    mutationFn: (v: { code: string; label: string }) => updateCode({ data: v }),
+    onSuccess: () => {
+      toast.success("Đã cập nhật nhãn");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["short-codes"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Lỗi"),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (code: string) => removeCode({ data: { code } }),
+    onSuccess: () => {
+      toast.success("Đã xoá mã");
       qc.invalidateQueries({ queryKey: ["short-codes"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Lỗi"),
@@ -132,7 +158,19 @@ function NfcCodesPage() {
                     {!c.is_active && <Badge variant="secondary">Tạm tắt</Badge>}
                   </div>
                   <div className="mt-2 font-mono text-sm font-semibold">/{c.code}</div>
-                  {c.label && <div className="text-xs text-muted-foreground">{c.label}</div>}
+                  {editing === c.code ? (
+                    <div className="mt-1 flex items-center gap-1">
+                      <Input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} className="h-8" placeholder="Nhãn mã" />
+                      <Button size="sm" variant="outline" onClick={() => updateMut.mutate({ code: c.code, label: editLabel })}>
+                        <Check className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    c.label && <div className="text-xs text-muted-foreground">{c.label}</div>
+                  )}
                   <div className="mt-2 text-[11px] break-all text-muted-foreground">{url}</div>
                   <div className="mt-3 flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => {
@@ -145,6 +183,14 @@ function NfcCodesPage() {
                       toggleMut.mutate({ code: c.code, isActive: !c.is_active })
                     }>
                       <Power className="h-3 w-3 mr-1" /> {c.is_active ? "Tắt" : "Bật"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setEditing(c.code); setEditLabel(c.label ?? ""); }}>
+                      <Pencil className="h-3 w-3 mr-1" /> Sửa nhãn
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-destructive" onClick={() => {
+                      if (confirm(`Xoá mã /${c.code}?`)) deleteMut.mutate(c.code);
+                    }}>
+                      <Trash2 className="h-3 w-3 mr-1" /> Xoá
                     </Button>
                   </div>
                 </div>

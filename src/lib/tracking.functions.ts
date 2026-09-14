@@ -133,3 +133,28 @@ export const toggleShortCode = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+/** Đổi nhãn mã ngắn NFC/QR. */
+export const updateShortCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ code: z.string().min(3).max(40), label: z.string().trim().max(120).nullable() }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase
+      .from("nfc_short_codes")
+      .update({ label: data.label || null } as never)
+      .eq("code", data.code);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Xoá hẳn một mã ngắn (không dùng nữa). */
+export const deleteShortCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ code: z.string().min(3).max(40) }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.from("nfc_short_codes").delete().eq("code", data.code);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

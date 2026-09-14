@@ -16,7 +16,14 @@ const getPublicCard = createServerFn({ method: "GET" })
       .is("deleted_at", null)
       .maybeSingle();
     if (error || !card) throw notFound();
-    return card;
+    const { data: blocks } = await supabaseAdmin
+      .from("card_blocks")
+      .select("id, block_type, position, config")
+      .eq("card_id", card.id)
+      .eq("is_visible", true)
+      .is("deleted_at", null)
+      .order("position", { ascending: true });
+    return { ...card, blocks: blocks ?? [] };
   });
 
 const TEMPLATES: Record<string, { bg: string; text: string }> = {
@@ -72,6 +79,9 @@ function PublicCard() {
     }).then(() => {});
   }, [card.id, card.tenant_id]);
 
+  const blocks = (Array.isArray((card as any).blocks) ? (card as any).blocks : []) as {
+    id: string; block_type: string; position: number; config: Record<string, unknown> | null;
+  }[];
   const fields = (Array.isArray(card.fields) ? card.fields : []) as { type?: string; label: string; value?: string; href?: string }[];
 
   return (
@@ -115,6 +125,39 @@ function PublicCard() {
             <p className="text-center text-xs opacity-60 py-4">Chưa có thông tin liên hệ</p>
           )}
         </nav>
+
+        {blocks.length > 0 && (
+          <section className="mt-8 space-y-4">
+            {blocks.map((b) => {
+              const cfg = (b.config ?? {}) as Record<string, any>;
+              const items: any[] = Array.isArray(cfg.items) ? cfg.items : [];
+              return (
+                <article key={b.id} className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+                  {cfg.title && <h2 className="text-[15px] font-semibold">{cfg.title}</h2>}
+                  {cfg.text && <p className="mt-1.5 text-[13px] leading-relaxed opacity-90">{cfg.text}</p>}
+                  {items.length > 0 && (
+                    <ul className="mt-3 space-y-2">
+                      {items.map((it, i) => (
+                        <li key={i} className="text-[13px] opacity-90">
+                          {it.href ? (
+                            <a href={it.href} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+                              {it.label ?? it.title ?? it.href}
+                            </a>
+                          ) : (
+                            <>{it.label ?? it.title ?? String(it)}</>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {cfg.image && (
+                    <img src={cfg.image} alt={cfg.title ?? "Hình ảnh"} loading="lazy" className="mt-3 w-full rounded-xl object-cover" />
+                  )}
+                </article>
+              );
+            })}
+          </section>
+        )}
 
         <footer className="mt-10 text-center text-[11px] opacity-60">
           Tạo bởi SaleBDS OS · BĐS
