@@ -4,7 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const SELECT =
-  "id,tenant_id,owner_user_id,lead_id,customer_id,project_id,title,audience,tone,cta,prompt,output,model,tokens,status,slug,is_published,views_count,created_at,updated_at";
+  "id,tenant_id,industry,owner_user_id,lead_id,customer_id,project_id,title,audience,tone,cta,prompt,output,model,tokens,status,slug,is_published,views_count,created_at,updated_at";
 
 export const TONES = ["professional", "friendly", "luxury", "urgent"] as const;
 
@@ -425,6 +425,7 @@ export const updateSalesPage = createServerFn({ method: "POST" })
         id: z.string().uuid(),
         title: z.string().trim().min(1).max(200).optional(),
         slug: z.string().trim().max(80).optional().nullable(),
+        industry: z.string().trim().max(50).optional().nullable(),
         output: OutputSchema.optional(),
       })
       .parse(d),
@@ -434,6 +435,7 @@ export const updateSalesPage = createServerFn({ method: "POST" })
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     if (data.title !== undefined) patch.title = data.title;
     if (data.output !== undefined) patch.output = data.output;
+    if (data.industry !== undefined) patch.industry = data.industry || null;
     if (data.slug !== undefined)
       patch.slug = data.slug ? slugify(data.slug) || null : null;
     const { data: row, error } = await context.supabase
