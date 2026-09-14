@@ -10,6 +10,8 @@ import {
   listShortCodes,
   createShortCode,
   toggleShortCode,
+  updateShortCode,
+  deleteShortCode,
 } from "@/lib/tracking.functions";
 import { QrCode } from "@/components/qr-code";
 import { PageHeader, SectionCard } from "@/components/app/ui";
