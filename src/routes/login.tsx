@@ -504,7 +504,7 @@ function LoginPage() {
               variant="outline"
               onClick={onGoogle}
               disabled={loading}
-              className="w-full h-11 rounded-xl border-[#E2E8F0] bg-white text-[#0F172A] text-sm font-medium hover:bg-[#F8FAFC] hover:border-[#CBD5E1] transition-all"
+              className="w-full h-11 rounded-xl border-border bg-card text-foreground text-sm font-medium hover:bg-muted hover:border-border transition-all"
             >
               <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M23.766 12.2764C23.766 11.4607 23.6999 10.6406 23.5588 9.83807H12.24V14.4591H18.7217C18.4528 15.9494 17.5885 17.2678 16.323 18.1056V21.1039H20.19C22.4608 19.0139 23.766 15.9274 23.766 12.2764Z" fill="#4285F4" />
@@ -515,10 +515,10 @@ function LoginPage() {
               Tiếp tục với Google
             </Button>
 
-            <p className="mt-6 text-center text-[11px] text-[#94A3B8] leading-relaxed">
+            <p className="mt-6 text-center text-[11px] text-muted-foreground leading-relaxed">
               Bằng việc tiếp tục, bạn đồng ý với{" "}
-              <span className="text-[#475569] font-medium">Điều khoản</span> &{" "}
-              <span className="text-[#475569] font-medium">Chính sách bảo mật</span> của SaleBDS OS.
+              <span className="text-foreground/80 font-medium">Điều khoản</span> &{" "}
+              <span className="text-foreground/80 font-medium">Chính sách bảo mật</span> của SaleBDS OS.
             </p>
           </div>
         </div>
@@ -528,10 +528,10 @@ function LoginPage() {
 }
 
 function inputCls(hasError: boolean) {
-  return `h-11 pl-10 rounded-xl bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] transition-all focus-visible:ring-2 focus-visible:ring-offset-1 ${
+  return `h-11 pl-10 rounded-xl bg-input text-sm text-foreground placeholder:text-muted-foreground transition-all focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
     hasError
-      ? "border-[#EF4444] focus-visible:ring-[#EF4444]/40"
-      : "border-[#E2E8F0] focus-visible:ring-[#3730A3]/40 focus-visible:border-[#3730A3]"
+      ? "border-destructive focus-visible:ring-destructive/40"
+      : "border-border focus-visible:ring-primary/40 focus-visible:border-primary"
   }`;
 }
 
@@ -554,23 +554,23 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-[13px] font-medium text-[#334155]">
+      <Label htmlFor={id} className="text-[13px] font-medium text-foreground/80">
         {label}
       </Label>
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
           {icon}
         </span>
         {children}
         {rightSlot}
       </div>
       {error ? (
-        <p className="text-xs text-[#DC2626] flex items-center gap-1.5 pt-0.5">
+        <p className="text-xs text-destructive flex items-center gap-1.5 pt-0.5">
           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
           {error}
         </p>
       ) : hint ? (
-        <p className="text-[11px] text-[#94A3B8] pt-0.5">{hint}</p>
+        <p className="text-[11px] text-muted-foreground pt-0.5">{hint}</p>
       ) : null}
     </div>
   );
