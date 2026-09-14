@@ -187,14 +187,14 @@ function SidebarBody({
             "mx-3 mb-3 rounded-xl bg-sidebar-accent/50 hover:bg-sidebar-accent transition flex items-center text-left",
             showLabels ? (isMobile ? "px-3 py-3 gap-2.5" : "px-3 py-2.5 gap-2.5") : "p-2 justify-center",
           ].join(" ")}>
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 grid place-items-center text-white text-[11px] font-bold shrink-0">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-indigo-500 grid place-items-center text-primary-foreground text-[11px] font-bold shrink-0">
               {currentTenant ? initials(currentTenant.name) : "—"}
             </div>
             <div className={[
               "flex-1 min-w-0 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
               showLabels ? "opacity-100 max-w-[180px] translate-x-0" : "opacity-0 max-w-0 -translate-x-2",
             ].join(" ")}>
-              <div className="text-[13px] font-semibold text-white truncate">
+              <div className="text-[13px] font-semibold text-sidebar-foreground truncate">
                 {currentTenant?.name ?? (isPlatformAdmin ? "Platform Admin" : "Chưa có workspace")}
               </div>
               <div className="text-[10.5px] text-sidebar-foreground/60">
