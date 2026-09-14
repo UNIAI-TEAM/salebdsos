@@ -212,16 +212,19 @@ function LandingsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Landing công khai"
-        subtitle="Chỉnh nội dung, thay hình ảnh, xuất bản và theo dõi lưu lượng, chuyển đổi"
+        sub="Chỉnh nội dung, thay hình ảnh, xuất bản và theo dõi lưu lượng, chuyển đổi"
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <KpiCard label="Lượt xem" value={String(all?.totalViews ?? 0)} icon={Eye} />
-        <KpiCard label="Khách để lại thông tin" value={String(all?.totalConversions ?? 0)} icon={Users2} />
+        <KpiCard label="Lượt xem" value={String(all?.totalViews ?? 0)} icon={Eye} delta={0} deltaLabel={`${days} ngày qua`} />
+        <KpiCard label="Khách để lại thông tin" value={String(all?.totalConversions ?? 0)} icon={Users2} delta={0} deltaLabel={`${days} ngày qua`} tone="green" />
         <KpiCard
           label="Tỷ lệ chuyển đổi"
           value={`${(all?.conversionRate ?? 0).toFixed(1)}%`}
           icon={Percent}
+          delta={0}
+          deltaLabel={`${days} ngày qua`}
+          tone="blue"
         />
       </div>
 
