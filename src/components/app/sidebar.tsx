@@ -279,7 +279,7 @@ function SidebarBody({
                           ].join(" ")}
                         />
                       )}
-                      <it.icon className={["h-4 w-4 shrink-0 transition-transform duration-300", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-white", showLabels ? "scale-100" : "scale-110"].join(" ")} />
+                      <it.icon className={["h-4 w-4 shrink-0 transition-transform duration-300", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground", showLabels ? "scale-100" : "scale-110"].join(" ")} />
                       <span className={[
                         "flex-1 truncate transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
                         showLabels ? "opacity-100 max-w-[180px] translate-x-0" : "opacity-0 max-w-0 -translate-x-2",
