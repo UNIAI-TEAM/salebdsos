@@ -465,3 +465,117 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       project,
     };
   });
+
+// ---------------------------------------------------------------------------
+// SEO article generated from the sales prompt
+// ---------------------------------------------------------------------------
+export type SeoArticle = {
+  seo_title?: string | null;
+  meta_description?: string | null;
+  sections?: Array<{ heading: string; body: string }> | null;
+  keywords?: string[] | null;
+  public_url?: string | null;
+  generated_at?: string | null;
+};
+
+/** Sinh bài viết SEO từ prompt bán hàng của trang, tự xuất bản để có link /p/... */
+export const generateSeoArticle = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), origin: z.string().trim().max(200).optional() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: page, error: pErr } = await supabase
+      .from("ai_sales_pages")
+      .select("id,title,prompt,output,tone,slug,is_published")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (pErr) throw new Error(pErr.message);
+    if (!page) throw new Error("Không tìm thấy trang.");
+
+    // Bảo đảm đã có đường dẫn công khai để chèn vào bài viết
+    let slug = page.slug as string | null;
+    if (!slug || !page.is_published) {
+      const base = slugify(page.title || "trang-ban-hang") || "trang-ban-hang";
+      slug = slug || `${base}-${page.id.slice(0, 6)}`;
+      const { error: upErr } = await supabase
+        .from("ai_sales_pages")
+        .update({ slug, is_published: true, status: "published" })
+        .eq("id", page.id);
+      if (upErr && !/duplicate|unique/i.test(upErr.message)) throw new Error(upErr.message);
+    }
+    const origin = (data.origin || "").replace(/\/+$/, "");
+    const publicUrl = origin ? `${origin}/p/${slug}` : `/p/${slug}`;
+
+    const out: any = page.output ?? {};
+    const res = await fetch(AI_URL, {
+      method: "POST",
+      headers: aiHeaders(),
+      body: JSON.stringify({
+        model: AI_MODEL,
+        messages: [
+          {
+            role: "system",
+            content:
+              "Bạn là chuyên gia SEO content bất động sản tại Việt Nam. Viết bài chuẩn SEO tiếng Việt, tự nhiên, không nhồi từ khoá. Chỉ trả JSON hợp lệ.",
+          },
+          {
+            role: "user",
+            content: `Dựa trên brief bán hàng sau, viết một BÀI VIẾT SEO (800-1200 từ) để thu hút khách hàng và dẫn về landing page.
+
+BRIEF/PROMPT:
+"""${page.prompt || ""}"""
+
+NỘI DUNG LANDING (tham khảo):
+${JSON.stringify(out).slice(0, 3000)}
+
+Link landing công khai: ${publicUrl}
+
+Trả JSON:
+{
+ "seo_title": tiêu đề SEO dưới 60 ký tự,
+ "meta_description": mô tả dưới 155 ký tự,
+ "keywords": mảng 5-8 từ khoá,
+ "sections": mảng 5-8 phần, mỗi phần {"heading": tiêu đề H2, "body": 2-4 đoạn văn, phân tách bằng "\\n\\n"}
+}
+Phần cuối phải là lời kêu gọi hành động có chèn link ${publicUrl}.`,
+          },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (!res.ok) throw aiStatusError(res.status, await res.text().catch(() => ""));
+    const json: any = await res.json();
+    let art: any = {};
+    try {
+      art = JSON.parse(json.choices?.[0]?.message?.content || "{}");
+    } catch {
+      art = {};
+    }
+    const article: SeoArticle = {
+      seo_title: typeof art.seo_title === "string" ? art.seo_title.slice(0, 120) : page.title,
+      meta_description:
+        typeof art.meta_description === "string" ? art.meta_description.slice(0, 300) : null,
+      keywords: Array.isArray(art.keywords)
+        ? art.keywords.filter((k: unknown) => typeof k === "string").slice(0, 12)
+        : [],
+      sections: Array.isArray(art.sections)
+        ? art.sections
+            .filter((s: any) => s && typeof s.heading === "string" && typeof s.body === "string")
+            .slice(0, 12)
+            .map((s: any) => ({ heading: s.heading.slice(0, 200), body: s.body.slice(0, 6000) }))
+        : [],
+      public_url: publicUrl,
+      generated_at: new Date().toISOString(),
+    };
+
+    const { data: row, error } = await supabase
+      .from("ai_sales_pages")
+      .update({ output: { ...out, seo_article: article } } as never)
+      .eq("id", page.id)
+      .select(SELECT)
+      .single();
+    if (error) throw new Error(error.message);
+    return { ok: true, page: row, article };
+  });
