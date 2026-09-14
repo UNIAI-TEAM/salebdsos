@@ -156,6 +156,18 @@ function AISalesPage() {
     setEditing(false);
   }, [selected?.id]);
 
+  const seoFn = useServerFn(generateSeoArticle);
+  const seoArticle: any = out?.seo_article ?? null;
+  const seoMut = useMutation({
+    mutationFn: () => seoFn({ data: { id: selected!.id, origin: origin || undefined } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ai-sales-pages", tenantId] });
+      toast.success("Đã sinh bài viết SEO");
+    },
+    onError: (e: any) => toast.error(e?.message || "Không sinh được bài viết SEO"),
+  });
+
+
   const startEdit = () => {
     if (!selected) return;
     setDraft({
