@@ -239,80 +239,23 @@ export const generateSalesPage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // Hydrate lead / customer / project context
-    let leadCtx = "";
-    if (data.leadId) {
-      const { data: l } = await supabase
-        .from("leads")
-        .select("full_name,phone,email,source,status,need_type,budget,timeline,score,project_id")
-        .eq("id", data.leadId)
-        .maybeSingle();
-      if (l) {
-        leadCtx = `Khách hàng tiềm năng: ${l.full_name || "?"}. Nguồn: ${l.source || "?"}. Nhu cầu: ${l.need_type || "?"}. Ngân sách: ${l.budget || "?"}. Thời gian: ${l.timeline || "?"}. Điểm AI: ${l.score ?? "?"}.`;
-        if (!data.projectId && l.project_id) data.projectId = l.project_id;
-      }
-    }
-    if (!leadCtx && data.customerId) {
-      const { data: c } = await supabase
-        .from("customers")
-        .select("full_name,phone,email,tags,notes")
-        .eq("id", data.customerId)
-        .maybeSingle();
-      if (c) leadCtx = `Khách hàng: ${c.full_name || "?"}. Tags: ${(c.tags || []).join(", ")}. Ghi chú: ${c.notes || "?"}.`;
-    }
-    let projectCtx = "";
-    if (data.projectId) {
-      const { data: p } = await supabase
-        .from("projects")
-        .select("name,location,city,description,price_from,price_to,currency,unit_highlights")
-        .eq("id", data.projectId)
-        .maybeSingle();
-      if (p) {
-        const price = p.price_from || p.price_to ? `${p.price_from ?? "?"} - ${p.price_to ?? "?"} ${p.currency || ""}` : "?";
-        const hl = Array.isArray(p.unit_highlights) ? p.unit_highlights.join("; ") : "";
-        projectCtx = `Dự án: ${p.name}. Vị trí: ${p.location || p.city || "?"}. Giá: ${price}. Mô tả: ${p.description || "?"}. Điểm nhấn: ${hl}.`;
-      }
-    }
+    const ctx = await hydrateContext(supabase, data);
+    if (!data.projectId && ctx.projectId) data.projectId = ctx.projectId;
+    const prompt = data.promptOverride?.trim() || buildPrompt(ctx, data);
 
-    const toneLabel = TONE_LABEL_VI[data.tone];
-    const prompt = `Bạn là copywriter bất động sản. Viết nội dung LANDING PAGE bán hàng cá nhân hoá bằng tiếng Việt, giọng ${toneLabel}.
-${leadCtx}
-${projectCtx}
-${data.audience ? `Đối tượng: ${data.audience}.` : ""}
-${data.cta ? `CTA mong muốn: ${data.cta}.` : ""}
-${data.extra ? `Yêu cầu thêm: ${data.extra}.` : ""}
-
-Trả về JSON với các trường:
-- headline: tiêu đề chính, ngắn gọn có cảm xúc
-- subheadline: 1 câu mô tả
-- benefits: mảng 3-5 lợi ích (mỗi cái 1 câu)
-- offer: chuỗi mô tả ưu đãi giới hạn
-- social_proof: 1 câu chứng thực xã hội
-- cta_primary: nút CTA chính
-- cta_secondary: nút CTA phụ
-- form_intro: 1 câu mời để lại thông tin
-Chỉ trả về JSON hợp lệ, không kèm chú thích.`;
-
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("AI Gateway chưa được cấu hình.");
-
-    const model = "google/gemini-2.5-flash";
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const model = AI_MODEL;
+    const res = await fetch(AI_URL, {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      headers: aiHeaders(),
       body: JSON.stringify({
         model,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       }),
     });
-    if (res.status === 429) throw new Error("Vượt giới hạn AI, thử lại sau ít phút.");
-    if (res.status === 402) throw new Error("Hết credit AI. Vui lòng nạp thêm.");
-    if (!res.ok) {
-      const t = await res.text().catch(() => "");
-      throw new Error(`AI lỗi: ${res.status} ${t}`);
-    }
+    if (!res.ok) throw aiStatusError(res.status, await res.text().catch(() => ""));
     const json = await res.json();
+
     const text: string = json.choices?.[0]?.message?.content || "{}";
     let output: any;
     try {
