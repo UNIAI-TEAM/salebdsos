@@ -279,7 +279,7 @@ function Dashboard() {
                         <tr key={l.id} className="border-b border-border last:border-0 hover:bg-muted/40">
                           <td className="py-2.5">
                             <div className="flex items-center gap-2">
-                              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary/30 to-indigo-400/30 grid place-items-center text-[10.5px] font-semibold">
+                              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary/30 to-indigo-500/30 grid place-items-center text-[10.5px] font-semibold">
                                 {(l.full_name?.split(" ").pop()?.[0] ?? "?").toUpperCase()}
                               </div>
                               <span className="font-medium">{l.full_name}</span>
