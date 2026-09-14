@@ -45,10 +45,14 @@ function MembersPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("agent");
 
-  // Tạo tài khoản nhân viên thật (đăng nhập được ngay)
+  // Tạo tài khoản nhân viên thật
   const [staff, setStaff] = useState({
     fullName: "", email: "", phone: "", password: "", role: "agent" as Role,
+    requireEmailVerification: true,
   });
+
+  const verifyRedirect = () =>
+    typeof window !== "undefined" ? `${window.location.origin}/verify-email` : undefined;
 
   const createStaffMu = useMutation({
     mutationFn: () =>
@@ -60,15 +64,19 @@ function MembersPage() {
           fullName: staff.fullName.trim(),
           phone: staff.phone.trim() || undefined,
           role: staff.role as "admin" | "manager" | "agent" | "viewer",
+          requireEmailVerification: staff.requireEmailVerification,
+          redirectTo: verifyRedirect(),
         },
       }),
     onSuccess: (res: any) => {
       toast.success(
-        res.created
-          ? `Đã tạo tài khoản ${res.email}, nhân viên có thể đăng nhập ngay`
-          : `Email ${res.email} đã có tài khoản, đã gắn quyền vào workspace`,
+        !res.created
+          ? `Email ${res.email} đã có tài khoản, đã gắn quyền vào workspace`
+          : res.requiresVerification
+            ? `Đã tạo tài khoản ${res.email}. ${res.verificationSent ? "Email xác nhận đã được gửi" : "Chưa gửi được email xác nhận, hãy bấm gửi lại"}`
+            : `Đã tạo tài khoản ${res.email}, nhân viên có thể đăng nhập ngay`,
       );
-      setStaff({ fullName: "", email: "", phone: "", password: "", role: "agent" });
+      setStaff({ fullName: "", email: "", phone: "", password: "", role: "agent", requireEmailVerification: true });
       qc.invalidateQueries({ queryKey: ["members", tenantId] });
     },
     onError: (e: any) => toast.error(e.message ?? "Không tạo được tài khoản"),
@@ -79,6 +87,14 @@ function MembersPage() {
       resetPass({ data: { tenantId: tenantId!, ...v } }),
     onSuccess: () => toast.success("Đã đặt lại mật khẩu"),
     onError: (e: any) => toast.error(e.message ?? "Không đặt lại được mật khẩu"),
+  });
+
+  const resendMu = useMutation({
+    mutationFn: (targetUserId: string) =>
+      resendVerify({ data: { tenantId: tenantId!, targetUserId, redirectTo: verifyRedirect() } }),
+    onSuccess: (r: any) =>
+      toast.success(r.alreadyVerified ? "Email này đã được xác nhận" : "Đã gửi lại email xác nhận"),
+    onError: (e: any) => toast.error(e.message ?? "Không gửi được email xác nhận"),
   });
 
   const inviteMu = useMutation({
