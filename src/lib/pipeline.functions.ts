@@ -139,3 +139,125 @@ export const deleteDeal = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+// ---------------------------------------------------------------------------
+// Pipeline stages CRUD
+// ---------------------------------------------------------------------------
+const STAGE_SELECT = "id,tenant_id,name,position,win_probability,created_at,updated_at";
+
+export const createStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenant_id: z.string().uuid(),
+        name: z.string().trim().min(1).max(80),
+        win_probability: z.number().int().min(0).max(100).nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: last } = await supabase
+      .from("pipeline_stages")
+      .select("position")
+      .eq("tenant_id", data.tenant_id)
+      .is("deleted_at", null)
+      .order("position", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const { data: row, error } = await supabase
+      .from("pipeline_stages")
+      .insert({
+        tenant_id: data.tenant_id,
+        name: data.name,
+        win_probability: data.win_probability ?? null,
+        position: (last?.position ?? -1) + 1,
+      })
+      .select(STAGE_SELECT)
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const updateStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        name: z.string().trim().min(1).max(80).optional(),
+        win_probability: z.number().int().min(0).max(100).nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { id, ...patch } = data;
+    const { data: row, error } = await context.supabase
+      .from("pipeline_stages")
+      .update(patch)
+      .eq("id", id)
+      .select(STAGE_SELECT)
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const reorderStages = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenant_id: z.string().uuid(),
+        ids: z.array(z.string().uuid()).min(1).max(50),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    for (let i = 0; i < data.ids.length; i++) {
+      const { error } = await supabase
+        .from("pipeline_stages")
+        .update({ position: i })
+        .eq("id", data.ids[i])
+        .eq("tenant_id", data.tenant_id);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+/** Soft-delete a stage. Deals are moved to `moveDealsTo` (or blocked if omitted). */
+export const deleteStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        moveDealsTo: z.string().uuid().nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { count } = await supabase
+      .from("pipeline_deals")
+      .select("id", { count: "exact", head: true })
+      .eq("stage_id", data.id)
+      .is("deleted_at", null);
+    if ((count ?? 0) > 0) {
+      if (!data.moveDealsTo)
+        throw new Error(`Giai đoạn còn ${count} deal. Hãy chọn giai đoạn để chuyển sang.`);
+      const { error: mErr } = await supabase
+        .from("pipeline_deals")
+        .update({ stage_id: data.moveDealsTo })
+        .eq("stage_id", data.id)
+        .is("deleted_at", null);
+      if (mErr) throw new Error(mErr.message);
+    }
+    const { error } = await supabase
+      .from("pipeline_stages")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true, moved: count ?? 0 };
+  });

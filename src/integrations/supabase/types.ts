@@ -155,18 +155,21 @@ export type Database = {
           customer_id: string | null
           deleted_at: string | null
           id: string
+          is_published: boolean
           lead_id: string | null
           model: string | null
           output: Json | null
           owner_user_id: string | null
           project_id: string | null
           prompt: string | null
+          slug: string | null
           status: string
           tenant_id: string
           title: string | null
           tokens: number | null
           tone: string | null
           updated_at: string
+          views_count: number
         }
         Insert: {
           audience?: string | null
@@ -175,18 +178,21 @@ export type Database = {
           customer_id?: string | null
           deleted_at?: string | null
           id?: string
+          is_published?: boolean
           lead_id?: string | null
           model?: string | null
           output?: Json | null
           owner_user_id?: string | null
           project_id?: string | null
           prompt?: string | null
+          slug?: string | null
           status?: string
           tenant_id: string
           title?: string | null
           tokens?: number | null
           tone?: string | null
           updated_at?: string
+          views_count?: number
         }
         Update: {
           audience?: string | null
@@ -195,18 +201,21 @@ export type Database = {
           customer_id?: string | null
           deleted_at?: string | null
           id?: string
+          is_published?: boolean
           lead_id?: string | null
           model?: string | null
           output?: Json | null
           owner_user_id?: string | null
           project_id?: string | null
           prompt?: string | null
+          slug?: string | null
           status?: string
           tenant_id?: string
           title?: string | null
           tokens?: number | null
           tone?: string | null
           updated_at?: string
+          views_count?: number
         }
         Relationships: []
       }
@@ -1086,6 +1095,133 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "invitations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_forms: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          fields: Json
+          id: string
+          is_active: boolean
+          name: string
+          project_id: string | null
+          redirect_url: string | null
+          slug: string
+          submit_count: number
+          success_message: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          fields?: Json
+          id?: string
+          is_active?: boolean
+          name: string
+          project_id?: string | null
+          redirect_url?: string | null
+          slug: string
+          submit_count?: number
+          success_message?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          fields?: Json
+          id?: string
+          is_active?: boolean
+          name?: string
+          project_id?: string | null
+          redirect_url?: string | null
+          slug?: string
+          submit_count?: number
+          success_message?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_forms_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_forms_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_submissions: {
+        Row: {
+          created_at: string
+          created_lead_id: string | null
+          form_id: string
+          id: string
+          ip_hash: string | null
+          payload: Json
+          referrer: string | null
+          tenant_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_lead_id?: string | null
+          form_id: string
+          id?: string
+          ip_hash?: string | null
+          payload?: Json
+          referrer?: string | null
+          tenant_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_lead_id?: string | null
+          form_id?: string
+          id?: string
+          ip_hash?: string | null
+          payload?: Json
+          referrer?: string | null
+          tenant_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_submissions_created_lead_id_fkey"
+            columns: ["created_lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "lead_forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_submissions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"

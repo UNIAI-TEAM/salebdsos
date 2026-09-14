@@ -17,6 +17,8 @@ import { Route as CustomizeRouteImport } from './routes/customize'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShareSlugRouteImport } from './routes/share.$slug'
+import { Route as PSlugRouteImport } from './routes/p.$slug'
+import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AcceptInviteTokenRouteImport } from './routes/accept-invite.$token'
 import { Route as AppWalletRouteImport } from './routes/_app.wallet'
@@ -46,7 +48,9 @@ import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
 import { Route as AppAiFollowupCustomerIdRouteImport } from './routes/_app.ai-followup.$customerId'
 import { Route as ApiPublicTCodeRouteImport } from './routes/api/public/t.$code'
+import { Route as ApiPublicSalesPagesSlugRouteImport } from './routes/api/public/sales-pages.$slug'
 import { Route as ApiPublicQCodeRouteImport } from './routes/api/public/q.$code'
+import { Route as ApiPublicLeadFormsSlugRouteImport } from './routes/api/public/lead-forms.$slug'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -85,6 +89,16 @@ const IndexRoute = IndexRouteImport.update({
 const ShareSlugRoute = ShareSlugRouteImport.update({
   id: '/share/$slug',
   path: '/share/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FSlugRoute = FSlugRouteImport.update({
+  id: '/f/$slug',
+  path: '/f/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CSlugRoute = CSlugRouteImport.update({
@@ -232,9 +246,19 @@ const ApiPublicTCodeRoute = ApiPublicTCodeRouteImport.update({
   path: '/api/public/t/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSalesPagesSlugRoute = ApiPublicSalesPagesSlugRouteImport.update({
+  id: '/api/public/sales-pages/$slug',
+  path: '/api/public/sales-pages/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicQCodeRoute = ApiPublicQCodeRouteImport.update({
   id: '/api/public/q/$code',
   path: '/api/public/q/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicLeadFormsSlugRoute = ApiPublicLeadFormsSlugRouteImport.update({
+  id: '/api/public/lead-forms/$slug',
+  path: '/api/public/lead-forms/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -271,10 +295,14 @@ export interface FileRoutesByFullPath {
   '/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
+  '/f/$slug': typeof FSlugRoute
+  '/p/$slug': typeof PSlugRoute
   '/share/$slug': typeof ShareSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
+  '/api/public/sales-pages/$slug': typeof ApiPublicSalesPagesSlugRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
 }
 export interface FileRoutesByTo {
@@ -310,10 +338,14 @@ export interface FileRoutesByTo {
   '/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
+  '/f/$slug': typeof FSlugRoute
+  '/p/$slug': typeof PSlugRoute
   '/share/$slug': typeof ShareSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
+  '/api/public/sales-pages/$slug': typeof ApiPublicSalesPagesSlugRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
 }
 export interface FileRoutesById {
@@ -351,10 +383,14 @@ export interface FileRoutesById {
   '/_app/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
+  '/f/$slug': typeof FSlugRoute
+  '/p/$slug': typeof PSlugRoute
   '/share/$slug': typeof ShareSlugRoute
   '/_app/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
+  '/api/public/sales-pages/$slug': typeof ApiPublicSalesPagesSlugRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
 }
 export interface FileRouteTypes {
@@ -392,10 +428,14 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/accept-invite/$token'
     | '/c/$slug'
+    | '/f/$slug'
+    | '/p/$slug'
     | '/share/$slug'
     | '/ai-followup/$customerId'
     | '/projects/$id'
+    | '/api/public/lead-forms/$slug'
     | '/api/public/q/$code'
+    | '/api/public/sales-pages/$slug'
     | '/api/public/t/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -431,10 +471,14 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/accept-invite/$token'
     | '/c/$slug'
+    | '/f/$slug'
+    | '/p/$slug'
     | '/share/$slug'
     | '/ai-followup/$customerId'
     | '/projects/$id'
+    | '/api/public/lead-forms/$slug'
     | '/api/public/q/$code'
+    | '/api/public/sales-pages/$slug'
     | '/api/public/t/$code'
   id:
     | '__root__'
@@ -471,10 +515,14 @@ export interface FileRouteTypes {
     | '/_app/wallet'
     | '/accept-invite/$token'
     | '/c/$slug'
+    | '/f/$slug'
+    | '/p/$slug'
     | '/share/$slug'
     | '/_app/ai-followup/$customerId'
     | '/_app/projects/$id'
+    | '/api/public/lead-forms/$slug'
     | '/api/public/q/$code'
+    | '/api/public/sales-pages/$slug'
     | '/api/public/t/$code'
   fileRoutesById: FileRoutesById
 }
@@ -488,8 +536,12 @@ export interface RootRouteChildren {
   VerifyEmailRoute: typeof VerifyEmailRoute
   AcceptInviteTokenRoute: typeof AcceptInviteTokenRoute
   CSlugRoute: typeof CSlugRoute
+  FSlugRoute: typeof FSlugRoute
+  PSlugRoute: typeof PSlugRoute
   ShareSlugRoute: typeof ShareSlugRoute
+  ApiPublicLeadFormsSlugRoute: typeof ApiPublicLeadFormsSlugRoute
   ApiPublicQCodeRoute: typeof ApiPublicQCodeRoute
+  ApiPublicSalesPagesSlugRoute: typeof ApiPublicSalesPagesSlugRoute
   ApiPublicTCodeRoute: typeof ApiPublicTCodeRoute
 }
 
@@ -549,6 +601,20 @@ declare module '@tanstack/react-router' {
       path: '/share/$slug'
       fullPath: '/share/$slug'
       preLoaderRoute: typeof ShareSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/f/$slug': {
+      id: '/f/$slug'
+      path: '/f/$slug'
+      fullPath: '/f/$slug'
+      preLoaderRoute: typeof FSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/c/$slug': {
@@ -754,11 +820,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sales-pages/$slug': {
+      id: '/api/public/sales-pages/$slug'
+      path: '/api/public/sales-pages/$slug'
+      fullPath: '/api/public/sales-pages/$slug'
+      preLoaderRoute: typeof ApiPublicSalesPagesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/q/$code': {
       id: '/api/public/q/$code'
       path: '/api/public/q/$code'
       fullPath: '/api/public/q/$code'
       preLoaderRoute: typeof ApiPublicQCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/lead-forms/$slug': {
+      id: '/api/public/lead-forms/$slug'
+      path: '/api/public/lead-forms/$slug'
+      fullPath: '/api/public/lead-forms/$slug'
+      preLoaderRoute: typeof ApiPublicLeadFormsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -854,8 +934,12 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyEmailRoute: VerifyEmailRoute,
   AcceptInviteTokenRoute: AcceptInviteTokenRoute,
   CSlugRoute: CSlugRoute,
+  FSlugRoute: FSlugRoute,
+  PSlugRoute: PSlugRoute,
   ShareSlugRoute: ShareSlugRoute,
+  ApiPublicLeadFormsSlugRoute: ApiPublicLeadFormsSlugRoute,
   ApiPublicQCodeRoute: ApiPublicQCodeRoute,
+  ApiPublicSalesPagesSlugRoute: ApiPublicSalesPagesSlugRoute,
   ApiPublicTCodeRoute: ApiPublicTCodeRoute,
 }
 export const routeTree = rootRouteImport

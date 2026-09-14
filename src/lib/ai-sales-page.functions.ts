@@ -4,7 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const SELECT =
-  "id,tenant_id,owner_user_id,lead_id,customer_id,project_id,title,audience,tone,cta,prompt,output,model,tokens,status,created_at,updated_at";
+  "id,tenant_id,owner_user_id,lead_id,customer_id,project_id,title,audience,tone,cta,prompt,output,model,tokens,status,slug,is_published,views_count,created_at,updated_at";
 
 export const TONES = ["professional", "friendly", "luxury", "urgent"] as const;
 export const TONE_LABEL_VI: Record<(typeof TONES)[number], string> = {
@@ -185,4 +185,145 @@ Chỉ trả về JSON hợp lệ, không kèm chú thích.`;
       .single();
     if (error) throw new Error(error.message);
     return { ok: true, page: row };
+  });
+
+// ---------------------------------------------------------------------------
+// Editing + publishing
+// ---------------------------------------------------------------------------
+const slugify = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/gi, "d")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+
+const OutputSchema = z.object({
+  headline: z.string().max(300).optional().nullable(),
+  subheadline: z.string().max(600).optional().nullable(),
+  benefits: z.array(z.string().max(400)).max(10).optional().nullable(),
+  offer: z.string().max(600).optional().nullable(),
+  social_proof: z.string().max(600).optional().nullable(),
+  cta_primary: z.string().max(120).optional().nullable(),
+  cta_secondary: z.string().max(120).optional().nullable(),
+  form_intro: z.string().max(400).optional().nullable(),
+});
+
+export const updateSalesPage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        title: z.string().trim().min(1).max(200).optional(),
+        slug: z.string().trim().max(80).optional().nullable(),
+        output: OutputSchema.optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const patch: Record<string, unknown> = {};
+    if (data.title !== undefined) patch.title = data.title;
+    if (data.output !== undefined) patch.output = data.output;
+    if (data.slug !== undefined)
+      patch.slug = data.slug ? slugify(data.slug) || null : null;
+    const { data: row, error } = await context.supabase
+      .from("ai_sales_pages")
+      .update(patch)
+      .eq("id", data.id)
+      .select(SELECT)
+      .single();
+    if (error) {
+      if (error.code === "23505" || /duplicate|unique/i.test(error.message))
+        throw new Error("Đường dẫn này đã được dùng. Hãy chọn đường dẫn khác.");
+      throw new Error(error.message);
+    }
+    return row;
+  });
+
+export const setSalesPagePublish = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        is_published: z.boolean(),
+        slug: z.string().trim().max(80).optional().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: current, error: cErr } = await supabase
+      .from("ai_sales_pages")
+      .select("id,slug,title")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (cErr) throw new Error(cErr.message);
+    if (!current) throw new Error("Không tìm thấy trang.");
+
+    let slug = current.slug;
+    if (data.slug) slug = slugify(data.slug);
+    if (data.is_published && !slug)
+      slug = `${slugify(current.title || "trang-ban-hang")}-${current.id.slice(0, 6)}`;
+
+    const { data: row, error } = await supabase
+      .from("ai_sales_pages")
+      .update({ is_published: data.is_published, slug, status: data.is_published ? "published" : "generated" })
+      .eq("id", data.id)
+      .select(SELECT)
+      .single();
+    if (error) {
+      if (/duplicate|unique/i.test(error.message))
+        throw new Error("Đường dẫn này đã được dùng. Hãy chọn đường dẫn khác.");
+      throw new Error(error.message);
+    }
+    return row;
+  });
+
+/** Public read of a published sales page — safe columns only, no auth. */
+export const getPublicSalesPage = createServerFn({ method: "GET" })
+  .inputValidator((d: { slug: string }) =>
+    z.object({ slug: z.string().trim().min(1).max(80) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
+      .from("ai_sales_pages")
+      .select("id,tenant_id,title,output,cta,slug,views_count,project_id")
+      .eq("slug", data.slug)
+      .eq("is_published", true)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) return null;
+
+    void supabaseAdmin
+      .from("ai_sales_pages")
+      .update({ views_count: (row.views_count ?? 0) + 1 })
+      .eq("id", row.id)
+      .then(({ error: e }) => {
+        if (e) console.error("[sales-page] view count", e.message);
+      });
+
+    let project: { name: string; location: string | null; cover_url: string | null } | null = null;
+    if (row.project_id) {
+      const { data: p } = await supabaseAdmin
+        .from("projects")
+        .select("name,location,cover_url")
+        .eq("id", row.project_id)
+        .maybeSingle();
+      project = p ?? null;
+    }
+    return {
+      id: row.id,
+      tenantId: row.tenant_id,
+      title: row.title,
+      cta: row.cta,
+      slug: row.slug,
+      output: (row.output ?? {}) as Record<string, unknown>,
+      project,
+    };
   });

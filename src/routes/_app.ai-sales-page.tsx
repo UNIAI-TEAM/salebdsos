@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, SectionCard } from "@/components/app/ui";
-import { Sparkles, Wand2, Trash2, Copy, Loader2, FileText, User } from "lucide-react";
-import { useState } from "react";
+import {
+  Sparkles, Wand2, Trash2, Copy, Loader2, FileText, User,
+  Pencil, Globe, EyeOff, ExternalLink, Eye, Save, X,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,6 +12,8 @@ import {
   listSalesPages,
   generateSalesPage,
   deleteSalesPage,
+  updateSalesPage,
+  setSalesPagePublish,
   TONES,
   TONE_LABEL_VI,
 } from "@/lib/ai-sales-page.functions";
@@ -16,6 +21,7 @@ import { listLeads } from "@/lib/lead.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/ai-sales-page")({ component: AISalesPage });
+
 
 type Tone = (typeof TONES)[number];
 
@@ -83,6 +89,81 @@ function AISalesPage() {
   const selected = items.find((x: any) => x.id === selectedId) ?? items[0] ?? null;
   const out: any = selected?.output ?? null;
 
+  // ---- Edit + publish ----
+  const updateFn = useServerFn(updateSalesPage);
+  const publishFn = useServerFn(setSalesPagePublish);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<any>({});
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setOrigin(window.location.origin);
+  }, []);
+  useEffect(() => {
+    setEditing(false);
+  }, [selected?.id]);
+
+  const startEdit = () => {
+    if (!selected) return;
+    setDraft({
+      title: selected.title ?? "",
+      slug: selected.slug ?? "",
+      headline: out?.headline ?? "",
+      subheadline: out?.subheadline ?? "",
+      benefits: Array.isArray(out?.benefits) ? out.benefits.join("\n") : "",
+      offer: out?.offer ?? "",
+      social_proof: out?.social_proof ?? "",
+      cta_primary: out?.cta_primary ?? "",
+      cta_secondary: out?.cta_secondary ?? "",
+      form_intro: out?.form_intro ?? "",
+    });
+    setEditing(true);
+  };
+
+  const saveMut = useMutation({
+    mutationFn: () =>
+      updateFn({
+        data: {
+          id: selected.id,
+          title: draft.title || selected.title || "Trang bán hàng",
+          slug: draft.slug || null,
+          output: {
+            headline: draft.headline || null,
+            subheadline: draft.subheadline || null,
+            benefits: String(draft.benefits || "")
+              .split("\n")
+              .map((s: string) => s.trim())
+              .filter(Boolean)
+              .slice(0, 10),
+            offer: draft.offer || null,
+            social_proof: draft.social_proof || null,
+            cta_primary: draft.cta_primary || null,
+            cta_secondary: draft.cta_secondary || null,
+            form_intro: draft.form_intro || null,
+          },
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Đã lưu nội dung");
+      setEditing(false);
+      qc.invalidateQueries({ queryKey: ["ai-sales-pages", tenantId] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Không lưu được"),
+  });
+
+  const pubMut = useMutation({
+    mutationFn: (v: { id: string; is_published: boolean }) => publishFn({ data: v }),
+    onSuccess: (r: any) => {
+      toast.success(r?.is_published ? "Đã xuất bản trang" : "Đã ẩn trang");
+      qc.invalidateQueries({ queryKey: ["ai-sales-pages", tenantId] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Không đổi được trạng thái"),
+  });
+
+  const publicUrl = selected?.slug ? `${origin}/p/${selected.slug}` : "";
+
+
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -146,7 +227,35 @@ function AISalesPage() {
             title={selected ? selected.title || "AI Sales Page" : "Xem trước"}
             action={
               selected ? (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={editing ? () => setEditing(false) : startEdit}
+                    className="h-8 px-3 rounded-lg border border-border text-[12px] inline-flex items-center gap-1.5 hover:bg-muted"
+                  >
+                    {editing ? <X className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
+                    {editing ? "Huỷ sửa" : "Sửa nội dung"}
+                  </button>
+                  <button
+                    disabled={pubMut.isPending}
+                    onClick={() =>
+                      pubMut.mutate({ id: selected.id, is_published: !selected.is_published })
+                    }
+                    className={`h-8 px-3 rounded-lg text-[12px] inline-flex items-center gap-1.5 font-semibold disabled:opacity-60 ${
+                      selected.is_published
+                        ? "border border-border hover:bg-muted"
+                        : "bg-primary text-primary-foreground hover:bg-primary/90"
+                    }`}
+                  >
+                    {selected.is_published ? (
+                      <>
+                        <EyeOff className="h-3.5 w-3.5" /> Ẩn trang
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="h-3.5 w-3.5" /> Xuất bản
+                      </>
+                    )}
+                  </button>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(JSON.stringify(out, null, 2));
@@ -165,6 +274,7 @@ function AISalesPage() {
                 </div>
               ) : null
             }
+
           >
             {!selected ? (
               <div className="p-8 text-center text-muted-foreground text-[13px]">
