@@ -74,6 +74,10 @@ const GenerateSchema = z.object({
   extra: z.string().trim().max(2000).optional(),
   /** Prompt do người dùng xem trước / chỉnh sửa. Nếu có sẽ dùng thay prompt tự sinh. */
   promptOverride: z.string().trim().max(8000).optional().nullable(),
+  /** Tạo xong xuất bản luôn thành landing công khai. */
+  autoPublish: z.boolean().optional().default(false),
+  /** Đường dẫn công khai mong muốn (tuỳ chọn). */
+  slug: z.string().trim().max(80).optional().nullable(),
 });
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
