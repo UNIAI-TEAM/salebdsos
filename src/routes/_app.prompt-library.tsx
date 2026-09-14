@@ -156,8 +156,8 @@ function PromptLibraryPage() {
     <div className="space-y-5">
       <PageHeader
         title="Thư viện prompt bán hàng"
-        description="Lưu lại prompt đã dùng, phân loại và tái sử dụng cho các yêu cầu sau."
-        actions={
+        sub="Lưu lại prompt đã dùng, phân loại và tái sử dụng cho các yêu cầu sau."
+        action={
           <button
             onClick={() => setDraft({ ...emptyDraft })}
             className="h-10 px-4 rounded-xl bg-primary text-primary-foreground text-[13px] font-semibold inline-flex items-center gap-2"
