@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import {
@@ -22,8 +22,9 @@ import { toast } from "sonner";
 import {
   Plus, Filter, MoreHorizontal, GripVertical, TrendingUp, DollarSign,
   Phone, Mail, Calendar, User as UserIcon, Building2, Trash2, X,
-  Settings2, ArrowUp, ArrowDown, Save,
+  Settings2, ArrowUp, ArrowDown, Save, Sparkles,
 } from "lucide-react";
+import { suggestPromptForDeal } from "@/lib/sales-prompt.functions";
 
 export const Route = createFileRoute("/_app/pipeline")({ component: PipelinePage });
 
@@ -154,6 +155,39 @@ function PipelinePage() {
     catch (err: any) { toast.error("Lỗi cập nhật: " + (err?.message ?? "")); void reload(); }
   };
 
+  // Tự chọn prompt AI phù hợp với giai đoạn của deal rồi mở trang AI Sales Page
+  const navigate = useNavigate();
+  const fnSuggest = useServerFn(suggestPromptForDeal);
+  const openAiForDeal = useCallback(async (deal: Deal) => {
+    if (!tenantId) return;
+    try {
+      const r: any = await fnSuggest({ data: { tenantId, dealId: deal.id } });
+      if (!r?.prompt) {
+        toast.error("Chưa có prompt nào trong thư viện. Hãy tạo prompt cho giai đoạn này.");
+        return;
+      }
+      sessionStorage.setItem(
+        "salebds:reuse-sales-prompt",
+        JSON.stringify({
+          prompt: r.prompt.rendered_prompt || r.prompt.prompt,
+          request: r.prompt.request ?? "",
+          title: deal.title ?? "",
+          audience: r.prompt.audience ?? "",
+          cta: r.prompt.cta ?? "",
+          tone: r.prompt.tone ?? "",
+        }),
+      );
+      toast.success(
+        r.matchedBy === "stage"
+          ? `Đã chọn prompt cho giai đoạn "${r.stage}"`
+          : "Chưa có prompt riêng cho giai đoạn — dùng prompt gần nhất",
+      );
+      void navigate({ to: "/ai-sales-page" });
+    } catch (e: any) {
+      toast.error(e?.message || "Không chọn được prompt");
+    }
+  }, [tenantId, fnSuggest, navigate]);
+
   const activeDeal = activeDealId ? deals.find((d) => d.id === activeDealId) ?? null : null;
   const ownerById = useMemo(() => new Map(owners.map((o) => [o.user_id, o])), [owners]);
   const leadById = useMemo(() => new Map(leads.map((l) => [l.id, l])), [leads]);
@@ -233,7 +267,8 @@ function PipelinePage() {
                       lead={d.lead_id ? leadById.get(d.lead_id) : null}
                       project={d.project_id ? projectById.get(d.project_id) : null}
                       owner={d.owner_user_id ? ownerById.get(d.owner_user_id) : null}
-                      onClick={() => setEditing(d)} />
+                      onClick={() => setEditing(d)}
+                      onAiPrompt={() => void openAiForDeal(d)} />
                   ))}
                 </Column>
               );
@@ -337,10 +372,10 @@ function Column({
 }
 
 function DealCard({
-  deal, lead, project, owner, onClick,
+  deal, lead, project, owner, onClick, onAiPrompt,
 }: {
   deal: Deal; lead?: Lead | null; project?: Project | null; owner?: Owner | null;
-  onClick: () => void;
+  onClick: () => void; onAiPrompt?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: deal.id });
   const style: React.CSSProperties = {
@@ -375,6 +410,13 @@ function DealCard({
       <div className="flex items-center justify-between gap-2">
         <span className="text-[12.5px] font-bold text-primary truncate">{fmtVND(deal.value)}</span>
         <div className="flex items-center gap-1.5 shrink-0">
+          {onAiPrompt && (
+            <button onClick={(e) => { e.stopPropagation(); onAiPrompt(); }}
+              className="h-6 w-6 rounded-full bg-primary/10 text-primary grid place-items-center hover:bg-primary/20"
+              title="Prompt AI theo giai đoạn" aria-label="ai-prompt">
+              <Sparkles className="h-3 w-3" />
+            </button>
+          )}
           {lead?.phone && (
             <a href={`tel:${lead.phone}`} onClick={(e) => e.stopPropagation()}
               className="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 grid place-items-center hover:bg-emerald-100" aria-label="call">
