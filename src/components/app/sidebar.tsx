@@ -293,7 +293,7 @@ function SidebarBody({
                         <span className={[
                           "text-[10px] px-1.5 py-0.5 rounded-md font-semibold transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
                           it.badge === "AI"
-                            ? "bg-brand-gradient text-white"
+                            ? "bg-brand-gradient text-primary-foreground"
                             : "bg-sidebar-accent text-sidebar-foreground/80",
                           showLabels ? "opacity-100 max-w-12 scale-100" : "opacity-0 max-w-0 scale-75",
                         ].join(" ")}>{it.badge}</span>
