@@ -85,6 +85,14 @@ function PublicSalesPage() {
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
         <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
+          {s("hero_image_url") ? (
+            <img
+              src={s("hero_image_url")}
+              alt={s("headline") || page.title || "Hình ảnh dự án"}
+              loading="lazy"
+              className="mx-auto mb-8 aspect-[16/9] w-full max-w-3xl rounded-2xl border border-border object-cover"
+            />
+          ) : null}
           {page.project?.name ? (
             <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
