@@ -386,7 +386,6 @@ function PublicFormsPanel({ tenantId }: { tenantId: string }) {
   const [editing, setEditing] = useState<any | null>(null);
   const [subsOf, setSubsOf] = useState<any | null>(null);
   const [origin, setOrigin] = useState("");
-  useState(() => 0);
 
   const formsQ = useQuery({
     queryKey: ["lead-forms", tenantId],
@@ -395,7 +394,7 @@ function PublicFormsPanel({ tenantId }: { tenantId: string }) {
   });
   const subsQ = useQuery({
     queryKey: ["lead-form-subs", subsOf?.id],
-    queryFn: () => subsFn({ data: { formId: subsOf.id } }),
+    queryFn: () => subsFn({ data: { tenantId, formId: subsOf.id } }),
     enabled: !!subsOf?.id,
   });
 
