@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import {
   Sparkles, Wand2, Trash2, Copy, Loader2, FileText, User,
-  Pencil, Globe, EyeOff, ExternalLink, Eye, Save, X,
+  Pencil, Globe, EyeOff, ExternalLink, Eye, Save, X, BookMarked, Library,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,6 +20,8 @@ import {
   TONES,
   TONE_LABEL_VI,
 } from "@/lib/ai-sales-page.functions";
+import { saveSalesPrompt } from "@/lib/sales-prompt.functions";
+import { Link } from "@tanstack/react-router";
 import { listLeads } from "@/lib/lead.functions";
 import { toast } from "sonner";
 
@@ -86,6 +88,49 @@ function AISalesPage() {
     onError: (e: any) => toast.error(e?.message || "Không tạo được prompt"),
   });
 
+
+  // Lưu prompt hiện tại vào thư viện để tái sử dụng
+  const savePromptFn = useServerFn(saveSalesPrompt);
+  const savePromptMut = useMutation({
+    mutationFn: () =>
+      savePromptFn({
+        data: {
+          tenantId: tenantId!,
+          name: (title || "Prompt bán hàng").slice(0, 200),
+          category: "general",
+          tags: [],
+          request: request || undefined,
+          prompt: prompt.trim(),
+          tone,
+          audience: audience || undefined,
+          cta: cta || undefined,
+        },
+      }),
+    onSuccess: () => toast.success("Đã lưu prompt vào thư viện"),
+    onError: (e: any) => toast.error(e?.message || "Không lưu được prompt"),
+  });
+
+  // Nhận prompt tái sử dụng từ Thư viện prompt
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("salebds:reuse-sales-prompt");
+      if (!raw) return;
+      sessionStorage.removeItem("salebds:reuse-sales-prompt");
+      const r = JSON.parse(raw);
+      if (r?.prompt) {
+        setPrompt(r.prompt);
+        setShowPrompt(true);
+      }
+      if (r?.request) setRequest(r.request);
+      if (r?.title) setTitle(r.title);
+      if (r?.audience) setAudience(r.audience);
+      if (r?.cta) setCta(r.cta);
+      if (r?.tone) setTone(r.tone as Tone);
+      toast.success("Đã nạp prompt từ thư viện");
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const historyQ = useQuery({
     queryKey: ["ai-sales-pages", tenantId],
