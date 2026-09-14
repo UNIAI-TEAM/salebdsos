@@ -177,7 +177,7 @@ function CustomerDetailPage() {
     onError: (e: any) => toast.error(e?.message ?? "Không cập nhật được"),
   });
 
-  if (detail.isLoading) {
+  if (detail.isLoading || (!detail.data && !detail.isError)) {
     return <div className="py-16 text-center text-sm text-muted-foreground">Đang tải...</div>;
   }
   if (detail.isError) {
