@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, SectionCard } from "@/components/app/ui";
-import { Sparkles, Wand2, Trash2, Copy, Loader2, FileText, User } from "lucide-react";
-import { useState } from "react";
+import {
+  Sparkles, Wand2, Trash2, Copy, Loader2, FileText, User,
+  Pencil, Globe, EyeOff, ExternalLink, Eye, Save, X,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -9,6 +12,8 @@ import {
   listSalesPages,
   generateSalesPage,
   deleteSalesPage,
+  updateSalesPage,
+  setSalesPagePublish,
   TONES,
   TONE_LABEL_VI,
 } from "@/lib/ai-sales-page.functions";
@@ -16,6 +21,7 @@ import { listLeads } from "@/lib/lead.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/ai-sales-page")({ component: AISalesPage });
+
 
 type Tone = (typeof TONES)[number];
 
@@ -83,6 +89,81 @@ function AISalesPage() {
   const selected = items.find((x: any) => x.id === selectedId) ?? items[0] ?? null;
   const out: any = selected?.output ?? null;
 
+  // ---- Edit + publish ----
+  const updateFn = useServerFn(updateSalesPage);
+  const publishFn = useServerFn(setSalesPagePublish);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<any>({});
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setOrigin(window.location.origin);
+  }, []);
+  useEffect(() => {
+    setEditing(false);
+  }, [selected?.id]);
+
+  const startEdit = () => {
+    if (!selected) return;
+    setDraft({
+      title: selected.title ?? "",
+      slug: selected.slug ?? "",
+      headline: out?.headline ?? "",
+      subheadline: out?.subheadline ?? "",
+      benefits: Array.isArray(out?.benefits) ? out.benefits.join("\n") : "",
+      offer: out?.offer ?? "",
+      social_proof: out?.social_proof ?? "",
+      cta_primary: out?.cta_primary ?? "",
+      cta_secondary: out?.cta_secondary ?? "",
+      form_intro: out?.form_intro ?? "",
+    });
+    setEditing(true);
+  };
+
+  const saveMut = useMutation({
+    mutationFn: () =>
+      updateFn({
+        data: {
+          id: selected.id,
+          title: draft.title || selected.title || "Trang bán hàng",
+          slug: draft.slug || null,
+          output: {
+            headline: draft.headline || null,
+            subheadline: draft.subheadline || null,
+            benefits: String(draft.benefits || "")
+              .split("\n")
+              .map((s: string) => s.trim())
+              .filter(Boolean)
+              .slice(0, 10),
+            offer: draft.offer || null,
+            social_proof: draft.social_proof || null,
+            cta_primary: draft.cta_primary || null,
+            cta_secondary: draft.cta_secondary || null,
+            form_intro: draft.form_intro || null,
+          },
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Đã lưu nội dung");
+      setEditing(false);
+      qc.invalidateQueries({ queryKey: ["ai-sales-pages", tenantId] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Không lưu được"),
+  });
+
+  const pubMut = useMutation({
+    mutationFn: (v: { id: string; is_published: boolean }) => publishFn({ data: v }),
+    onSuccess: (r: any) => {
+      toast.success(r?.is_published ? "Đã xuất bản trang" : "Đã ẩn trang");
+      qc.invalidateQueries({ queryKey: ["ai-sales-pages", tenantId] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Không đổi được trạng thái"),
+  });
+
+  const publicUrl = selected?.slug ? `${origin}/p/${selected.slug}` : "";
+
+
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -146,7 +227,35 @@ function AISalesPage() {
             title={selected ? selected.title || "AI Sales Page" : "Xem trước"}
             action={
               selected ? (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={editing ? () => setEditing(false) : startEdit}
+                    className="h-8 px-3 rounded-lg border border-border text-[12px] inline-flex items-center gap-1.5 hover:bg-muted"
+                  >
+                    {editing ? <X className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
+                    {editing ? "Huỷ sửa" : "Sửa nội dung"}
+                  </button>
+                  <button
+                    disabled={pubMut.isPending}
+                    onClick={() =>
+                      pubMut.mutate({ id: selected.id, is_published: !selected.is_published })
+                    }
+                    className={`h-8 px-3 rounded-lg text-[12px] inline-flex items-center gap-1.5 font-semibold disabled:opacity-60 ${
+                      selected.is_published
+                        ? "border border-border hover:bg-muted"
+                        : "bg-primary text-primary-foreground hover:bg-primary/90"
+                    }`}
+                  >
+                    {selected.is_published ? (
+                      <>
+                        <EyeOff className="h-3.5 w-3.5" /> Ẩn trang
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="h-3.5 w-3.5" /> Xuất bản
+                      </>
+                    )}
+                  </button>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(JSON.stringify(out, null, 2));
@@ -165,6 +274,7 @@ function AISalesPage() {
                 </div>
               ) : null
             }
+
           >
             {!selected ? (
               <div className="p-8 text-center text-muted-foreground text-[13px]">
@@ -173,6 +283,90 @@ function AISalesPage() {
               </div>
             ) : (
               <div className="p-1 space-y-4">
+                {selected.is_published && publicUrl ? (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700">
+                      <Globe className="h-3.5 w-3.5" /> Đang xuất bản
+                    </span>
+                    <code className="text-[12px] text-emerald-800 truncate">{publicUrl}</code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(publicUrl);
+                        toast.success("Đã copy đường dẫn");
+                      }}
+                      className="h-7 px-2.5 rounded-md bg-white border border-emerald-200 text-[12px] inline-flex items-center gap-1 hover:bg-emerald-100"
+                    >
+                      <Copy className="h-3 w-3" /> Copy
+                    </button>
+                    <a
+                      href={publicUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="h-7 px-2.5 rounded-md bg-white border border-emerald-200 text-[12px] inline-flex items-center gap-1 hover:bg-emerald-100"
+                    >
+                      <ExternalLink className="h-3 w-3" /> Mở
+                    </a>
+                    <span className="ml-auto text-[12px] text-emerald-700 inline-flex items-center gap-1">
+                      <Eye className="h-3.5 w-3.5" /> {selected.views_count ?? 0} lượt xem
+                    </span>
+                  </div>
+                ) : null}
+
+                {editing ? (
+                  <div className="rounded-2xl border border-border p-4 space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Field label="Tiêu đề nội bộ">
+                        <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className={inputCls} />
+                      </Field>
+                      <Field label="Đường dẫn công khai (/p/...)">
+                        <input value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} className={inputCls} placeholder="uu-dai-thang-9" />
+                      </Field>
+                    </div>
+                    <Field label="Tiêu đề chính">
+                      <input value={draft.headline} onChange={(e) => setDraft({ ...draft, headline: e.target.value })} className={inputCls} />
+                    </Field>
+                    <Field label="Mô tả ngắn">
+                      <textarea value={draft.subheadline} onChange={(e) => setDraft({ ...draft, subheadline: e.target.value })} rows={2} className={inputCls + " py-2"} />
+                    </Field>
+                    <Field label="Điểm nổi bật (mỗi dòng 1 ý)">
+                      <textarea value={draft.benefits} onChange={(e) => setDraft({ ...draft, benefits: e.target.value })} rows={5} className={inputCls + " py-2"} />
+                    </Field>
+                    <Field label="Ưu đãi">
+                      <input value={draft.offer} onChange={(e) => setDraft({ ...draft, offer: e.target.value })} className={inputCls} />
+                    </Field>
+                    <Field label="Chứng thực khách hàng">
+                      <input value={draft.social_proof} onChange={(e) => setDraft({ ...draft, social_proof: e.target.value })} className={inputCls} />
+                    </Field>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Field label="Nút chính">
+                        <input value={draft.cta_primary} onChange={(e) => setDraft({ ...draft, cta_primary: e.target.value })} className={inputCls} />
+                      </Field>
+                      <Field label="Nút phụ">
+                        <input value={draft.cta_secondary} onChange={(e) => setDraft({ ...draft, cta_secondary: e.target.value })} className={inputCls} />
+                      </Field>
+                    </div>
+                    <Field label="Lời mời để lại thông tin">
+                      <input value={draft.form_intro} onChange={(e) => setDraft({ ...draft, form_intro: e.target.value })} className={inputCls} />
+                    </Field>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        disabled={saveMut.isPending}
+                        onClick={() => saveMut.mutate()}
+                        className="h-10 px-4 rounded-xl bg-primary text-primary-foreground text-[13px] font-semibold inline-flex items-center gap-2 disabled:opacity-60"
+                      >
+                        {saveMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        Lưu nội dung
+                      </button>
+                      <button
+                        onClick={() => setEditing(false)}
+                        className="h-10 px-4 rounded-xl border border-border text-[13px] font-medium hover:bg-muted"
+                      >
+                        Huỷ
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="rounded-2xl overflow-hidden border border-border bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-8">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[11px] font-semibold">
                     <Sparkles className="h-3 w-3 text-amber-300" /> AI cá nhân hoá

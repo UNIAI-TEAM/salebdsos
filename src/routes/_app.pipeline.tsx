@@ -16,11 +16,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/use-auth";
 import {
   getPipeline, upsertDeal, moveDeal, deleteDeal,
+  createStage, updateStage, deleteStage, reorderStages,
 } from "@/lib/pipeline.functions";
 import { toast } from "sonner";
 import {
   Plus, Filter, MoreHorizontal, GripVertical, TrendingUp, DollarSign,
   Phone, Mail, Calendar, User as UserIcon, Building2, Trash2, X,
+  Settings2, ArrowUp, ArrowDown, Save,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/pipeline")({ component: PipelinePage });
@@ -80,6 +82,7 @@ function PipelinePage() {
   const [editing, setEditing] = useState<Deal | null>(null);
   const [creating, setCreating] = useState<{ stageId?: string } | null>(null);
   const [activeDealId, setActiveDealId] = useState<string | null>(null);
+  const [stageMgr, setStageMgr] = useState(false);
 
   const canEdit = hasRole(["owner", "admin", "manager", "agent"]);
 
@@ -175,6 +178,9 @@ function PipelinePage() {
                 ))}
               </SelectContent>
             </Select>
+            <Button variant="outline" onClick={() => setStageMgr(true)} disabled={!canEdit} className="h-9 rounded-xl">
+              <Settings2 className="h-4 w-4" /> Giai đoạn
+            </Button>
             <Button onClick={() => setCreating({})} disabled={!canEdit} className="h-9 rounded-xl">
               <Plus className="h-4 w-4" /> Thêm deal
             </Button>
@@ -243,6 +249,17 @@ function PipelinePage() {
           )}
         </DragOverlay>
       </DndContext>
+
+      {stageMgr && tenantId && (
+        <StageManagerDialog
+          open
+          onClose={() => setStageMgr(false)}
+          tenantId={tenantId}
+          stages={stages}
+          dealCount={(id: string) => (dealsByStage.get(id) ?? []).length}
+          onChanged={reload}
+        />
+      )}
 
       {creating && tenantId && (
         <DealDialog open onClose={() => setCreating(null)}
@@ -565,5 +582,172 @@ function DealSheet({
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// Stage manager
+// ---------------------------------------------------------------------------
+function StageManagerDialog({
+  open, onClose, tenantId, stages, dealCount, onChanged,
+}: {
+  open: boolean;
+  onClose: () => void;
+  tenantId: string;
+  stages: Stage[];
+  dealCount: (id: string) => number;
+  onChanged: () => Promise<void> | void;
+}) {
+  const fnCreate = useServerFn(createStage);
+  const fnUpdate = useServerFn(updateStage);
+  const fnDelete = useServerFn(deleteStage);
+  const fnReorder = useServerFn(reorderStages);
+
+  const [order, setOrder] = useState<Stage[]>(stages);
+  const [busy, setBusy] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newProb, setNewProb] = useState("");
+  const [removing, setRemoving] = useState<Stage | null>(null);
+  const [moveTo, setMoveTo] = useState<string>("");
+
+  useEffect(() => { setOrder(stages); }, [stages]);
+
+  const run = async (fn: () => Promise<unknown>, ok: string) => {
+    setBusy(true);
+    try { await fn(); toast.success(ok); await onChanged(); }
+    catch (e: any) { toast.error(e?.message ?? "Không thực hiện được"); }
+    finally { setBusy(false); }
+  };
+
+  const move = (idx: number, dir: -1 | 1) => {
+    const next = [...order];
+    const j = idx + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[idx], next[j]] = [next[j]!, next[idx]!];
+    setOrder(next);
+  };
+
+  const dirty = order.map((s) => s.id).join(",") !== stages.map((s) => s.id).join(",");
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Quản lý giai đoạn</DialogTitle></DialogHeader>
+
+        {removing ? (
+          <div className="space-y-3">
+            <p className="text-[13px]">
+              Xoá giai đoạn <b>{removing.name}</b>?
+              {dealCount(removing.id) > 0
+                ? ` Còn ${dealCount(removing.id)} deal, hãy chọn giai đoạn để chuyển sang.`
+                : ""}
+            </p>
+            {dealCount(removing.id) > 0 && (
+              <Select value={moveTo} onValueChange={setMoveTo}>
+                <SelectTrigger className="h-10 rounded-xl"><SelectValue placeholder="Chuyển deal sang..." /></SelectTrigger>
+                <SelectContent>
+                  {order.filter((s) => s.id !== removing.id).map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRemoving(null)}>Huỷ</Button>
+              <Button
+                variant="destructive"
+                disabled={busy || (dealCount(removing.id) > 0 && !moveTo)}
+                onClick={() =>
+                  run(async () => {
+                    await fnDelete({ data: { id: removing.id, moveDealsTo: moveTo || null } });
+                    setRemoving(null); setMoveTo("");
+                  }, "Đã xoá giai đoạn")
+                }
+              >
+                Xoá
+              </Button>
+            </DialogFooter>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2 max-h-[320px] overflow-y-auto">
+              {order.map((s, i) => (
+                <div key={s.id} className="flex items-center gap-2 rounded-xl border border-border p-2">
+                  <div className="flex flex-col">
+                    <button onClick={() => move(i, -1)} disabled={i === 0} className="text-muted-foreground disabled:opacity-30">
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={() => move(i, 1)} disabled={i === order.length - 1} className="text-muted-foreground disabled:opacity-30">
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <Input
+                    defaultValue={s.name}
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      if (v && v !== s.name) void run(() => fnUpdate({ data: { id: s.id, name: v } }), "Đã đổi tên");
+                    }}
+                    className="h-9 rounded-lg text-[13px]"
+                  />
+                  <Input
+                    type="number" min={0} max={100}
+                    defaultValue={s.win_probability ?? ""}
+                    placeholder="%"
+                    onBlur={(e) => {
+                      const raw = e.target.value.trim();
+                      const v = raw === "" ? null : Math.max(0, Math.min(100, Number(raw)));
+                      if (v !== s.win_probability)
+                        void run(() => fnUpdate({ data: { id: s.id, win_probability: v } }), "Đã cập nhật tỷ lệ");
+                    }}
+                    className="h-9 w-20 rounded-lg text-[13px]"
+                  />
+                  <span className="text-[11.5px] text-muted-foreground w-14 text-right">{dealCount(s.id)} deal</span>
+                  <button onClick={() => { setRemoving(s); setMoveTo(""); }} className="text-red-600 p-1">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {dirty && (
+              <Button
+                disabled={busy}
+                onClick={() => run(() => fnReorder({ data: { tenant_id: tenantId, ids: order.map((s) => s.id) } }), "Đã lưu thứ tự")}
+                className="w-full h-10 rounded-xl"
+              >
+                <Save className="h-4 w-4" /> Lưu thứ tự
+              </Button>
+            )}
+
+            <div className="border-t border-border pt-3 space-y-2">
+              <Label className="text-[12px]">Thêm giai đoạn</Label>
+              <div className="flex gap-2">
+                <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Tên giai đoạn" className="h-10 rounded-xl" />
+                <Input value={newProb} onChange={(e) => setNewProb(e.target.value)} type="number" min={0} max={100} placeholder="%" className="h-10 w-20 rounded-xl" />
+                <Button
+                  disabled={busy || !newName.trim()}
+                  onClick={() =>
+                    run(async () => {
+                      await fnCreate({
+                        data: {
+                          tenant_id: tenantId,
+                          name: newName.trim(),
+                          win_probability: newProb.trim() === "" ? null : Math.max(0, Math.min(100, Number(newProb))),
+                        },
+                      });
+                      setNewName(""); setNewProb("");
+                    }, "Đã thêm giai đoạn")
+                  }
+                  className="h-10 rounded-xl"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
