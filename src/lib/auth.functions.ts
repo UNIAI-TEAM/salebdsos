@@ -232,6 +232,8 @@ export const createStaffAccount = createServerFn({ method: "POST" })
         fullName: z.string().trim().min(2).max(120),
         phone: z.string().trim().max(30).optional(),
         role: z.enum(STAFF_ROLES),
+        requireEmailVerification: z.boolean().optional().default(true),
+        redirectTo: z.string().url().optional(),
       })
       .parse(d),
   )
