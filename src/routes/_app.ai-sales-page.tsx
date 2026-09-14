@@ -108,7 +108,8 @@ function AISalesPage() {
           audience: audience || undefined,
           tone,
           cta: cta || undefined,
-          extra: extra || undefined,
+          extra: extra || request || undefined,
+          promptOverride: prompt.trim() || undefined,
         },
       }),
     onSuccess: (r) => {
