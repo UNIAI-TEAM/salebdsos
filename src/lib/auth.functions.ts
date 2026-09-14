@@ -253,17 +253,27 @@ export const createStaffAccount = createServerFn({ method: "POST" })
 
     let newUserId = existing?.user_id as string | undefined;
     let created = false;
+    let verificationSent = false;
 
     if (!newUserId) {
       const { data: createdUser, error: cErr } = await supabaseAdmin.auth.admin.createUser({
         email,
         password: data.password,
-        email_confirm: true,
+        email_confirm: !data.requireEmailVerification,
         user_metadata: { full_name: data.fullName, phone: data.phone ?? null },
       });
       if (cErr || !createdUser?.user) throw new Error(cErr?.message ?? "Không tạo được tài khoản");
       newUserId = createdUser.user.id;
       created = true;
+
+      if (data.requireEmailVerification) {
+        const { error: sErr } = await supabaseAdmin.auth.resend({
+          type: "signup",
+          email,
+          options: data.redirectTo ? { emailRedirectTo: data.redirectTo } : undefined,
+        });
+        verificationSent = !sErr;
+      }
     }
 
     await supabaseAdmin
