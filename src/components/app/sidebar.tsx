@@ -145,7 +145,7 @@ function SidebarBody({
           <button
             onClick={onCollapseToggle}
             className={[
-              "rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-white transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              "rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
               collapsed ? "opacity-0 scale-90 pointer-events-none w-0 p-0 overflow-hidden" : "opacity-100 scale-100 p-1.5",
             ].join(" ")}
             aria-label="Thu gọn menu"
@@ -156,7 +156,7 @@ function SidebarBody({
         {variant === "mobile" && (
           <button
             onClick={onClose}
-            className="inline-flex items-center justify-center h-10 w-10 rounded-xl hover:bg-sidebar-accent active:scale-95 text-sidebar-foreground/80 hover:text-white transition"
+            className="inline-flex items-center justify-center h-10 w-10 rounded-xl hover:bg-sidebar-accent active:scale-95 text-sidebar-foreground/80 hover:text-sidebar-foreground transition"
             aria-label="Đóng menu"
           >
             <X className="h-5 w-5" />
