@@ -130,13 +130,13 @@ function SidebarBody({
           className="flex items-center gap-2.5 min-w-0"
         >
           <div className="h-9 w-9 rounded-xl bg-brand-gradient grid place-items-center shadow-glow shrink-0">
-            <Radio className="h-4.5 w-4.5 text-white" strokeWidth={2.5} />
+            <Radio className="h-4.5 w-4.5 text-primary-foreground" strokeWidth={2.5} />
           </div>
           <div className={[
             "leading-tight min-w-0 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
             showLabels ? "opacity-100 max-w-[180px] translate-x-0" : "opacity-0 max-w-0 -translate-x-2",
           ].join(" ")}>
-            <div className="text-[15px] font-bold text-white truncate">SaleBDS OS</div>
+            <div className="text-[15px] font-bold text-sidebar-foreground truncate">SaleBDS OS</div>
             <div className="text-[11px] text-sidebar-foreground/60 truncate">Điều hành kinh doanh bằng điểm chạm</div>
           </div>
         </Link>
@@ -145,7 +145,7 @@ function SidebarBody({
           <button
             onClick={onCollapseToggle}
             className={[
-              "rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-white transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              "rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
               collapsed ? "opacity-0 scale-90 pointer-events-none w-0 p-0 overflow-hidden" : "opacity-100 scale-100 p-1.5",
             ].join(" ")}
             aria-label="Thu gọn menu"
@@ -156,7 +156,7 @@ function SidebarBody({
         {variant === "mobile" && (
           <button
             onClick={onClose}
-            className="inline-flex items-center justify-center h-10 w-10 rounded-xl hover:bg-sidebar-accent active:scale-95 text-sidebar-foreground/80 hover:text-white transition"
+            className="inline-flex items-center justify-center h-10 w-10 rounded-xl hover:bg-sidebar-accent active:scale-95 text-sidebar-foreground/80 hover:text-sidebar-foreground transition"
             aria-label="Đóng menu"
           >
             <X className="h-5 w-5" />
@@ -172,7 +172,7 @@ function SidebarBody({
         ].join(" ")}>
           <button
             onClick={onCollapseToggle}
-            className="w-full grid place-items-center h-9 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-white transition"
+            className="w-full grid place-items-center h-9 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition"
             aria-label="Mở rộng menu"
           >
             <PanelLeftOpen className="h-4 w-4" />
@@ -187,14 +187,14 @@ function SidebarBody({
             "mx-3 mb-3 rounded-xl bg-sidebar-accent/50 hover:bg-sidebar-accent transition flex items-center text-left",
             showLabels ? (isMobile ? "px-3 py-3 gap-2.5" : "px-3 py-2.5 gap-2.5") : "p-2 justify-center",
           ].join(" ")}>
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 grid place-items-center text-white text-[11px] font-bold shrink-0">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-indigo-500 grid place-items-center text-primary-foreground text-[11px] font-bold shrink-0">
               {currentTenant ? initials(currentTenant.name) : "—"}
             </div>
             <div className={[
               "flex-1 min-w-0 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
               showLabels ? "opacity-100 max-w-[180px] translate-x-0" : "opacity-0 max-w-0 -translate-x-2",
             ].join(" ")}>
-              <div className="text-[13px] font-semibold text-white truncate">
+              <div className="text-[13px] font-semibold text-sidebar-foreground truncate">
                 {currentTenant?.name ?? (isPlatformAdmin ? "Platform Admin" : "Chưa có workspace")}
               </div>
               <div className="text-[10.5px] text-sidebar-foreground/60">
@@ -264,9 +264,9 @@ function SidebarBody({
                           : "justify-center p-2.5",
                         active
                           ? (iconOnly
-                              ? "bg-sidebar-accent text-white ring-1 ring-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_6px_18px_-6px_hsl(var(--primary)/0.55)]"
-                              : "bg-sidebar-accent text-white")
-                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 active:bg-sidebar-accent/70 hover:text-white",
+                              ? "bg-sidebar-accent text-sidebar-foreground ring-1 ring-primary/50 shadow-[0_0_0_1px_oklch(0.62_0.18_285/0.25),0_6px_18px_-6px_oklch(0.62_0.18_285/0.55)]"
+                              : "bg-sidebar-accent text-sidebar-foreground")
+                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 active:bg-sidebar-accent/70 hover:text-sidebar-foreground",
                       ].join(" ")}
                     >
                       {/* Active indicator bar — visible in both expanded and icon-only modes */}
@@ -279,7 +279,7 @@ function SidebarBody({
                           ].join(" ")}
                         />
                       )}
-                      <it.icon className={["h-4 w-4 shrink-0 transition-transform duration-300", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-white", showLabels ? "scale-100" : "scale-110"].join(" ")} />
+                      <it.icon className={["h-4 w-4 shrink-0 transition-transform duration-300", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground", showLabels ? "scale-100" : "scale-110"].join(" ")} />
                       <span className={[
                         "flex-1 truncate transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
                         showLabels ? "opacity-100 max-w-[180px] translate-x-0" : "opacity-0 max-w-0 -translate-x-2",
@@ -287,13 +287,13 @@ function SidebarBody({
                       ].join(" ")}>{it.label}</span>
                       {/* Active dot when icon-only (in place of hidden badge) */}
                       {iconOnly && active && (
-                        <span aria-hidden className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
+                        <span aria-hidden className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_oklch(0.62_0.18_285)]" />
                       )}
                       {it.badge && (
                         <span className={[
                           "text-[10px] px-1.5 py-0.5 rounded-md font-semibold transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] overflow-hidden",
                           it.badge === "AI"
-                            ? "bg-brand-gradient text-white"
+                            ? "bg-brand-gradient text-primary-foreground"
                             : "bg-sidebar-accent text-sidebar-foreground/80",
                           showLabels ? "opacity-100 max-w-12 scale-100" : "opacity-0 max-w-0 scale-75",
                         ].join(" ")}>{it.badge}</span>
@@ -328,8 +328,8 @@ function SidebarBody({
       >
         <div className="rounded-xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-primary/20 p-3.5">
           <div className="flex items-center gap-2 mb-1.5">
-            <Crown className="h-4 w-4 text-yellow-400" />
-            <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
+            <Crown className="h-4 w-4 text-accent" />
+            <div className="text-[11px] font-bold uppercase tracking-wider text-sidebar-foreground/90">
               {currentTenant?.plan ?? "Free"}
             </div>
           </div>
@@ -337,7 +337,7 @@ function SidebarBody({
             Mở khoá AI Follow-up không giới hạn & báo cáo nâng cao.
           </p>
           <button className={[
-            "mt-2.5 w-full rounded-lg bg-white text-sidebar text-[12px] font-semibold hover:bg-white/90 active:scale-[0.98] transition",
+            "mt-2.5 w-full rounded-lg bg-foreground text-background text-[12px] font-semibold hover:bg-foreground/90 active:scale-[0.98] transition",
             isMobile ? "py-2.5" : "py-1.5",
           ].join(" ")}>
             Nâng cấp ngay

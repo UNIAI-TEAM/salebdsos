@@ -177,7 +177,7 @@ function PublicSalesPage() {
             {s("form_intro") || "Để lại thông tin để được tư vấn"}
           </h2>
           {sent ? (
-            <p className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center text-[14px] font-medium text-emerald-700">
+            <p className="mt-6 rounded-xl border border-success/30 bg-success/10 p-4 text-center text-[14px] font-medium text-success">
               Cảm ơn bạn! Chúng tôi sẽ liên hệ trong thời gian sớm nhất.
             </p>
           ) : (

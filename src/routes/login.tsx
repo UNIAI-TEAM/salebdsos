@@ -193,31 +193,30 @@ function LoginPage() {
   const hasConfirmError = touched.confirmPassword && !!errors.confirmPassword;
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-[#F8FAFC]">
-      {/* Left: brand panel — Deep Indigo */}
-      <aside className="relative hidden lg:flex flex-col justify-between p-10 xl:p-16 text-white overflow-hidden bg-[#0F172A]">
-        {/* gradient + glow layers */}
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,#1E1B4B_0%,#3730A3_55%,#0E7490_100%)]" />
-        <div className="absolute -top-32 -left-24 h-[28rem] w-[28rem] rounded-full bg-[#6366F1] opacity-30 blur-3xl" />
-        <div className="absolute -bottom-32 -right-16 h-[26rem] w-[26rem] rounded-full bg-[#06B6D4] opacity-25 blur-3xl" />
-        <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] [background-size:42px_42px]" />
+    <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-background">
+      {/* Left: brand panel — Dark Luxury */}
+      <aside className="relative hidden lg:flex flex-col justify-between p-10 xl:p-16 text-foreground overflow-hidden bg-[linear-gradient(135deg,oklch(0.12_0.03_265)_0%,oklch(0.16_0.05_285)_55%,oklch(0.11_0.03_265)_100%)]">
+        {/* ambient glows */}
+        <div className="absolute -top-32 -left-24 h-[28rem] w-[28rem] rounded-full bg-primary opacity-20 blur-3xl" />
+        <div className="absolute -bottom-32 -right-16 h-[26rem] w-[26rem] rounded-full bg-accent opacity-15 blur-3xl" />
+        <div className="absolute inset-0 opacity-[0.06] [background-image:linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)] [background-size:42px_42px]" />
 
         <Link to="/" className="relative inline-flex items-center gap-3 group">
-          <div className="h-11 w-11 rounded-2xl bg-white/10 backdrop-blur ring-1 ring-white/20 flex items-center justify-center group-hover:bg-white/15 transition-colors">
-            <Building2 className="h-5 w-5 text-white" />
+          <div className="h-11 w-11 rounded-2xl glass ring-1 ring-white/15 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+            <Building2 className="h-5 w-5 text-foreground" />
           </div>
           <span className="font-bold text-xl tracking-tight">SaleBDS OS</span>
         </Link>
 
         <div className="relative space-y-7 max-w-md">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur ring-1 ring-white/15 px-3 py-1 text-xs font-medium text-white/90">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#22D3EE] shadow-[0_0_12px_#22D3EE]" />
+          <div className="inline-flex items-center gap-2 rounded-full glass ring-1 ring-white/15 px-3 py-1 text-xs font-medium text-foreground/90">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_12px_var(--color-accent)]" />
             Nền tảng số #1 cho Sale BĐS
           </div>
           <h2 className="text-3xl xl:text-[2.6rem] font-bold leading-[1.1] tracking-tight">
-            Điều hành kinh doanh BĐS bằng <span className="text-[#67E8F9]">điểm chạm</span>.
+            Điều hành kinh doanh BĐS bằng <span className="text-gold-gradient">điểm chạm</span>.
           </h2>
-          <p className="text-white/75 text-base leading-relaxed">
+          <p className="text-foreground/70 text-base leading-relaxed">
             NFC card · Dynamic QR · CRM · AI Follow-up · Lead Score — tất cả trong
             một workspace cho agency và sale BĐS.
           </p>
@@ -228,9 +227,9 @@ function LoginPage() {
               "AI chấm điểm lead & gợi ý kịch bản chăm sóc",
               "Analytics điểm chạm theo thời gian thực",
             ].map((t) => (
-              <li key={t} className="flex items-start gap-3 text-white/85">
-                <span className="mt-0.5 h-5 w-5 rounded-md bg-white/10 ring-1 ring-white/15 flex items-center justify-center">
-                  <Check className="h-3 w-3 text-[#67E8F9]" />
+              <li key={t} className="flex items-start gap-3 text-foreground/80">
+                <span className="mt-0.5 h-5 w-5 rounded-md glass ring-1 ring-white/15 flex items-center justify-center">
+                  <Check className="h-3 w-3 text-accent" />
                 </span>
                 <span>{t}</span>
               </li>
@@ -238,7 +237,7 @@ function LoginPage() {
           </ul>
         </div>
 
-        <div className="relative flex items-center justify-between text-xs text-white/55">
+        <div className="relative flex items-center justify-between text-xs text-foreground/50">
           <span>© {new Date().getFullYear()} SaleBDS OS</span>
           <span className="inline-flex items-center gap-1.5">
             <ShieldCheck className="h-3.5 w-3.5" />
@@ -249,23 +248,23 @@ function LoginPage() {
 
       {/* Right: form */}
       <main className="flex items-center justify-center px-4 py-10 sm:px-8 relative">
-        {/* subtle background accents on mobile/right side */}
+        {/* subtle dark ambient accents */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 right-1/4 h-72 w-72 rounded-full bg-[#EEF2FF] blur-3xl opacity-70" />
-          <div className="absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-[#CFFAFE] blur-3xl opacity-60" />
+          <div className="absolute -top-24 right-1/4 h-72 w-72 rounded-full bg-primary/10 blur-3xl opacity-70" />
+          <div className="absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-accent/10 blur-3xl opacity-60" />
         </div>
 
         <div className="relative w-full max-w-[440px]">
           <Link to="/" className="lg:hidden flex items-center justify-center gap-2 mb-8">
-            <div className="h-10 w-10 rounded-xl bg-[linear-gradient(135deg,#3730A3,#06B6D4)] flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Building2 className="h-5 w-5 text-white" />
+            <div className="h-10 w-10 rounded-xl bg-brand-gradient flex items-center justify-center shadow-lg shadow-primary/20">
+              <Building2 className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-lg text-[#0F172A]">SaleBDS OS</span>
+            <span className="font-bold text-lg text-foreground">SaleBDS OS</span>
           </Link>
 
-          <div className="rounded-3xl border border-[#E2E8F0] bg-white/90 backdrop-blur-xl p-7 sm:p-9 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.18)]">
+          <div className="rounded-3xl border border-border bg-card/90 backdrop-blur-xl p-7 sm:p-9 shadow-card">
             {/* Tabs */}
-            <div className="grid grid-cols-2 gap-1 p-1 mb-7 rounded-xl bg-[#F1F5F9]">
+            <div className="grid grid-cols-2 gap-1 p-1 mb-7 rounded-xl bg-muted">
               {(["signin", "signup"] as const).map((m) => (
                 <button
                   key={m}
@@ -277,8 +276,8 @@ function LoginPage() {
                   }}
                   className={`h-9 rounded-lg text-sm font-semibold transition-all ${
                     mode === m
-                      ? "bg-white text-[#0F172A] shadow-sm"
-                      : "text-[#64748B] hover:text-[#0F172A]"
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {m === "signin" ? "Đăng nhập" : "Đăng ký"}
@@ -287,10 +286,10 @@ function LoginPage() {
             </div>
 
             <div className="mb-6">
-              <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
                 {mode === "signin" ? "Chào mừng trở lại 👋" : "Bắt đầu hành trình"}
               </h1>
-              <p className="text-sm text-[#64748B] mt-1.5">
+              <p className="text-sm text-muted-foreground mt-1.5">
                 {mode === "signin"
                   ? "Đăng nhập để vào workspace BĐS của bạn."
                   : "Tạo tài khoản & đăng ký agency của bạn."}
@@ -318,8 +317,6 @@ function LoginPage() {
                   />
                 </Field>
               )}
-
-
 
               {mode === "signup" && (
                 <Field
@@ -372,7 +369,7 @@ function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center rounded-md text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3730A3]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     tabIndex={-1}
                     aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                   >
@@ -404,18 +401,18 @@ function LoginPage() {
                         className={`h-1 flex-1 rounded-full transition-colors ${
                           i < passwordStrength
                             ? passwordStrength <= 1
-                              ? "bg-[#EF4444]"
+                              ? "bg-destructive"
                               : passwordStrength === 2
-                              ? "bg-[#F59E0B]"
+                              ? "bg-warning"
                               : passwordStrength === 3
-                              ? "bg-[#22C55E]"
-                              : "bg-[#16A34A]"
-                            : "bg-[#E2E8F0]"
+                              ? "bg-success"
+                              : "bg-success"
+                            : "bg-muted-foreground/20"
                         }`}
                       />
                     ))}
                   </div>
-                  <p className="text-[11px] text-[#64748B]">
+                  <p className="text-[11px] text-muted-foreground">
                     {passwordStrength <= 1 && "Mật khẩu yếu — thêm chữ hoa, số hoặc ký tự đặc biệt."}
                     {passwordStrength === 2 && "Tạm ổn — nên dùng thêm ký tự đặc biệt."}
                     {passwordStrength === 3 && "Mạnh."}
@@ -434,7 +431,7 @@ function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowConfirm((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center rounded-md text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3730A3]"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       tabIndex={-1}
                       aria-label={showConfirm ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                     >
@@ -460,17 +457,17 @@ function LoginPage() {
 
               {mode === "signin" && (
                 <div className="flex items-center justify-between pt-1">
-                  <label className="flex items-center gap-2 text-sm text-[#475569] cursor-pointer select-none">
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-[#CBD5E1] accent-[#3730A3]"
+                      className="h-4 w-4 rounded border-border accent-primary"
                     />
                     Ghi nhớ đăng nhập
                   </label>
                   <button
                     type="button"
                     onClick={() => toast.info("Tính năng đang phát triển")}
-                    className="text-sm font-semibold text-[#3730A3] hover:text-[#1E1B4B] transition-colors"
+                    className="text-sm font-semibold text-primary hover:text-primary-foreground/80 transition-colors"
                   >
                     Quên mật khẩu?
                   </button>
@@ -480,7 +477,7 @@ function LoginPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="group w-full h-12 rounded-xl bg-[linear-gradient(135deg,#3730A3_0%,#4338CA_55%,#06B6D4_140%)] text-white text-sm font-semibold shadow-[0_10px_30px_-10px_rgba(55,48,163,0.6)] hover:shadow-[0_14px_36px_-12px_rgba(55,48,163,0.7)] hover:brightness-110 active:brightness-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                className="group w-full h-12 rounded-xl bg-gradient-to-r from-primary to-indigo-500 text-primary-foreground text-sm font-semibold shadow-glow hover:shadow-[0_14px_36px_-12px_oklch(0.55_0.18_285/0.55)] hover:brightness-110 active:brightness-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -496,8 +493,8 @@ function LoginPage() {
               </Button>
             </form>
 
-            <div className="my-6 flex items-center gap-3 text-[11px] text-[#94A3B8]">
-              <div className="h-px flex-1 bg-[#E2E8F0]" />
+            <div className="my-6 flex items-center gap-3 text-[11px] text-muted-foreground">
+              <div className="h-px flex-1 bg-border" />
               <span className="uppercase tracking-[0.16em] font-semibold">hoặc tiếp tục với</span>
               <div className="h-px flex-1 bg-[#E2E8F0]" />
             </div>
@@ -507,7 +504,7 @@ function LoginPage() {
               variant="outline"
               onClick={onGoogle}
               disabled={loading}
-              className="w-full h-11 rounded-xl border-[#E2E8F0] bg-white text-[#0F172A] text-sm font-medium hover:bg-[#F8FAFC] hover:border-[#CBD5E1] transition-all"
+              className="w-full h-11 rounded-xl border-border bg-card text-foreground text-sm font-medium hover:bg-muted hover:border-border transition-all"
             >
               <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M23.766 12.2764C23.766 11.4607 23.6999 10.6406 23.5588 9.83807H12.24V14.4591H18.7217C18.4528 15.9494 17.5885 17.2678 16.323 18.1056V21.1039H20.19C22.4608 19.0139 23.766 15.9274 23.766 12.2764Z" fill="#4285F4" />
@@ -518,10 +515,10 @@ function LoginPage() {
               Tiếp tục với Google
             </Button>
 
-            <p className="mt-6 text-center text-[11px] text-[#94A3B8] leading-relaxed">
+            <p className="mt-6 text-center text-[11px] text-muted-foreground leading-relaxed">
               Bằng việc tiếp tục, bạn đồng ý với{" "}
-              <span className="text-[#475569] font-medium">Điều khoản</span> &{" "}
-              <span className="text-[#475569] font-medium">Chính sách bảo mật</span> của SaleBDS OS.
+              <span className="text-foreground/80 font-medium">Điều khoản</span> &{" "}
+              <span className="text-foreground/80 font-medium">Chính sách bảo mật</span> của SaleBDS OS.
             </p>
           </div>
         </div>
@@ -531,10 +528,10 @@ function LoginPage() {
 }
 
 function inputCls(hasError: boolean) {
-  return `h-11 pl-10 rounded-xl bg-white text-sm text-[#0F172A] placeholder:text-[#94A3B8] transition-all focus-visible:ring-2 focus-visible:ring-offset-1 ${
+  return `h-11 pl-10 rounded-xl bg-input text-sm text-foreground placeholder:text-muted-foreground transition-all focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
     hasError
-      ? "border-[#EF4444] focus-visible:ring-[#EF4444]/40"
-      : "border-[#E2E8F0] focus-visible:ring-[#3730A3]/40 focus-visible:border-[#3730A3]"
+      ? "border-destructive focus-visible:ring-destructive/40"
+      : "border-border focus-visible:ring-primary/40 focus-visible:border-primary"
   }`;
 }
 
@@ -557,23 +554,23 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-[13px] font-medium text-[#334155]">
+      <Label htmlFor={id} className="text-[13px] font-medium text-foreground/80">
         {label}
       </Label>
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8] pointer-events-none">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
           {icon}
         </span>
         {children}
         {rightSlot}
       </div>
       {error ? (
-        <p className="text-xs text-[#DC2626] flex items-center gap-1.5 pt-0.5">
+        <p className="text-xs text-destructive flex items-center gap-1.5 pt-0.5">
           <AlertCircle className="h-3.5 w-3.5 shrink-0" />
           {error}
         </p>
       ) : hint ? (
-        <p className="text-[11px] text-[#94A3B8] pt-0.5">{hint}</p>
+        <p className="text-[11px] text-muted-foreground pt-0.5">{hint}</p>
       ) : null}
     </div>
   );

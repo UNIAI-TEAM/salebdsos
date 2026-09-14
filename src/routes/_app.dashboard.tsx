@@ -120,11 +120,11 @@ function Dashboard() {
   }, [pipelineQ.data]);
 
   const stageColors = [
-    "bg-slate-100 text-slate-700",
-    "bg-blue-100 text-blue-700",
-    "bg-amber-100 text-amber-700",
-    "bg-violet-100 text-violet-700",
-    "bg-emerald-100 text-emerald-700",
+    "bg-primary/15 text-primary",
+    "bg-info/15 text-info",
+    "bg-warning/15 text-warning",
+    "bg-success/15 text-success",
+    "bg-muted text-muted-foreground",
   ];
 
   // Estimated revenue from won deals in pipeline
@@ -186,10 +186,10 @@ function Dashboard() {
                           <stop offset="100%" stopColor="oklch(0.59 0.22 285)" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid stroke="oklch(0.93 0.008 265)" vertical={false} />
-                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: "oklch(0.52 0.02 265)" }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 10, fill: "oklch(0.52 0.02 265)" }} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.93 0.008 265)", fontSize: 12 }} />
+                      <CartesianGrid stroke="oklch(0.25 0.02 265)" vertical={false} />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: "oklch(0.65 0.02 265)" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: "oklch(0.65 0.02 265)" }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.25 0.02 265)", fontSize: 12, background: "oklch(0.14 0.025 265)" }} />
                       <Area dataKey="taps" stroke="oklch(0.59 0.22 285)" strokeWidth={2.2} fill="url(#g1)" name="Lượt chạm" />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -238,14 +238,14 @@ function Dashboard() {
                 <ul className="space-y-3">
                   {topProjects.slice(0, 5).map((p: any) => (
                     <li key={p.id} className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 grid place-items-center text-lg overflow-hidden">
+                      <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-indigo-500/20 grid place-items-center text-lg overflow-hidden">
                         {p.cover_url ? <img src={p.cover_url} alt="" className="h-full w-full object-cover" /> : "🏙️"}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[13px] font-semibold truncate">{p.name}</div>
                         <div className="text-[11px] text-muted-foreground">{p.leads} leads · {p.won} chốt</div>
                       </div>
-                      <span className="inline-flex items-center gap-0.5 text-emerald-600 text-[11.5px] font-semibold">
+                      <span className="inline-flex items-center gap-0.5 text-success text-[11.5px] font-semibold">
                         <ArrowUpRight className="h-3 w-3" /> {p.won ? Math.round((p.won / Math.max(p.leads, 1)) * 100) : 0}%
                       </span>
                     </li>
@@ -279,7 +279,7 @@ function Dashboard() {
                         <tr key={l.id} className="border-b border-border last:border-0 hover:bg-muted/40">
                           <td className="py-2.5">
                             <div className="flex items-center gap-2">
-                              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary/30 to-indigo-400/30 grid place-items-center text-[10.5px] font-semibold">
+                              <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary/30 to-indigo-500/30 grid place-items-center text-[10.5px] font-semibold">
                                 {(l.full_name?.split(" ").pop()?.[0] ?? "?").toUpperCase()}
                               </div>
                               <span className="font-medium">{l.full_name}</span>
@@ -342,7 +342,7 @@ function Dashboard() {
                   <div key={m.l}>
                     <div className="text-[10.5px] text-muted-foreground">{m.l}</div>
                     <div className="text-[14px] font-bold leading-tight">{m.v}</div>
-                    <div className={["text-[10.5px] font-semibold", m.d >= 0 ? "text-emerald-600" : "text-rose-600"].join(" ")}>
+                    <div className={["text-[10.5px] font-semibold", m.d >= 0 ? "text-success" : "text-destructive"].join(" ")}>
                       {m.d >= 0 ? "↑" : "↓"} {Math.abs(m.d)}%
                     </div>
                   </div>
@@ -354,12 +354,12 @@ function Dashboard() {
                 ) : (
                   <ResponsiveContainer>
                     <BarChart data={daily.slice(-14).map((d: any) => ({ day: d.day.slice(5), nfc: d.nfc ?? 0, qr: d.qr ?? 0 }))} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
-                      <CartesianGrid stroke="oklch(0.93 0.008 265)" vertical={false} />
-                      <XAxis dataKey="day" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid oklch(0.93 0.008 265)" }} />
+                      <CartesianGrid stroke="oklch(0.25 0.02 265)" vertical={false} />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: "oklch(0.65 0.02 265)" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: "oklch(0.65 0.02 265)" }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid oklch(0.25 0.02 265)", background: "oklch(0.14 0.025 265)" }} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
-                      <Bar dataKey="nfc" fill="oklch(0.59 0.22 285)" radius={[4, 4, 0, 0]} name="NFC" />
+                      <Bar dataKey="nfc" fill="oklch(0.62 0.18 285)" radius={[4, 4, 0, 0]} name="NFC" />
                       <Bar dataKey="qr" fill="oklch(0.65 0.16 240)" radius={[4, 4, 0, 0]} name="QR" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -398,21 +398,21 @@ function Dashboard() {
                     desc: `${kpis?.deltas.touches ?? 0}%`,
                     note: `${fmt(kpis?.totalTouches)} lượt trong ${days} ngày`,
                     icon: TrendingUp,
-                    tone: "from-emerald-500/15 to-emerald-500/0 text-emerald-600",
+                    tone: "from-emerald-500/15 to-emerald-500/0 text-success",
                   },
                   {
                     title: "Dự án hàng đầu",
                     desc: topProjects[0]?.name ?? "Chưa có",
                     note: `${topProjects[0]?.leads ?? 0} leads`,
                     icon: Building2,
-                    tone: "from-blue-500/15 to-blue-500/0 text-blue-600",
+                    tone: "from-blue-500/15 to-blue-500/0 text-info",
                   },
                   {
                     title: "Nguồn hiệu quả nhất",
                     desc: sourceData[0]?.name ?? "—",
                     note: `${sourceData[0]?.count ?? 0} lượt chạm`,
                     icon: Radio,
-                    tone: "from-amber-500/15 to-amber-500/0 text-amber-600",
+                    tone: "from-amber-500/15 to-amber-500/0 text-warning",
                   },
                   {
                     title: "Gợi ý hành động",
@@ -480,7 +480,7 @@ function Dashboard() {
                   </button>
                 ))}
               </div>
-              <button className="mt-3 w-full rounded-xl bg-white/95 text-slate-900 text-[12px] font-semibold py-2 hover:bg-white">
+              <button className="mt-3 w-full rounded-xl bg-foreground text-background text-[12px] font-semibold py-2 hover:bg-foreground/90">
                 Lưu liên hệ
               </button>
             </div>
