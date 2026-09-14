@@ -328,8 +328,8 @@ function SidebarBody({
       >
         <div className="rounded-xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-primary/20 p-3.5">
           <div className="flex items-center gap-2 mb-1.5">
-            <Crown className="h-4 w-4 text-yellow-400" />
-            <div className="text-[11px] font-bold uppercase tracking-wider text-white/90">
+            <Crown className="h-4 w-4 text-accent" />
+            <div className="text-[11px] font-bold uppercase tracking-wider text-sidebar-foreground/90">
               {currentTenant?.plan ?? "Free"}
             </div>
           </div>
@@ -337,7 +337,7 @@ function SidebarBody({
             Mở khoá AI Follow-up không giới hạn & báo cáo nâng cao.
           </p>
           <button className={[
-            "mt-2.5 w-full rounded-lg bg-white text-sidebar text-[12px] font-semibold hover:bg-white/90 active:scale-[0.98] transition",
+            "mt-2.5 w-full rounded-lg bg-foreground text-background text-[12px] font-semibold hover:bg-foreground/90 active:scale-[0.98] transition",
             isMobile ? "py-2.5" : "py-1.5",
           ].join(" ")}>
             Nâng cấp ngay
