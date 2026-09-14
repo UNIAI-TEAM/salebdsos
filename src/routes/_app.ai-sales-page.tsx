@@ -283,6 +283,90 @@ function AISalesPage() {
               </div>
             ) : (
               <div className="p-1 space-y-4">
+                {selected.is_published && publicUrl ? (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700">
+                      <Globe className="h-3.5 w-3.5" /> Đang xuất bản
+                    </span>
+                    <code className="text-[12px] text-emerald-800 truncate">{publicUrl}</code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(publicUrl);
+                        toast.success("Đã copy đường dẫn");
+                      }}
+                      className="h-7 px-2.5 rounded-md bg-white border border-emerald-200 text-[12px] inline-flex items-center gap-1 hover:bg-emerald-100"
+                    >
+                      <Copy className="h-3 w-3" /> Copy
+                    </button>
+                    <a
+                      href={publicUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="h-7 px-2.5 rounded-md bg-white border border-emerald-200 text-[12px] inline-flex items-center gap-1 hover:bg-emerald-100"
+                    >
+                      <ExternalLink className="h-3 w-3" /> Mở
+                    </a>
+                    <span className="ml-auto text-[12px] text-emerald-700 inline-flex items-center gap-1">
+                      <Eye className="h-3.5 w-3.5" /> {selected.views_count ?? 0} lượt xem
+                    </span>
+                  </div>
+                ) : null}
+
+                {editing ? (
+                  <div className="rounded-2xl border border-border p-4 space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Field label="Tiêu đề nội bộ">
+                        <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className={inputCls} />
+                      </Field>
+                      <Field label="Đường dẫn công khai (/p/...)">
+                        <input value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} className={inputCls} placeholder="uu-dai-thang-9" />
+                      </Field>
+                    </div>
+                    <Field label="Tiêu đề chính">
+                      <input value={draft.headline} onChange={(e) => setDraft({ ...draft, headline: e.target.value })} className={inputCls} />
+                    </Field>
+                    <Field label="Mô tả ngắn">
+                      <textarea value={draft.subheadline} onChange={(e) => setDraft({ ...draft, subheadline: e.target.value })} rows={2} className={inputCls + " py-2"} />
+                    </Field>
+                    <Field label="Điểm nổi bật (mỗi dòng 1 ý)">
+                      <textarea value={draft.benefits} onChange={(e) => setDraft({ ...draft, benefits: e.target.value })} rows={5} className={inputCls + " py-2"} />
+                    </Field>
+                    <Field label="Ưu đãi">
+                      <input value={draft.offer} onChange={(e) => setDraft({ ...draft, offer: e.target.value })} className={inputCls} />
+                    </Field>
+                    <Field label="Chứng thực khách hàng">
+                      <input value={draft.social_proof} onChange={(e) => setDraft({ ...draft, social_proof: e.target.value })} className={inputCls} />
+                    </Field>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Field label="Nút chính">
+                        <input value={draft.cta_primary} onChange={(e) => setDraft({ ...draft, cta_primary: e.target.value })} className={inputCls} />
+                      </Field>
+                      <Field label="Nút phụ">
+                        <input value={draft.cta_secondary} onChange={(e) => setDraft({ ...draft, cta_secondary: e.target.value })} className={inputCls} />
+                      </Field>
+                    </div>
+                    <Field label="Lời mời để lại thông tin">
+                      <input value={draft.form_intro} onChange={(e) => setDraft({ ...draft, form_intro: e.target.value })} className={inputCls} />
+                    </Field>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        disabled={saveMut.isPending}
+                        onClick={() => saveMut.mutate()}
+                        className="h-10 px-4 rounded-xl bg-primary text-primary-foreground text-[13px] font-semibold inline-flex items-center gap-2 disabled:opacity-60"
+                      >
+                        {saveMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        Lưu nội dung
+                      </button>
+                      <button
+                        onClick={() => setEditing(false)}
+                        className="h-10 px-4 rounded-xl border border-border text-[13px] font-medium hover:bg-muted"
+                      >
+                        Huỷ
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="rounded-2xl overflow-hidden border border-border bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-8">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[11px] font-semibold">
                     <Sparkles className="h-3 w-3 text-amber-300" /> AI cá nhân hoá
