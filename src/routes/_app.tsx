@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AppSidebar } from "@/components/app/sidebar";
 import { AppTopbar } from "@/components/app/topbar";
+import { MobileTabBar } from "@/components/app/mobile-tabbar";
 import { useAuth } from "@/hooks/use-auth";
 import { SidebarCollapsedProvider } from "@/hooks/use-sidebar-collapsed";
 import { MobileDrawerProvider } from "@/hooks/use-mobile-drawer";
