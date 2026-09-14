@@ -1764,11 +1764,13 @@ export type Database = {
           prompt: string
           request: string | null
           source_page_id: string | null
+          stage_id: string | null
           tags: string[]
           tenant_id: string
           tone: string | null
           updated_at: string
           use_count: number
+          variables: Json
         }
         Insert: {
           audience?: string | null
@@ -1783,11 +1785,13 @@ export type Database = {
           prompt: string
           request?: string | null
           source_page_id?: string | null
+          stage_id?: string | null
           tags?: string[]
           tenant_id: string
           tone?: string | null
           updated_at?: string
           use_count?: number
+          variables?: Json
         }
         Update: {
           audience?: string | null
@@ -1802,13 +1806,22 @@ export type Database = {
           prompt?: string
           request?: string | null
           source_page_id?: string | null
+          stage_id?: string | null
           tags?: string[]
           tenant_id?: string
           tone?: string | null
           updated_at?: string
           use_count?: number
+          variables?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_prompts_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_prompts_tenant_id_fkey"
             columns: ["tenant_id"]

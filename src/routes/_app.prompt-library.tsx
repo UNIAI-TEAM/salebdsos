@@ -16,7 +16,10 @@ import {
   listSalesPrompts,
   saveSalesPrompt,
   useSalesPrompt,
+  STAGE_VARIABLES,
+  STAGE_VARIABLE_LABEL_VI,
 } from "@/lib/sales-prompt.functions";
+import { getPipeline } from "@/lib/pipeline.functions";
 
 export const Route = createFileRoute("/_app/prompt-library")({
   head: () => ({
@@ -51,6 +54,7 @@ const emptyDraft = {
   tone: "",
   audience: "",
   cta: "",
+  stageId: "",
 };
 
 function PromptLibraryPage() {
@@ -63,18 +67,34 @@ function PromptLibraryPage() {
   const [category, setCategory] = useState<string>("all");
   const [draft, setDraft] = useState<typeof emptyDraft | null>(null);
   const [historyFor, setHistoryFor] = useState<string | null>(null);
+  const [stageFilter, setStageFilter] = useState<string>("all");
 
   const listFn = useServerFn(listSalesPrompts);
   const saveFn = useServerFn(saveSalesPrompt);
   const delFn = useServerFn(deleteSalesPrompt);
   const useFn = useServerFn(useSalesPrompt);
   const usesFn = useServerFn(listSalesPromptUses);
+  const pipelineFn = useServerFn(getPipeline);
+
+  const stagesQ = useQuery({
+    queryKey: ["pipeline-stages-lite", tenantId],
+    queryFn: () => pipelineFn({ data: { tenantId: tenantId! } }),
+    enabled: !!tenantId,
+  });
+  const stages: Row[] = (stagesQ.data as any)?.stages ?? [];
+  const stageName = (id?: string | null) =>
+    stages.find((s) => s.id === id)?.name ?? null;
 
   const listQ = useQuery({
-    queryKey: ["sales-prompts", tenantId, category, search],
+    queryKey: ["sales-prompts", tenantId, category, search, stageFilter],
     queryFn: () =>
       listFn({
-        data: { tenantId: tenantId!, category, search: search.trim() || undefined },
+        data: {
+          tenantId: tenantId!,
+          category,
+          search: search.trim() || undefined,
+          ...(stageFilter !== "all" ? { stageId: stageFilter } : {}),
+        },
       }),
     enabled: !!tenantId,
   });
@@ -102,6 +122,7 @@ function PromptLibraryPage() {
           tone: draft!.tone || undefined,
           audience: draft!.audience || undefined,
           cta: draft!.cta || undefined,
+          stageId: draft!.stageId || null,
         },
       }),
     onSuccess: () => {
@@ -178,6 +199,19 @@ function PromptLibraryPage() {
               className={inputCls + " pl-9"}
             />
           </div>
+          <select
+            value={stageFilter}
+            onChange={(e) => setStageFilter(e.target.value)}
+            className={inputCls}
+          >
+            <option value="all">Tất cả giai đoạn</option>
+            {stages.map((s) => (
+              <option key={s.id} value={s.id}>
+                Giai đoạn: {s.name}
+              </option>
+            ))}
+          </select>
+
           <div className="flex flex-wrap gap-2">
             {["all", ...PROMPT_CATEGORIES].map((c) => (
               <button
@@ -222,6 +256,40 @@ function PromptLibraryPage() {
                   ))}
                 </select>
               </Field>
+            </div>
+            <Field label="Giai đoạn pipeline áp dụng">
+              <select
+                value={draft.stageId}
+                onChange={(e) => setDraft({ ...draft, stageId: e.target.value })}
+                className={inputCls}
+              >
+                <option value="">Không gắn giai đoạn (dùng chung)</option>
+                {stages.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <div className="rounded-xl border border-border p-3">
+              <div className="text-[11.5px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                Biến giai đoạn — bấm để chèn vào prompt
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {STAGE_VARIABLES.map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() =>
+                      setDraft((d) => (d ? { ...d, prompt: `${d.prompt}{{${v}}}` } : d))
+                    }
+                    className="h-7 px-2.5 rounded-md border border-border text-[12px] hover:bg-muted"
+                    title={STAGE_VARIABLE_LABEL_VI[v]}
+                  >
+                    {`{{${v}}}`} · {STAGE_VARIABLE_LABEL_VI[v]}
+                  </button>
+                ))}
+              </div>
             </div>
             <Field label="Thẻ (cách nhau bằng dấu phẩy)">
               <input
@@ -312,6 +380,11 @@ function PromptLibraryPage() {
                       <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary font-medium">
                         {PROMPT_CATEGORY_LABEL_VI[it.category as never] || it.category}
                       </span>
+                      {stageName(it.stage_id) ? (
+                        <span className="px-2 py-0.5 rounded-md bg-muted font-medium">
+                          Giai đoạn: {stageName(it.stage_id)}
+                        </span>
+                      ) : null}
                       <span>Đã dùng {it.use_count} lần</span>
                       {it.last_used_at && (
                         <span>· Gần nhất {new Date(it.last_used_at).toLocaleString("vi-VN")}</span>
@@ -354,6 +427,7 @@ function PromptLibraryPage() {
                           tone: it.tone ?? "",
                           audience: it.audience ?? "",
                           cta: it.cta ?? "",
+                          stageId: it.stage_id ?? "",
                         })
                       }
                     >
