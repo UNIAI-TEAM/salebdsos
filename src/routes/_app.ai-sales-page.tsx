@@ -219,7 +219,25 @@ function AISalesPage() {
         {/* Form */}
         <SectionCard title="Tham số tạo" className="lg:col-span-1">
           <div className="space-y-3 p-1">
+            <Field label="Yêu cầu của khách hàng">
+              <textarea
+                value={request}
+                onChange={(e) => setRequest(e.target.value)}
+                rows={4}
+                className={inputCls + " py-2 h-auto"}
+                placeholder="VD: Anh cần căn 2PN Ocean Park cho gia đình trẻ, ngân sách 3 tỷ, muốn nhấn ưu đãi tháng 9 và mời xem nhà mẫu cuối tuần…"
+              />
+            </Field>
+            <button
+              disabled={!tenantId || request.trim().length < 5 || briefMut.isPending}
+              onClick={() => briefMut.mutate()}
+              className="w-full h-10 rounded-xl border border-border text-[13px] font-semibold inline-flex items-center justify-center gap-2 hover:bg-muted disabled:opacity-60"
+            >
+              {briefMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {briefMut.isPending ? "Đang phân tích..." : "AI phân tích & sinh prompt"}
+            </button>
             <Field label="Lead / khách hàng">
+
               <select
                 value={leadId}
                 onChange={(e) => setLeadId(e.target.value)}
