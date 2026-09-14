@@ -36,12 +36,53 @@ function AISalesPage() {
   const [tone, setTone] = useState<Tone>("professional");
   const [cta, setCta] = useState("");
   const [extra, setExtra] = useState("");
+  const [request, setRequest] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [showPrompt, setShowPrompt] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const listFn = useServerFn(listSalesPages);
   const listLeadsFn = useServerFn(listLeads);
   const generateFn = useServerFn(generateSalesPage);
   const deleteFn = useServerFn(deleteSalesPage);
+  const draftFn = useServerFn(draftSalesBrief);
+  const previewFn = useServerFn(previewSalesPrompt);
+
+  const briefMut = useMutation({
+    mutationFn: () => draftFn({ data: { tenantId: tenantId!, request, leadId: leadId || undefined } }),
+    onSuccess: (r: any) => {
+      setTitle(r.title || "");
+      setAudience(r.audience || "");
+      setTone(r.tone as Tone);
+      setCta(r.cta || "");
+      setExtra(r.extra || "");
+      setPrompt(r.prompt || "");
+      setShowPrompt(true);
+      toast.success("AI đã tạo brief và prompt");
+    },
+    onError: (e: any) => toast.error(e?.message || "Không phân tích được yêu cầu"),
+  });
+
+  const promptMut = useMutation({
+    mutationFn: () =>
+      previewFn({
+        data: {
+          tenantId: tenantId!,
+          leadId: leadId || undefined,
+          title: title || undefined,
+          audience: audience || undefined,
+          tone,
+          cta: cta || undefined,
+          extra: extra || request || undefined,
+        },
+      }),
+    onSuccess: (r: any) => {
+      setPrompt(r.prompt || "");
+      setShowPrompt(true);
+    },
+    onError: (e: any) => toast.error(e?.message || "Không tạo được prompt"),
+  });
+
 
   const historyQ = useQuery({
     queryKey: ["ai-sales-pages", tenantId],
