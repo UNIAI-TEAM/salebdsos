@@ -19,6 +19,8 @@ import {
   generateSeoArticle,
   TONES,
   TONE_LABEL_VI,
+  LENGTHS, LENGTH_LABEL_VI, INTENTS, INTENT_LABEL_VI,
+  type SalesLength, type SalesIntent,
 } from "@/lib/ai-sales-page.functions";
 import { saveSalesPrompt } from "@/lib/sales-prompt.functions";
 import { listLeads } from "@/lib/lead.functions";
@@ -38,6 +40,8 @@ function AISalesPage() {
   const [title, setTitle] = useState("");
   const [audience, setAudience] = useState("");
   const [tone, setTone] = useState<Tone>("professional");
+  const [length, setLength] = useState<SalesLength>("short");
+  const [intent, setIntent] = useState<SalesIntent>("lead_gen");
   const [cta, setCta] = useState("");
   const [extra, setExtra] = useState("");
   const [request, setRequest] = useState("");
@@ -58,6 +62,8 @@ function AISalesPage() {
       setTitle(r.title || "");
       setAudience(r.audience || "");
       setTone(r.tone as Tone);
+      if (r.length) setLength(r.length as SalesLength);
+      if (r.intent) setIntent(r.intent as SalesIntent);
       setCta(r.cta || "");
       setExtra(r.extra || "");
       setPrompt(r.prompt || "");
@@ -76,6 +82,8 @@ function AISalesPage() {
           title: title || undefined,
           audience: audience || undefined,
           tone,
+          length,
+          intent,
           cta: cta || undefined,
           extra: extra || request || undefined,
         },
@@ -152,6 +160,8 @@ function AISalesPage() {
           title: title || undefined,
           audience: audience || undefined,
           tone,
+          length,
+          intent,
           cta: cta || undefined,
           extra: extra || request || undefined,
           promptOverride: prompt.trim() || undefined,
@@ -333,6 +343,20 @@ function AISalesPage() {
                   <option key={t} value={t}>
                     {TONE_LABEL_VI[t]}
                   </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Loại yêu cầu">
+              <select value={intent} onChange={(e) => setIntent(e.target.value as SalesIntent)} className={inputCls}>
+                {INTENTS.map((i) => (
+                  <option key={i} value={i}>{INTENT_LABEL_VI[i]}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Độ dài nội dung">
+              <select value={length} onChange={(e) => setLength(e.target.value as SalesLength)} className={inputCls}>
+                {LENGTHS.map((l) => (
+                  <option key={l} value={l}>{LENGTH_LABEL_VI[l]}</option>
                 ))}
               </select>
             </Field>
