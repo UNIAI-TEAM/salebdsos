@@ -99,7 +99,7 @@ function AISalesPage() {
   });
 
   const genMut = useMutation({
-    mutationFn: () =>
+    mutationFn: (opts?: { autoPublish?: boolean }) =>
       generateFn({
         data: {
           tenantId: tenantId!,
@@ -110,12 +110,21 @@ function AISalesPage() {
           cta: cta || undefined,
           extra: extra || request || undefined,
           promptOverride: prompt.trim() || undefined,
+          autoPublish: opts?.autoPublish ?? false,
         },
       }),
-    onSuccess: (r) => {
-      toast.success("Đã tạo AI Sales Page");
+    onSuccess: (r: any) => {
       setSelectedId(r.page?.id ?? null);
       qc.invalidateQueries({ queryKey: ["ai-sales-pages", tenantId] });
+      if (r?.published && r.page?.slug) {
+        const url = `${window.location.origin}/p/${r.page.slug}`;
+        navigator.clipboard?.writeText(url).catch(() => {});
+        toast.success("Đã tạo & xuất bản landing — đã copy đường dẫn");
+      } else if (r?.publishError) {
+        toast.warning("Đã tạo nội dung nhưng chưa xuất bản được. Hãy thử xuất bản lại.");
+      } else {
+        toast.success("Đã tạo AI Sales Page");
+      }
     },
     onError: (e: any) => toast.error(e?.message || "Không tạo được"),
   });
