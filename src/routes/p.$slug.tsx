@@ -67,6 +67,11 @@ function PublicSalesPage() {
         body: JSON.stringify({
           full_name: fd.get("full_name"),
           phone: fd.get("phone"),
+          email: fd.get("email"),
+          need_type: fd.get("need_type"),
+          budget: fd.get("budget"),
+          timeline: fd.get("timeline"),
+          note: fd.get("note"),
         }),
       });
       const out = (await res.json()) as { ok?: boolean; error?: string };
@@ -187,8 +192,56 @@ function PublicSalesPage() {
                 required
                 name="phone"
                 inputMode="tel"
+                pattern="[0-9+()\s.\-]{8,20}"
                 placeholder="Số điện thoại"
                 className="h-11 w-full rounded-xl border border-border bg-card px-4 text-[14px] outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <input
+                name="email"
+                type="email"
+                placeholder="Email (không bắt buộc)"
+                className="h-11 w-full rounded-xl border border-border bg-card px-4 text-[14px] outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <select
+                  name="need_type"
+                  defaultValue=""
+                  className="h-11 w-full rounded-xl border border-border bg-card px-3 text-[14px] outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  <option value="">Nhu cầu</option>
+                  <option value="Để ở">Để ở</option>
+                  <option value="Đầu tư">Đầu tư</option>
+                  <option value="Cho thuê">Cho thuê</option>
+                </select>
+                <select
+                  name="budget"
+                  defaultValue=""
+                  className="h-11 w-full rounded-xl border border-border bg-card px-3 text-[14px] outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  <option value="">Ngân sách</option>
+                  <option value="Dưới 2 tỷ">Dưới 2 tỷ</option>
+                  <option value="2 - 5 tỷ">2 - 5 tỷ</option>
+                  <option value="5 - 10 tỷ">5 - 10 tỷ</option>
+                  <option value="Trên 10 tỷ">Trên 10 tỷ</option>
+                </select>
+              </div>
+              <select
+                name="timeline"
+                defaultValue=""
+                className="h-11 w-full rounded-xl border border-border bg-card px-3 text-[14px] outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">Thời điểm quan tâm</option>
+                <option value="Ngay lập tức">Ngay lập tức</option>
+                <option value="Trong 1 tháng">Trong 1 tháng</option>
+                <option value="Trong 3 tháng">Trong 3 tháng</option>
+                <option value="Đang tham khảo">Đang tham khảo</option>
+              </select>
+              <textarea
+                name="note"
+                rows={3}
+                maxLength={1000}
+                placeholder="Ghi chú (không bắt buộc)"
+                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-[14px] outline-none focus:ring-2 focus:ring-primary/30"
               />
               {err ? <p className="text-[13px] font-medium text-destructive">{err}</p> : null}
               <button
