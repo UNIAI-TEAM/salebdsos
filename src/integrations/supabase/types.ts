@@ -2130,6 +2130,14 @@ export type Database = {
         Args: { _day?: string }
         Returns: undefined
       }
+      bump_sales_page_conversion: {
+        Args: { _page_id: string; _tenant_id: string }
+        Returns: undefined
+      }
+      bump_sales_page_view: {
+        Args: { _page_id: string; _tenant_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:
