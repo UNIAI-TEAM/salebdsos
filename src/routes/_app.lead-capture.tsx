@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Plus, Search, UserPlus, Users2, Sparkles, Trash2, RefreshCw, X,
+  Link2, Copy, ExternalLink, Code2, Pencil, FileText, Power,
 } from "lucide-react";
 import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,6 +12,11 @@ import {
   listLeads, upsertLead, updateLeadStatus, softDeleteLead, getLeadStats,
   LEAD_STATUSES, type LeadStatus,
 } from "@/lib/lead.functions";
+import {
+  listLeadForms, createLeadForm, updateLeadForm, deleteLeadForm,
+  listFormSubmissions, DEFAULT_FIELDS, FIELD_TYPES,
+  type LeadFormField,
+} from "@/lib/lead-form.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/lead-capture")({ component: LeadCapturePage });
@@ -233,6 +239,10 @@ function LeadCapturePage() {
         )}
       </SectionCard>
 
+      <div className="mt-6">
+        <PublicFormsPanel tenantId={tenantId} />
+      </div>
+
       {openForm && (
         <LeadFormDialog
           onClose={() => setOpenForm(false)}
@@ -353,5 +363,261 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <div className="text-[11.5px] font-semibold text-muted-foreground mb-1">{label}</div>
       {children}
     </label>
+  );
+}
+
+
+// ---------------------------------------------------------------------------
+// Public reusable lead forms
+// ---------------------------------------------------------------------------
+const FIELD_TYPE_LABEL: Record<string, string> = {
+  text: "Văn bản", email: "Email", phone: "Số điện thoại",
+  textarea: "Đoạn văn", select: "Lựa chọn",
+};
+
+function PublicFormsPanel({ tenantId }: { tenantId: string }) {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listLeadForms);
+  const createFn = useServerFn(createLeadForm);
+  const updateFn = useServerFn(updateLeadForm);
+  const deleteFn = useServerFn(deleteLeadForm);
+  const subsFn = useServerFn(listFormSubmissions);
+
+  const [editing, setEditing] = useState<any | null>(null);
+  const [subsOf, setSubsOf] = useState<any | null>(null);
+  const [origin, setOrigin] = useState("");
+  useState(() => 0);
+
+  const formsQ = useQuery({
+    queryKey: ["lead-forms", tenantId],
+    queryFn: () => listFn({ data: { tenantId } }),
+    enabled: !!tenantId,
+  });
+  const subsQ = useQuery({
+    queryKey: ["lead-form-subs", subsOf?.id],
+    queryFn: () => subsFn({ data: { formId: subsOf.id } }),
+    enabled: !!subsOf?.id,
+  });
+
+  if (typeof window !== "undefined" && !origin) setOrigin(window.location.origin);
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["lead-forms", tenantId] });
+
+  const saveM = useMutation({
+    mutationFn: (v: any) =>
+      v.id ? updateFn({ data: v }) : createFn({ data: { ...v, tenantId } }),
+    onSuccess: () => { toast.success("Đã lưu biểu mẫu"); setEditing(null); invalidate(); },
+    onError: (e: any) => toast.error(e?.message ?? "Không lưu được"),
+  });
+  const delM = useMutation({
+    mutationFn: (id: string) => deleteFn({ data: { id } }),
+    onSuccess: () => { toast.success("Đã xoá biểu mẫu"); invalidate(); },
+    onError: (e: any) => toast.error(e?.message ?? "Không xoá được"),
+  });
+  const toggleM = useMutation({
+    mutationFn: (v: { id: string; is_active: boolean }) => updateFn({ data: v }),
+    onSuccess: () => invalidate(),
+  });
+
+  const forms = formsQ.data?.items ?? [];
+
+  return (
+    <SectionCard
+      title="Biểu mẫu công khai"
+      action={
+        <button
+          onClick={() =>
+            setEditing({
+              name: "", slug: "", description: "", fields: DEFAULT_FIELDS,
+              success_message: "", redirect_url: "", is_active: true,
+            })
+          }
+          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-[12.5px] font-semibold hover:bg-primary/90"
+        >
+          <Plus className="h-3.5 w-3.5" /> Tạo biểu mẫu
+        </button>
+      }
+    >
+      {formsQ.isLoading ? (
+        <div className="py-8 text-center text-muted-foreground text-[13px]">Đang tải…</div>
+      ) : forms.length === 0 ? (
+        <div className="py-8 text-center text-muted-foreground text-[13px]">
+          <FileText className="h-5 w-5 mx-auto mb-2 opacity-50" />
+          Chưa có biểu mẫu. Tạo biểu mẫu để nhận lead từ link công khai hoặc nhúng vào website.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {forms.map((f: any) => {
+            const url = `${origin}/f/${f.slug}`;
+            const embed = `<iframe src="${url}" width="100%" height="720" style="border:0"></iframe>`;
+            return (
+              <div key={f.id} className="rounded-xl border border-border p-3">
+                <div className="flex items-start gap-2 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-[13.5px] truncate">{f.name}</div>
+                    <div className="text-[12px] text-muted-foreground truncate">{url}</div>
+                  </div>
+                  <span className={`h-6 px-2 rounded-md text-[11.5px] font-semibold inline-flex items-center ${f.is_active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                    {f.is_active ? "Đang bật" : "Đã tắt"}
+                  </span>
+                  <span className="text-[11.5px] text-muted-foreground">{f.submit_count ?? 0} lượt gửi</span>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <IconBtn onClick={() => { void navigator.clipboard.writeText(url); toast.success("Đã copy link"); }} icon={Copy} label="Copy link" />
+                  <a href={url} target="_blank" rel="noreferrer" className="h-8 px-2.5 rounded-lg border border-border text-[12px] inline-flex items-center gap-1.5 hover:bg-muted">
+                    <ExternalLink className="h-3.5 w-3.5" /> Mở
+                  </a>
+                  <IconBtn onClick={() => { void navigator.clipboard.writeText(embed); toast.success("Đã copy mã nhúng"); }} icon={Code2} label="Mã nhúng" />
+                  <IconBtn onClick={() => setSubsOf(f)} icon={Users2} label="Lượt gửi" />
+                  <IconBtn onClick={() => setEditing({ ...f, fields: (f.fields ?? DEFAULT_FIELDS) as LeadFormField[] })} icon={Pencil} label="Sửa" />
+                  <IconBtn onClick={() => toggleM.mutate({ id: f.id, is_active: !f.is_active })} icon={Power} label={f.is_active ? "Tắt" : "Bật"} />
+                  <button
+                    onClick={() => { if (confirm("Xoá biểu mẫu này?")) delM.mutate(f.id); }}
+                    className="h-8 px-2.5 rounded-lg border border-border text-[12px] inline-flex items-center gap-1.5 text-rose-600 hover:bg-rose-50"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Xoá
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {editing && (
+        <FormBuilderDialog
+          value={editing}
+          onChange={setEditing}
+          onClose={() => setEditing(null)}
+          onSave={() => saveM.mutate(editing)}
+          saving={saveM.isPending}
+        />
+      )}
+
+      {subsOf && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setSubsOf(null)}>
+          <div className="bg-card rounded-2xl border border-border w-full max-w-2xl max-h-[80vh] overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="font-semibold text-[14px]">Lượt gửi · {subsOf.name}</div>
+              <button onClick={() => setSubsOf(null)} className="p-1.5 rounded-md hover:bg-muted"><X className="h-4 w-4" /></button>
+            </div>
+            {subsQ.isLoading ? (
+              <div className="py-8 text-center text-muted-foreground text-[13px]">Đang tải…</div>
+            ) : (subsQ.data?.items ?? []).length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground text-[13px]">Chưa có lượt gửi nào.</div>
+            ) : (
+              <div className="space-y-2">
+                {(subsQ.data?.items ?? []).map((s: any) => (
+                  <div key={s.id} className="rounded-xl border border-border p-3 text-[12.5px]">
+                    <div className="text-muted-foreground text-[11.5px] mb-1">
+                      {new Date(s.created_at).toLocaleString("vi-VN")}
+                    </div>
+                    <pre className="whitespace-pre-wrap break-words text-[12px]">{JSON.stringify(s.payload, null, 2)}</pre>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+function IconBtn({ onClick, icon: Icon, label }: { onClick: () => void; icon: any; label: string }) {
+  return (
+    <button onClick={onClick} className="h-8 px-2.5 rounded-lg border border-border text-[12px] inline-flex items-center gap-1.5 hover:bg-muted">
+      <Icon className="h-3.5 w-3.5" /> {label}
+    </button>
+  );
+}
+
+function FormBuilderDialog({
+  value, onChange, onClose, onSave, saving,
+}: { value: any; onChange: (v: any) => void; onClose: () => void; onSave: () => void; saving: boolean }) {
+  const fields: LeadFormField[] = value.fields ?? [];
+  const setFields = (f: LeadFormField[]) => onChange({ ...value, fields: f });
+  const inputCls = "w-full h-10 px-3 rounded-xl border border-border bg-card text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/30";
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-card rounded-2xl border border-border w-full max-w-xl max-h-[85vh] overflow-y-auto p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <div className="font-semibold text-[14px]">{value.id ? "Sửa biểu mẫu" : "Tạo biểu mẫu"}</div>
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted"><X className="h-4 w-4" /></button>
+        </div>
+
+        <label className="block text-[12px] text-muted-foreground">Tên biểu mẫu</label>
+        <input value={value.name ?? ""} onChange={(e) => onChange({ ...value, name: e.target.value })} className={inputCls} placeholder="Đăng ký nhận bảng giá" />
+
+        <label className="block text-[12px] text-muted-foreground">Đường dẫn công khai (/f/...)</label>
+        <input value={value.slug ?? ""} onChange={(e) => onChange({ ...value, slug: e.target.value })} className={inputCls} placeholder="dang-ky-bang-gia" />
+
+        <label className="block text-[12px] text-muted-foreground">Mô tả ngắn</label>
+        <textarea value={value.description ?? ""} onChange={(e) => onChange({ ...value, description: e.target.value })} rows={2} className={inputCls + " py-2 h-auto"} />
+
+        <div className="border-t border-border pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[12.5px] font-semibold">Các trường thu thập</span>
+            <button
+              onClick={() => setFields([...fields, { key: `field_${fields.length + 1}`, label: "Trường mới", type: "text", required: false } as LeadFormField])}
+              className="h-8 px-2.5 rounded-lg border border-border text-[12px] inline-flex items-center gap-1.5 hover:bg-muted"
+            >
+              <Plus className="h-3.5 w-3.5" /> Thêm trường
+            </button>
+          </div>
+          <div className="space-y-2">
+            {fields.map((f, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <input
+                  value={f.label}
+                  onChange={(e) => setFields(fields.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))}
+                  className="h-9 px-2.5 rounded-lg border border-border bg-card text-[12.5px] flex-1"
+                  placeholder="Nhãn"
+                />
+                <select
+                  value={f.type}
+                  onChange={(e) => setFields(fields.map((x, j) => (j === i ? { ...x, type: e.target.value as any } : x)))}
+                  className="h-9 px-2 rounded-lg border border-border bg-card text-[12.5px]"
+                >
+                  {FIELD_TYPES.map((t) => (<option key={t} value={t}>{FIELD_TYPE_LABEL[t]}</option>))}
+                </select>
+                <label className="text-[12px] inline-flex items-center gap-1 text-muted-foreground">
+                  <input
+                    type="checkbox" checked={!!f.required}
+                    onChange={(e) => setFields(fields.map((x, j) => (j === i ? { ...x, required: e.target.checked } : x)))}
+                  /> Bắt buộc
+                </label>
+                <button onClick={() => setFields(fields.filter((_, j) => j !== i))} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-md">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <label className="block text-[12px] text-muted-foreground">Thông báo sau khi gửi</label>
+        <input value={value.success_message ?? ""} onChange={(e) => onChange({ ...value, success_message: e.target.value })} className={inputCls} placeholder="Cảm ơn bạn, chúng tôi sẽ liên hệ ngay!" />
+
+        <label className="block text-[12px] text-muted-foreground">Chuyển hướng sau khi gửi (tuỳ chọn)</label>
+        <input value={value.redirect_url ?? ""} onChange={(e) => onChange({ ...value, redirect_url: e.target.value })} className={inputCls} placeholder="https://..." />
+
+        <label className="text-[12.5px] inline-flex items-center gap-2">
+          <input type="checkbox" checked={value.is_active !== false} onChange={(e) => onChange({ ...value, is_active: e.target.checked })} />
+          Kích hoạt biểu mẫu
+        </label>
+
+        <div className="flex gap-2 pt-2">
+          <button
+            disabled={saving || !String(value.name ?? "").trim() || fields.length === 0}
+            onClick={onSave}
+            className="h-10 px-4 rounded-xl bg-primary text-primary-foreground text-[13px] font-semibold disabled:opacity-60 inline-flex items-center gap-2"
+          >
+            <Link2 className="h-4 w-4" /> {saving ? "Đang lưu…" : "Lưu biểu mẫu"}
+          </button>
+          <button onClick={onClose} className="h-10 px-4 rounded-xl border border-border text-[13px] font-medium hover:bg-muted">Huỷ</button>
+        </div>
+      </div>
+    </div>
   );
 }
