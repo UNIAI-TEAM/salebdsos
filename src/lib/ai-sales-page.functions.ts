@@ -200,6 +200,17 @@ const slugify = (s: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
 
+export type SalesPageOutput = {
+  headline?: string | null;
+  subheadline?: string | null;
+  benefits?: string[] | null;
+  offer?: string | null;
+  social_proof?: string | null;
+  cta_primary?: string | null;
+  cta_secondary?: string | null;
+  form_intro?: string | null;
+};
+
 const OutputSchema = z.object({
   headline: z.string().max(300).optional().nullable(),
   subheadline: z.string().max(600).optional().nullable(),
@@ -225,13 +236,14 @@ export const updateSalesPage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const patch: Record<string, unknown> = {};
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     if (data.title !== undefined) patch.title = data.title;
     if (data.output !== undefined) patch.output = data.output;
     if (data.slug !== undefined)
       patch.slug = data.slug ? slugify(data.slug) || null : null;
     const { data: row, error } = await context.supabase
       .from("ai_sales_pages")
-      .update(patch)
+      .update(patch as never)
       .eq("id", data.id)
       .select(SELECT)
       .single();
@@ -323,7 +335,7 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       title: row.title,
       cta: row.cta,
       slug: row.slug,
-      output: (row.output ?? {}) as Record<string, unknown>,
+      output: (row.output ?? {}) as SalesPageOutput,
       project,
     };
   });

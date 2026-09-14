@@ -105,7 +105,7 @@ export const updateLeadForm = createServerFn({ method: "POST" })
     if (slug !== undefined) patch.slug = slugifyForm(slug || "") || undefined;
     const { data: row, error } = await context.supabase
       .from("lead_forms")
-      .update(patch)
+      .update(patch as never)
       .eq("id", id)
       .select(SELECT)
       .single();
