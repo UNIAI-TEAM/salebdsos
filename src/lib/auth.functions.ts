@@ -191,3 +191,119 @@ export const removeMember = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ===================== Tạo tài khoản nhân viên thật ===================== */
+
+const STAFF_ROLES = ["admin", "manager", "agent", "viewer"] as const;
+
+async function assertTenantAdmin(supabase: any, userId: string, tenantId: string) {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  const ok = (data ?? []).some((r: any) => r.role === "owner" || r.role === "admin");
+  if (!ok) throw new Error("Bạn không có quyền quản lý thành viên của workspace này");
+}
+
+export const createStaffAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        email: z.string().email().max(254),
+        password: z.string().min(8).max(72),
+        fullName: z.string().trim().min(2).max(120),
+        phone: z.string().trim().max(30).optional(),
+        role: z.enum(STAFF_ROLES),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertTenantAdmin(supabase, userId, data.tenantId);
+
+    const email = data.email.toLowerCase();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Nếu email đã có tài khoản, chỉ gắn quyền vào workspace hiện tại
+    const { data: existing } = await supabaseAdmin
+      .from("profiles")
+      .select("user_id")
+      .eq("email", email)
+      .maybeSingle();
+
+    let newUserId = existing?.user_id as string | undefined;
+    let created = false;
+
+    if (!newUserId) {
+      const { data: createdUser, error: cErr } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: data.password,
+        email_confirm: true,
+        user_metadata: { full_name: data.fullName, phone: data.phone ?? null },
+      });
+      if (cErr || !createdUser?.user) throw new Error(cErr?.message ?? "Không tạo được tài khoản");
+      newUserId = createdUser.user.id;
+      created = true;
+    }
+
+    await supabaseAdmin
+      .from("profiles")
+      .upsert(
+        {
+          user_id: newUserId,
+          email,
+          full_name: data.fullName,
+          phone: data.phone ?? null,
+          default_tenant_id: data.tenantId,
+        } as never,
+        { onConflict: "user_id" },
+      );
+
+    const { data: roleRow, error: rErr } = await supabaseAdmin
+      .from("user_roles")
+      .upsert(
+        { tenant_id: data.tenantId, user_id: newUserId, role: data.role } as never,
+        { onConflict: "user_id,role" },
+      )
+      .select("id")
+      .single();
+    if (rErr) throw new Error(rErr.message);
+
+    return { userId: newUserId, roleRowId: roleRow?.id as string, created, email };
+  });
+
+export const resetStaffPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        targetUserId: z.string().uuid(),
+        password: z.string().min(8).max(72),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertTenantAdmin(supabase, userId, data.tenantId);
+
+    const { data: member, error: mErr } = await supabase
+      .from("user_roles")
+      .select("id")
+      .eq("tenant_id", data.tenantId)
+      .eq("user_id", data.targetUserId)
+      .limit(1);
+    if (mErr) throw new Error(mErr.message);
+    if (!member?.length) throw new Error("Người dùng không thuộc workspace này");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.targetUserId, {
+      password: data.password,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
