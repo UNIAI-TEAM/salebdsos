@@ -147,7 +147,11 @@ function CustomersPage() {
               )}
               {items.map((r) => (
                 <tr key={r.id} className="border-t border-border hover:bg-muted/30">
-                  <td className="px-5 py-3 font-semibold">{r.full_name}</td>
+                  <td className="px-5 py-3 font-semibold">
+                    <Link to="/customers/$id" params={{ id: r.id }} className="hover:text-primary hover:underline">
+                      {r.full_name}
+                    </Link>
+                  </td>
                   <td className="px-3 py-3">{r.phone ?? "—"}</td>
                   <td className="px-3 py-3">{r.email ?? "—"}</td>
                   <td className="px-3 py-3">{r.company ?? "—"}</td>

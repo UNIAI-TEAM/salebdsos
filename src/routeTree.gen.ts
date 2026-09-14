@@ -50,6 +50,7 @@ import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
 import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
 import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
+import { Route as AppCustomersIdRouteImport } from './routes/_app.customers.$id'
 import { Route as AppAiFollowupCustomerIdRouteImport } from './routes/_app.ai-followup.$customerId'
 import { Route as ApiPublicTCodeRouteImport } from './routes/api/public/t.$code'
 import { Route as ApiPublicSalesPagesSlugRouteImport } from './routes/api/public/sales-pages.$slug'
@@ -260,6 +261,11 @@ const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppProjectsRoute,
 } as any)
+const AppCustomersIdRoute = AppCustomersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppCustomersRoute,
+} as any)
 const AppAiFollowupCustomerIdRoute = AppAiFollowupCustomerIdRouteImport.update({
   id: '/$customerId',
   path: '/$customerId',
@@ -302,7 +308,7 @@ export interface FileRoutesByFullPath {
   '/auth-settings': typeof AppAuthSettingsRoute
   '/card-designer': typeof AppCardDesignerRoute
   '/content-library': typeof AppContentLibraryRoute
-  '/customers': typeof AppCustomersRoute
+  '/customers': typeof AppCustomersRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/digital-card': typeof AppDigitalCardRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
@@ -327,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/p/$slug': typeof PSlugRoute
   '/share/$slug': typeof ShareSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
+  '/customers/$id': typeof AppCustomersIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
@@ -349,7 +356,7 @@ export interface FileRoutesByTo {
   '/auth-settings': typeof AppAuthSettingsRoute
   '/card-designer': typeof AppCardDesignerRoute
   '/content-library': typeof AppContentLibraryRoute
-  '/customers': typeof AppCustomersRoute
+  '/customers': typeof AppCustomersRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/digital-card': typeof AppDigitalCardRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
@@ -374,6 +381,7 @@ export interface FileRoutesByTo {
   '/p/$slug': typeof PSlugRoute
   '/share/$slug': typeof ShareSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
+  '/customers/$id': typeof AppCustomersIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
@@ -398,7 +406,7 @@ export interface FileRoutesById {
   '/_app/auth-settings': typeof AppAuthSettingsRoute
   '/_app/card-designer': typeof AppCardDesignerRoute
   '/_app/content-library': typeof AppContentLibraryRoute
-  '/_app/customers': typeof AppCustomersRoute
+  '/_app/customers': typeof AppCustomersRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/digital-card': typeof AppDigitalCardRoute
   '/_app/dynamic-qr': typeof AppDynamicQrRoute
@@ -423,6 +431,7 @@ export interface FileRoutesById {
   '/p/$slug': typeof PSlugRoute
   '/share/$slug': typeof ShareSlugRoute
   '/_app/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
+  '/_app/customers/$id': typeof AppCustomersIdRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
@@ -472,6 +481,7 @@ export interface FileRouteTypes {
     | '/p/$slug'
     | '/share/$slug'
     | '/ai-followup/$customerId'
+    | '/customers/$id'
     | '/projects/$id'
     | '/api/public/lead-forms/$slug'
     | '/api/public/q/$code'
@@ -519,6 +529,7 @@ export interface FileRouteTypes {
     | '/p/$slug'
     | '/share/$slug'
     | '/ai-followup/$customerId'
+    | '/customers/$id'
     | '/projects/$id'
     | '/api/public/lead-forms/$slug'
     | '/api/public/q/$code'
@@ -567,6 +578,7 @@ export interface FileRouteTypes {
     | '/p/$slug'
     | '/share/$slug'
     | '/_app/ai-followup/$customerId'
+    | '/_app/customers/$id'
     | '/_app/projects/$id'
     | '/api/public/lead-forms/$slug'
     | '/api/public/q/$code'
@@ -882,6 +894,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProjectsIdRouteImport
       parentRoute: typeof AppProjectsRoute
     }
+    '/_app/customers/$id': {
+      id: '/_app/customers/$id'
+      path: '/$id'
+      fullPath: '/customers/$id'
+      preLoaderRoute: typeof AppCustomersIdRouteImport
+      parentRoute: typeof AppCustomersRoute
+    }
     '/_app/ai-followup/$customerId': {
       id: '/_app/ai-followup/$customerId'
       path: '/$customerId'
@@ -932,6 +951,18 @@ const AppAiFollowupRouteWithChildren = AppAiFollowupRoute._addFileChildren(
   AppAiFollowupRouteChildren,
 )
 
+interface AppCustomersRouteChildren {
+  AppCustomersIdRoute: typeof AppCustomersIdRoute
+}
+
+const AppCustomersRouteChildren: AppCustomersRouteChildren = {
+  AppCustomersIdRoute: AppCustomersIdRoute,
+}
+
+const AppCustomersRouteWithChildren = AppCustomersRoute._addFileChildren(
+  AppCustomersRouteChildren,
+)
+
 interface AppProjectsRouteChildren {
   AppProjectsIdRoute: typeof AppProjectsIdRoute
 }
@@ -954,7 +985,7 @@ interface AppRouteChildren {
   AppAuthSettingsRoute: typeof AppAuthSettingsRoute
   AppCardDesignerRoute: typeof AppCardDesignerRoute
   AppContentLibraryRoute: typeof AppContentLibraryRoute
-  AppCustomersRoute: typeof AppCustomersRoute
+  AppCustomersRoute: typeof AppCustomersRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppDigitalCardRoute: typeof AppDigitalCardRoute
   AppDynamicQrRoute: typeof AppDynamicQrRoute
@@ -985,7 +1016,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAuthSettingsRoute: AppAuthSettingsRoute,
   AppCardDesignerRoute: AppCardDesignerRoute,
   AppContentLibraryRoute: AppContentLibraryRoute,
-  AppCustomersRoute: AppCustomersRoute,
+  AppCustomersRoute: AppCustomersRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppDigitalCardRoute: AppDigitalCardRoute,
   AppDynamicQrRoute: AppDynamicQrRoute,
