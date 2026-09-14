@@ -77,6 +77,19 @@ export const listMembers = createServerFn({ method: "GET" })
       .select("id, email, role, status, expires_at, created_at, token")
       .eq("tenant_id", data.tenantId)
       .order("created_at", { ascending: false });
+
+    // Trạng thái xác nhận email của từng thành viên
+    const confirmed = new Map<string, string | null>();
+    if (userIds.length) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await Promise.all(
+        userIds.map(async (uid) => {
+          const { data: u } = await supabaseAdmin.auth.admin.getUserById(uid);
+          confirmed.set(uid, u?.user?.email_confirmed_at ?? null);
+        }),
+      );
+    }
+
     return {
       members: (roles ?? []).map((r) => {
         const p = profiles.find((x) => x.user_id === r.user_id);
@@ -88,6 +101,7 @@ export const listMembers = createServerFn({ method: "GET" })
           fullName: p?.full_name ?? null,
           avatarUrl: p?.avatar_url ?? null,
           joinedAt: r.created_at as string,
+          emailConfirmedAt: confirmed.get(r.user_id) ?? null,
         };
       }),
       invitations: invites ?? [],
