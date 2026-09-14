@@ -22,8 +22,8 @@ const ROLE_OPTIONS: { value: Role; label: string }[] = [
 ];
 
 function MembersPage() {
-  const { currentTenant, hasRole, user } = useAuth();
-  const canManage = hasRole(["owner", "admin"]);
+  const { currentTenant, canManageMembers, currentRole, user } = useAuth();
+  const canManage = canManageMembers;
   const tenantId = currentTenant?.id;
 
   const fetchMembers = useServerFn(listMembers);
@@ -33,6 +33,7 @@ function MembersPage() {
   const remove = useServerFn(removeMember);
   const createStaff = useServerFn(createStaffAccount);
   const resetPass = useServerFn(resetStaffPassword);
+  const resendVerify = useServerFn(resendStaffVerification);
 
   const qc = useQueryClient();
   const q = useQuery({
