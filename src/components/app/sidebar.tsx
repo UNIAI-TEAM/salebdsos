@@ -264,9 +264,9 @@ function SidebarBody({
                           : "justify-center p-2.5",
                         active
                           ? (iconOnly
-                              ? "bg-sidebar-accent text-white ring-1 ring-primary/50 shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_6px_18px_-6px_hsl(var(--primary)/0.55)]"
-                              : "bg-sidebar-accent text-white")
-                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 active:bg-sidebar-accent/70 hover:text-white",
+                              ? "bg-sidebar-accent text-sidebar-foreground ring-1 ring-primary/50 shadow-[0_0_0_1px_oklch(0.62_0.18_285/0.25),0_6px_18px_-6px_oklch(0.62_0.18_285/0.55)]"
+                              : "bg-sidebar-accent text-sidebar-foreground")
+                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 active:bg-sidebar-accent/70 hover:text-sidebar-foreground",
                       ].join(" ")}
                     >
                       {/* Active indicator bar — visible in both expanded and icon-only modes */}
