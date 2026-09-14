@@ -1705,6 +1705,45 @@ export type Database = {
           },
         ]
       }
+      sales_page_views: {
+        Row: {
+          conversions: number
+          day: string
+          page_id: string
+          tenant_id: string
+          views: number
+        }
+        Insert: {
+          conversions?: number
+          day?: string
+          page_id: string
+          tenant_id: string
+          views?: number
+        }
+        Update: {
+          conversions?: number
+          day?: string
+          page_id?: string
+          tenant_id?: string
+          views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_page_views_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "ai_sales_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_page_views_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_prompt_uses: {
         Row: {
           id: number
