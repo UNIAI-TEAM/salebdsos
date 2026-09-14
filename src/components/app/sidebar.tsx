@@ -130,13 +130,13 @@ function SidebarBody({
           className="flex items-center gap-2.5 min-w-0"
         >
           <div className="h-9 w-9 rounded-xl bg-brand-gradient grid place-items-center shadow-glow shrink-0">
-            <Radio className="h-4.5 w-4.5 text-white" strokeWidth={2.5} />
+            <Radio className="h-4.5 w-4.5 text-primary-foreground" strokeWidth={2.5} />
           </div>
           <div className={[
             "leading-tight min-w-0 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
             showLabels ? "opacity-100 max-w-[180px] translate-x-0" : "opacity-0 max-w-0 -translate-x-2",
           ].join(" ")}>
-            <div className="text-[15px] font-bold text-white truncate">SaleBDS OS</div>
+            <div className="text-[15px] font-bold text-sidebar-foreground truncate">SaleBDS OS</div>
             <div className="text-[11px] text-sidebar-foreground/60 truncate">Điều hành kinh doanh bằng điểm chạm</div>
           </div>
         </Link>
