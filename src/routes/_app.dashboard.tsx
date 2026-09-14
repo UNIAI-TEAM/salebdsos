@@ -354,12 +354,12 @@ function Dashboard() {
                 ) : (
                   <ResponsiveContainer>
                     <BarChart data={daily.slice(-14).map((d: any) => ({ day: d.day.slice(5), nfc: d.nfc ?? 0, qr: d.qr ?? 0 }))} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
-                      <CartesianGrid stroke="oklch(0.93 0.008 265)" vertical={false} />
-                      <XAxis dataKey="day" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid oklch(0.93 0.008 265)" }} />
+                      <CartesianGrid stroke="oklch(0.25 0.02 265)" vertical={false} />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: "oklch(0.65 0.02 265)" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: "oklch(0.65 0.02 265)" }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid oklch(0.25 0.02 265)", background: "oklch(0.14 0.025 265)" }} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
-                      <Bar dataKey="nfc" fill="oklch(0.59 0.22 285)" radius={[4, 4, 0, 0]} name="NFC" />
+                      <Bar dataKey="nfc" fill="oklch(0.62 0.18 285)" radius={[4, 4, 0, 0]} name="NFC" />
                       <Bar dataKey="qr" fill="oklch(0.65 0.16 240)" radius={[4, 4, 0, 0]} name="QR" />
                     </BarChart>
                   </ResponsiveContainer>
