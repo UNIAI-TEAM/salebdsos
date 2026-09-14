@@ -67,6 +67,11 @@ function PublicSalesPage() {
         body: JSON.stringify({
           full_name: fd.get("full_name"),
           phone: fd.get("phone"),
+          email: fd.get("email"),
+          need_type: fd.get("need_type"),
+          budget: fd.get("budget"),
+          timeline: fd.get("timeline"),
+          note: fd.get("note"),
         }),
       });
       const out = (await res.json()) as { ok?: boolean; error?: string };
