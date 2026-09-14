@@ -199,6 +199,19 @@ function PromptLibraryPage() {
               className={inputCls + " pl-9"}
             />
           </div>
+          <select
+            value={stageFilter}
+            onChange={(e) => setStageFilter(e.target.value)}
+            className={inputCls}
+          >
+            <option value="all">Tất cả giai đoạn</option>
+            {stages.map((s) => (
+              <option key={s.id} value={s.id}>
+                Giai đoạn: {s.name}
+              </option>
+            ))}
+          </select>
+
           <div className="flex flex-wrap gap-2">
             {["all", ...PROMPT_CATEGORIES].map((c) => (
               <button
