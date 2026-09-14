@@ -1705,6 +1705,119 @@ export type Database = {
           },
         ]
       }
+      sales_prompt_uses: {
+        Row: {
+          id: number
+          note: string | null
+          page_id: string | null
+          prompt_id: string
+          tenant_id: string
+          used_at: string
+          used_by: string | null
+        }
+        Insert: {
+          id?: number
+          note?: string | null
+          page_id?: string | null
+          prompt_id: string
+          tenant_id: string
+          used_at?: string
+          used_by?: string | null
+        }
+        Update: {
+          id?: number
+          note?: string | null
+          page_id?: string | null
+          prompt_id?: string
+          tenant_id?: string
+          used_at?: string
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_prompt_uses_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "sales_prompts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_prompt_uses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_prompts: {
+        Row: {
+          audience: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          cta: string | null
+          deleted_at: string | null
+          id: string
+          last_used_at: string | null
+          name: string
+          prompt: string
+          request: string | null
+          source_page_id: string | null
+          tags: string[]
+          tenant_id: string
+          tone: string | null
+          updated_at: string
+          use_count: number
+        }
+        Insert: {
+          audience?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          cta?: string | null
+          deleted_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          name: string
+          prompt: string
+          request?: string | null
+          source_page_id?: string | null
+          tags?: string[]
+          tenant_id: string
+          tone?: string | null
+          updated_at?: string
+          use_count?: number
+        }
+        Update: {
+          audience?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          cta?: string | null
+          deleted_at?: string | null
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          prompt?: string
+          request?: string | null
+          source_page_id?: string | null
+          tags?: string[]
+          tenant_id?: string
+          tone?: string | null
+          updated_at?: string
+          use_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_prompts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       settings: {
         Row: {
           created_at: string
