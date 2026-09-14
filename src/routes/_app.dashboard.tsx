@@ -480,7 +480,7 @@ function Dashboard() {
                   </button>
                 ))}
               </div>
-              <button className="mt-3 w-full rounded-xl bg-white/95 text-slate-900 text-[12px] font-semibold py-2 hover:bg-white">
+              <button className="mt-3 w-full rounded-xl bg-foreground text-background text-[12px] font-semibold py-2 hover:bg-foreground/90">
                 Lưu liên hệ
               </button>
             </div>
