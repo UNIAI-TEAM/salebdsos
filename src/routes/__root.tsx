@@ -106,11 +106,19 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ServiceWorkerRegistrar() {
+  React.useEffect(() => {
+    void import("@/lib/pwa").then((m) => m.setupServiceWorker());
+  }, []);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <ServiceWorkerRegistrar />
         <Outlet />
       </AuthProvider>
     </QueryClientProvider>
