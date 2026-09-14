@@ -109,8 +109,6 @@ function AISalesPage() {
           request: request || undefined,
           prompt: prompt.trim(),
           tone,
-          length,
-          intent,
           audience: audience || undefined,
           cta: cta || undefined,
         },
