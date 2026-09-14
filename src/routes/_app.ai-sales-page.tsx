@@ -317,7 +317,23 @@ function AISalesPage() {
                       {showPrompt ? "Ẩn" : "Xem"}
                     </button>
                   ) : null}
+                  {prompt ? (
+                    <button
+                      disabled={savePromptMut.isPending}
+                      onClick={() => savePromptMut.mutate()}
+                      title="Lưu prompt vào thư viện để tái sử dụng"
+                      className="h-7 px-2.5 rounded-md border border-border text-[12px] inline-flex items-center gap-1 hover:bg-muted disabled:opacity-60"
+                    >
+                      {savePromptMut.isPending ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <BookMarked className="h-3 w-3" />
+                      )}
+                      Lưu vào thư viện
+                    </button>
+                  ) : null}
                 </div>
+
               </div>
               {prompt && showPrompt ? (
                 <textarea
