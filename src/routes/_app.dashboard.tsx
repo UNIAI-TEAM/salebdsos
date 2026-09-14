@@ -186,10 +186,10 @@ function Dashboard() {
                           <stop offset="100%" stopColor="oklch(0.59 0.22 285)" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid stroke="oklch(0.93 0.008 265)" vertical={false} />
-                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: "oklch(0.52 0.02 265)" }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 10, fill: "oklch(0.52 0.02 265)" }} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.93 0.008 265)", fontSize: 12 }} />
+                      <CartesianGrid stroke="oklch(0.25 0.02 265)" vertical={false} />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: "oklch(0.65 0.02 265)" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: "oklch(0.65 0.02 265)" }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.25 0.02 265)", fontSize: 12, background: "oklch(0.14 0.025 265)" }} />
                       <Area dataKey="taps" stroke="oklch(0.59 0.22 285)" strokeWidth={2.2} fill="url(#g1)" name="Lượt chạm" />
                     </AreaChart>
                   </ResponsiveContainer>
