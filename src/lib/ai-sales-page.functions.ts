@@ -291,26 +291,29 @@ export const generateSalesPage = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    if (!data.autoPublish) return { ok: true, page: row, published: false };
-
-    // Xuất bản ngay: sinh slug (thử tối đa 5 lần nếu trùng)
+    // Luôn gán slug cố định ngay khi lưu (link không đổi về sau).
     const base =
       slugify(data.slug || row.title || output?.headline || "trang-ban-hang") || "trang-ban-hang";
-    let published = row;
+    let saved = row;
     let lastErr = "";
     for (let i = 0; i < 5; i++) {
       const slug = i === 0 ? `${base}-${row.id.slice(0, 6)}` : `${base}-${row.id.slice(0, 6)}-${i}`;
       const { data: p, error: pErr } = await supabase
         .from("ai_sales_pages")
-        .update({ slug, is_published: true, status: "published" })
+        .update({
+          slug,
+          is_published: data.autoPublish,
+          status: data.autoPublish ? "published" : "generated",
+        })
         .eq("id", row.id)
         .select(SELECT)
         .single();
-      if (!pErr && p) return { ok: true, page: p, published: true };
+      if (!pErr && p) return { ok: true, page: p, published: data.autoPublish };
       lastErr = pErr?.message ?? "";
       if (!/duplicate|unique/i.test(lastErr)) break;
     }
-    return { ok: true, page: published, published: false, publishError: lastErr };
+    return { ok: true, page: saved, published: false, publishError: lastErr };
+
   });
 
 // ---------------------------------------------------------------------------
