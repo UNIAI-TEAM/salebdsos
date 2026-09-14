@@ -342,7 +342,7 @@ function Dashboard() {
                   <div key={m.l}>
                     <div className="text-[10.5px] text-muted-foreground">{m.l}</div>
                     <div className="text-[14px] font-bold leading-tight">{m.v}</div>
-                    <div className={["text-[10.5px] font-semibold", m.d >= 0 ? "text-emerald-600" : "text-rose-600"].join(" ")}>
+                    <div className={["text-[10.5px] font-semibold", m.d >= 0 ? "text-success" : "text-destructive"].join(" ")}>
                       {m.d >= 0 ? "↑" : "↓"} {Math.abs(m.d)}%
                     </div>
                   </div>
