@@ -155,6 +155,7 @@ export type Database = {
           customer_id: string | null
           deleted_at: string | null
           id: string
+          industry: string | null
           is_published: boolean
           lead_id: string | null
           model: string | null
@@ -178,6 +179,7 @@ export type Database = {
           customer_id?: string | null
           deleted_at?: string | null
           id?: string
+          industry?: string | null
           is_published?: boolean
           lead_id?: string | null
           model?: string | null
@@ -201,6 +203,7 @@ export type Database = {
           customer_id?: string | null
           deleted_at?: string | null
           id?: string
+          industry?: string | null
           is_published?: boolean
           lead_id?: string | null
           model?: string | null
@@ -1798,6 +1801,7 @@ export type Database = {
           cta: string | null
           deleted_at: string | null
           id: string
+          industry: string | null
           last_used_at: string | null
           name: string
           prompt: string
@@ -1819,6 +1823,7 @@ export type Database = {
           cta?: string | null
           deleted_at?: string | null
           id?: string
+          industry?: string | null
           last_used_at?: string | null
           name: string
           prompt: string
@@ -1840,6 +1845,7 @@ export type Database = {
           cta?: string | null
           deleted_at?: string | null
           id?: string
+          industry?: string | null
           last_used_at?: string | null
           name?: string
           prompt?: string

@@ -40,6 +40,7 @@ import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
 import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppCustomersRouteImport } from './routes/_app.customers'
+import { Route as AppContentLibraryRouteImport } from './routes/_app.content-library'
 import { Route as AppAuthSettingsRouteImport } from './routes/_app.auth-settings'
 import { Route as AppAppointmentsRouteImport } from './routes/_app.appointments'
 import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
@@ -208,6 +209,11 @@ const AppCustomersRoute = AppCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AppRoute,
 } as any)
+const AppContentLibraryRoute = AppContentLibraryRouteImport.update({
+  id: '/content-library',
+  path: '/content-library',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAuthSettingsRoute = AppAuthSettingsRouteImport.update({
   id: '/auth-settings',
   path: '/auth-settings',
@@ -288,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AppAnalyticsRoute
   '/appointments': typeof AppAppointmentsRoute
   '/auth-settings': typeof AppAuthSettingsRoute
+  '/content-library': typeof AppContentLibraryRoute
   '/customers': typeof AppCustomersRoute
   '/dashboard': typeof AppDashboardRoute
   '/digital-card': typeof AppDigitalCardRoute
@@ -333,6 +340,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AppAnalyticsRoute
   '/appointments': typeof AppAppointmentsRoute
   '/auth-settings': typeof AppAuthSettingsRoute
+  '/content-library': typeof AppContentLibraryRoute
   '/customers': typeof AppCustomersRoute
   '/dashboard': typeof AppDashboardRoute
   '/digital-card': typeof AppDigitalCardRoute
@@ -380,6 +388,7 @@ export interface FileRoutesById {
   '/_app/analytics': typeof AppAnalyticsRoute
   '/_app/appointments': typeof AppAppointmentsRoute
   '/_app/auth-settings': typeof AppAuthSettingsRoute
+  '/_app/content-library': typeof AppContentLibraryRoute
   '/_app/customers': typeof AppCustomersRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/digital-card': typeof AppDigitalCardRoute
@@ -427,6 +436,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/appointments'
     | '/auth-settings'
+    | '/content-library'
     | '/customers'
     | '/dashboard'
     | '/digital-card'
@@ -472,6 +482,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/appointments'
     | '/auth-settings'
+    | '/content-library'
     | '/customers'
     | '/dashboard'
     | '/digital-card'
@@ -518,6 +529,7 @@ export interface FileRouteTypes {
     | '/_app/analytics'
     | '/_app/appointments'
     | '/_app/auth-settings'
+    | '/_app/content-library'
     | '/_app/customers'
     | '/_app/dashboard'
     | '/_app/digital-card'
@@ -788,6 +800,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCustomersRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/content-library': {
+      id: '/_app/content-library'
+      path: '/content-library'
+      fullPath: '/content-library'
+      preLoaderRoute: typeof AppContentLibraryRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/auth-settings': {
       id: '/_app/auth-settings'
       path: '/auth-settings'
@@ -914,6 +933,7 @@ interface AppRouteChildren {
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppAppointmentsRoute: typeof AppAppointmentsRoute
   AppAuthSettingsRoute: typeof AppAuthSettingsRoute
+  AppContentLibraryRoute: typeof AppContentLibraryRoute
   AppCustomersRoute: typeof AppCustomersRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDigitalCardRoute: typeof AppDigitalCardRoute
@@ -943,6 +963,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppAppointmentsRoute: AppAppointmentsRoute,
   AppAuthSettingsRoute: AppAuthSettingsRoute,
+  AppContentLibraryRoute: AppContentLibraryRoute,
   AppCustomersRoute: AppCustomersRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDigitalCardRoute: AppDigitalCardRoute,

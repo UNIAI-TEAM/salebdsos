@@ -23,7 +23,7 @@ export const PROMPT_CATEGORY_LABEL_VI: Record<(typeof PROMPT_CATEGORIES)[number]
 };
 
 const SELECT =
-  "id,tenant_id,name,category,tags,request,prompt,tone,audience,cta,source_page_id,stage_id,variables,use_count,last_used_at,created_by,created_at,updated_at";
+  "id,tenant_id,name,category,industry,tags,request,prompt,tone,audience,cta,source_page_id,stage_id,variables,use_count,last_used_at,created_by,created_at,updated_at";
 
 export const listSalesPrompts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -33,6 +33,7 @@ export const listSalesPrompts = createServerFn({ method: "GET" })
         tenantId: z.string().uuid(),
         search: z.string().trim().max(200).optional(),
         category: z.string().trim().max(50).optional(),
+        industry: z.string().trim().max(50).optional(),
         stageId: z.string().uuid().optional(),
       })
       .parse(d),
@@ -46,6 +47,7 @@ export const listSalesPrompts = createServerFn({ method: "GET" })
       .order("updated_at", { ascending: false })
       .limit(200);
     if (data.category && data.category !== "all") q = q.eq("category", data.category);
+    if (data.industry && data.industry !== "all") q = q.eq("industry", data.industry);
     if (data.stageId) q = q.eq("stage_id", data.stageId);
     if (data.search) q = q.or(`name.ilike.%${data.search}%,prompt.ilike.%${data.search}%`);
     const { data: items, error } = await q;
@@ -58,6 +60,7 @@ const SaveSchema = z.object({
   tenantId: z.string().uuid(),
   name: z.string().trim().min(1).max(200),
   category: z.string().trim().max(50).default("general"),
+  industry: z.string().trim().max(50).nullable().optional(),
   tags: z.array(z.string().trim().max(40)).max(12).default([]),
   request: z.string().trim().max(4000).optional(),
   prompt: z.string().trim().min(10).max(20000),
@@ -78,6 +81,7 @@ export const saveSalesPrompt = createServerFn({ method: "POST" })
       tenant_id: data.tenantId,
       name: data.name,
       category: data.category || "general",
+      industry: data.industry ?? null,
       tags: data.tags,
       request: data.request ?? null,
       prompt: data.prompt,
