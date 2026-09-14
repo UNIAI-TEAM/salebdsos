@@ -7,6 +7,41 @@ const SELECT =
   "id,tenant_id,owner_user_id,lead_id,customer_id,project_id,title,audience,tone,cta,prompt,output,model,tokens,status,slug,is_published,views_count,created_at,updated_at";
 
 export const TONES = ["professional", "friendly", "luxury", "urgent"] as const;
+
+/** Độ dài nội dung landing: ngắn gọn → đầy đủ. */
+export const LENGTHS = ["short", "medium", "long"] as const;
+export type SalesLength = (typeof LENGTHS)[number];
+export const LENGTH_LABEL_VI: Record<SalesLength, string> = {
+  short: "Ngắn gọn (~120 từ)",
+  medium: "Vừa phải (~220 từ)",
+  long: "Đầy đủ (~350 từ)",
+};
+/** Ngân sách từ cho từng phần theo độ dài. */
+export const LENGTH_SPEC: Record<SalesLength, {
+  total: number; benefits: string; benefitWords: number; sub: number; headline: number; seoWords: string; sections: string;
+}> = {
+  short:  { total: 120, benefits: "3",   benefitWords: 12, sub: 18, headline: 10, seoWords: "450-600",  sections: "3-4" },
+  medium: { total: 220, benefits: "4",   benefitWords: 18, sub: 25, headline: 12, seoWords: "700-900",  sections: "4-5" },
+  long:   { total: 350, benefits: "5",   benefitWords: 24, sub: 32, headline: 14, seoWords: "1000-1300", sections: "5-7" },
+};
+
+/** Phân loại yêu cầu của khách hàng để chọn cấu trúc nội dung phù hợp. */
+export const INTENTS = ["lead_gen", "project_intro", "promo", "event", "nurture"] as const;
+export type SalesIntent = (typeof INTENTS)[number];
+export const INTENT_LABEL_VI: Record<SalesIntent, string> = {
+  lead_gen: "Thu thập khách tiềm năng",
+  project_intro: "Giới thiệu dự án",
+  promo: "Ưu đãi / khuyến mãi",
+  event: "Mời sự kiện / mở bán",
+  nurture: "Nuôi dưỡng & chốt lại",
+};
+const INTENT_FOCUS_VI: Record<SalesIntent, string> = {
+  lead_gen: "Ưu tiên form để lại thông tin, giảm rào cản, nêu lợi ích khi đăng ký.",
+  project_intro: "Ưu tiên vị trí, tiện ích, pháp lý và tiềm năng tăng giá.",
+  promo: "Ưu tiên giá trị ưu đãi, thời hạn và điều kiện áp dụng.",
+  event: "Ưu tiên thời gian, địa điểm, quyền lợi khi tham dự và cách đăng ký.",
+  nurture: "Ưu tiên xử lý băn khoăn còn lại và lý do nên quyết định ngay.",
+};
 export const TONE_LABEL_VI: Record<(typeof TONES)[number], string> = {
   professional: "Chuyên nghiệp",
   friendly: "Thân thiện",
@@ -70,6 +105,8 @@ const GenerateSchema = z.object({
   title: z.string().trim().max(200).optional(),
   audience: z.string().trim().max(400).optional(),
   tone: z.enum(TONES).default("professional"),
+  length: z.enum(LENGTHS).optional().default("short"),
+  intent: z.enum(INTENTS).optional().default("lead_gen"),
   cta: z.string().trim().max(200).optional(),
   extra: z.string().trim().max(2000).optional(),
   /** Prompt do người dùng xem trước / chỉnh sửa. Nếu có sẽ dùng thay prompt tự sinh. */
@@ -148,25 +185,41 @@ async function hydrateContext(
 
 function buildPrompt(
   ctx: Ctx,
-  data: { tone: (typeof TONES)[number]; audience?: string; cta?: string; extra?: string },
+  data: {
+    tone: (typeof TONES)[number]; audience?: string; cta?: string; extra?: string;
+    length?: SalesLength; intent?: SalesIntent;
+  },
 ) {
   const toneLabel = TONE_LABEL_VI[data.tone];
+  const len: SalesLength = data.length ?? "short";
+  const intent: SalesIntent = data.intent ?? "lead_gen";
+  const spec = LENGTH_SPEC[len];
   return `Bạn là copywriter bất động sản. Viết nội dung LANDING PAGE bán hàng cá nhân hoá bằng tiếng Việt, giọng ${toneLabel}.
+Loại yêu cầu: ${INTENT_LABEL_VI[intent]}. ${INTENT_FOCUS_VI[intent]}
 ${ctx.leadCtx}
 ${ctx.projectCtx}
 ${data.audience ? `Đối tượng: ${data.audience}.` : ""}
 ${data.cta ? `CTA mong muốn: ${data.cta}.` : ""}
 ${data.extra ? `Yêu cầu thêm: ${data.extra}.` : ""}
 
+QUY TẮC ĐỘ DÀI (bắt buộc tuân thủ, viết súc tích, không lan man, không lặp ý):
+- Tổng toàn bộ nội dung tối đa ${spec.total} từ.
+- headline: tối đa ${spec.headline} từ; subheadline: tối đa ${spec.sub} từ.
+- benefits: đúng ${spec.benefits} mục, mỗi mục tối đa ${spec.benefitWords} từ.
+- offer, social_proof, form_intro: mỗi phần 1 câu ngắn.
+- Không viết lời mở đầu sáo rỗng, không nhắc lại yêu cầu, không dùng emoji.
+
+CHUẨN SEO:
+- seo_title: 50-60 ký tự, có từ khoá chính (khu vực/dự án).
+- seo_description: 140-155 ký tự, có CTA.
+- keywords: 5-8 từ khoá tiếng Việt sát nhu cầu tìm kiếm, không nhồi nhét.
+
 Trả về JSON với các trường:
-- headline: tiêu đề chính, ngắn gọn có cảm xúc
-- subheadline: 1 câu mô tả
-- benefits: mảng 3-5 lợi ích (mỗi cái 1 câu)
-- offer: chuỗi mô tả ưu đãi giới hạn
-- social_proof: 1 câu chứng thực xã hội
-- cta_primary: nút CTA chính
-- cta_secondary: nút CTA phụ
-- form_intro: 1 câu mời để lại thông tin
+- headline, subheadline
+- benefits: mảng chuỗi
+- offer, social_proof, cta_primary, cta_secondary, form_intro
+- seo_title, seo_description
+- keywords: mảng chuỗi
 Chỉ trả về JSON hợp lệ, không kèm chú thích.`;
 }
 
@@ -200,7 +253,7 @@ export const draftSalesBrief = createServerFn({ method: "POST" })
           },
           {
             role: "user",
-            content: `Yêu cầu của khách hàng:\n"""${data.request}"""\n${ctx.leadCtx}\n${ctx.projectCtx}\n\nTrả JSON: {"title": string, "audience": string, "tone": "professional"|"friendly"|"luxury"|"urgent", "cta": string, "extra": string}. "extra" tóm tắt các yêu cầu đặc thù (ưu đãi, điểm nhấn, ràng buộc) bằng tiếng Việt.`,
+            content: `Yêu cầu của khách hàng:\n"""${data.request}"""\n${ctx.leadCtx}\n${ctx.projectCtx}\n\nTrả JSON: {"title": string, "audience": string, "tone": "professional"|"friendly"|"luxury"|"urgent", "intent": "lead_gen"|"project_intro"|"promo"|"event"|"nurture", "length": "short"|"medium"|"long", "cta": string, "extra": string}. "intent" là phân loại yêu cầu, "length" chọn "short" nếu yêu cầu đơn giản/ưu đãi ngắn, "long" chỉ khi khách yêu cầu chi tiết đầy đủ. "extra" tóm tắt các yêu cầu đặc thù (ưu đãi, điểm nhấn, ràng buộc) bằng tiếng Việt.`,
           },
         ],
         response_format: { type: "json_object" },
@@ -217,10 +270,18 @@ export const draftSalesBrief = createServerFn({ method: "POST" })
     const tone = (TONES as readonly string[]).includes(brief.tone)
       ? (brief.tone as (typeof TONES)[number])
       : "professional";
+    const intent: SalesIntent = (INTENTS as readonly string[]).includes(brief.intent)
+      ? (brief.intent as SalesIntent)
+      : "lead_gen";
+    const length: SalesLength = (LENGTHS as readonly string[]).includes(brief.length)
+      ? (brief.length as SalesLength)
+      : "short";
     const draft = {
       title: typeof brief.title === "string" ? brief.title.slice(0, 200) : "",
       audience: typeof brief.audience === "string" ? brief.audience.slice(0, 400) : "",
       tone,
+      intent,
+      length,
       cta: typeof brief.cta === "string" ? brief.cta.slice(0, 200) : "",
       extra: typeof brief.extra === "string" ? brief.extra.slice(0, 2000) : data.request.slice(0, 2000),
     };
@@ -525,7 +586,7 @@ export const generateSeoArticle = createServerFn({ method: "POST" })
           },
           {
             role: "user",
-            content: `Dựa trên brief bán hàng sau, viết một BÀI VIẾT SEO (800-1200 từ) để thu hút khách hàng và dẫn về landing page.
+            content: `Dựa trên brief bán hàng sau, viết một BÀI VIẾT SEO súc tích, không lan man để thu hút khách hàng và dẫn về landing page.
 
 BRIEF/PROMPT:
 """${page.prompt || ""}"""
