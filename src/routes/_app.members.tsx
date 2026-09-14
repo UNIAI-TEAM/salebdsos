@@ -190,6 +190,19 @@ function MembersPage() {
             >
               {createStaffMu.isPending ? "Đang tạo..." : "Tạo tài khoản"}
             </button>
+            <label className="sm:col-span-2 lg:col-span-3 flex items-start gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={staff.requireEmailVerification}
+                onChange={(e) => setStaff({ ...staff, requireEmailVerification: e.target.checked })}
+                className="mt-0.5 h-4 w-4 rounded border-border"
+              />
+              <span>
+                Yêu cầu xác nhận email trước khi đăng nhập — hệ thống gửi email xác nhận tới nhân viên.
+                Bỏ chọn nếu muốn tài khoản dùng được ngay.
+                {" "}Quyền của vai trò đang chọn: <b>{permissionLabel(staff.role)}</b>
+              </span>
+            </label>
           </form>
         </div>
       )}
