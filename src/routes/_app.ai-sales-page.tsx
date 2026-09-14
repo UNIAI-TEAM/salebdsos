@@ -161,10 +161,14 @@ function AISalesPage() {
     onSuccess: (r: any) => {
       setSelectedId(r.page?.id ?? null);
       qc.invalidateQueries({ queryKey: ["ai-sales-pages", tenantId] });
-      if (r?.published && r.page?.slug) {
+      if (r.page?.slug) {
         const url = `${window.location.origin}/p/${r.page.slug}`;
         navigator.clipboard?.writeText(url).catch(() => {});
-        toast.success("Đã tạo & xuất bản landing — đã copy đường dẫn");
+        toast.success(
+          r?.published
+            ? "Đã tạo & xuất bản landing — đã copy đường dẫn"
+            : "Đã lưu landing với link cố định — đã copy đường dẫn",
+        );
       } else if (r?.publishError) {
         toast.warning("Đã tạo nội dung nhưng chưa xuất bản được. Hãy thử xuất bản lại.");
       } else {
@@ -473,12 +477,25 @@ function AISalesPage() {
               </div>
             ) : (
               <div className="p-1 space-y-4">
-                {selected.is_published && publicUrl ? (
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700">
-                      <Globe className="h-3.5 w-3.5" /> Đang xuất bản
+                {publicUrl ? (
+                  <div
+                    className={
+                      "rounded-xl border p-3 flex items-center gap-2 flex-wrap " +
+                      (selected.is_published
+                        ? "border-emerald-200 bg-emerald-50"
+                        : "border-border bg-muted/40")
+                    }
+                  >
+                    <span
+                      className={
+                        "inline-flex items-center gap-1.5 text-[12px] font-semibold " +
+                        (selected.is_published ? "text-emerald-700" : "text-muted-foreground")
+                      }
+                    >
+                      <Globe className="h-3.5 w-3.5" />
+                      {selected.is_published ? "Đang xuất bản" : "Đã lưu — chưa xuất bản"}
                     </span>
-                    <code className="text-[12px] text-emerald-800 truncate">{publicUrl}</code>
+                    <code className="text-[12px] truncate">{publicUrl}</code>
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(publicUrl);
