@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import {
   Sparkles, Wand2, Trash2, Copy, Loader2, FileText, User,
-  Pencil, Globe, EyeOff, ExternalLink, Eye, Save, X, BookMarked, Library,
+  Pencil, Globe, EyeOff, ExternalLink, Eye, Save, X, BookMarked,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -21,7 +21,6 @@ import {
   TONE_LABEL_VI,
 } from "@/lib/ai-sales-page.functions";
 import { saveSalesPrompt } from "@/lib/sales-prompt.functions";
-import { Link } from "@tanstack/react-router";
 import { listLeads } from "@/lib/lead.functions";
 import { toast } from "sonner";
 
