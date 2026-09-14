@@ -824,6 +824,89 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string
+          deal_id: string | null
+          deleted_at: string | null
+          id: string
+          kind: string
+          note: string | null
+          occurred_at: string
+          project_id: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id: string
+          deal_id?: string | null
+          deleted_at?: string | null
+          id?: string
+          kind?: string
+          note?: string | null
+          occurred_at?: string
+          project_id?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string
+          deal_id?: string | null
+          deleted_at?: string | null
+          id?: string
+          kind?: string
+          note?: string | null
+          occurred_at?: string
+          project_id?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_transactions_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_transactions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           company: string | null
@@ -1379,6 +1462,7 @@ export type Database = {
           closed_at: string | null
           created_at: string
           currency: string | null
+          customer_id: string | null
           deleted_at: string | null
           expected_close_date: string | null
           id: string
@@ -1400,6 +1484,7 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           currency?: string | null
+          customer_id?: string | null
           deleted_at?: string | null
           expected_close_date?: string | null
           id?: string
@@ -1421,6 +1506,7 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           currency?: string | null
+          customer_id?: string | null
           deleted_at?: string | null
           expected_close_date?: string | null
           id?: string
@@ -1439,6 +1525,13 @@ export type Database = {
           value?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "pipeline_deals_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pipeline_deals_lead_id_fkey"
             columns: ["lead_id"]

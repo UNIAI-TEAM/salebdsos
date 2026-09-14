@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -20,7 +20,7 @@ import {
 } from "@/lib/customer.functions";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_app/customers")({ component: CustomersPage });
+export const Route = createFileRoute("/_app/customers/")({ component: CustomersPage });
 
 type CustomerRow = {
   id: string; full_name: string; email: string | null; phone: string | null;
@@ -147,7 +147,11 @@ function CustomersPage() {
               )}
               {items.map((r) => (
                 <tr key={r.id} className="border-t border-border hover:bg-muted/30">
-                  <td className="px-5 py-3 font-semibold">{r.full_name}</td>
+                  <td className="px-5 py-3 font-semibold">
+                    <Link to="/customers/$id" params={{ id: r.id }} className="hover:text-primary hover:underline">
+                      {r.full_name}
+                    </Link>
+                  </td>
                   <td className="px-3 py-3">{r.phone ?? "—"}</td>
                   <td className="px-3 py-3">{r.email ?? "—"}</td>
                   <td className="px-3 py-3">{r.company ?? "—"}</td>
