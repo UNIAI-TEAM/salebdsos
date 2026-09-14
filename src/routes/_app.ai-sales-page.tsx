@@ -16,6 +16,7 @@ import {
   setSalesPagePublish,
   draftSalesBrief,
   previewSalesPrompt,
+  generateSeoArticle,
   TONES,
   TONE_LABEL_VI,
 } from "@/lib/ai-sales-page.functions";
@@ -680,4 +681,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       {children}
     </div>
   );
+}
+
+function seoArticleText(a: any) {
+  const parts = [a?.seo_title || "", a?.meta_description || ""];
+  for (const s of a?.sections ?? []) parts.push(`## ${s.heading}\n${s.body}`);
+  if (a?.public_url) parts.push(a.public_url);
+  return parts.filter(Boolean).join("\n\n");
 }
