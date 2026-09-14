@@ -20,7 +20,7 @@ import {
 } from "@/lib/customer.functions";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_app/customers")({ component: CustomersPage });
+export const Route = createFileRoute("/_app/customers/")({ component: CustomersPage });
 
 type CustomerRow = {
   id: string; full_name: string; email: string | null; phone: string | null;
