@@ -5,10 +5,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth, type Role } from "@/hooks/use-auth";
 import {
   listMembers, inviteMember, revokeInvitation, updateMemberRole, removeMember,
-  createStaffAccount, resetStaffPassword,
+  createStaffAccount, resetStaffPassword, resendStaffVerification,
 } from "@/lib/auth.functions";
+import { permissionLabel } from "@/lib/permissions";
 import { toast } from "sonner";
-import { Mail, Trash2, Copy, ShieldCheck, UserPlus, KeyRound, BadgePlus } from "lucide-react";
+import { Mail, Trash2, Copy, ShieldCheck, UserPlus, KeyRound, BadgePlus, MailCheck, MailWarning } from "lucide-react";
 
 export const Route = createFileRoute("/_app/members")({ component: MembersPage });
 
