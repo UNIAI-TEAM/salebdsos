@@ -299,7 +299,54 @@ export const createStaffAccount = createServerFn({ method: "POST" })
       .single();
     if (rErr) throw new Error(rErr.message);
 
-    return { userId: newUserId, roleRowId: roleRow?.id as string, created, email };
+    return {
+      userId: newUserId,
+      roleRowId: roleRow?.id as string,
+      created,
+      email,
+      verificationSent,
+      requiresVerification: !!data.requireEmailVerification && created,
+    };
+  });
+
+/** Gửi lại email xác nhận cho một thành viên trong workspace (chỉ owner/admin) */
+export const resendStaffVerification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        targetUserId: z.string().uuid(),
+        redirectTo: z.string().url().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertTenantAdmin(supabase, userId, data.tenantId);
+
+    const { data: member, error: mErr } = await supabase
+      .from("user_roles")
+      .select("id")
+      .eq("tenant_id", data.tenantId)
+      .eq("user_id", data.targetUserId)
+      .limit(1);
+    if (mErr) throw new Error(mErr.message);
+    if (!member?.length) throw new Error("Người dùng không thuộc workspace này");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: target } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
+    const email = target?.user?.email;
+    if (!email) throw new Error("Không tìm thấy email của người dùng");
+    if (target?.user?.email_confirmed_at) return { ok: true as const, alreadyVerified: true };
+
+    const { error } = await supabaseAdmin.auth.resend({
+      type: "signup",
+      email,
+      options: data.redirectTo ? { emailRedirectTo: data.redirectTo } : undefined,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const, alreadyVerified: false };
   });
 
 export const resetStaffPassword = createServerFn({ method: "POST" })
