@@ -5,10 +5,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth, type Role } from "@/hooks/use-auth";
 import {
   listMembers, inviteMember, revokeInvitation, updateMemberRole, removeMember,
-  createStaffAccount, resetStaffPassword,
+  createStaffAccount, resetStaffPassword, resendStaffVerification,
 } from "@/lib/auth.functions";
+import { permissionLabel } from "@/lib/permissions";
 import { toast } from "sonner";
-import { Mail, Trash2, Copy, ShieldCheck, UserPlus, KeyRound, BadgePlus } from "lucide-react";
+import { Mail, Trash2, Copy, ShieldCheck, UserPlus, KeyRound, BadgePlus, MailCheck, MailWarning } from "lucide-react";
 
 export const Route = createFileRoute("/_app/members")({ component: MembersPage });
 
@@ -21,8 +22,8 @@ const ROLE_OPTIONS: { value: Role; label: string }[] = [
 ];
 
 function MembersPage() {
-  const { currentTenant, hasRole, user } = useAuth();
-  const canManage = hasRole(["owner", "admin"]);
+  const { currentTenant, canManageMembers, currentRole, user } = useAuth();
+  const canManage = canManageMembers;
   const tenantId = currentTenant?.id;
 
   const fetchMembers = useServerFn(listMembers);
@@ -32,6 +33,7 @@ function MembersPage() {
   const remove = useServerFn(removeMember);
   const createStaff = useServerFn(createStaffAccount);
   const resetPass = useServerFn(resetStaffPassword);
+  const resendVerify = useServerFn(resendStaffVerification);
 
   const qc = useQueryClient();
   const q = useQuery({
@@ -43,10 +45,14 @@ function MembersPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("agent");
 
-  // Tạo tài khoản nhân viên thật (đăng nhập được ngay)
+  // Tạo tài khoản nhân viên thật
   const [staff, setStaff] = useState({
     fullName: "", email: "", phone: "", password: "", role: "agent" as Role,
+    requireEmailVerification: true,
   });
+
+  const verifyRedirect = () =>
+    typeof window !== "undefined" ? `${window.location.origin}/verify-email` : undefined;
 
   const createStaffMu = useMutation({
     mutationFn: () =>
@@ -58,15 +64,19 @@ function MembersPage() {
           fullName: staff.fullName.trim(),
           phone: staff.phone.trim() || undefined,
           role: staff.role as "admin" | "manager" | "agent" | "viewer",
+          requireEmailVerification: staff.requireEmailVerification,
+          redirectTo: verifyRedirect(),
         },
       }),
     onSuccess: (res: any) => {
       toast.success(
-        res.created
-          ? `Đã tạo tài khoản ${res.email}, nhân viên có thể đăng nhập ngay`
-          : `Email ${res.email} đã có tài khoản, đã gắn quyền vào workspace`,
+        !res.created
+          ? `Email ${res.email} đã có tài khoản, đã gắn quyền vào workspace`
+          : res.requiresVerification
+            ? `Đã tạo tài khoản ${res.email}. ${res.verificationSent ? "Email xác nhận đã được gửi" : "Chưa gửi được email xác nhận, hãy bấm gửi lại"}`
+            : `Đã tạo tài khoản ${res.email}, nhân viên có thể đăng nhập ngay`,
       );
-      setStaff({ fullName: "", email: "", phone: "", password: "", role: "agent" });
+      setStaff({ fullName: "", email: "", phone: "", password: "", role: "agent", requireEmailVerification: true });
       qc.invalidateQueries({ queryKey: ["members", tenantId] });
     },
     onError: (e: any) => toast.error(e.message ?? "Không tạo được tài khoản"),
@@ -77,6 +87,14 @@ function MembersPage() {
       resetPass({ data: { tenantId: tenantId!, ...v } }),
     onSuccess: () => toast.success("Đã đặt lại mật khẩu"),
     onError: (e: any) => toast.error(e.message ?? "Không đặt lại được mật khẩu"),
+  });
+
+  const resendMu = useMutation({
+    mutationFn: (targetUserId: string) =>
+      resendVerify({ data: { tenantId: tenantId!, targetUserId, redirectTo: verifyRedirect() } }),
+    onSuccess: (r: any) =>
+      toast.success(r.alreadyVerified ? "Email này đã được xác nhận" : "Đã gửi lại email xác nhận"),
+    onError: (e: any) => toast.error(e.message ?? "Không gửi được email xác nhận"),
   });
 
   const inviteMu = useMutation({
@@ -115,7 +133,9 @@ function MembersPage() {
         <ShieldCheck className="h-6 w-6 text-primary" />
         <div>
           <h1 className="text-2xl font-bold">Thành viên & Vai trò</h1>
-          <p className="text-sm text-muted-foreground">Quản lý người dùng trong {currentTenant?.name}</p>
+          <p className="text-sm text-muted-foreground">
+            Quản lý người dùng trong {currentTenant?.name} · Quyền của bạn: {permissionLabel(currentRole)}
+          </p>
         </div>
       </div>
 
@@ -172,6 +192,19 @@ function MembersPage() {
             >
               {createStaffMu.isPending ? "Đang tạo..." : "Tạo tài khoản"}
             </button>
+            <label className="sm:col-span-2 lg:col-span-3 flex items-start gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={staff.requireEmailVerification}
+                onChange={(e) => setStaff({ ...staff, requireEmailVerification: e.target.checked })}
+                className="mt-0.5 h-4 w-4 rounded border-border"
+              />
+              <span>
+                Yêu cầu xác nhận email trước khi đăng nhập — hệ thống gửi email xác nhận tới nhân viên.
+                Bỏ chọn nếu muốn tài khoản dùng được ngay.
+                {" "}Quyền của vai trò đang chọn: <b>{permissionLabel(staff.role)}</b>
+              </span>
+            </label>
           </form>
         </div>
       )}
@@ -223,7 +256,29 @@ function MembersPage() {
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{m.fullName || m.email || m.userId}</div>
                 <div className="text-xs text-muted-foreground truncate">{m.email}</div>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  {(m as any).emailConfirmedAt ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500">
+                      <MailCheck className="h-3 w-3" /> Đã xác nhận email
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500">
+                      <MailWarning className="h-3 w-3" /> Chờ xác nhận email
+                    </span>
+                  )}
+                  <span className="text-[11px] text-muted-foreground">{permissionLabel(m.role)}</span>
+                </div>
               </div>
+              {canManage && !(m as any).emailConfirmedAt && (
+                <button
+                  onClick={() => resendMu.mutate(m.userId)}
+                  disabled={resendMu.isPending}
+                  className="h-9 px-2 rounded-md hover:bg-muted text-xs flex items-center gap-1 disabled:opacity-60"
+                  title="Gửi lại email xác nhận"
+                >
+                  <Mail className="h-3.5 w-3.5" /> Gửi lại
+                </button>
+              )}
               {canManage && m.userId !== user?.id ? (
                 <select
                   value={m.role}

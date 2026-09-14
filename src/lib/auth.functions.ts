@@ -77,6 +77,19 @@ export const listMembers = createServerFn({ method: "GET" })
       .select("id, email, role, status, expires_at, created_at, token")
       .eq("tenant_id", data.tenantId)
       .order("created_at", { ascending: false });
+
+    // Trạng thái xác nhận email của từng thành viên
+    const confirmed = new Map<string, string | null>();
+    if (userIds.length) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await Promise.all(
+        userIds.map(async (uid) => {
+          const { data: u } = await supabaseAdmin.auth.admin.getUserById(uid);
+          confirmed.set(uid, u?.user?.email_confirmed_at ?? null);
+        }),
+      );
+    }
+
     return {
       members: (roles ?? []).map((r) => {
         const p = profiles.find((x) => x.user_id === r.user_id);
@@ -88,6 +101,7 @@ export const listMembers = createServerFn({ method: "GET" })
           fullName: p?.full_name ?? null,
           avatarUrl: p?.avatar_url ?? null,
           joinedAt: r.created_at as string,
+          emailConfirmedAt: confirmed.get(r.user_id) ?? null,
         };
       }),
       invitations: invites ?? [],
@@ -218,6 +232,8 @@ export const createStaffAccount = createServerFn({ method: "POST" })
         fullName: z.string().trim().min(2).max(120),
         phone: z.string().trim().max(30).optional(),
         role: z.enum(STAFF_ROLES),
+        requireEmailVerification: z.boolean().optional().default(true),
+        redirectTo: z.string().url().optional(),
       })
       .parse(d),
   )
@@ -237,17 +253,27 @@ export const createStaffAccount = createServerFn({ method: "POST" })
 
     let newUserId = existing?.user_id as string | undefined;
     let created = false;
+    let verificationSent = false;
 
     if (!newUserId) {
       const { data: createdUser, error: cErr } = await supabaseAdmin.auth.admin.createUser({
         email,
         password: data.password,
-        email_confirm: true,
+        email_confirm: !data.requireEmailVerification,
         user_metadata: { full_name: data.fullName, phone: data.phone ?? null },
       });
       if (cErr || !createdUser?.user) throw new Error(cErr?.message ?? "Không tạo được tài khoản");
       newUserId = createdUser.user.id;
       created = true;
+
+      if (data.requireEmailVerification) {
+        const { error: sErr } = await supabaseAdmin.auth.resend({
+          type: "signup",
+          email,
+          options: data.redirectTo ? { emailRedirectTo: data.redirectTo } : undefined,
+        });
+        verificationSent = !sErr;
+      }
     }
 
     await supabaseAdmin
@@ -273,7 +299,54 @@ export const createStaffAccount = createServerFn({ method: "POST" })
       .single();
     if (rErr) throw new Error(rErr.message);
 
-    return { userId: newUserId, roleRowId: roleRow?.id as string, created, email };
+    return {
+      userId: newUserId,
+      roleRowId: roleRow?.id as string,
+      created,
+      email,
+      verificationSent,
+      requiresVerification: !!data.requireEmailVerification && created,
+    };
+  });
+
+/** Gửi lại email xác nhận cho một thành viên trong workspace (chỉ owner/admin) */
+export const resendStaffVerification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        targetUserId: z.string().uuid(),
+        redirectTo: z.string().url().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await assertTenantAdmin(supabase, userId, data.tenantId);
+
+    const { data: member, error: mErr } = await supabase
+      .from("user_roles")
+      .select("id")
+      .eq("tenant_id", data.tenantId)
+      .eq("user_id", data.targetUserId)
+      .limit(1);
+    if (mErr) throw new Error(mErr.message);
+    if (!member?.length) throw new Error("Người dùng không thuộc workspace này");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: target } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
+    const email = target?.user?.email;
+    if (!email) throw new Error("Không tìm thấy email của người dùng");
+    if (target?.user?.email_confirmed_at) return { ok: true as const, alreadyVerified: true };
+
+    const { error } = await supabaseAdmin.auth.resend({
+      type: "signup",
+      email,
+      options: data.redirectTo ? { emailRedirectTo: data.redirectTo } : undefined,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const, alreadyVerified: false };
   });
 
 export const resetStaffPassword = createServerFn({ method: "POST" })
