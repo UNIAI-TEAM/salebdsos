@@ -133,7 +133,9 @@ function MembersPage() {
         <ShieldCheck className="h-6 w-6 text-primary" />
         <div>
           <h1 className="text-2xl font-bold">Thành viên & Vai trò</h1>
-          <p className="text-sm text-muted-foreground">Quản lý người dùng trong {currentTenant?.name}</p>
+          <p className="text-sm text-muted-foreground">
+            Quản lý người dùng trong {currentTenant?.name} · Quyền của bạn: {permissionLabel(currentRole)}
+          </p>
         </div>
       </div>
 
