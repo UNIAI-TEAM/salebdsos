@@ -270,8 +270,47 @@ function AISalesPage() {
               <input value={cta} onChange={(e) => setCta(e.target.value)} className={inputCls} placeholder="VD: Đặt lịch xem nhà mẫu" />
             </Field>
             <Field label="Yêu cầu thêm">
-              <textarea value={extra} onChange={(e) => setExtra(e.target.value)} rows={3} className={inputCls + " py-2"} placeholder="Ghi chú về ưu đãi, điểm nhấn..." />
+              <textarea value={extra} onChange={(e) => setExtra(e.target.value)} rows={3} className={inputCls + " py-2 h-auto"} placeholder="Ghi chú về ưu đãi, điểm nhấn..." />
             </Field>
+
+            <div className="rounded-xl border border-border p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[11.5px] font-semibold text-muted-foreground uppercase tracking-wide">
+                  Prompt gửi cho AI
+                </div>
+                <div className="flex gap-1.5">
+                  <button
+                    disabled={!tenantId || promptMut.isPending}
+                    onClick={() => promptMut.mutate()}
+                    className="h-7 px-2.5 rounded-md border border-border text-[12px] inline-flex items-center gap-1 hover:bg-muted disabled:opacity-60"
+                  >
+                    {promptMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
+                    Tạo lại
+                  </button>
+                  {prompt ? (
+                    <button
+                      onClick={() => setShowPrompt((v) => !v)}
+                      className="h-7 px-2.5 rounded-md border border-border text-[12px] hover:bg-muted"
+                    >
+                      {showPrompt ? "Ẩn" : "Xem"}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              {prompt && showPrompt ? (
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  rows={10}
+                  className={inputCls + " py-2 h-auto font-mono text-[11.5px] leading-relaxed"}
+                />
+              ) : (
+                <p className="text-[12px] text-muted-foreground">
+                  {prompt ? "Prompt đã sẵn sàng, bấm “Xem” để chỉnh sửa." : "Chưa có prompt — AI sẽ tự sinh khi bạn tạo nội dung."}
+                </p>
+              )}
+            </div>
+
             <button
               disabled={!tenantId || genMut.isPending}
               onClick={() => genMut.mutate()}
