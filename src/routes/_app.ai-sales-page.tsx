@@ -14,6 +14,8 @@ import {
   deleteSalesPage,
   updateSalesPage,
   setSalesPagePublish,
+  draftSalesBrief,
+  previewSalesPrompt,
   TONES,
   TONE_LABEL_VI,
 } from "@/lib/ai-sales-page.functions";
@@ -36,12 +38,53 @@ function AISalesPage() {
   const [tone, setTone] = useState<Tone>("professional");
   const [cta, setCta] = useState("");
   const [extra, setExtra] = useState("");
+  const [request, setRequest] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [showPrompt, setShowPrompt] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const listFn = useServerFn(listSalesPages);
   const listLeadsFn = useServerFn(listLeads);
   const generateFn = useServerFn(generateSalesPage);
   const deleteFn = useServerFn(deleteSalesPage);
+  const draftFn = useServerFn(draftSalesBrief);
+  const previewFn = useServerFn(previewSalesPrompt);
+
+  const briefMut = useMutation({
+    mutationFn: () => draftFn({ data: { tenantId: tenantId!, request, leadId: leadId || undefined } }),
+    onSuccess: (r: any) => {
+      setTitle(r.title || "");
+      setAudience(r.audience || "");
+      setTone(r.tone as Tone);
+      setCta(r.cta || "");
+      setExtra(r.extra || "");
+      setPrompt(r.prompt || "");
+      setShowPrompt(true);
+      toast.success("AI đã tạo brief và prompt");
+    },
+    onError: (e: any) => toast.error(e?.message || "Không phân tích được yêu cầu"),
+  });
+
+  const promptMut = useMutation({
+    mutationFn: () =>
+      previewFn({
+        data: {
+          tenantId: tenantId!,
+          leadId: leadId || undefined,
+          title: title || undefined,
+          audience: audience || undefined,
+          tone,
+          cta: cta || undefined,
+          extra: extra || request || undefined,
+        },
+      }),
+    onSuccess: (r: any) => {
+      setPrompt(r.prompt || "");
+      setShowPrompt(true);
+    },
+    onError: (e: any) => toast.error(e?.message || "Không tạo được prompt"),
+  });
+
 
   const historyQ = useQuery({
     queryKey: ["ai-sales-pages", tenantId],
@@ -65,7 +108,8 @@ function AISalesPage() {
           audience: audience || undefined,
           tone,
           cta: cta || undefined,
-          extra: extra || undefined,
+          extra: extra || request || undefined,
+          promptOverride: prompt.trim() || undefined,
         },
       }),
     onSuccess: (r) => {
@@ -175,7 +219,25 @@ function AISalesPage() {
         {/* Form */}
         <SectionCard title="Tham số tạo" className="lg:col-span-1">
           <div className="space-y-3 p-1">
+            <Field label="Yêu cầu của khách hàng">
+              <textarea
+                value={request}
+                onChange={(e) => setRequest(e.target.value)}
+                rows={4}
+                className={inputCls + " py-2 h-auto"}
+                placeholder="VD: Anh cần căn 2PN Ocean Park cho gia đình trẻ, ngân sách 3 tỷ, muốn nhấn ưu đãi tháng 9 và mời xem nhà mẫu cuối tuần…"
+              />
+            </Field>
+            <button
+              disabled={!tenantId || request.trim().length < 5 || briefMut.isPending}
+              onClick={() => briefMut.mutate()}
+              className="w-full h-10 rounded-xl border border-border text-[13px] font-semibold inline-flex items-center justify-center gap-2 hover:bg-muted disabled:opacity-60"
+            >
+              {briefMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {briefMut.isPending ? "Đang phân tích..." : "AI phân tích & sinh prompt"}
+            </button>
             <Field label="Lead / khách hàng">
+
               <select
                 value={leadId}
                 onChange={(e) => setLeadId(e.target.value)}
@@ -208,8 +270,47 @@ function AISalesPage() {
               <input value={cta} onChange={(e) => setCta(e.target.value)} className={inputCls} placeholder="VD: Đặt lịch xem nhà mẫu" />
             </Field>
             <Field label="Yêu cầu thêm">
-              <textarea value={extra} onChange={(e) => setExtra(e.target.value)} rows={3} className={inputCls + " py-2"} placeholder="Ghi chú về ưu đãi, điểm nhấn..." />
+              <textarea value={extra} onChange={(e) => setExtra(e.target.value)} rows={3} className={inputCls + " py-2 h-auto"} placeholder="Ghi chú về ưu đãi, điểm nhấn..." />
             </Field>
+
+            <div className="rounded-xl border border-border p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[11.5px] font-semibold text-muted-foreground uppercase tracking-wide">
+                  Prompt gửi cho AI
+                </div>
+                <div className="flex gap-1.5">
+                  <button
+                    disabled={!tenantId || promptMut.isPending}
+                    onClick={() => promptMut.mutate()}
+                    className="h-7 px-2.5 rounded-md border border-border text-[12px] inline-flex items-center gap-1 hover:bg-muted disabled:opacity-60"
+                  >
+                    {promptMut.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
+                    Tạo lại
+                  </button>
+                  {prompt ? (
+                    <button
+                      onClick={() => setShowPrompt((v) => !v)}
+                      className="h-7 px-2.5 rounded-md border border-border text-[12px] hover:bg-muted"
+                    >
+                      {showPrompt ? "Ẩn" : "Xem"}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              {prompt && showPrompt ? (
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  rows={10}
+                  className={inputCls + " py-2 h-auto font-mono text-[11.5px] leading-relaxed"}
+                />
+              ) : (
+                <p className="text-[12px] text-muted-foreground">
+                  {prompt ? "Prompt đã sẵn sàng, bấm “Xem” để chỉnh sửa." : "Chưa có prompt — AI sẽ tự sinh khi bạn tạo nội dung."}
+                </p>
+              )}
+            </div>
+
             <button
               disabled={!tenantId || genMut.isPending}
               onClick={() => genMut.mutate()}

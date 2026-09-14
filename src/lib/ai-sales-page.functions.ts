@@ -72,53 +72,84 @@ const GenerateSchema = z.object({
   tone: z.enum(TONES).default("professional"),
   cta: z.string().trim().max(200).optional(),
   extra: z.string().trim().max(2000).optional(),
+  /** Prompt do người dùng xem trước / chỉnh sửa. Nếu có sẽ dùng thay prompt tự sinh. */
+  promptOverride: z.string().trim().max(8000).optional().nullable(),
 });
 
-export const generateSalesPage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => GenerateSchema.parse(d))
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const AI_MODEL = "google/gemini-3.8-flash";
 
-    // Hydrate lead / customer / project context
-    let leadCtx = "";
-    if (data.leadId) {
-      const { data: l } = await supabase
-        .from("leads")
-        .select("full_name,phone,email,source,status,need_type,budget,timeline,score,project_id")
-        .eq("id", data.leadId)
-        .maybeSingle();
-      if (l) {
-        leadCtx = `Khách hàng tiềm năng: ${l.full_name || "?"}. Nguồn: ${l.source || "?"}. Nhu cầu: ${l.need_type || "?"}. Ngân sách: ${l.budget || "?"}. Thời gian: ${l.timeline || "?"}. Điểm AI: ${l.score ?? "?"}.`;
-        if (!data.projectId && l.project_id) data.projectId = l.project_id;
-      }
-    }
-    if (!leadCtx && data.customerId) {
-      const { data: c } = await supabase
-        .from("customers")
-        .select("full_name,phone,email,tags,notes")
-        .eq("id", data.customerId)
-        .maybeSingle();
-      if (c) leadCtx = `Khách hàng: ${c.full_name || "?"}. Tags: ${(c.tags || []).join(", ")}. Ghi chú: ${c.notes || "?"}.`;
-    }
-    let projectCtx = "";
-    if (data.projectId) {
-      const { data: p } = await supabase
-        .from("projects")
-        .select("name,location,city,description,price_from,price_to,currency,unit_highlights")
-        .eq("id", data.projectId)
-        .maybeSingle();
-      if (p) {
-        const price = p.price_from || p.price_to ? `${p.price_from ?? "?"} - ${p.price_to ?? "?"} ${p.currency || ""}` : "?";
-        const hl = Array.isArray(p.unit_highlights) ? p.unit_highlights.join("; ") : "";
-        projectCtx = `Dự án: ${p.name}. Vị trí: ${p.location || p.city || "?"}. Giá: ${price}. Mô tả: ${p.description || "?"}. Điểm nhấn: ${hl}.`;
-      }
-    }
+function aiHeaders() {
+  const apiKey = process.env["LOVABLE_API_KEY"];
+  if (!apiKey) throw new Error("AI Gateway chưa được cấu hình.");
+  return {
+    "Lovable-API-Key": apiKey,
+    "Content-Type": "application/json",
+  } as Record<string, string>;
+}
 
-    const toneLabel = TONE_LABEL_VI[data.tone];
-    const prompt = `Bạn là copywriter bất động sản. Viết nội dung LANDING PAGE bán hàng cá nhân hoá bằng tiếng Việt, giọng ${toneLabel}.
-${leadCtx}
-${projectCtx}
+function aiStatusError(status: number, body: string) {
+  if (status === 429) return new Error("Vượt giới hạn AI, thử lại sau ít phút.");
+  if (status === 402) return new Error("Hết credit AI. Vui lòng nạp thêm.");
+  if (status === 403) return new Error("Tính năng AI đang bị khoá cho workspace này.");
+  return new Error(`AI lỗi: ${status} ${body}`);
+}
+
+type Ctx = { leadCtx: string; projectCtx: string; projectId?: string | null };
+
+async function hydrateContext(
+  supabase: any,
+  data: { leadId?: string | null; customerId?: string | null; projectId?: string | null },
+): Promise<Ctx> {
+  let leadCtx = "";
+  let projectId = data.projectId ?? null;
+  if (data.leadId) {
+    const { data: l } = await supabase
+      .from("leads")
+      .select("full_name,phone,email,source,status,need_type,budget,timeline,score,project_id")
+      .eq("id", data.leadId)
+      .maybeSingle();
+    if (l) {
+      leadCtx = `Khách hàng tiềm năng: ${l.full_name || "?"}. Nguồn: ${l.source || "?"}. Nhu cầu: ${l.need_type || "?"}. Ngân sách: ${l.budget || "?"}. Thời gian: ${l.timeline || "?"}. Điểm AI: ${l.score ?? "?"}.`;
+      if (!projectId && l.project_id) projectId = l.project_id;
+    }
+  }
+  if (!leadCtx && data.customerId) {
+    const { data: c } = await supabase
+      .from("customers")
+      .select("full_name,phone,email,tags,notes")
+      .eq("id", data.customerId)
+      .maybeSingle();
+    if (c)
+      leadCtx = `Khách hàng: ${c.full_name || "?"}. Tags: ${(c.tags || []).join(", ")}. Ghi chú: ${c.notes || "?"}.`;
+  }
+  let projectCtx = "";
+  if (projectId) {
+    const { data: p } = await supabase
+      .from("projects")
+      .select("name,location,city,description,price_from,price_to,currency,unit_highlights")
+      .eq("id", projectId)
+      .maybeSingle();
+    if (p) {
+      const price =
+        p.price_from || p.price_to
+          ? `${p.price_from ?? "?"} - ${p.price_to ?? "?"} ${p.currency || ""}`
+          : "?";
+      const hl = Array.isArray(p.unit_highlights) ? p.unit_highlights.join("; ") : "";
+      projectCtx = `Dự án: ${p.name}. Vị trí: ${p.location || p.city || "?"}. Giá: ${price}. Mô tả: ${p.description || "?"}. Điểm nhấn: ${hl}.`;
+    }
+  }
+  return { leadCtx, projectCtx, projectId };
+}
+
+function buildPrompt(
+  ctx: Ctx,
+  data: { tone: (typeof TONES)[number]; audience?: string; cta?: string; extra?: string },
+) {
+  const toneLabel = TONE_LABEL_VI[data.tone];
+  return `Bạn là copywriter bất động sản. Viết nội dung LANDING PAGE bán hàng cá nhân hoá bằng tiếng Việt, giọng ${toneLabel}.
+${ctx.leadCtx}
+${ctx.projectCtx}
 ${data.audience ? `Đối tượng: ${data.audience}.` : ""}
 ${data.cta ? `CTA mong muốn: ${data.cta}.` : ""}
 ${data.extra ? `Yêu cầu thêm: ${data.extra}.` : ""}
@@ -133,27 +164,98 @@ Trả về JSON với các trường:
 - cta_secondary: nút CTA phụ
 - form_intro: 1 câu mời để lại thông tin
 Chỉ trả về JSON hợp lệ, không kèm chú thích.`;
+}
 
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("AI Gateway chưa được cấu hình.");
+/** Từ yêu cầu tự do của khách hàng → tự sinh tham số + prompt để xem trước. */
+export const draftSalesBrief = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        request: z.string().trim().min(5).max(4000),
+        leadId: z.string().uuid().optional().nullable(),
+        customerId: z.string().uuid().optional().nullable(),
+        projectId: z.string().uuid().optional().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const ctx = await hydrateContext(context.supabase, data);
 
-    const model = "google/gemini-2.5-flash";
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const res = await fetch(AI_URL, {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      headers: aiHeaders(),
+      body: JSON.stringify({
+        model: AI_MODEL,
+        messages: [
+          {
+            role: "system",
+            content:
+              "Bạn là chuyên gia brief marketing bất động sản. Từ yêu cầu tự do của khách hàng, hãy suy luận ra tham số chiến dịch. Chỉ trả JSON hợp lệ.",
+          },
+          {
+            role: "user",
+            content: `Yêu cầu của khách hàng:\n"""${data.request}"""\n${ctx.leadCtx}\n${ctx.projectCtx}\n\nTrả JSON: {"title": string, "audience": string, "tone": "professional"|"friendly"|"luxury"|"urgent", "cta": string, "extra": string}. "extra" tóm tắt các yêu cầu đặc thù (ưu đãi, điểm nhấn, ràng buộc) bằng tiếng Việt.`,
+          },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (!res.ok) throw aiStatusError(res.status, await res.text().catch(() => ""));
+    const json: any = await res.json();
+    let brief: any = {};
+    try {
+      brief = JSON.parse(json.choices?.[0]?.message?.content || "{}");
+    } catch {
+      brief = {};
+    }
+    const tone = (TONES as readonly string[]).includes(brief.tone)
+      ? (brief.tone as (typeof TONES)[number])
+      : "professional";
+    const draft = {
+      title: typeof brief.title === "string" ? brief.title.slice(0, 200) : "",
+      audience: typeof brief.audience === "string" ? brief.audience.slice(0, 400) : "",
+      tone,
+      cta: typeof brief.cta === "string" ? brief.cta.slice(0, 200) : "",
+      extra: typeof brief.extra === "string" ? brief.extra.slice(0, 2000) : data.request.slice(0, 2000),
+    };
+    return { ...draft, prompt: buildPrompt(ctx, draft) };
+  });
+
+/** Xem trước prompt sẽ gửi cho AI (không gọi model). */
+export const previewSalesPrompt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => GenerateSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const ctx = await hydrateContext(context.supabase, data);
+    return { prompt: buildPrompt(ctx, data) };
+  });
+
+
+export const generateSalesPage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => GenerateSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const ctx = await hydrateContext(supabase, data);
+    if (!data.projectId && ctx.projectId) data.projectId = ctx.projectId;
+    const prompt = data.promptOverride?.trim() || buildPrompt(ctx, data);
+
+    const model = AI_MODEL;
+    const res = await fetch(AI_URL, {
+      method: "POST",
+      headers: aiHeaders(),
       body: JSON.stringify({
         model,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       }),
     });
-    if (res.status === 429) throw new Error("Vượt giới hạn AI, thử lại sau ít phút.");
-    if (res.status === 402) throw new Error("Hết credit AI. Vui lòng nạp thêm.");
-    if (!res.ok) {
-      const t = await res.text().catch(() => "");
-      throw new Error(`AI lỗi: ${res.status} ${t}`);
-    }
+    if (!res.ok) throw aiStatusError(res.status, await res.text().catch(() => ""));
     const json = await res.json();
+
     const text: string = json.choices?.[0]?.message?.content || "{}";
     let output: any;
     try {
