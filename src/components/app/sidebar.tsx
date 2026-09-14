@@ -23,6 +23,7 @@ const groups: Group[] = [
     items: [
       { to: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
       { to: "/digital-card", label: "Danh thiếp & Profile", icon: IdCard },
+      { to: "/card-designer", label: "Thiết kế danh thiếp", icon: IdCard, badge: "New" },
     ],
   },
   {
