@@ -27,7 +27,7 @@ const getPublicCard = createServerFn({ method: "GET" })
   });
 
 const TEMPLATES: Record<string, { bg: string; text: string }> = {
-  "luxury-dark": { bg: "from-slate-800 via-slate-900 to-black", text: "text-white" },
+  "luxury-dark": { bg: "from-slate-900 via-[#0B0F1A] to-black", text: "text-white" },
   "skyline": { bg: "from-sky-500 via-indigo-600 to-violet-700", text: "text-white" },
   "minimal": { bg: "from-zinc-50 to-zinc-100", text: "text-zinc-900" },
   "premium": { bg: "from-violet-700 via-fuchsia-700 to-rose-600", text: "text-white" },
