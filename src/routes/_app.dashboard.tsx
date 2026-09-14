@@ -238,14 +238,14 @@ function Dashboard() {
                 <ul className="space-y-3">
                   {topProjects.slice(0, 5).map((p: any) => (
                     <li key={p.id} className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 grid place-items-center text-lg overflow-hidden">
+                      <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-indigo-500/20 grid place-items-center text-lg overflow-hidden">
                         {p.cover_url ? <img src={p.cover_url} alt="" className="h-full w-full object-cover" /> : "🏙️"}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[13px] font-semibold truncate">{p.name}</div>
                         <div className="text-[11px] text-muted-foreground">{p.leads} leads · {p.won} chốt</div>
                       </div>
-                      <span className="inline-flex items-center gap-0.5 text-emerald-600 text-[11.5px] font-semibold">
+                      <span className="inline-flex items-center gap-0.5 text-success text-[11.5px] font-semibold">
                         <ArrowUpRight className="h-3 w-3" /> {p.won ? Math.round((p.won / Math.max(p.leads, 1)) * 100) : 0}%
                       </span>
                     </li>
