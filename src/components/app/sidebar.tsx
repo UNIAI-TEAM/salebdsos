@@ -172,7 +172,7 @@ function SidebarBody({
         ].join(" ")}>
           <button
             onClick={onCollapseToggle}
-            className="w-full grid place-items-center h-9 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-white transition"
+            className="w-full grid place-items-center h-9 rounded-lg hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground transition"
             aria-label="Mở rộng menu"
           >
             <PanelLeftOpen className="h-4 w-4" />
