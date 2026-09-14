@@ -329,6 +329,7 @@ export const generateSalesPage = createServerFn({ method: "POST" })
       output = { headline: "", subheadline: "", benefits: [], raw: text };
     }
     const tokens: number | null = json.usage?.total_tokens ?? null;
+    output = { ...output, length: data.length, intent: data.intent };
 
     const { data: row, error } = await supabase
       .from("ai_sales_pages")
@@ -573,6 +574,10 @@ export const generateSeoArticle = createServerFn({ method: "POST" })
     const publicUrl = origin ? `${origin}/p/${slug}` : `/p/${slug}`;
 
     const out: any = page.output ?? {};
+    const artLen: SalesLength = (LENGTHS as readonly string[]).includes(out?.length)
+      ? (out.length as SalesLength)
+      : "short";
+    const artSpec = LENGTH_SPEC[artLen];
     const res = await fetch(AI_URL, {
       method: "POST",
       headers: aiHeaders(),
@@ -586,7 +591,7 @@ export const generateSeoArticle = createServerFn({ method: "POST" })
           },
           {
             role: "user",
-            content: `Dựa trên brief bán hàng sau, viết một BÀI VIẾT SEO súc tích, không lan man để thu hút khách hàng và dẫn về landing page.
+            content: `Dựa trên brief bán hàng sau, viết một BÀI VIẾT SEO dài ${artSpec.seoWords} từ, súc tích, không lan man, mỗi đoạn tối đa 3 câu để thu hút khách hàng và dẫn về landing page.
 
 BRIEF/PROMPT:
 """${page.prompt || ""}"""
@@ -601,7 +606,7 @@ Trả JSON:
  "seo_title": tiêu đề SEO dưới 60 ký tự,
  "meta_description": mô tả dưới 155 ký tự,
  "keywords": mảng 5-8 từ khoá,
- "sections": mảng 5-8 phần, mỗi phần {"heading": tiêu đề H2, "body": 2-4 đoạn văn, phân tách bằng "\\n\\n"}
+ "sections": mảng ${artSpec.sections} phần, mỗi phần {"heading": tiêu đề H2, "body": 2-4 đoạn văn, phân tách bằng "\\n\\n"}
 }
 Phần cuối phải là lời kêu gọi hành động có chèn link ${publicUrl}.`,
           },
