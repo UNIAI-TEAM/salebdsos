@@ -3,7 +3,7 @@ import {
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
   Wallet, QrCode, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
-  PanelLeftClose, PanelLeftOpen, X,
+  PanelLeftClose, PanelLeftOpen, X, BookMarked,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
@@ -42,6 +42,7 @@ const groups: Group[] = [
       { to: "/ai-followup", label: "AI Follow-up", icon: Sparkles, badge: "AI" },
       { to: "/ai-lead-score", label: "AI Lead Score", icon: Gauge, roles: ["owner", "admin", "manager"] },
       { to: "/ai-sales-page", label: "AI Sales Page", icon: Globe2, roles: ["owner", "admin", "manager"] },
+      { to: "/prompt-library", label: "Thư viện prompt", icon: BookMarked, roles: ["owner", "admin", "manager", "agent"] },
       { to: "/marketing", label: "Marketing & Campaign", icon: Megaphone, roles: ["owner", "admin", "manager"] },
       { to: "/analytics", label: "Báo cáo & Analytics", icon: BarChart3, roles: ["owner", "admin", "manager"] },
     ],

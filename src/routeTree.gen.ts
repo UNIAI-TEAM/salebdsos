@@ -25,6 +25,7 @@ import { Route as AppWalletRouteImport } from './routes/_app.wallet'
 import { Route as AppTeamRouteImport } from './routes/_app.team'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppQrSharingRouteImport } from './routes/_app.qr-sharing'
+import { Route as AppPromptLibraryRouteImport } from './routes/_app.prompt-library'
 import { Route as AppProjectsRouteImport } from './routes/_app.projects'
 import { Route as AppProductsRouteImport } from './routes/_app.products'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
@@ -129,6 +130,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppQrSharingRoute = AppQrSharingRouteImport.update({
   id: '/qr-sharing',
   path: '/qr-sharing',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPromptLibraryRoute = AppPromptLibraryRouteImport.update({
+  id: '/prompt-library',
+  path: '/prompt-library',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProjectsRoute = AppProjectsRouteImport.update({
@@ -289,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
   '/projects': typeof AppProjectsRouteWithChildren
+  '/prompt-library': typeof AppPromptLibraryRoute
   '/qr-sharing': typeof AppQrSharingRoute
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
@@ -332,6 +339,7 @@ export interface FileRoutesByTo {
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
   '/projects': typeof AppProjectsRouteWithChildren
+  '/prompt-library': typeof AppPromptLibraryRoute
   '/qr-sharing': typeof AppQrSharingRoute
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
@@ -377,6 +385,7 @@ export interface FileRoutesById {
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/products': typeof AppProductsRoute
   '/_app/projects': typeof AppProjectsRouteWithChildren
+  '/_app/prompt-library': typeof AppPromptLibraryRoute
   '/_app/qr-sharing': typeof AppQrSharingRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/team': typeof AppTeamRoute
@@ -422,6 +431,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/products'
     | '/projects'
+    | '/prompt-library'
     | '/qr-sharing'
     | '/settings'
     | '/team'
@@ -465,6 +475,7 @@ export interface FileRouteTypes {
     | '/pipeline'
     | '/products'
     | '/projects'
+    | '/prompt-library'
     | '/qr-sharing'
     | '/settings'
     | '/team'
@@ -509,6 +520,7 @@ export interface FileRouteTypes {
     | '/_app/pipeline'
     | '/_app/products'
     | '/_app/projects'
+    | '/_app/prompt-library'
     | '/_app/qr-sharing'
     | '/_app/settings'
     | '/_app/team'
@@ -657,6 +669,13 @@ declare module '@tanstack/react-router' {
       path: '/qr-sharing'
       fullPath: '/qr-sharing'
       preLoaderRoute: typeof AppQrSharingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/prompt-library': {
+      id: '/_app/prompt-library'
+      path: '/prompt-library'
+      fullPath: '/prompt-library'
+      preLoaderRoute: typeof AppPromptLibraryRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/projects': {
@@ -889,6 +908,7 @@ interface AppRouteChildren {
   AppPipelineRoute: typeof AppPipelineRoute
   AppProductsRoute: typeof AppProductsRoute
   AppProjectsRoute: typeof AppProjectsRouteWithChildren
+  AppPromptLibraryRoute: typeof AppPromptLibraryRoute
   AppQrSharingRoute: typeof AppQrSharingRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTeamRoute: typeof AppTeamRoute
@@ -916,6 +936,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPipelineRoute: AppPipelineRoute,
   AppProductsRoute: AppProductsRoute,
   AppProjectsRoute: AppProjectsRouteWithChildren,
+  AppPromptLibraryRoute: AppPromptLibraryRoute,
   AppQrSharingRoute: AppQrSharingRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTeamRoute: AppTeamRoute,
