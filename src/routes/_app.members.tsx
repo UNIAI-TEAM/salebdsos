@@ -5,9 +5,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth, type Role } from "@/hooks/use-auth";
 import {
   listMembers, inviteMember, revokeInvitation, updateMemberRole, removeMember,
+  createStaffAccount, resetStaffPassword,
 } from "@/lib/auth.functions";
 import { toast } from "sonner";
-import { Mail, Trash2, Copy, ShieldCheck, UserPlus } from "lucide-react";
+import { Mail, Trash2, Copy, ShieldCheck, UserPlus, KeyRound, BadgePlus } from "lucide-react";
 
 export const Route = createFileRoute("/_app/members")({ component: MembersPage });
 
@@ -29,6 +30,8 @@ function MembersPage() {
   const revoke = useServerFn(revokeInvitation);
   const updateRole = useServerFn(updateMemberRole);
   const remove = useServerFn(removeMember);
+  const createStaff = useServerFn(createStaffAccount);
+  const resetPass = useServerFn(resetStaffPassword);
 
   const qc = useQueryClient();
   const q = useQuery({
@@ -39,6 +42,42 @@ function MembersPage() {
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("agent");
+
+  // Tạo tài khoản nhân viên thật (đăng nhập được ngay)
+  const [staff, setStaff] = useState({
+    fullName: "", email: "", phone: "", password: "", role: "agent" as Role,
+  });
+
+  const createStaffMu = useMutation({
+    mutationFn: () =>
+      createStaff({
+        data: {
+          tenantId: tenantId!,
+          email: staff.email.trim(),
+          password: staff.password,
+          fullName: staff.fullName.trim(),
+          phone: staff.phone.trim() || undefined,
+          role: staff.role as "admin" | "manager" | "agent" | "viewer",
+        },
+      }),
+    onSuccess: (res: any) => {
+      toast.success(
+        res.created
+          ? `Đã tạo tài khoản ${res.email}, nhân viên có thể đăng nhập ngay`
+          : `Email ${res.email} đã có tài khoản, đã gắn quyền vào workspace`,
+      );
+      setStaff({ fullName: "", email: "", phone: "", password: "", role: "agent" });
+      qc.invalidateQueries({ queryKey: ["members", tenantId] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Không tạo được tài khoản"),
+  });
+
+  const resetPassMu = useMutation({
+    mutationFn: (v: { targetUserId: string; password: string }) =>
+      resetPass({ data: { tenantId: tenantId!, ...v } }),
+    onSuccess: () => toast.success("Đã đặt lại mật khẩu"),
+    onError: (e: any) => toast.error(e.message ?? "Không đặt lại được mật khẩu"),
+  });
 
   const inviteMu = useMutation({
     mutationFn: () => invite({ data: { tenantId: tenantId!, email, role } }),
@@ -79,6 +118,63 @@ function MembersPage() {
           <p className="text-sm text-muted-foreground">Quản lý người dùng trong {currentTenant?.name}</p>
         </div>
       </div>
+
+      {canManage && (
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <BadgePlus className="h-4 w-4 text-primary" />
+            <h2 className="font-semibold">Tạo tài khoản nhân viên</h2>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Tài khoản có email và mật khẩu thật, đăng nhập được ngay với đúng vai trò trong workspace này.
+          </p>
+          <form
+            onSubmit={(e) => { e.preventDefault(); createStaffMu.mutate(); }}
+            className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            <input
+              required minLength={2} placeholder="Họ và tên"
+              value={staff.fullName}
+              onChange={(e) => setStaff({ ...staff, fullName: e.target.value })}
+              className="h-10 rounded-lg border border-border bg-background px-3 text-sm"
+            />
+            <input
+              required type="email" placeholder="email@congty.com"
+              value={staff.email}
+              onChange={(e) => setStaff({ ...staff, email: e.target.value })}
+              className="h-10 rounded-lg border border-border bg-background px-3 text-sm"
+            />
+            <input
+              placeholder="Số điện thoại (tuỳ chọn)"
+              value={staff.phone}
+              onChange={(e) => setStaff({ ...staff, phone: e.target.value })}
+              className="h-10 rounded-lg border border-border bg-background px-3 text-sm"
+            />
+            <input
+              required type="password" minLength={8} placeholder="Mật khẩu tạm (tối thiểu 8 ký tự)"
+              value={staff.password}
+              onChange={(e) => setStaff({ ...staff, password: e.target.value })}
+              className="h-10 rounded-lg border border-border bg-background px-3 text-sm"
+            />
+            <select
+              value={staff.role}
+              onChange={(e) => setStaff({ ...staff, role: e.target.value as Role })}
+              className="h-10 rounded-lg border border-border bg-background px-3 text-sm"
+            >
+              {ROLE_OPTIONS.filter((r) => r.value !== "owner").map((r) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              disabled={createStaffMu.isPending}
+              className="h-10 rounded-lg bg-primary text-primary-foreground px-4 text-sm font-semibold disabled:opacity-60"
+            >
+              {createStaffMu.isPending ? "Đang tạo..." : "Tạo tài khoản"}
+            </button>
+          </form>
+        </div>
+      )}
 
       {canManage && (
         <div className="rounded-2xl border border-border bg-card p-5">
@@ -138,6 +234,20 @@ function MembersPage() {
                 </select>
               ) : (
                 <span className="text-xs px-2 py-1 rounded-md bg-muted">{ROLE_OPTIONS.find((r) => r.value === m.role)?.label ?? m.role}</span>
+              )}
+              {canManage && m.userId !== user?.id && (
+                <button
+                  onClick={() => {
+                    const pw = prompt(`Mật khẩu mới cho ${m.email ?? "nhân viên"} (tối thiểu 8 ký tự)`);
+                    if (!pw) return;
+                    if (pw.length < 8) { toast.error("Mật khẩu tối thiểu 8 ký tự"); return; }
+                    resetPassMu.mutate({ targetUserId: m.userId, password: pw });
+                  }}
+                  className="h-9 w-9 grid place-items-center rounded-md hover:bg-muted"
+                  title="Đặt lại mật khẩu"
+                >
+                  <KeyRound className="h-4 w-4" />
+                </button>
               )}
               {canManage && m.userId !== user?.id && (
                 <button
