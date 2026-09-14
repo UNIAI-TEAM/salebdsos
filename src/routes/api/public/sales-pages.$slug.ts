@@ -54,6 +54,13 @@ export const Route = createFileRoute("/api/public/sales-pages/$slug")({
           console.error("[sales-page] lead insert", error.message);
           return json({ error: "Không gửi được, vui lòng thử lại." }, 500);
         }
+        // Ghi nhận chuyển đổi theo ngày để vẽ biểu đồ
+        const { error: bErr } = await supabaseAdmin.rpc("bump_sales_page_conversion", {
+          _page_id: page.id,
+          _tenant_id: page.tenant_id,
+        });
+        if (bErr) console.error("[sales-page] conversion", bErr.message);
+
         return json({ ok: true });
       },
     },

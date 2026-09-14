@@ -42,6 +42,7 @@ const groups: Group[] = [
       { to: "/ai-followup", label: "AI Follow-up", icon: Sparkles, badge: "AI" },
       { to: "/ai-lead-score", label: "AI Lead Score", icon: Gauge, roles: ["owner", "admin", "manager"] },
       { to: "/ai-sales-page", label: "AI Sales Page", icon: Globe2, roles: ["owner", "admin", "manager"] },
+      { to: "/landings", label: "Landing công khai", icon: Globe2, roles: ["owner", "admin", "manager", "agent"] },
       { to: "/prompt-library", label: "Thư viện prompt", icon: BookMarked, roles: ["owner", "admin", "manager", "agent"] },
       { to: "/marketing", label: "Marketing & Campaign", icon: Megaphone, roles: ["owner", "admin", "manager"] },
       { to: "/analytics", label: "Báo cáo & Analytics", icon: BarChart3, roles: ["owner", "admin", "manager"] },

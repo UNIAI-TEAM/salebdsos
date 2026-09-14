@@ -400,6 +400,8 @@ export type SalesPageOutput = {
   cta_primary?: string | null;
   cta_secondary?: string | null;
   form_intro?: string | null;
+  hero_image_url?: string | null;
+  gallery?: string[] | null;
 };
 
 const OutputSchema = z.object({
@@ -411,6 +413,8 @@ const OutputSchema = z.object({
   cta_primary: z.string().max(120).optional().nullable(),
   cta_secondary: z.string().max(120).optional().nullable(),
   form_intro: z.string().max(400).optional().nullable(),
+  hero_image_url: z.string().trim().max(1000).optional().nullable(),
+  gallery: z.array(z.string().trim().max(1000)).max(8).optional().nullable(),
 });
 
 export const updateSalesPage = createServerFn({ method: "POST" })
@@ -502,6 +506,13 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) return null;
+
+    // Ghi nhận lượt xem theo ngày để vẽ biểu đồ lưu lượng
+    void supabaseAdmin
+      .rpc("bump_sales_page_view", { _page_id: row.id, _tenant_id: row.tenant_id })
+      .then(({ error: e }: { error: { message: string } | null }) => {
+        if (e) console.error("[sales-page] daily view", e.message);
+      });
 
     void supabaseAdmin
       .from("ai_sales_pages")
@@ -647,4 +658,66 @@ Phần cuối phải là lời kêu gọi hành động có chèn link ${publicU
       .single();
     if (error) throw new Error(error.message);
     return { ok: true, page: row, article };
+  });
+
+
+// ---------------------------------------------------------------------------
+// Thống kê lưu lượng & chuyển đổi cho landing công khai
+// ---------------------------------------------------------------------------
+export type LandingStatPoint = { day: string; views: number; conversions: number };
+
+export const getSalesPageStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        pageId: z.string().uuid().optional().nullable(),
+        days: z.number().int().min(7).max(90).optional().default(30),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const days = data.days ?? 30;
+    const since = new Date(Date.now() - (days - 1) * 86400000);
+    const sinceDay = since.toISOString().slice(0, 10);
+
+    let q = context.supabase
+      .from("sales_page_views")
+      .select("page_id,day,views,conversions")
+      .eq("tenant_id", data.tenantId)
+      .gte("day", sinceDay)
+      .order("day", { ascending: true });
+    if (data.pageId) q = q.eq("page_id", data.pageId);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const byDay = new Map<string, LandingStatPoint>();
+    for (let i = 0; i < days; i++) {
+      const d = new Date(since.getTime() + i * 86400000).toISOString().slice(0, 10);
+      byDay.set(d, { day: d, views: 0, conversions: 0 });
+    }
+    const byPage = new Map<string, { views: number; conversions: number }>();
+    for (const r of rows ?? []) {
+      const key = String(r.day).slice(0, 10);
+      const point = byDay.get(key);
+      if (point) {
+        point.views += r.views ?? 0;
+        point.conversions += r.conversions ?? 0;
+      }
+      const agg = byPage.get(r.page_id) ?? { views: 0, conversions: 0 };
+      agg.views += r.views ?? 0;
+      agg.conversions += r.conversions ?? 0;
+      byPage.set(r.page_id, agg);
+    }
+    const series = Array.from(byDay.values());
+    const totalViews = series.reduce((a, b) => a + b.views, 0);
+    const totalConversions = series.reduce((a, b) => a + b.conversions, 0);
+    return {
+      series,
+      totalViews,
+      totalConversions,
+      conversionRate: totalViews ? (totalConversions / totalViews) * 100 : 0,
+      byPage: Object.fromEntries(byPage),
+    };
   });
