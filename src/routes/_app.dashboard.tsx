@@ -120,11 +120,11 @@ function Dashboard() {
   }, [pipelineQ.data]);
 
   const stageColors = [
-    "bg-slate-100 text-slate-700",
-    "bg-blue-100 text-blue-700",
-    "bg-amber-100 text-amber-700",
-    "bg-violet-100 text-violet-700",
-    "bg-emerald-100 text-emerald-700",
+    "bg-primary/15 text-primary",
+    "bg-info/15 text-info",
+    "bg-warning/15 text-warning",
+    "bg-success/15 text-success",
+    "bg-muted text-muted-foreground",
   ];
 
   // Estimated revenue from won deals in pipeline
