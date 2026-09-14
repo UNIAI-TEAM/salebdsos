@@ -74,6 +74,10 @@ const GenerateSchema = z.object({
   extra: z.string().trim().max(2000).optional(),
   /** Prompt do người dùng xem trước / chỉnh sửa. Nếu có sẽ dùng thay prompt tự sinh. */
   promptOverride: z.string().trim().max(8000).optional().nullable(),
+  /** Tạo xong xuất bản luôn thành landing công khai. */
+  autoPublish: z.boolean().optional().default(false),
+  /** Đường dẫn công khai mong muốn (tuỳ chọn). */
+  slug: z.string().trim().max(80).optional().nullable(),
 });
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
@@ -286,7 +290,27 @@ export const generateSalesPage = createServerFn({ method: "POST" })
       .select(SELECT)
       .single();
     if (error) throw new Error(error.message);
-    return { ok: true, page: row };
+
+    if (!data.autoPublish) return { ok: true, page: row, published: false };
+
+    // Xuất bản ngay: sinh slug (thử tối đa 5 lần nếu trùng)
+    const base =
+      slugify(data.slug || row.title || output?.headline || "trang-ban-hang") || "trang-ban-hang";
+    let published = row;
+    let lastErr = "";
+    for (let i = 0; i < 5; i++) {
+      const slug = i === 0 ? `${base}-${row.id.slice(0, 6)}` : `${base}-${row.id.slice(0, 6)}-${i}`;
+      const { data: p, error: pErr } = await supabase
+        .from("ai_sales_pages")
+        .update({ slug, is_published: true, status: "published" })
+        .eq("id", row.id)
+        .select(SELECT)
+        .single();
+      if (!pErr && p) return { ok: true, page: p, published: true };
+      lastErr = pErr?.message ?? "";
+      if (!/duplicate|unique/i.test(lastErr)) break;
+    }
+    return { ok: true, page: published, published: false, publishError: lastErr };
   });
 
 // ---------------------------------------------------------------------------
