@@ -322,11 +322,18 @@ function AISalesPage() {
 
             <button
               disabled={!tenantId || genMut.isPending}
-              onClick={() => genMut.mutate()}
+              onClick={() => genMut.mutate({ autoPublish: true })}
               className="w-full h-11 rounded-xl bg-primary text-primary-foreground text-[13px] font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              {genMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-              {genMut.isPending ? "Đang tạo..." : "Tạo bằng AI"}
+              {genMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+              {genMut.isPending ? "Đang tạo & xuất bản..." : "Tạo & xuất bản landing"}
+            </button>
+            <button
+              disabled={!tenantId || genMut.isPending}
+              onClick={() => genMut.mutate({ autoPublish: false })}
+              className="w-full h-10 rounded-xl border border-border text-[13px] font-semibold inline-flex items-center justify-center gap-2 hover:bg-muted disabled:opacity-60"
+            >
+              <Wand2 className="h-4 w-4" /> Chỉ tạo nội dung (chưa xuất bản)
             </button>
           </div>
         </SectionCard>
