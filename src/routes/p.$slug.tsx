@@ -192,7 +192,7 @@ function PublicSalesPage() {
                 required
                 name="phone"
                 inputMode="tel"
-                pattern="[0-9+()\s.\-]{8,20}"
+                pattern="[-0-9+() .]{8,20}"
                 placeholder="Số điện thoại"
                 className="h-11 w-full rounded-xl border border-border bg-card px-4 text-[14px] outline-none focus:ring-2 focus:ring-primary/30"
               />
