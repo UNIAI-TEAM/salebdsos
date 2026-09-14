@@ -254,7 +254,29 @@ function MembersPage() {
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{m.fullName || m.email || m.userId}</div>
                 <div className="text-xs text-muted-foreground truncate">{m.email}</div>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  {(m as any).emailConfirmedAt ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500">
+                      <MailCheck className="h-3 w-3" /> Đã xác nhận email
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500">
+                      <MailWarning className="h-3 w-3" /> Chờ xác nhận email
+                    </span>
+                  )}
+                  <span className="text-[11px] text-muted-foreground">{permissionLabel(m.role)}</span>
+                </div>
               </div>
+              {canManage && !(m as any).emailConfirmedAt && (
+                <button
+                  onClick={() => resendMu.mutate(m.userId)}
+                  disabled={resendMu.isPending}
+                  className="h-9 px-2 rounded-md hover:bg-muted text-xs flex items-center gap-1 disabled:opacity-60"
+                  title="Gửi lại email xác nhận"
+                >
+                  <Mail className="h-3.5 w-3.5" /> Gửi lại
+                </button>
+              )}
               {canManage && m.userId !== user?.id ? (
                 <select
                   value={m.role}
