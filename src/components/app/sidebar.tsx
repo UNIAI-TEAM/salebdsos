@@ -287,7 +287,7 @@ function SidebarBody({
                       ].join(" ")}>{it.label}</span>
                       {/* Active dot when icon-only (in place of hidden badge) */}
                       {iconOnly && active && (
-                        <span aria-hidden className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
+                        <span aria-hidden className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_oklch(0.62_0.18_285)]" />
                       )}
                       {it.badge && (
                         <span className={[
