@@ -14,6 +14,8 @@ import {
   deleteSalesPage,
   updateSalesPage,
   setSalesPagePublish,
+  draftSalesBrief,
+  previewSalesPrompt,
   TONES,
   TONE_LABEL_VI,
 } from "@/lib/ai-sales-page.functions";
