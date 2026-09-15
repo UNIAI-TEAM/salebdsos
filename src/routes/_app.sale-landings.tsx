@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { warmOfflineCache, warmLandings } from "@/lib/pwa";
+import { optimizeImageVariants, formatBytes } from "@/lib/image-optim";
+
 import {
   Globe2, Search, Upload, FileText, ImageIcon, Check, ExternalLink, Copy, Link2,
 } from "lucide-react";
@@ -146,6 +148,8 @@ function LandingQuickEdit({ id, tenantId }: { id: string; tenantId: string }) {
   const p: any = page.data;
   const out: any = p?.output ?? {};
   const gallery: string[] = Array.isArray(out.gallery) ? out.gallery : [];
+  const galleryMobile: string[] = Array.isArray(out.gallery_mobile) ? out.gallery_mobile : [];
+
   const origin = typeof window === "undefined" ? "" : window.location.origin;
   const url = p?.slug ? `${origin}/p/${p.slug}` : null;
 
@@ -186,18 +190,31 @@ function LandingQuickEdit({ id, tenantId }: { id: string; tenantId: string }) {
     setBusy(true);
     try {
       const urls: string[] = [];
+      const mobileUrls: string[] = [];
       for (const file of Array.from(files).slice(0, 8)) {
-        if (file.size > 8 * 1024 * 1024) { toast.error(`${file.name} > 8MB`); continue; }
-        urls.push(await upload(file, "images"));
+        if (file.size > 20 * 1024 * 1024) { toast.error(`${file.name} > 20MB`); continue; }
+        const { large, small } = await optimizeImageVariants(file);
+        urls.push(await upload(large.file, "images"));
+        mobileUrls.push(await upload(small.file, "images"));
+        if (large.file.size < file.size) {
+          toast.success(`Đã nén ${file.name}: ${formatBytes(file.size)} → ${formatBytes(large.file.size)}`);
+        }
       }
       if (urls.length) {
         save.mutate({
-          output: { ...out, gallery: [...gallery, ...urls].slice(0, 8), hero_image_url: urls[0] },
+          output: {
+            ...out,
+            gallery: [...gallery, ...urls].slice(0, 8),
+            gallery_mobile: [...galleryMobile, ...mobileUrls].slice(0, 8),
+            hero_image_url: urls[0],
+            hero_image_mobile_url: mobileUrls[0] ?? urls[0],
+          },
         });
       }
     } catch (e: any) { toast.error(e?.message ?? "Tải ảnh lỗi"); }
     finally { setBusy(false); }
   }
+
 
   async function onPickBrochure(file: File | null) {
     if (!file) return;
