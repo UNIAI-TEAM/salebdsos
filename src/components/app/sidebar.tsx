@@ -73,6 +73,18 @@ const groups: Group[] = [
   },
 ];
 
+/** Chế độ Sale trên điện thoại: chỉ landing công khai, danh thiếp và timeline. */
+const saleMobileGroups: Group[] = [
+  {
+    label: "Dành cho Sale",
+    items: [
+      { to: "/landings", label: "Landing công khai", icon: Globe2 },
+      { to: "/digital-card", label: "Danh thiếp & Profile", icon: IdCard },
+      { to: "/timeline", label: "Timeline", icon: Radio },
+    ],
+  },
+];
+
 const roleLabel: Record<Role, string> = {
   platform_admin: "Platform Admin",
   owner: "Agency Owner",
@@ -235,7 +247,7 @@ function SidebarBody({
       </DropdownMenu>
 
       <nav className="flex-1 overflow-y-auto scrollbar-thin px-2 pb-3">
-        {groups.map((g) => {
+        {(isMobile ? saleMobileGroups : groups).map((g) => {
           const items = g.items.filter(can);
           if (items.length === 0) return null;
           return (
