@@ -3,6 +3,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { CheckCircle2, Gift, Quote, MapPin, ArrowRight } from "lucide-react";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
+import { InstallLandingApp } from "@/components/install-landing-app";
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
@@ -129,6 +130,9 @@ function PublicSalesPage() {
                 {s("cta_secondary")}
               </a>
             ) : null}
+          </div>
+          <div className="mt-5 flex justify-center">
+            <InstallLandingApp slug={page.slug} title={page.title || "Landing"} />
           </div>
         </div>
       </section>
