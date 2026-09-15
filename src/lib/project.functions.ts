@@ -17,6 +17,7 @@ const ProjectInput = z.object({
   currency: z.string().max(8).optional().nullable(),
   description: z.string().max(5000).optional().nullable(),
   cover_url: z.string().url().max(1000).optional().nullable(),
+  cover_mobile_url: z.string().url().max(1000).optional().nullable(),
   brochure_url: z.string().url().max(1000).optional().nullable(),
   brochure_name: z.string().max(255).optional().nullable(),
   sales_policy: z.string().max(5000).optional().nullable(),
@@ -24,6 +25,7 @@ const ProjectInput = z.object({
   cta_form_enabled: z.boolean().optional(),
   unit_highlights: z.array(z.string().min(1).max(200)).max(20).optional(),
   gallery: z.array(z.string().url().max(1000)).max(40).optional(),
+  gallery_mobile: z.array(z.string().url().max(1000)).max(40).optional(),
 });
 
 export const listProjects = createServerFn({ method: "GET" })
@@ -32,7 +34,7 @@ export const listProjects = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("projects")
-      .select("id,name,developer,location,city,property_type,status,price_from,price_to,currency,cover_url,created_at")
+      .select("id,name,developer,location,city,property_type,status,price_from,price_to,currency,cover_url,cover_mobile_url,created_at")
       .eq("tenant_id", data.tenantId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
@@ -63,7 +65,7 @@ export const upsertProject = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => ProjectInput.parse(i))
   .handler(async ({ data, context }) => {
-    const payload = { ...data, unit_highlights: data.unit_highlights ?? [], gallery: data.gallery ?? [] };
+    const payload = { ...data, unit_highlights: data.unit_highlights ?? [], gallery: data.gallery ?? [], gallery_mobile: data.gallery_mobile ?? [] };
     if (data.id) {
       const { data: row, error } = await context.supabase
         .from("projects").update(payload).eq("id", data.id).select().single();
