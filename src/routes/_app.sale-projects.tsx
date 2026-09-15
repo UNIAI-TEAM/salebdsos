@@ -15,8 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { warmOfflineCache } from "@/lib/pwa";
-import { optimizeImage } from "@/lib/image-optim";
+import { warmOfflineCache, warmOfflineAssets } from "@/lib/pwa";
+import { optimizeImageVariants, formatBytes } from "@/lib/image-optim";
 import { ProjectAppointments } from "@/components/app/project-appointments";
 
 import { Building2, Search, Upload, FileText, Link2, ImageIcon, Check, ExternalLink } from "lucide-react";
@@ -58,6 +58,15 @@ function SaleProjectsPage() {
     void warmOfflineCache(["/sale-projects", "/landings", "/timeline"]);
   }, []);
 
+  // Lưu sẵn ảnh bìa (bản nhẹ cho điện thoại) để sale xem được khi mất mạng
+  const covers = (projects.data ?? [])
+    .map((p: any) => p.cover_mobile_url ?? p.cover_url)
+    .filter(Boolean) as string[];
+  const coverKey = covers.join(",");
+  useEffect(() => {
+    if (covers.length) void warmOfflineAssets(covers);
+  }, [coverKey]);
+
   if (!tenantId) return <div className="p-6 text-sm text-muted-foreground">Chọn workspace để tiếp tục.</div>;
 
   const items = projects.data ?? [];
@@ -86,7 +95,7 @@ function SaleProjectsPage() {
               >
                 <div className="h-16 w-20 shrink-0 rounded-xl bg-muted overflow-hidden grid place-items-center">
                   {p.cover_url
-                    ? <img src={p.cover_url} alt={p.name} className="h-full w-full object-cover" />
+                    ? <img src={(p as any).cover_mobile_url ?? p.cover_url} alt={p.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                     : <Building2 className="h-5 w-5 text-muted-foreground" />}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -131,6 +140,7 @@ function ProjectQuickEdit({ id, tenantId }: { id: string; tenantId: string }) {
 
   const p: any = project.data?.project;
   const gallery: string[] = (p?.gallery as string[]) ?? [];
+  const galleryMobile: string[] = (p?.gallery_mobile as string[]) ?? [];
   const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   const save = useMutation({
@@ -157,13 +167,26 @@ function ProjectQuickEdit({ id, tenantId }: { id: string; tenantId: string }) {
     setBusy(true);
     try {
       const urls: string[] = [];
+      const mobileUrls: string[] = [];
+      let saved = 0;
       for (const file of Array.from(files).slice(0, 8)) {
         if (file.size > 20 * 1024 * 1024) { toast.error(`${file.name} > 20MB`); continue; }
-        const optimized = await optimizeImage(file, { maxWidth: 1600, quality: 0.82 });
-        urls.push(await upload(optimized.file, "gallery"));
+        const { large, small } = await optimizeImageVariants(file);
+        urls.push(await upload(large.file, "gallery"));
+        mobileUrls.push(await upload(small.file, "gallery"));
+        saved += Math.max(0, file.size - small.file.size);
       }
 
-      if (urls.length) save.mutate({ gallery: [...gallery, ...urls], cover_url: urls[0] });
+      if (urls.length) {
+        void warmOfflineAssets(mobileUrls);
+        if (saved > 0) toast.success(`Đã nén ảnh, tiết kiệm ${formatBytes(saved)}`);
+        save.mutate({
+          gallery: [...gallery, ...urls],
+          gallery_mobile: [...galleryMobile, ...mobileUrls],
+          cover_url: urls[0],
+          cover_mobile_url: mobileUrls[0] ?? urls[0],
+        });
+      }
     } catch (e: any) { toast.error(e?.message ?? "Tải ảnh lỗi"); }
     finally { setBusy(false); }
   }
@@ -202,16 +225,20 @@ function ProjectQuickEdit({ id, tenantId }: { id: string; tenantId: string }) {
           </div>
           <div className="aspect-[16/9] rounded-xl bg-muted overflow-hidden grid place-items-center">
             {p.cover_url
-              ? <img src={p.cover_url} alt={p.name} className="h-full w-full object-cover" />
+              ? <img
+                  src={p.cover_mobile_url ?? p.cover_url}
+                  srcSet={p.cover_mobile_url ? `${p.cover_mobile_url} 800w, ${p.cover_url} 1600w` : undefined}
+                  sizes="(max-width: 640px) 100vw, 512px"
+                  alt={p.name} decoding="async" className="h-full w-full object-cover" />
               : <ImageIcon className="h-6 w-6 text-muted-foreground" />}
           </div>
           {gallery.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
-              {gallery.map((url) => (
+              {gallery.map((url, i) => (
                 <button key={url} type="button" disabled={saving}
-                  onClick={() => save.mutate({ cover_url: url })}
+                  onClick={() => save.mutate({ cover_url: url, cover_mobile_url: galleryMobile[i] ?? url })}
                   className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted">
-                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  <img src={galleryMobile[i] ?? url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   {p.cover_url === url && (
                     <span className="absolute inset-0 grid place-items-center bg-primary/40 text-primary-foreground">
                       <Check className="h-5 w-5" />
