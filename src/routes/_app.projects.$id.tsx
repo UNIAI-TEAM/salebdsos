@@ -8,6 +8,7 @@ import {
   getProject, upsertProject, softDeleteProject,
   attachCard, detachCard, getMyCardsForAttach,
 } from "@/lib/project.functions";
+import { listSalesPages } from "@/lib/ai-sales-page.functions";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
