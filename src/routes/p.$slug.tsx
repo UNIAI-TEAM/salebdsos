@@ -52,6 +52,58 @@ function Fallback({ title, sub }: { title: string; sub: string }) {
   );
 }
 
+function shareLinks(url: string, text: string) {
+  const encodedUrl = encodeURIComponent(url);
+  const encodedText = encodeURIComponent(text);
+  return {
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    zalo: `https://zalo.me/share?u=${encodedUrl}&t=${encodedText}`,
+    viber: `viber://forward?text=${encodedText}%20${encodedUrl}`,
+  };
+}
+
+function ShareLanding({ url, title }: { url: string; title: string }) {
+  const links = shareLinks(url, title);
+  const share = async (href: string, app: string) => {
+    if (app === "viber" && typeof window !== "undefined" && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      toast?.error?.("Viber chỉ mở được trên điện thoại.");
+      return;
+    }
+    window.open(href, "_blank", "noopener,noreferrer");
+  };
+  return (
+    <div className="mt-6">
+      <div className="flex items-center justify-center gap-2 text-[12.5px] text-muted-foreground">
+        <Share2 className="h-3.5 w-3.5" />
+        <span>Chia sẻ cho bạn bè</span>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={() => share(links.zalo, "zalo")}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#0068FF] px-4 text-[12.5px] font-semibold text-white hover:bg-[#0056d6]"
+        >
+          Zalo
+        </button>
+        <button
+          type="button"
+          onClick={() => share(links.facebook, "facebook")}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#1877F3] px-4 text-[12.5px] font-semibold text-white hover:bg-[#166fe5]"
+        >
+          Facebook
+        </button>
+        <button
+          type="button"
+          onClick={() => share(links.viber, "viber")}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#7360F2] px-4 text-[12.5px] font-semibold text-white hover:bg-[#6658d9]"
+        >
+          Viber
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PublicSalesPage() {
   const page = Route.useLoaderData();
   const o = page.output as Record<string, unknown>;
