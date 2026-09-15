@@ -8,6 +8,8 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { warmOfflineCache } from "@/lib/pwa";
 import { getSaleTimeline } from "@/lib/sale-timeline.functions";
+import { QuickContact } from "@/components/app/quick-contact";
+
 
 export const Route = createFileRoute("/_app/timeline")({
   head: () => ({
