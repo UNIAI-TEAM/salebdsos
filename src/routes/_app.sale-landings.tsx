@@ -272,9 +272,10 @@ function LandingQuickEdit({ id, tenantId }: { id: string; tenantId: string }) {
           </div>
           {gallery.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
-              {gallery.map((g) => (
+              {gallery.map((g, i) => (
                 <button key={g} type="button" disabled={saving}
-                  onClick={() => save.mutate({ output: { ...out, hero_image_url: g } })}
+                  onClick={() => save.mutate({ output: { ...out, hero_image_url: g, hero_image_mobile_url: galleryMobile[i] ?? g } })}
+
                   className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted">
                   <img src={g} alt="" className="h-full w-full object-cover" />
                   {out.hero_image_url === g && (
