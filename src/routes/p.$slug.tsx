@@ -1,7 +1,8 @@
 // Public AI sales landing page: /p/<slug>
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CheckCircle2, Gift, Quote, MapPin, ArrowRight, FileText } from "lucide-react";
+import { CheckCircle2, Gift, Quote, MapPin, ArrowRight, FileText, Share2 } from "lucide-react";
+import { toast } from "sonner";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
 import { InstallLandingApp } from "@/components/install-landing-app";
 import { warmLanding } from "@/lib/pwa";
@@ -17,16 +18,20 @@ export const Route = createFileRoute("/p/$slug")({
     const desc = String(
       (loaderData?.output?.["subheadline"] as string) || "Thông tin dự án và ưu đãi dành riêng cho bạn.",
     ).slice(0, 155);
-    return {
-      meta: [
-        { title },
-        { name: "description", content: desc },
-        { property: "og:title", content: title },
-        { property: "og:description", content: desc },
-        { property: "og:type", content: "website" },
-        { name: "twitter:card", content: "summary_large_image" },
-      ],
-    };
+    const heroUrl = String((loaderData?.output?.["hero_image_url"] as string) || "");
+    const meta: { title?: string; name?: string; property?: string; content?: string }[] = [
+      { title },
+      { name: "description", content: desc },
+      { property: "og:title", content: title },
+      { property: "og:description", content: desc },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ];
+    if (heroUrl.startsWith("https://")) {
+      meta.push({ property: "og:image", content: heroUrl });
+      meta.push({ name: "twitter:image", content: heroUrl });
+    }
+    return { meta };
   },
   component: PublicSalesPage,
   errorComponent: () => (
@@ -48,6 +53,58 @@ function Fallback({ title, sub }: { title: string; sub: string }) {
   );
 }
 
+function shareLinks(url: string, text: string) {
+  const encodedUrl = encodeURIComponent(url);
+  const encodedText = encodeURIComponent(text);
+  return {
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    zalo: `https://zalo.me/share?u=${encodedUrl}&t=${encodedText}`,
+    viber: `viber://forward?text=${encodedText}%20${encodedUrl}`,
+  };
+}
+
+function ShareLanding({ url, title }: { url: string; title: string }) {
+  const links = shareLinks(url, title);
+  const share = async (href: string, app: string) => {
+    if (app === "viber" && typeof window !== "undefined" && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      toast?.error?.("Viber chỉ mở được trên điện thoại.");
+      return;
+    }
+    window.open(href, "_blank", "noopener,noreferrer");
+  };
+  return (
+    <div className="mt-6">
+      <div className="flex items-center justify-center gap-2 text-[12.5px] text-muted-foreground">
+        <Share2 className="h-3.5 w-3.5" />
+        <span>Chia sẻ cho bạn bè</span>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={() => share(links.zalo, "zalo")}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#0068FF] px-4 text-[12.5px] font-semibold text-white hover:bg-[#0056d6]"
+        >
+          Zalo
+        </button>
+        <button
+          type="button"
+          onClick={() => share(links.facebook, "facebook")}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#1877F3] px-4 text-[12.5px] font-semibold text-white hover:bg-[#166fe5]"
+        >
+          Facebook
+        </button>
+        <button
+          type="button"
+          onClick={() => share(links.viber, "viber")}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#7360F2] px-4 text-[12.5px] font-semibold text-white hover:bg-[#6658d9]"
+        >
+          Viber
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PublicSalesPage() {
   const page = Route.useLoaderData();
   const o = page.output as Record<string, unknown>;
@@ -56,6 +113,8 @@ function PublicSalesPage() {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Làm mới cache của chính landing này (trang + manifest + ảnh hero)
   // để lần mở từ icon sau đó hiện gần như tức thì.
@@ -144,6 +203,12 @@ function PublicSalesPage() {
           <div className="mt-5 flex justify-center">
             <InstallLandingApp slug={page.slug ?? ""} title={page.title || "Landing"} />
           </div>
+          {mounted && page.slug ? (
+            <ShareLanding
+              url={`${window.location.origin}/p/${page.slug}`}
+              title={s("headline") || page.title || "Thông tin dự án"}
+            />
+          ) : null}
         </div>
       </section>
 
