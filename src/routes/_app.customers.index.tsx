@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { warmOfflineCache } from "@/lib/pwa";
+import { getCustomerDetail } from "@/lib/customer-detail.functions";
 import { Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Users2, Upload } from "lucide-react";
 import { ImportCustomersDialog } from "@/components/customers/import-csv-dialog";
 import { PageHeader, KpiCard } from "@/components/app/ui";
@@ -48,6 +50,7 @@ function CustomersPage() {
   const fnCreate = useServerFn(createCustomer);
   const fnUpdate = useServerFn(updateCustomer);
   const fnDelete = useServerFn(deleteCustomer);
+  const fnDetail = useServerFn(getCustomerDetail);
 
   const list = useQuery({
     queryKey: ["customers", tenantId, search, page, pageSize],
@@ -77,6 +80,22 @@ function CustomersPage() {
   const items = (list.data?.items ?? []) as CustomerRow[];
   const total = list.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  // Lưu trước danh sách + chi tiết khách (giao dịch, lịch hẹn) để xem khi mất mạng.
+  useEffect(() => {
+    if (!tenantId || items.length === 0) return;
+    const top = items.slice(0, 8);
+    warmOfflineCache(["/customers", "/timeline", ...top.map((c) => `/customers/${c.id}`)]);
+    top.forEach((c) => {
+      void qc
+        .prefetchQuery({
+          queryKey: ["customer-detail", tenantId, c.id],
+          queryFn: () => fnDetail({ data: { tenantId, id: c.id } }),
+          staleTime: 60_000,
+        })
+        .catch(() => {});
+    });
+  }, [tenantId, items, qc, fnDetail]);
 
   const onSubmitSearch = (e: React.FormEvent) => {
     e.preventDefault();

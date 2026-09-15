@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { warmOfflineCache } from "@/lib/pwa";
 import {
   ArrowLeft, Plus, Wallet, CalendarClock, History, Trash2, GitBranch, Check, X,
 } from "lucide-react";
@@ -87,6 +88,12 @@ function CustomerDetailPage() {
     queryFn: () => fnDetail({ data: { tenantId: tenantId!, id } }),
     enabled: !!tenantId,
   });
+
+  // Lưu trước trang khách này để xem lại khi mất mạng.
+  useEffect(() => {
+    if (!detail.data) return;
+    warmOfflineCache([`/customers/${id}`, "/customers", "/timeline"]);
+  }, [detail.data, id]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["customer-detail", tenantId, id] });

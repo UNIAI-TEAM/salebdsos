@@ -53,7 +53,7 @@ export default defineConfig({
               options: {
                 cacheName: "salebds-app-pages",
                 networkTimeoutSeconds: 4,
-                expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 7 },
+                expiration: { maxEntries: 90, maxAgeSeconds: 60 * 60 * 24 * 7 },
                 cacheableResponse: { statuses: [0, 200] },
               },
             },

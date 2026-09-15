@@ -56,6 +56,7 @@ function TimelinePage() {
       "/timeline",
       "/digital-card",
       "/landings",
+      "/customers",
       ...d.cards.filter((c) => c.slug).map((c) => `/c/${c.slug}`),
       ...d.pages.filter((p) => p.slug).map((p) => `/p/${p.slug}`),
     ]);
