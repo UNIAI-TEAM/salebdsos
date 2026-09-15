@@ -77,3 +77,51 @@ export async function warmOfflineCache(paths: string[]): Promise<void> {
   );
 }
 
+/**
+ * Lưu trước ảnh (hero landing, ảnh bìa dự án, avatar danh thiếp) để landing
+ * mở từ icon hiện ảnh ngay, không phải chờ tải lại khi mạng yếu.
+ */
+export async function warmOfflineAssets(urls: string[]): Promise<void> {
+  if (typeof window === "undefined" || typeof caches === "undefined") return;
+  if (isBlockedContext()) return;
+  if (!navigator.onLine) return;
+
+  const unique = Array.from(new Set(urls.filter((u) => !!u && /^https?:\/\//.test(u)))).slice(0, 40);
+  if (unique.length === 0) return;
+
+  const cache = await caches.open("salebds-images");
+  await Promise.allSettled(
+    unique.map(async (url) => {
+      try {
+        if (await cache.match(url)) return;
+        const res = await fetch(url, { mode: "cors" });
+        if (res.ok || res.type === "opaque") await cache.put(url, res.clone());
+      } catch {
+        /* bỏ qua */
+      }
+    }),
+  );
+}
+
+/**
+ * Lưu trước một landing công khai: trang /p/{slug}, manifest app riêng của
+ * landing và ảnh hero → mở từ icon là hiện ngay.
+ */
+export async function warmLanding(slug: string, heroImageUrl?: string | null): Promise<void> {
+  if (!slug) return;
+  await Promise.allSettled([
+    warmOfflineCache([`/p/${slug}`]),
+    warmOfflineCache([`/api/public/landing-manifest/${slug}`]),
+    warmOfflineAssets(heroImageUrl ? [heroImageUrl] : []),
+  ]);
+}
+
+/** Lưu trước nhiều landing (tuần tự nhẹ để không nghẽn mạng yếu). */
+export async function warmLandings(
+  landings: { slug: string | null; heroImageUrl?: string | null }[],
+): Promise<void> {
+  for (const l of landings.filter((x) => !!x.slug).slice(0, 12)) {
+    await warmLanding(l.slug as string, l.heroImageUrl ?? null);
+  }
+}
+
