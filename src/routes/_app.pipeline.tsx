@@ -216,6 +216,19 @@ function PipelinePage() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={filterProject} onValueChange={setFilterProject}>
+              <SelectTrigger className="h-9 w-[190px] rounded-xl text-[12.5px]">
+                <Filter className="h-4 w-4 mr-1" />
+                <SelectValue placeholder="Lọc dự án" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả dự án</SelectItem>
+                <SelectItem value="none">Chưa gắn dự án</SelectItem>
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button variant="outline" onClick={() => setStageMgr(true)} disabled={!canEdit} className="h-9 rounded-xl">
               <Settings2 className="h-4 w-4" /> Giai đoạn
             </Button>
