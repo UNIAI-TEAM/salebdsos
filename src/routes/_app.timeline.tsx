@@ -67,7 +67,7 @@ function TimelinePage() {
     <div className="space-y-6">
       <PageHeader title="Timeline" sub="Hoạt động của bạn và lượt xem landing, danh thiếp trong 14 ngày." />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <KpiCard icon={Eye} label="Lượt xem" value={String(d?.stats.views ?? 0)} delta={0} deltaLabel="14 ngày qua" />
         <KpiCard icon={Users2} label="Khách mới" value={String(d?.stats.leads ?? 0)} delta={0} deltaLabel="14 ngày qua" tone="amber" />
         <KpiCard icon={Activity} label="Hoạt động" value={String(d?.stats.activities ?? 0)} delta={0} deltaLabel="14 ngày qua" tone="blue" />
@@ -76,17 +76,18 @@ function TimelinePage() {
 
       {(d?.cards?.length || d?.pages?.length) ? (
         <SectionCard title="Mở nhanh">
-          <div className="flex flex-wrap gap-2">
+          <div className="grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             {(d?.cards ?? []).map((c) => (
               <a
                 key={c.id}
                 href={`/c/${c.slug}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-[13px] hover:border-primary/50"
+                className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-[13px] hover:border-primary/50"
               >
-                <IdCard className="size-4 text-primary" /> {c.name}
-                <ExternalLink className="size-3.5 text-muted-foreground" />
+                <IdCard className="size-4 shrink-0 text-primary" />
+                <span className="truncate">{c.name}</span>
+                <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
               </a>
             ))}
             {(d?.pages ?? []).filter((p) => p.slug).map((p) => (
@@ -95,10 +96,11 @@ function TimelinePage() {
                 href={`/p/${p.slug}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-[13px] hover:border-primary/50"
+                className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-[13px] hover:border-primary/50"
               >
-                <Globe2 className="size-4 text-primary" /> {p.title || "Landing"}
-                <ExternalLink className="size-3.5 text-muted-foreground" />
+                <Globe2 className="size-4 shrink-0 text-primary" />
+                <span className="truncate">{p.title || "Landing"}</span>
+                <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
               </a>
             ))}
           </div>
@@ -117,19 +119,19 @@ function TimelinePage() {
             <Link to="/landings" className="text-primary hover:underline">landing</Link> của bạn.
           </div>
         ) : (
-          <ol className="relative space-y-4 pl-5">
+          <ol className="relative min-w-0 space-y-4 pl-5">
             <span className="absolute left-1.5 top-2 bottom-2 w-px bg-border" aria-hidden />
             {d!.items.map((it) => {
               const s = KIND_STYLE[it.kind] ?? KIND_STYLE.activity;
               return (
-                <li key={it.id} className="relative">
+                <li key={it.id} className="relative min-w-0">
                   <span className={`absolute -left-[15px] top-1.5 size-2.5 rounded-full ${s.dot}`} aria-hidden />
-                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    <span className="text-[13.5px] font-semibold">{it.title}</span>
+                  <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="min-w-0 break-words text-[13.5px] font-semibold">{it.title}</span>
                     <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{s.label}</span>
                   </div>
-                  {it.detail ? <p className="text-[13px] text-muted-foreground">{it.detail}</p> : null}
-                  <p className="text-[11.5px] text-muted-foreground/80">
+                  {it.detail ? <p className="min-w-0 break-words text-[13px] text-muted-foreground">{it.detail}</p> : null}
+                  <p className="min-w-0 break-words text-[11.5px] text-muted-foreground/80">
                     {fmt(it.at)}
                     {it.meta ? ` • ${it.meta}` : ""}
                   </p>

@@ -17,20 +17,20 @@ export function KpiCard({
   };
   const up = delta >= 0;
   return (
-    <div className="rounded-2xl bg-card border border-border p-5 shadow-soft hover:shadow-card transition">
-      <div className="flex items-start justify-between mb-4">
-        <div className={["h-10 w-10 rounded-xl grid place-items-center", tones[tone]].join(" ")}>
+    <div className="min-w-0 rounded-2xl bg-card border border-border p-3.5 shadow-soft hover:shadow-card transition sm:p-5">
+      <div className="mb-3 flex items-start justify-between sm:mb-4">
+        <div className={["grid h-9 w-9 shrink-0 place-items-center rounded-xl sm:h-10 sm:w-10", tones[tone]].join(" ")}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
-      <div className="text-[12.5px] text-muted-foreground font-medium mb-1.5">{label}</div>
+      <div className="mb-1.5 min-w-0 break-words text-[12.5px] font-medium text-muted-foreground">{label}</div>
       <div className="text-[26px] font-bold tracking-tight text-foreground leading-none mb-2">{value}</div>
-      <div className="flex items-center gap-1.5 text-[11.5px]">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11.5px]">
         <span className={["inline-flex items-center gap-0.5 font-semibold", up ? "text-emerald-600" : "text-rose-600"].join(" ")}>
           {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
           {Math.abs(delta)}%
         </span>
-        <span className="text-muted-foreground">{deltaLabel}</span>
+        <span className="min-w-0 break-words text-muted-foreground">{deltaLabel}</span>
       </div>
     </div>
   );

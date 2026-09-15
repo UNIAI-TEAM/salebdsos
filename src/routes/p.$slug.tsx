@@ -5,6 +5,7 @@ import { CheckCircle2, Gift, Quote, MapPin, ArrowRight, FileText, Share2 } from 
 import { toast } from "sonner";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
 import { InstallLandingApp } from "@/components/install-landing-app";
+import { Button } from "@/components/ui/button";
 import { warmLanding, warmOfflineAssets } from "@/lib/pwa";
 
 export const Route = createFileRoute("/p/$slug")({
@@ -160,7 +161,7 @@ function PublicSalesPage() {
     <main className="min-h-screen bg-background text-foreground">
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
-        <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
+        <div className="relative mx-auto max-w-4xl px-4 py-12 text-center sm:px-6 sm:py-20">
           {s("hero_image_url") ? (
             <img
               src={s("hero_image_mobile_url") || s("hero_image_url")}
@@ -176,39 +177,41 @@ function PublicSalesPage() {
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              className="mx-auto mb-8 aspect-[16/9] w-full max-w-3xl rounded-2xl border border-border object-cover bg-muted"
+              className="mx-auto mb-6 aspect-[16/9] w-full max-w-3xl rounded-xl border border-border bg-muted object-cover sm:mb-8 sm:rounded-2xl"
             />
           ) : null}
 
           {page.project?.name ? (
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5" />
-              {page.project.name}
-              {page.project.location ? ` · ${page.project.location}` : ""}
+            <div className="inline-grid max-w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">
+                {page.project.name}
+                {page.project.location ? ` · ${page.project.location}` : ""}
+              </span>
             </div>
           ) : null}
-          <h1 className="mt-5 text-[34px] sm:text-[46px] font-bold leading-[1.1] tracking-tight">
+          <h1 className="mt-4 break-words text-[30px] font-bold leading-[1.12] sm:mt-5 sm:text-[46px]">
             {s("headline") || page.title}
           </h1>
           {s("subheadline") ? (
-            <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-muted-foreground">
+            <p className="mx-auto mt-3 max-w-2xl break-words text-[14px] leading-relaxed text-muted-foreground sm:mt-4 sm:text-[16px]">
               {s("subheadline")}
             </p>
           ) : null}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <div className="mx-auto mt-6 grid w-full max-w-sm gap-2.5 sm:mt-8 sm:flex sm:max-w-none sm:flex-wrap sm:items-center sm:justify-center sm:gap-3">
             <a
               href="#lien-he"
-              className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-6 text-[14px] font-semibold text-primary-foreground hover:bg-primary/90"
+              className="inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-center text-[14px] font-semibold text-primary-foreground hover:bg-primary/90 sm:px-6"
             >
-              {s("cta_primary") || page.cta || "Nhận thông tin"}
-              <ArrowRight className="h-4 w-4" />
+              <span className="min-w-0 break-words">{s("cta_primary") || page.cta || "Nhận thông tin"}</span>
+              <ArrowRight className="h-4 w-4 shrink-0" />
             </a>
             {s("cta_secondary") ? (
               <a
                 href="#lien-he"
-                className="inline-flex h-11 items-center rounded-xl border border-border bg-card px-6 text-[14px] font-semibold hover:bg-muted"
+                className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-xl border border-border bg-card px-4 text-center text-[14px] font-semibold hover:bg-muted sm:px-6"
               >
-                {s("cta_secondary")}
+                <span className="break-words">{s("cta_secondary")}</span>
               </a>
             ) : null}
           </div>
@@ -225,16 +228,16 @@ function PublicSalesPage() {
       </section>
 
       {benefits.length > 0 ? (
-        <section className="mx-auto max-w-4xl px-6 py-14">
+        <section className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
           <h2 className="text-[20px] font-bold tracking-tight">Điểm nổi bật</h2>
           <ul className="mt-6 grid gap-4 sm:grid-cols-2">
             {benefits.map((b, i) => (
               <li
                 key={i}
-                className="flex gap-3 rounded-2xl border border-border bg-card p-5 text-[14px] leading-relaxed"
+                className="flex min-w-0 gap-3 rounded-xl border border-border bg-card p-4 text-[14px] leading-relaxed sm:rounded-2xl sm:p-5"
               >
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                <span>{b}</span>
+                <span className="min-w-0 break-words">{b}</span>
               </li>
             ))}
           </ul>
@@ -242,33 +245,33 @@ function PublicSalesPage() {
       ) : null}
 
       {s("offer") ? (
-        <section className="mx-auto max-w-4xl px-6 pb-14">
-          <div className="flex gap-4 rounded-2xl border border-primary/30 bg-primary/5 p-6">
+        <section className="mx-auto max-w-4xl px-4 pb-10 sm:px-6 sm:pb-14">
+          <div className="flex min-w-0 gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:gap-4 sm:rounded-2xl sm:p-6">
             <Gift className="mt-0.5 h-6 w-6 shrink-0 text-primary" />
-            <div>
+            <div className="min-w-0">
               <div className="text-[13px] font-semibold uppercase tracking-wide text-primary">Ưu đãi</div>
-              <p className="mt-1.5 text-[15px] leading-relaxed">{s("offer")}</p>
+              <p className="mt-1.5 break-words text-[15px] leading-relaxed">{s("offer")}</p>
             </div>
           </div>
         </section>
       ) : null}
 
       {s("social_proof") ? (
-        <section className="mx-auto max-w-3xl px-6 pb-14">
-          <blockquote className="rounded-2xl border border-border bg-card p-7 text-center">
+        <section className="mx-auto max-w-3xl px-4 pb-10 sm:px-6 sm:pb-14">
+          <blockquote className="rounded-xl border border-border bg-card p-5 text-center sm:rounded-2xl sm:p-7">
             <Quote className="mx-auto h-6 w-6 text-muted-foreground" />
-            <p className="mt-3 text-[16px] italic leading-relaxed">{s("social_proof")}</p>
+            <p className="mt-3 break-words text-[15px] italic leading-relaxed sm:text-[16px]">{s("social_proof")}</p>
           </blockquote>
         </section>
       ) : null}
 
       {s("brochure_url") ? (
-        <section className="mx-auto max-w-3xl px-6 pb-14">
+        <section className="mx-auto max-w-3xl px-4 pb-10 sm:px-6 sm:pb-14">
           <a
             href={s("brochure_url")}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4"
+            className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors hover:bg-muted sm:rounded-2xl sm:p-4"
           >
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
               <FileText className="h-5 w-5" />
@@ -279,14 +282,14 @@ function PublicSalesPage() {
               </span>
               <span className="block text-[12.5px] text-muted-foreground">Tải brochure để xem chi tiết</span>
             </span>
-            <ArrowRight className="h-4 w-4 text-primary" />
+            <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
           </a>
         </section>
       ) : null}
 
-      <section id="lien-he" className="border-t border-border bg-muted/30 py-16">
-        <div className="mx-auto max-w-lg px-6">
-          <h2 className="text-center text-[22px] font-bold tracking-tight">
+      <section id="lien-he" className="scroll-mt-4 border-t border-border bg-muted/30 py-12 pb-[max(3rem,env(safe-area-inset-bottom))] sm:py-16">
+        <div className="mx-auto max-w-lg px-4 sm:px-6">
+          <h2 className="break-words text-center text-[20px] font-bold sm:text-[22px]">
             {s("form_intro") || "Để lại thông tin để được tư vấn"}
           </h2>
           {sent ? (
@@ -357,13 +360,13 @@ function PublicSalesPage() {
                 className="w-full rounded-xl border border-border bg-card px-4 py-3 text-[14px] outline-none focus:ring-2 focus:ring-primary/30"
               />
               {err ? <p className="text-[13px] font-medium text-destructive">{err}</p> : null}
-              <button
+              <Button
                 type="submit"
                 disabled={busy}
-                className="h-11 w-full rounded-xl bg-primary text-[14px] font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                className="h-11 w-full rounded-xl text-[14px] font-semibold"
               >
                 {busy ? "Đang gửi…" : s("cta_primary") || "Gửi thông tin"}
-              </button>
+              </Button>
 
             </form>
           )}
