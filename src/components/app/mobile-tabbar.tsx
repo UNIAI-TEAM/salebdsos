@@ -114,7 +114,6 @@ export function MobileTabBar() {
           {tabs.slice(2).map((t) => (
             <TabLink key={t.to} tab={t} active={pathname.startsWith(t.to)} />
           ))}
-          <span aria-hidden />
         </div>
       </nav>
     </>
