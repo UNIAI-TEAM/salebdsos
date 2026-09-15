@@ -61,7 +61,7 @@ function PublicSalesPage() {
   // để lần mở từ icon sau đó hiện gần như tức thì.
   useEffect(() => {
     if (!page.slug) return;
-    void warmLanding(page.slug, s("hero_image_url") || null);
+    void warmLanding(page.slug, s("hero_image_url") || null, s("brochure_url") || null);
   }, [page.slug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {

@@ -117,13 +117,15 @@ function LandingsPage() {
     void warmLandings(
       items
         .filter((p) => p.is_published && p.slug)
-        .map((p) => ({
-          slug: p.slug,
-          heroImageUrl:
-            typeof (p.output as Record<string, unknown> | null)?.["hero_image_url"] === "string"
-              ? ((p.output as Record<string, unknown>)["hero_image_url"] as string)
-              : null,
-        })),
+        .map((p) => {
+          const out = (p.output as Record<string, unknown> | null) ?? {};
+          const str = (k: string) => (typeof out[k] === "string" ? (out[k] as string) : null);
+          return {
+            slug: p.slug,
+            heroImageUrl: str("hero_image_url"),
+            brochureUrl: str("brochure_url"),
+          };
+        }),
     );
   }, [items]);
   useEffect(() => {
