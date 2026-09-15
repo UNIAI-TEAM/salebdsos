@@ -57,9 +57,11 @@ export async function warmOfflineCache(paths: string[]): Promise<void> {
   if (unique.length === 0) return;
 
   const pick = (path: string) =>
-    path.startsWith("/p/") || path.startsWith("/c/")
-      ? "salebds-public-pages"
-      : "salebds-app-pages";
+    path.startsWith("/api/")
+      ? "salebds-data"
+      : path.startsWith("/p/") || path.startsWith("/c/")
+        ? "salebds-public-pages"
+        : "salebds-app-pages";
 
   await Promise.allSettled(
     unique.map(async (path) => {
