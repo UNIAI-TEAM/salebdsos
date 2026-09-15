@@ -50,6 +50,7 @@ function CustomersPage() {
   const fnCreate = useServerFn(createCustomer);
   const fnUpdate = useServerFn(updateCustomer);
   const fnDelete = useServerFn(deleteCustomer);
+  const fnDetail = useServerFn(getCustomerDetail);
 
   const list = useQuery({
     queryKey: ["customers", tenantId, search, page, pageSize],
