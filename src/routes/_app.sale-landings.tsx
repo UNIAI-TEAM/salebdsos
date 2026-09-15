@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { warmOfflineCache, warmLandings } from "@/lib/pwa";
+import { warmOfflineCache, warmLandings, warmOfflineAssets } from "@/lib/pwa";
 import { optimizeImageVariants, formatBytes } from "@/lib/image-optim";
 
 import {
@@ -75,7 +75,13 @@ function SaleLandingsPage() {
         brochureUrl: (p.output?.brochure_url as string) ?? null,
       }));
     if (list.length) void warmLandings(list);
+    const mobileHeroes = published
+      .filter((p) => p.is_published)
+      .map((p) => p.output?.hero_image_mobile_url as string)
+      .filter(Boolean);
+    if (mobileHeroes.length) void warmOfflineAssets(mobileHeroes);
   }, [pages.data]);
+
 
   if (!tenantId) return <div className="p-6 text-sm text-muted-foreground">Chọn workspace để tiếp tục.</div>;
 
