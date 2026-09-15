@@ -203,7 +203,7 @@ function PublicSalesPage() {
           <div className="mt-5 flex justify-center">
             <InstallLandingApp slug={page.slug ?? ""} title={page.title || "Landing"} />
           </div>
-          {typeof window !== "undefined" && page.slug ? (
+          {mounted && page.slug ? (
             <ShareLanding
               url={`${window.location.origin}/p/${page.slug}`}
               title={s("headline") || page.title || "Thông tin dự án"}
