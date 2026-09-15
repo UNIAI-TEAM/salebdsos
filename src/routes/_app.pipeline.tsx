@@ -79,6 +79,7 @@ function PipelinePage() {
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterOwner, setFilterOwner] = useState<string>("all");
+  const [filterProject, setFilterProject] = useState<string>("all");
 
   const [editing, setEditing] = useState<Deal | null>(null);
   const [creating, setCreating] = useState<{ stageId?: string } | null>(null);
@@ -105,10 +106,13 @@ function PipelinePage() {
   useEffect(() => { void reload(); }, [reload]);
 
   const filteredDeals = useMemo(() => {
-    if (filterOwner === "all") return deals;
-    if (filterOwner === "unassigned") return deals.filter((d) => !d.owner_user_id);
-    return deals.filter((d) => d.owner_user_id === filterOwner);
-  }, [deals, filterOwner]);
+    let list = deals;
+    if (filterOwner === "unassigned") list = list.filter((d) => !d.owner_user_id);
+    else if (filterOwner !== "all") list = list.filter((d) => d.owner_user_id === filterOwner);
+    if (filterProject === "none") list = list.filter((d) => !d.project_id);
+    else if (filterProject !== "all") list = list.filter((d) => d.project_id === filterProject);
+    return list;
+  }, [deals, filterOwner, filterProject]);
 
   const dealsByStage = useMemo(() => {
     const m = new Map<string, Deal[]>();
