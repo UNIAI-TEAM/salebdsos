@@ -52,6 +52,15 @@ function ProjectDetailPage() {
     enabled: !!tenantId,
   });
 
+  const fetchLandings = useServerFn(listSalesPages);
+  const landings = useQuery({
+    queryKey: ["project-landings", tenantId, id],
+    queryFn: () => fetchLandings({ data: { tenantId: tenantId!, projectId: id, pageSize: 20 } }),
+    enabled: !!tenantId,
+  });
+  const landingItems = landings.data?.items ?? [];
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+
   const p = project.data?.project;
   const linkedCards = project.data?.cards ?? [];
 
