@@ -13,6 +13,7 @@ import {
   Eye, Users2, Percent, Trash2, ExternalLink, Copy, Upload, Save, Globe, EyeOff, ImageIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { warmLandings, warmOfflineCache } from "@/lib/pwa";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listSalesPages, updateSalesPage, deleteSalesPage, setSalesPagePublish, getSalesPageStats,
