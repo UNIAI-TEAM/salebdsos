@@ -21,6 +21,8 @@ import {
   createCustomerAppointment, updateCustomerAppointmentStatus,
 } from "@/lib/customer-detail.functions";
 import { toast } from "sonner";
+import { QuickContact } from "@/components/app/quick-contact";
+
 
 export const Route = createFileRoute("/_app/customers/$id")({
   head: () => ({
@@ -212,8 +214,10 @@ function CustomerDetailPage() {
           <p className="text-[13px] text-muted-foreground">
             {[c.phone, c.email, c.company].filter(Boolean).join(" • ") || "Chưa có thông tin liên hệ"}
           </p>
+          <QuickContact phone={c.phone} email={c.email} name={c.full_name} />
         </div>
         <div className="flex gap-2">
+
           <Button variant="outline" disabled={!canEdit} onClick={() => setApptOpen(true)}>
             <CalendarClock className="mr-2 h-4 w-4" /> Đặt lịch gặp
           </Button>

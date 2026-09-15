@@ -10,6 +10,9 @@ export type SaleTimelineItem = {
   title: string;
   detail?: string | null;
   meta?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  name?: string | null;
 };
 
 const Input = z.object({
@@ -143,7 +146,7 @@ export const getSaleTimeline = createServerFn({ method: "GET" })
     // 4) Lead từ landing/form của tôi
     const { data: leads } = await supabase
       .from("leads")
-      .select("id,full_name,phone,source,created_at,card_id")
+      .select("id,full_name,phone,email,source,created_at,card_id")
       .eq("tenant_id", data.tenantId)
       .eq("owner_user_id", userId)
       .is("deleted_at", null)
@@ -158,6 +161,9 @@ export const getSaleTimeline = createServerFn({ method: "GET" })
         title: `Khách mới: ${l.full_name || l.phone || "Chưa có tên"}`,
         detail: l.phone || null,
         meta: SOURCE_LABEL_VI[l.source] ?? l.source ?? null,
+        phone: l.phone ?? null,
+        email: l.email ?? null,
+        name: l.full_name ?? null,
       });
     });
 
