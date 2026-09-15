@@ -5,7 +5,7 @@ import { CheckCircle2, Gift, Quote, MapPin, ArrowRight, FileText, Share2 } from 
 import { toast } from "sonner";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
 import { InstallLandingApp } from "@/components/install-landing-app";
-import { warmLanding } from "@/lib/pwa";
+import { warmLanding, warmOfflineAssets } from "@/lib/pwa";
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
