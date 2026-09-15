@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { optimizeImage } from "@/lib/image-optim";
+import { ProjectAppointments } from "@/components/app/project-appointments";
 
 
 export const Route = createFileRoute("/_app/projects/$id")({ component: ProjectDetailPage });
@@ -229,6 +230,8 @@ function ProjectDetailPage() {
               <div className="text-[13px] text-muted-foreground">Chưa có brochure.</div>
             )}
           </SectionCard>
+
+          {tenantId && <ProjectAppointments projectId={id} tenantId={tenantId} />}
 
           {/* Landing công khai */}
           <SectionCard

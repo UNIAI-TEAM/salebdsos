@@ -4,7 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const SELECT =
-  "id,tenant_id,customer_id,lead_id,assigned_to,title,location,starts_at,ends_at,status,notes,reminder_minutes,created_by,created_at,updated_at";
+  "id,tenant_id,project_id,customer_id,lead_id,assigned_to,title,location,starts_at,ends_at,status,notes,reminder_minutes,is_published,created_by,created_at,updated_at";
 
 const StatusEnum = z.enum(["scheduled", "completed", "canceled", "no_show"]);
 
@@ -19,6 +19,8 @@ const Input = z.object({
   customer_id: z.string().uuid().nullable().optional(),
   lead_id: z.string().uuid().nullable().optional(),
   assigned_to: z.string().uuid().nullable().optional(),
+  project_id: z.string().uuid().nullable().optional(),
+  is_published: z.boolean().optional().default(false),
 });
 
 export const listAppointments = createServerFn({ method: "GET" })
@@ -29,6 +31,7 @@ export const listAppointments = createServerFn({ method: "GET" })
       from?: string;
       to?: string;
       status?: string;
+      projectId?: string;
       page?: number;
       pageSize?: number;
     }) => d,
@@ -50,6 +53,7 @@ export const listAppointments = createServerFn({ method: "GET" })
     if (data.from) q = q.gte("starts_at", data.from);
     if (data.to) q = q.lte("starts_at", data.to);
     if (data.status && data.status !== "all") q = q.eq("status", data.status);
+    if (data.projectId) q = q.eq("project_id", data.projectId);
 
     const { data: items, error, count } = await q;
     if (error) throw new Error(error.message);

@@ -320,9 +320,11 @@ export type Database = {
           customer_id: string | null
           ends_at: string
           id: string
+          is_published: boolean
           lead_id: string | null
           location: string | null
           notes: string | null
+          project_id: string | null
           reminder_minutes: number | null
           starts_at: string
           status: string
@@ -337,9 +339,11 @@ export type Database = {
           customer_id?: string | null
           ends_at: string
           id?: string
+          is_published?: boolean
           lead_id?: string | null
           location?: string | null
           notes?: string | null
+          project_id?: string | null
           reminder_minutes?: number | null
           starts_at: string
           status?: string
@@ -354,9 +358,11 @@ export type Database = {
           customer_id?: string | null
           ends_at?: string
           id?: string
+          is_published?: boolean
           lead_id?: string | null
           location?: string | null
           notes?: string | null
+          project_id?: string | null
           reminder_minutes?: number | null
           starts_at?: string
           status?: string
@@ -377,6 +383,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {

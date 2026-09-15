@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { warmOfflineCache } from "@/lib/pwa";
 import { optimizeImage } from "@/lib/image-optim";
+import { ProjectAppointments } from "@/components/app/project-appointments";
 
 import { Building2, Search, Upload, FileText, Link2, ImageIcon, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
@@ -107,6 +108,7 @@ function SaleProjectsPage() {
 
       <Dialog open={!!openId} onOpenChange={(o) => !o && setOpenId(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sr-only"><DialogTitle>Quản lý dự án</DialogTitle></DialogHeader>
           {openId && <ProjectQuickEdit id={openId} tenantId={tenantId} />}
         </DialogContent>
       </Dialog>
@@ -185,7 +187,7 @@ function ProjectQuickEdit({ id, tenantId }: { id: string; tenantId: string }) {
 
   return (
     <>
-      <DialogHeader><DialogTitle className="text-[15px]">{p.name}</DialogTitle></DialogHeader>
+      <div className="text-[15px] font-semibold">{p.name}</div>
 
       <div className="space-y-5">
         {/* Ảnh bìa & gallery */}
@@ -243,6 +245,8 @@ function ProjectQuickEdit({ id, tenantId }: { id: string; tenantId: string }) {
             <div className="text-[13px] text-muted-foreground">Chưa có brochure.</div>
           )}
         </section>
+
+        <ProjectAppointments projectId={id} tenantId={tenantId} />
 
         {/* Landing công khai */}
         <section className="space-y-2">
