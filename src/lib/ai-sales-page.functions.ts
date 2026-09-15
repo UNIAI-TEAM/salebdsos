@@ -51,7 +51,7 @@ export const TONE_LABEL_VI: Record<(typeof TONES)[number], string> = {
 
 export const listSalesPages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { tenantId: string; leadId?: string; customerId?: string; page?: number; pageSize?: number }) => d)
+  .inputValidator((d: { tenantId: string; leadId?: string; customerId?: string; projectId?: string; page?: number; pageSize?: number }) => d)
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const page = data.page ?? 1;
@@ -67,6 +67,7 @@ export const listSalesPages = createServerFn({ method: "GET" })
       .range(from, to);
     if (data.leadId) q = q.eq("lead_id", data.leadId);
     if (data.customerId) q = q.eq("customer_id", data.customerId);
+    if (data.projectId) q = q.eq("project_id", data.projectId);
     const { data: items, error, count } = await q;
     if (error) throw new Error(error.message);
     return { items: items ?? [], total: count ?? 0, page, pageSize };

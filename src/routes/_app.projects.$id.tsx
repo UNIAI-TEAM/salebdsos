@@ -8,6 +8,7 @@ import {
   getProject, upsertProject, softDeleteProject,
   attachCard, detachCard, getMyCardsForAttach,
 } from "@/lib/project.functions";
+import { listSalesPages } from "@/lib/ai-sales-page.functions";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,15 @@ function ProjectDetailPage() {
     queryFn: () => fetchCards({ data: { tenantId: tenantId! } }),
     enabled: !!tenantId,
   });
+
+  const fetchLandings = useServerFn(listSalesPages);
+  const landings = useQuery({
+    queryKey: ["project-landings", tenantId, id],
+    queryFn: () => fetchLandings({ data: { tenantId: tenantId!, projectId: id, pageSize: 20 } }),
+    enabled: !!tenantId,
+  });
+  const landingItems = landings.data?.items ?? [];
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   const p = project.data?.project;
   const linkedCards = project.data?.cards ?? [];
@@ -213,6 +223,60 @@ function ProjectDetailPage() {
               </a>
             ) : (
               <div className="text-[13px] text-muted-foreground">Chưa có brochure.</div>
+            )}
+          </SectionCard>
+
+          {/* Landing công khai */}
+          <SectionCard
+            title="Landing công khai"
+            action={
+              <Link to="/ai-sales-page" className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-primary">
+                <Plus className="h-4 w-4" /> Tạo landing
+              </Link>
+            }
+          >
+            {landings.isLoading ? (
+              <div className="text-[13px] text-muted-foreground">Đang tải…</div>
+            ) : landingItems.length === 0 ? (
+              <div className="text-[13px] text-muted-foreground">
+                Chưa có landing nào cho dự án này. Bấm “Tạo landing” để tạo trang giới thiệu công khai.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {landingItems.map((l: any) => {
+                  const url = l.slug ? `${origin}/p/${l.slug}` : null;
+                  return (
+                    <div key={l.id} className="flex items-center gap-3 p-3 rounded-xl border border-border">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13px] font-semibold truncate">{l.title ?? "Landing"}</div>
+                        <div className="text-[11.5px] text-muted-foreground truncate">
+                          {l.slug ? `/p/${l.slug}` : "Chưa có đường dẫn"} · {l.views_count ?? 0} lượt xem
+                        </div>
+                      </div>
+                      <Badge variant={l.is_published ? "default" : "secondary"}>
+                        {l.is_published ? "Đang công khai" : "Bản nháp"}
+                      </Badge>
+                      {url && l.is_published && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              void navigator.clipboard.writeText(url);
+                              toast.success("Đã copy link landing");
+                            }}
+                          >
+                            Copy link
+                          </Button>
+                          <a href={url} target="_blank" rel="noreferrer" className="text-primary">
+                            <LinkIcon className="h-4 w-4" />
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </SectionCard>
 
