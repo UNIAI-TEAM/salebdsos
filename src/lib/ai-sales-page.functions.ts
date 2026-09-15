@@ -51,7 +51,7 @@ export const TONE_LABEL_VI: Record<(typeof TONES)[number], string> = {
 
 export const listSalesPages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { tenantId: string; leadId?: string; customerId?: string; page?: number; pageSize?: number }) => d)
+  .inputValidator((d: { tenantId: string; leadId?: string; customerId?: string; projectId?: string; page?: number; pageSize?: number }) => d)
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const page = data.page ?? 1;
