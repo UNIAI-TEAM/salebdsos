@@ -106,24 +106,58 @@ export async function warmOfflineAssets(urls: string[]): Promise<void> {
 }
 
 /**
- * Lưu trước một landing công khai: trang /p/{slug}, manifest app riêng của
- * landing và ảnh hero → mở từ icon là hiện ngay.
+ * Lưu trước tài liệu (brochure PDF) để sale mở landing khi mất mạng vẫn
+ * xem được brochure ngay, không phải chờ tải.
  */
-export async function warmLanding(slug: string, heroImageUrl?: string | null): Promise<void> {
+export async function warmOfflineDocs(urls: (string | null | undefined)[]): Promise<void> {
+  if (typeof window === "undefined" || typeof caches === "undefined") return;
+  if (isBlockedContext()) return;
+  if (!navigator.onLine) return;
+
+  const unique = Array.from(
+    new Set(urls.filter((u): u is string => !!u && /^https?:\/\//.test(u))),
+  ).slice(0, 20);
+  if (unique.length === 0) return;
+
+  const cache = await caches.open("salebds-docs");
+  await Promise.allSettled(
+    unique.map(async (url) => {
+      try {
+        if (await cache.match(url)) return;
+        const res = await fetch(url, { mode: "cors" });
+        // Brochure thường 2–20MB: chỉ lưu khi tải trọn vẹn
+        if (res.ok || res.type === "opaque") await cache.put(url, res.clone());
+      } catch {
+        /* bỏ qua */
+      }
+    }),
+  );
+}
+
+/**
+ * Lưu trước một landing công khai: trang /p/{slug}, manifest app riêng của
+ * landing, ảnh hero và brochure → mở từ icon là hiện ngay.
+ */
+export async function warmLanding(
+  slug: string,
+  heroImageUrl?: string | null,
+  brochureUrl?: string | null,
+): Promise<void> {
   if (!slug) return;
   await Promise.allSettled([
     warmOfflineCache([`/p/${slug}`]),
     warmOfflineCache([`/api/public/landing-manifest/${slug}`]),
     warmOfflineAssets(heroImageUrl ? [heroImageUrl] : []),
+    warmOfflineDocs([brochureUrl]),
   ]);
 }
 
 /** Lưu trước nhiều landing (tuần tự nhẹ để không nghẽn mạng yếu). */
 export async function warmLandings(
-  landings: { slug: string | null; heroImageUrl?: string | null }[],
+  landings: { slug: string | null; heroImageUrl?: string | null; brochureUrl?: string | null }[],
 ): Promise<void> {
   for (const l of landings.filter((x) => !!x.slug).slice(0, 12)) {
-    await warmLanding(l.slug as string, l.heroImageUrl ?? null);
+    await warmLanding(l.slug as string, l.heroImageUrl ?? null, l.brochureUrl ?? null);
   }
 }
 

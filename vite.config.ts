@@ -81,6 +81,17 @@ export default defineConfig({
               },
             },
             {
+              // Brochure PDF: mở lại được khi mất mạng (hỗ trợ tải theo phần)
+              urlPattern: ({ url }) => /\.pdf($|\?)/i.test(url.href),
+              handler: "CacheFirst",
+              options: {
+                cacheName: "salebds-docs",
+                rangeRequests: true,
+                expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
               // Ảnh (avatar, brochure, hero landing)
               urlPattern: ({ request }) => request.destination === "image",
               handler: "CacheFirst",

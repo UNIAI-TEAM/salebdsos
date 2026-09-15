@@ -67,7 +67,11 @@ function SaleLandingsPage() {
     const published = (pages.data?.items ?? []) as any[];
     const list = published
       .filter((p) => p.is_published && p.slug)
-      .map((p) => ({ slug: p.slug as string, heroUrl: (p.output?.hero_image_url as string) ?? null }));
+      .map((p) => ({
+        slug: p.slug as string,
+        heroImageUrl: (p.output?.hero_image_url as string) ?? null,
+        brochureUrl: (p.output?.brochure_url as string) ?? null,
+      }));
     if (list.length) void warmLandings(list);
   }, [pages.data]);
 
