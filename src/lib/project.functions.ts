@@ -17,6 +17,7 @@ const ProjectInput = z.object({
   currency: z.string().max(8).optional().nullable(),
   description: z.string().max(5000).optional().nullable(),
   cover_url: z.string().url().max(1000).optional().nullable(),
+  cover_mobile_url: z.string().url().max(1000).optional().nullable(),
   brochure_url: z.string().url().max(1000).optional().nullable(),
   brochure_name: z.string().max(255).optional().nullable(),
   sales_policy: z.string().max(5000).optional().nullable(),
@@ -24,6 +25,7 @@ const ProjectInput = z.object({
   cta_form_enabled: z.boolean().optional(),
   unit_highlights: z.array(z.string().min(1).max(200)).max(20).optional(),
   gallery: z.array(z.string().url().max(1000)).max(40).optional(),
+  gallery_mobile: z.array(z.string().url().max(1000)).max(40).optional(),
 });
 
 export const listProjects = createServerFn({ method: "GET" })
