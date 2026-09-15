@@ -108,6 +108,7 @@ function SaleProjectsPage() {
 
       <Dialog open={!!openId} onOpenChange={(o) => !o && setOpenId(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sr-only"><DialogTitle>Quản lý dự án</DialogTitle></DialogHeader>
           {openId && <ProjectQuickEdit id={openId} tenantId={tenantId} />}
         </DialogContent>
       </Dialog>
@@ -186,7 +187,7 @@ function ProjectQuickEdit({ id, tenantId }: { id: string; tenantId: string }) {
 
   return (
     <>
-      <DialogHeader><DialogTitle className="text-[15px]">{p.name}</DialogTitle></DialogHeader>
+      <div className="text-[15px] font-semibold">{p.name}</div>
 
       <div className="space-y-5">
         {/* Ảnh bìa & gallery */}
