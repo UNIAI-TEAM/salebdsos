@@ -129,6 +129,12 @@ function TimelinePage() {
                     {fmt(it.at)}
                     {it.meta ? ` • ${it.meta}` : ""}
                   </p>
+                  {it.phone || it.email ? (
+                    <div className="mt-2">
+                      <QuickContact phone={it.phone} email={it.email} name={it.name} compact />
+                    </div>
+                  ) : null}
+
                 </li>
               );
             })}
