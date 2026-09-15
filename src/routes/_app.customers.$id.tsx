@@ -88,6 +88,12 @@ function CustomerDetailPage() {
     enabled: !!tenantId,
   });
 
+  // Lưu trước trang khách này để xem lại khi mất mạng.
+  useEffect(() => {
+    if (!detail.data) return;
+    warmOfflineCache([`/customers/${id}`, "/customers", "/timeline"]);
+  }, [detail.data, id]);
+
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["customer-detail", tenantId, id] });
     qc.invalidateQueries({ queryKey: ["pipeline", tenantId] });
