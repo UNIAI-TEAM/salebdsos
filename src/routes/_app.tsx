@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/
 import { useEffect } from "react";
 import { AppSidebar } from "@/components/app/sidebar";
 import { AppTopbar } from "@/components/app/topbar";
+import { OfflineBanner } from "@/components/app/offline-banner";
 import { MobileTabBar } from "@/components/app/mobile-tabbar";
 import { useAuth } from "@/hooks/use-auth";
 import { SidebarCollapsedProvider } from "@/hooks/use-sidebar-collapsed";
@@ -67,6 +68,7 @@ function AppLayoutShell() {
   useSaleMobileRedirect();
   return (
     <div className="min-h-screen flex w-full bg-background">
+      <OfflineBanner />
       <AppSidebar />
       <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
         <AppTopbar />
