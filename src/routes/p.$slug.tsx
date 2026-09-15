@@ -17,16 +17,20 @@ export const Route = createFileRoute("/p/$slug")({
     const desc = String(
       (loaderData?.output?.["subheadline"] as string) || "Thông tin dự án và ưu đãi dành riêng cho bạn.",
     ).slice(0, 155);
-    return {
-      meta: [
-        { title },
-        { name: "description", content: desc },
-        { property: "og:title", content: title },
-        { property: "og:description", content: desc },
-        { property: "og:type", content: "website" },
-        { name: "twitter:card", content: "summary_large_image" },
-      ],
-    };
+    const heroUrl = String((loaderData?.output?.["hero_image_url"] as string) || "");
+    const meta: { title?: string; name?: string; property?: string; content: string }[] = [
+      { title },
+      { name: "description", content: desc },
+      { property: "og:title", content: title },
+      { property: "og:description", content: desc },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ];
+    if (heroUrl.startsWith("https://")) {
+      meta.push({ property: "og:image", content: heroUrl });
+      meta.push({ name: "twitter:image", content: heroUrl });
+    }
+    return { meta };
   },
   component: PublicSalesPage,
   errorComponent: () => (
