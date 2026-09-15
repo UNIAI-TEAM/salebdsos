@@ -67,7 +67,7 @@ function TimelinePage() {
     <div className="space-y-6">
       <PageHeader title="Timeline" sub="Hoạt động của bạn và lượt xem landing, danh thiếp trong 14 ngày." />
 
-      <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <KpiCard icon={Eye} label="Lượt xem" value={String(d?.stats.views ?? 0)} delta={0} deltaLabel="14 ngày qua" />
         <KpiCard icon={Users2} label="Khách mới" value={String(d?.stats.leads ?? 0)} delta={0} deltaLabel="14 ngày qua" tone="amber" />
         <KpiCard icon={Activity} label="Hoạt động" value={String(d?.stats.activities ?? 0)} delta={0} deltaLabel="14 ngày qua" tone="blue" />
