@@ -121,7 +121,10 @@ function PublicSalesPage() {
   useEffect(() => {
     if (!page.slug) return;
     void warmLanding(page.slug, s("hero_image_url") || null, s("brochure_url") || null);
+    const mob = s("hero_image_mobile_url");
+    if (mob) void warmOfflineAssets([mob]);
   }, [page.slug]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
