@@ -3,7 +3,7 @@ import {
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
   Wallet, QrCode, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
-  PanelLeftClose, PanelLeftOpen, X, BookMarked,
+  PanelLeftClose, PanelLeftOpen, X, BookMarked, Activity,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
@@ -80,7 +80,7 @@ const saleMobileGroups: Group[] = [
     items: [
       { to: "/landings", label: "Landing công khai", icon: Globe2 },
       { to: "/digital-card", label: "Danh thiếp & Profile", icon: IdCard },
-      { to: "/timeline", label: "Timeline", icon: Radio },
+      { to: "/timeline", label: "Timeline", icon: Activity },
     ],
   },
 ];

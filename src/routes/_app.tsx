@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AppSidebar } from "@/components/app/sidebar";
 import { AppTopbar } from "@/components/app/topbar";
@@ -49,8 +49,22 @@ function AppLayout() {
   );
 }
 
+/** Trên điện thoại, sale chỉ dùng landing / danh thiếp / timeline → không vào Tổng quan. */
+function useSaleMobileRedirect() {
+  const nav = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isMobile = window.matchMedia("(max-width: 1023px)").matches;
+    if (isMobile && (pathname === "/dashboard" || pathname === "/")) {
+      nav({ to: "/timeline", replace: true });
+    }
+  }, [pathname, nav]);
+}
+
 function AppLayoutShell() {
   useSidebarShortcut();
+  useSaleMobileRedirect();
   return (
     <div className="min-h-screen flex w-full bg-background">
       <AppSidebar />
