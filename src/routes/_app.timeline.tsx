@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
 import { Eye, Users2, Activity, ExternalLink, IdCard, Globe2 } from "lucide-react";
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { warmOfflineCache } from "@/lib/pwa";
 import { getSaleTimeline } from "@/lib/sale-timeline.functions";
 
 export const Route = createFileRoute("/_app/timeline")({
@@ -44,6 +46,18 @@ function TimelinePage() {
   });
 
   const d = q.data;
+
+  // Lưu trước timeline, danh thiếp và landing để xem được khi mất mạng.
+  useEffect(() => {
+    if (!d) return;
+    warmOfflineCache([
+      "/timeline",
+      "/digital-card",
+      "/landings",
+      ...d.cards.filter((c) => c.slug).map((c) => `/c/${c.slug}`),
+      ...d.pages.filter((p) => p.slug).map((p) => `/p/${p.slug}`),
+    ]);
+  }, [d]);
 
   return (
     <div className="space-y-6">
