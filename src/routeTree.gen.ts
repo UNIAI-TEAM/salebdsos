@@ -22,6 +22,7 @@ import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AcceptInviteTokenRouteImport } from './routes/accept-invite.$token'
 import { Route as AppWalletRouteImport } from './routes/_app.wallet'
+import { Route as AppTimelineRouteImport } from './routes/_app.timeline'
 import { Route as AppTeamRouteImport } from './routes/_app.team'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppQrSharingRouteImport } from './routes/_app.qr-sharing'
@@ -119,6 +120,11 @@ const AcceptInviteTokenRoute = AcceptInviteTokenRouteImport.update({
 const AppWalletRoute = AppWalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTimelineRoute = AppTimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTeamRoute = AppTeamRouteImport.update({
@@ -325,6 +331,7 @@ export interface FileRoutesByFullPath {
   '/qr-sharing': typeof AppQrSharingRoute
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
+  '/timeline': typeof AppTimelineRoute
   '/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
@@ -373,6 +380,7 @@ export interface FileRoutesByTo {
   '/qr-sharing': typeof AppQrSharingRoute
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
+  '/timeline': typeof AppTimelineRoute
   '/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
@@ -423,6 +431,7 @@ export interface FileRoutesById {
   '/_app/qr-sharing': typeof AppQrSharingRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/team': typeof AppTeamRoute
+  '/_app/timeline': typeof AppTimelineRoute
   '/_app/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
@@ -473,6 +482,7 @@ export interface FileRouteTypes {
     | '/qr-sharing'
     | '/settings'
     | '/team'
+    | '/timeline'
     | '/wallet'
     | '/accept-invite/$token'
     | '/c/$slug'
@@ -521,6 +531,7 @@ export interface FileRouteTypes {
     | '/qr-sharing'
     | '/settings'
     | '/team'
+    | '/timeline'
     | '/wallet'
     | '/accept-invite/$token'
     | '/c/$slug'
@@ -570,6 +581,7 @@ export interface FileRouteTypes {
     | '/_app/qr-sharing'
     | '/_app/settings'
     | '/_app/team'
+    | '/_app/timeline'
     | '/_app/wallet'
     | '/accept-invite/$token'
     | '/c/$slug'
@@ -696,6 +708,13 @@ declare module '@tanstack/react-router' {
       path: '/wallet'
       fullPath: '/wallet'
       preLoaderRoute: typeof AppWalletRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/timeline': {
+      id: '/_app/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof AppTimelineRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/team': {
@@ -990,6 +1009,7 @@ interface AppRouteChildren {
   AppQrSharingRoute: typeof AppQrSharingRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTeamRoute: typeof AppTeamRoute
+  AppTimelineRoute: typeof AppTimelineRoute
   AppWalletRoute: typeof AppWalletRoute
   AppCustomersIdRoute: typeof AppCustomersIdRoute
   AppCustomersIndexRoute: typeof AppCustomersIndexRoute
@@ -1022,6 +1042,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppQrSharingRoute: AppQrSharingRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTeamRoute: AppTeamRoute,
+  AppTimelineRoute: AppTimelineRoute,
   AppWalletRoute: AppWalletRoute,
   AppCustomersIdRoute: AppCustomersIdRoute,
   AppCustomersIndexRoute: AppCustomersIndexRoute,
