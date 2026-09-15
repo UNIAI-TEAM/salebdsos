@@ -22,6 +22,8 @@ import {
   ArrowLeft, Upload, FileText, Trash2, Plus, X, Phone, Link2 as LinkIcon, Building2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { optimizeImage } from "@/lib/image-optim";
+
 
 export const Route = createFileRoute("/_app/projects/$id")({ component: ProjectDetailPage });
 

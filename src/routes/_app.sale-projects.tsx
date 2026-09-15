@@ -16,6 +16,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { warmOfflineCache } from "@/lib/pwa";
+import { optimizeImage } from "@/lib/image-optim";
+
 import { Building2, Search, Upload, FileText, Link2, ImageIcon, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
