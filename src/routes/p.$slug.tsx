@@ -1,9 +1,10 @@
 // Public AI sales landing page: /p/<slug>
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, Gift, Quote, MapPin, ArrowRight } from "lucide-react";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
 import { InstallLandingApp } from "@/components/install-landing-app";
+import { warmLanding } from "@/lib/pwa";
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
@@ -56,6 +57,13 @@ function PublicSalesPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // Làm mới cache của chính landing này (trang + manifest + ảnh hero)
+  // để lần mở từ icon sau đó hiện gần như tức thì.
+  useEffect(() => {
+    if (!page.slug) return;
+    void warmLanding(page.slug, s("hero_image_url") || null);
+  }, [page.slug]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setBusy(true);
@@ -95,7 +103,9 @@ function PublicSalesPage() {
             <img
               src={s("hero_image_url")}
               alt={s("headline") || page.title || "Hình ảnh dự án"}
-              loading="lazy"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
               className="mx-auto mb-8 aspect-[16/9] w-full max-w-3xl rounded-2xl border border-border object-cover"
             />
           ) : null}

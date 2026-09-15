@@ -13,6 +13,7 @@ import {
   Eye, Users2, Percent, Trash2, ExternalLink, Copy, Upload, Save, Globe, EyeOff, ImageIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { warmLandings, warmOfflineCache } from "@/lib/pwa";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listSalesPages, updateSalesPage, deleteSalesPage, setSalesPagePublish, getSalesPageStats,
@@ -107,6 +108,24 @@ function LandingsPage() {
   useEffect(() => {
     if (!selectedId && items.length) setSelectedId(items[0]!.id);
   }, [items, selectedId]);
+
+  // Lưu trước từng landing đã công khai (trang + manifest app + ảnh hero)
+  // để sale mở từ icon là hiện ngay, kể cả mạng yếu.
+  useEffect(() => {
+    if (!items.length) return;
+    void warmOfflineCache(["/landings"]);
+    void warmLandings(
+      items
+        .filter((p) => p.is_published && p.slug)
+        .map((p) => ({
+          slug: p.slug,
+          heroImageUrl:
+            typeof (p.output as Record<string, unknown> | null)?.["hero_image_url"] === "string"
+              ? ((p.output as Record<string, unknown>)["hero_image_url"] as string)
+              : null,
+        })),
+    );
+  }, [items]);
   useEffect(() => {
     if (selected) setDraft(toDraft(selected));
   }, [selected?.id, selected?.output]); // eslint-disable-line react-hooks/exhaustive-deps

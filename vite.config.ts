@@ -38,8 +38,19 @@ export default defineConfig({
               handler: "NetworkFirst",
               options: {
                 cacheName: "salebds-public-pages",
-                networkTimeoutSeconds: 4,
-                expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                networkTimeoutSeconds: 3,
+                expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              // Manifest app riêng của từng landing + dữ liệu landing công khai
+              urlPattern: ({ request, url }) =>
+                request.method === "GET" && url.pathname.startsWith("/api/public/"),
+              handler: "StaleWhileRevalidate",
+              options: {
+                cacheName: "salebds-data",
+                expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 },
                 cacheableResponse: { statuses: [0, 200] },
               },
             },
