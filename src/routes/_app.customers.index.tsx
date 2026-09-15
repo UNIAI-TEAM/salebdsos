@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { warmOfflineCache } from "@/lib/pwa";
+import { getCustomerDetail } from "@/lib/customer-detail.functions";
 import { Search, Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Users2, Upload } from "lucide-react";
 import { ImportCustomersDialog } from "@/components/customers/import-csv-dialog";
 import { PageHeader, KpiCard } from "@/components/app/ui";
