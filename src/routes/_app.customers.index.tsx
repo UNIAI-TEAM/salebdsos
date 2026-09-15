@@ -78,6 +78,22 @@ function CustomersPage() {
   const total = list.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
+  // Lưu trước danh sách + chi tiết khách (giao dịch, lịch hẹn) để xem khi mất mạng.
+  useEffect(() => {
+    if (!tenantId || items.length === 0) return;
+    const top = items.slice(0, 8);
+    warmOfflineCache(["/customers", "/timeline", ...top.map((c) => `/customers/${c.id}`)]);
+    top.forEach((c) => {
+      void qc
+        .prefetchQuery({
+          queryKey: ["customer-detail", tenantId, c.id],
+          queryFn: () => fnDetail({ data: { tenantId, id: c.id } }),
+          staleTime: 60_000,
+        })
+        .catch(() => {});
+    });
+  }, [tenantId, items, qc, fnDetail]);
+
   const onSubmitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
