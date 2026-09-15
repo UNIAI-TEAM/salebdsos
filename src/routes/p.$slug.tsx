@@ -132,7 +132,7 @@ function PublicSalesPage() {
             ) : null}
           </div>
           <div className="mt-5 flex justify-center">
-            <InstallLandingApp slug={page.slug} title={page.title || "Landing"} />
+            <InstallLandingApp slug={page.slug ?? ""} title={page.title || "Landing"} />
           </div>
         </div>
       </section>
