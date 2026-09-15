@@ -35,18 +35,19 @@ export function QuickContact({
       key={label}
       size={iconOnly ? "icon" : "sm"}
       variant={primary ? "default" : "outline"}
+      className={iconOnly ? "h-12 w-full min-w-0 flex-col gap-0.5 px-1" : undefined}
       title={label}
       aria-label={label}
     >
       <a href={href} target="_blank" rel="noreferrer">
         <Icon className={iconOnly ? "h-4 w-4" : "mr-2 h-4 w-4"} />
-        {iconOnly ? null : label}
+        {iconOnly ? <span className="max-w-full truncate text-[9px] leading-none">{label}</span> : label}
       </a>
     </Button>
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className={iconOnly ? "grid w-full max-w-xs grid-cols-4 gap-1.5" : "flex flex-wrap items-center gap-2"}>
       {tel ? btn("Zalo", `https://zalo.me/${zaloNumber(tel)}`, MessageCircle, true) : null}
       {tel ? btn("Gọi", `tel:${tel.replace(/\s/g, "")}`, Phone) : null}
       {tel
