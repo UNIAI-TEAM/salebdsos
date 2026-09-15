@@ -19,7 +19,7 @@ export const Route = createFileRoute("/p/$slug")({
       (loaderData?.output?.["subheadline"] as string) || "Thông tin dự án và ưu đãi dành riêng cho bạn.",
     ).slice(0, 155);
     const heroUrl = String((loaderData?.output?.["hero_image_url"] as string) || "");
-    const meta: { title?: string; name?: string; property?: string; content: string }[] = [
+    const meta: { title?: string; name?: string; property?: string; content?: string }[] = [
       { title },
       { name: "description", content: desc },
       { property: "og:title", content: title },
