@@ -113,6 +113,8 @@ function PublicSalesPage() {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Làm mới cache của chính landing này (trang + manifest + ảnh hero)
   // để lần mở từ icon sau đó hiện gần như tức thì.
