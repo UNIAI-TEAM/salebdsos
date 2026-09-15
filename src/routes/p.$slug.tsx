@@ -1,7 +1,7 @@
 // Public AI sales landing page: /p/<slug>
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CheckCircle2, Gift, Quote, MapPin, ArrowRight, FileText } from "lucide-react";
+import { CheckCircle2, Gift, Quote, MapPin, ArrowRight, FileText, Share2 } from "lucide-react";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
 import { InstallLandingApp } from "@/components/install-landing-app";
 import { warmLanding } from "@/lib/pwa";
