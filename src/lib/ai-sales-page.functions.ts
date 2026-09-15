@@ -403,6 +403,8 @@ export type SalesPageOutput = {
   form_intro?: string | null;
   hero_image_url?: string | null;
   gallery?: string[] | null;
+  brochure_url?: string | null;
+  brochure_name?: string | null;
 };
 
 const OutputSchema = z.object({
@@ -416,6 +418,8 @@ const OutputSchema = z.object({
   form_intro: z.string().max(400).optional().nullable(),
   hero_image_url: z.string().trim().max(1000).optional().nullable(),
   gallery: z.array(z.string().trim().max(1000)).max(8).optional().nullable(),
+  brochure_url: z.string().trim().max(1000).optional().nullable(),
+  brochure_name: z.string().trim().max(200).optional().nullable(),
 });
 
 export const updateSalesPage = createServerFn({ method: "POST" })

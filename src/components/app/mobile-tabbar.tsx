@@ -6,7 +6,7 @@ type Tab = { to: string; label: string; icon: any };
 
 // Chế độ Sale trên điện thoại: landing công khai, dự án, danh thiếp và timeline.
 const tabs: Tab[] = [
-  { to: "/landings", label: "Landing", icon: Globe2 },
+  { to: "/sale-landings", label: "Landing", icon: Globe2 },
   { to: "/sale-projects", label: "Dự án", icon: Building2 },
   { to: "/digital-card", label: "Danh thiếp", icon: IdCard },
   { to: "/timeline", label: "Timeline", icon: Activity },
@@ -14,7 +14,7 @@ const tabs: Tab[] = [
 
 const quickActions: Tab[] = [
   { to: "/sale-projects", label: "Dự án của tôi", icon: Building2 },
-  { to: "/landings", label: "Landing công khai", icon: Globe2 },
+  { to: "/sale-landings", label: "Landing công khai", icon: Globe2 },
   { to: "/digital-card", label: "Danh thiếp của tôi", icon: IdCard },
   { to: "/airdrop", label: "Chia sẻ AirDrop", icon: Send },
   { to: "/nfc-codes", label: "NFC & QR", icon: QrCode },
