@@ -43,3 +43,37 @@ export async function setupServiceWorker(): Promise<void> {
   const { registerSW } = await import("virtual:pwa-register");
   registerSW({ immediate: true });
 }
+
+/**
+ * Lưu trước các trang quan trọng (timeline, danh thiếp, landing công khai)
+ * để sale gặp khách không có mạng vẫn mở lại được.
+ */
+export async function warmOfflineCache(paths: string[]): Promise<void> {
+  if (typeof window === "undefined" || typeof caches === "undefined") return;
+  if (isBlockedContext()) return;
+  if (!navigator.onLine) return;
+
+  const unique = Array.from(new Set(paths.filter(Boolean)));
+  if (unique.length === 0) return;
+
+  const pick = (path: string) =>
+    path.startsWith("/p/") || path.startsWith("/c/")
+      ? "salebds-public-pages"
+      : "salebds-app-pages";
+
+  await Promise.allSettled(
+    unique.map(async (path) => {
+      try {
+        const cache = await caches.open(pick(path));
+        const req = new Request(new URL(path, window.location.origin).toString(), {
+          credentials: "include",
+        });
+        const res = await fetch(req);
+        if (res.ok) await cache.put(req, res.clone());
+      } catch {
+        /* offline hoặc bị chặn: bỏ qua */
+      }
+    }),
+  );
+}
+
