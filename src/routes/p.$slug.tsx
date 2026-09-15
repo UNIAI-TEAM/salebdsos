@@ -1,9 +1,10 @@
 // Public AI sales landing page: /p/<slug>
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, Gift, Quote, MapPin, ArrowRight } from "lucide-react";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
 import { InstallLandingApp } from "@/components/install-landing-app";
+import { warmLanding } from "@/lib/pwa";
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
