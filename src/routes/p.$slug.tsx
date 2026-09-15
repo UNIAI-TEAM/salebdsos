@@ -160,14 +160,23 @@ function PublicSalesPage() {
         <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
           {s("hero_image_url") ? (
             <img
-              src={s("hero_image_url")}
+              src={s("hero_image_mobile_url") || s("hero_image_url")}
+              srcSet={
+                s("hero_image_mobile_url")
+                  ? `${s("hero_image_mobile_url")} 800w, ${s("hero_image_url")} 1600w`
+                  : undefined
+              }
+              sizes="(max-width: 768px) 100vw, 768px"
               alt={s("headline") || page.title || "Hình ảnh dự án"}
+              width={1600}
+              height={900}
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              className="mx-auto mb-8 aspect-[16/9] w-full max-w-3xl rounded-2xl border border-border object-cover"
+              className="mx-auto mb-8 aspect-[16/9] w-full max-w-3xl rounded-2xl border border-border object-cover bg-muted"
             />
           ) : null}
+
           {page.project?.name ? (
             <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[12px] font-medium text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
