@@ -402,8 +402,11 @@ export type SalesPageOutput = {
   cta_secondary?: string | null;
   form_intro?: string | null;
   hero_image_url?: string | null;
+  hero_image_mobile_url?: string | null;
   gallery?: string[] | null;
+  gallery_mobile?: string[] | null;
   brochure_url?: string | null;
+
   brochure_name?: string | null;
 };
 
@@ -417,7 +420,10 @@ const OutputSchema = z.object({
   cta_secondary: z.string().max(120).optional().nullable(),
   form_intro: z.string().max(400).optional().nullable(),
   hero_image_url: z.string().trim().max(1000).optional().nullable(),
+  hero_image_mobile_url: z.string().trim().max(1000).optional().nullable(),
   gallery: z.array(z.string().trim().max(1000)).max(8).optional().nullable(),
+  gallery_mobile: z.array(z.string().trim().max(1000)).max(8).optional().nullable(),
+
   brochure_url: z.string().trim().max(1000).optional().nullable(),
   brochure_name: z.string().trim().max(200).optional().nullable(),
 });

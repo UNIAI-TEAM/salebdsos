@@ -22,6 +22,8 @@ import {
   ArrowLeft, Upload, FileText, Trash2, Plus, X, Phone, Link2 as LinkIcon, Building2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { optimizeImage } from "@/lib/image-optim";
+
 
 export const Route = createFileRoute("/_app/projects/$id")({ component: ProjectDetailPage });
 
@@ -103,9 +105,11 @@ function ProjectDetailPage() {
     try {
       const urls: string[] = [];
       for (const file of Array.from(files).slice(0, 10)) {
-        if (file.size > 8 * 1024 * 1024) { toast.error(`${file.name} > 8MB`); continue; }
-        urls.push(await uploadFile(file, "gallery"));
+        if (file.size > 20 * 1024 * 1024) { toast.error(`${file.name} > 20MB`); continue; }
+        const optimized = await optimizeImage(file, { maxWidth: 1600, quality: 0.82 });
+        urls.push(await uploadFile(optimized.file, "gallery"));
       }
+
       const newGallery = [...((f?.gallery as string[]) ?? []), ...urls];
       save.mutate({ ...f, gallery: newGallery, cover_url: f?.cover_url ?? urls[0] ?? null });
     } catch (e: any) { toast.error(e?.message ?? "Upload lỗi"); }

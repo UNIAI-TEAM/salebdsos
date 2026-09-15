@@ -16,6 +16,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { warmOfflineCache } from "@/lib/pwa";
+import { optimizeImage } from "@/lib/image-optim";
+
 import { Building2, Search, Upload, FileText, Link2, ImageIcon, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
@@ -154,9 +156,11 @@ function ProjectQuickEdit({ id, tenantId }: { id: string; tenantId: string }) {
     try {
       const urls: string[] = [];
       for (const file of Array.from(files).slice(0, 8)) {
-        if (file.size > 8 * 1024 * 1024) { toast.error(`${file.name} > 8MB`); continue; }
-        urls.push(await upload(file, "gallery"));
+        if (file.size > 20 * 1024 * 1024) { toast.error(`${file.name} > 20MB`); continue; }
+        const optimized = await optimizeImage(file, { maxWidth: 1600, quality: 0.82 });
+        urls.push(await upload(optimized.file, "gallery"));
       }
+
       if (urls.length) save.mutate({ gallery: [...gallery, ...urls], cover_url: urls[0] });
     } catch (e: any) { toast.error(e?.message ?? "Tải ảnh lỗi"); }
     finally { setBusy(false); }
