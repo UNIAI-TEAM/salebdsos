@@ -47,13 +47,13 @@ function TimelinePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Timeline" subtitle="Hoạt động của bạn và lượt xem landing, danh thiếp trong 14 ngày." />
+      <PageHeader title="Timeline" sub="Hoạt động của bạn và lượt xem landing, danh thiếp trong 14 ngày." />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <KpiCard icon={Eye} label="Lượt xem" value={String(d?.stats.views ?? 0)} />
-        <KpiCard icon={Users2} label="Khách mới" value={String(d?.stats.leads ?? 0)} />
-        <KpiCard icon={Activity} label="Hoạt động" value={String(d?.stats.activities ?? 0)} />
-        <KpiCard icon={Globe2} label="Landing đang có" value={String(d?.stats.pages ?? 0)} />
+        <KpiCard icon={Eye} label="Lượt xem" value={String(d?.stats.views ?? 0)} delta={0} deltaLabel="14 ngày qua" />
+        <KpiCard icon={Users2} label="Khách mới" value={String(d?.stats.leads ?? 0)} delta={0} deltaLabel="14 ngày qua" tone="amber" />
+        <KpiCard icon={Activity} label="Hoạt động" value={String(d?.stats.activities ?? 0)} delta={0} deltaLabel="14 ngày qua" tone="blue" />
+        <KpiCard icon={Globe2} label="Landing đang có" value={String(d?.stats.pages ?? 0)} delta={0} deltaLabel="tổng hiện tại" tone="green" />
       </div>
 
       {(d?.cards?.length || d?.pages?.length) ? (
