@@ -21,6 +21,8 @@ import {
   createCustomerAppointment, updateCustomerAppointmentStatus,
 } from "@/lib/customer-detail.functions";
 import { toast } from "sonner";
+import { QuickContact } from "@/components/app/quick-contact";
+
 
 export const Route = createFileRoute("/_app/customers/$id")({
   head: () => ({
