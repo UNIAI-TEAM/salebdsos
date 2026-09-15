@@ -34,7 +34,7 @@ export const listProjects = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("projects")
-      .select("id,name,developer,location,city,property_type,status,price_from,price_to,currency,cover_url,created_at")
+      .select("id,name,developer,location,city,property_type,status,price_from,price_to,currency,cover_url,cover_mobile_url,created_at")
       .eq("tenant_id", data.tenantId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
@@ -65,7 +65,7 @@ export const upsertProject = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => ProjectInput.parse(i))
   .handler(async ({ data, context }) => {
-    const payload = { ...data, unit_highlights: data.unit_highlights ?? [], gallery: data.gallery ?? [] };
+    const payload = { ...data, unit_highlights: data.unit_highlights ?? [], gallery: data.gallery ?? [], gallery_mobile: data.gallery_mobile ?? [] };
     if (data.id) {
       const { data: row, error } = await context.supabase
         .from("projects").update(payload).eq("id", data.id).select().single();
