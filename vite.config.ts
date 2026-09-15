@@ -25,9 +25,10 @@ export default defineConfig({
         outDir: "dist/client",
         workbox: {
           globDirectory: "dist/client",
-          globPatterns: ["**/*.{js,css,woff2,png,svg,ico}"],
-          navigateFallback: null,
-          navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
+          globPatterns: ["**/*.{js,css,woff2,png,svg,ico}", "offline.html"],
+          // Trang chưa từng mở khi offline → hiện trang thông báo đã lưu sẵn
+          navigateFallback: "/offline.html",
+          navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//, /\/_serverFn\//],
           runtimeCaching: [
             {
               // Landing công khai + danh thiếp số: xem lại được khi mất mạng
