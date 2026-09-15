@@ -1,7 +1,7 @@
 // Public AI sales landing page: /p/<slug>
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CheckCircle2, Gift, Quote, MapPin, ArrowRight, FileText, Share2 } from "lucide-react";
+import { CheckCircle2, Gift, Quote, MapPin, ArrowRight, FileText, Share2, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
 import { InstallLandingApp } from "@/components/install-landing-app";
@@ -284,6 +284,34 @@ function PublicSalesPage() {
             </span>
             <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
           </a>
+        </section>
+      ) : null}
+
+      {page.appointments.length > 0 ? (
+        <section className="mx-auto max-w-3xl px-4 pb-10 sm:px-6 sm:pb-14">
+          <h2 className="text-[20px] font-bold tracking-tight">Lịch sự kiện sắp tới</h2>
+          <ol className="relative mt-5 space-y-3 border-l border-border pl-5">
+            {page.appointments.map((appointment) => {
+              const starts = new Date(appointment.starts_at);
+              const ends = new Date(appointment.ends_at);
+              return (
+                <li key={appointment.id} className="relative min-w-0 rounded-xl border border-border bg-card p-4">
+                  <span className="absolute -left-[29px] top-4 grid h-4 w-4 place-items-center rounded-full bg-primary ring-4 ring-background" />
+                  <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-3">
+                    <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                    <div className="min-w-0">
+                      <h3 className="break-words text-[14px] font-semibold">{appointment.title}</h3>
+                      <p className="mt-1 text-[12.5px] text-muted-foreground">
+                        {starts.toLocaleDateString("vi-VN", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" })} · {starts.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}–{ends.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                      {appointment.location ? <p className="mt-1 flex min-w-0 items-start gap-1 text-[12.5px] text-muted-foreground"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span className="break-words">{appointment.location}</span></p> : null}
+                      <a href="#lien-he" className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-semibold text-primary">Đăng ký tham dự <ArrowRight className="h-3.5 w-3.5" /></a>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
         </section>
       ) : null}
 

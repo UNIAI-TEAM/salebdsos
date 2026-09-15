@@ -410,6 +410,14 @@ export type SalesPageOutput = {
   brochure_name?: string | null;
 };
 
+export type PublicProjectAppointment = {
+  id: string;
+  title: string;
+  location: string | null;
+  starts_at: string;
+  ends_at: string;
+};
+
 const OutputSchema = z.object({
   headline: z.string().max(300).optional().nullable(),
   subheadline: z.string().max(600).optional().nullable(),
@@ -536,13 +544,23 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       });
 
     let project: { name: string; location: string | null; cover_url: string | null } | null = null;
+    let appointments: PublicProjectAppointment[] = [];
     if (row.project_id) {
-      const { data: p } = await supabaseAdmin
-        .from("projects")
-        .select("name,location,cover_url")
-        .eq("id", row.project_id)
-        .maybeSingle();
+      const [{ data: p }, { data: publicAppointments, error: appointmentsError }] = await Promise.all([
+        supabaseAdmin.from("projects").select("name,location,cover_url").eq("id", row.project_id).maybeSingle(),
+        supabaseAdmin
+          .from("appointments")
+          .select("id,title,location,starts_at,ends_at")
+          .eq("project_id", row.project_id)
+          .eq("is_published", true)
+          .eq("status", "scheduled")
+          .gte("ends_at", new Date().toISOString())
+          .order("starts_at", { ascending: true })
+          .limit(12),
+      ]);
       project = p ?? null;
+      if (appointmentsError) console.error("[sales-page] public appointments", appointmentsError.message);
+      appointments = (publicAppointments ?? []) as PublicProjectAppointment[];
     }
     return {
       id: row.id,
@@ -552,6 +570,7 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       slug: row.slug,
       output: (row.output ?? {}) as SalesPageOutput,
       project,
+      appointments,
     };
   });
 
