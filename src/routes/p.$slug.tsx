@@ -1,7 +1,7 @@
 // Public AI sales landing page: /p/<slug>
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CheckCircle2, Gift, Quote, MapPin, ArrowRight } from "lucide-react";
+import { CheckCircle2, Gift, Quote, MapPin, ArrowRight, FileText } from "lucide-react";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
 import { InstallLandingApp } from "@/components/install-landing-app";
 import { warmLanding } from "@/lib/pwa";
@@ -182,6 +182,28 @@ function PublicSalesPage() {
             <Quote className="mx-auto h-6 w-6 text-muted-foreground" />
             <p className="mt-3 text-[16px] italic leading-relaxed">{s("social_proof")}</p>
           </blockquote>
+        </section>
+      ) : null}
+
+      {s("brochure_url") ? (
+        <section className="mx-auto max-w-3xl px-6 pb-14">
+          <a
+            href={s("brochure_url")}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4"
+          >
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+              <FileText className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] font-semibold truncate">
+                {s("brochure_name") || "Tài liệu dự án (PDF)"}
+              </span>
+              <span className="block text-[12.5px] text-muted-foreground">Tải brochure để xem chi tiết</span>
+            </span>
+            <ArrowRight className="h-4 w-4 text-primary" />
+          </a>
         </section>
       ) : null}
 

@@ -26,6 +26,7 @@ import { Route as AppTimelineRouteImport } from './routes/_app.timeline'
 import { Route as AppTeamRouteImport } from './routes/_app.team'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSaleProjectsRouteImport } from './routes/_app.sale-projects'
+import { Route as AppSaleLandingsRouteImport } from './routes/_app.sale-landings'
 import { Route as AppQrSharingRouteImport } from './routes/_app.qr-sharing'
 import { Route as AppPromptLibraryRouteImport } from './routes/_app.prompt-library'
 import { Route as AppProjectsRouteImport } from './routes/_app.projects'
@@ -142,6 +143,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppSaleProjectsRoute = AppSaleProjectsRouteImport.update({
   id: '/sale-projects',
   path: '/sale-projects',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSaleLandingsRoute = AppSaleLandingsRouteImport.update({
+  id: '/sale-landings',
+  path: '/sale-landings',
   getParentRoute: () => AppRoute,
 } as any)
 const AppQrSharingRoute = AppQrSharingRouteImport.update({
@@ -342,6 +348,7 @@ export interface FileRoutesByFullPath {
   '/projects': typeof AppProjectsRouteWithChildren
   '/prompt-library': typeof AppPromptLibraryRoute
   '/qr-sharing': typeof AppQrSharingRoute
+  '/sale-landings': typeof AppSaleLandingsRoute
   '/sale-projects': typeof AppSaleProjectsRoute
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
@@ -393,6 +400,7 @@ export interface FileRoutesByTo {
   '/projects': typeof AppProjectsRouteWithChildren
   '/prompt-library': typeof AppPromptLibraryRoute
   '/qr-sharing': typeof AppQrSharingRoute
+  '/sale-landings': typeof AppSaleLandingsRoute
   '/sale-projects': typeof AppSaleProjectsRoute
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
@@ -446,6 +454,7 @@ export interface FileRoutesById {
   '/_app/projects': typeof AppProjectsRouteWithChildren
   '/_app/prompt-library': typeof AppPromptLibraryRoute
   '/_app/qr-sharing': typeof AppQrSharingRoute
+  '/_app/sale-landings': typeof AppSaleLandingsRoute
   '/_app/sale-projects': typeof AppSaleProjectsRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/team': typeof AppTeamRoute
@@ -499,6 +508,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/prompt-library'
     | '/qr-sharing'
+    | '/sale-landings'
     | '/sale-projects'
     | '/settings'
     | '/team'
@@ -550,6 +560,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/prompt-library'
     | '/qr-sharing'
+    | '/sale-landings'
     | '/sale-projects'
     | '/settings'
     | '/team'
@@ -602,6 +613,7 @@ export interface FileRouteTypes {
     | '/_app/projects'
     | '/_app/prompt-library'
     | '/_app/qr-sharing'
+    | '/_app/sale-landings'
     | '/_app/sale-projects'
     | '/_app/settings'
     | '/_app/team'
@@ -762,6 +774,13 @@ declare module '@tanstack/react-router' {
       path: '/sale-projects'
       fullPath: '/sale-projects'
       preLoaderRoute: typeof AppSaleProjectsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sale-landings': {
+      id: '/_app/sale-landings'
+      path: '/sale-landings'
+      fullPath: '/sale-landings'
+      preLoaderRoute: typeof AppSaleLandingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/qr-sharing': {
@@ -1047,6 +1066,7 @@ interface AppRouteChildren {
   AppProjectsRoute: typeof AppProjectsRouteWithChildren
   AppPromptLibraryRoute: typeof AppPromptLibraryRoute
   AppQrSharingRoute: typeof AppQrSharingRoute
+  AppSaleLandingsRoute: typeof AppSaleLandingsRoute
   AppSaleProjectsRoute: typeof AppSaleProjectsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTeamRoute: typeof AppTeamRoute
@@ -1081,6 +1101,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProjectsRoute: AppProjectsRouteWithChildren,
   AppPromptLibraryRoute: AppPromptLibraryRoute,
   AppQrSharingRoute: AppQrSharingRoute,
+  AppSaleLandingsRoute: AppSaleLandingsRoute,
   AppSaleProjectsRoute: AppSaleProjectsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTeamRoute: AppTeamRoute,
