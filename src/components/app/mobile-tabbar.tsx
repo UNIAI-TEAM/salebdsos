@@ -1,24 +1,21 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-  LayoutDashboard, Users2, GitBranch, IdCard, Plus, Zap, Send, QrCode, CalendarClock, X,
-} from "lucide-react";
+import { IdCard, Plus, Send, QrCode, X, Globe2, Activity } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type Tab = { to: string; label: string; icon: any };
 
+// Chế độ Sale trên điện thoại: chỉ landing công khai, danh thiếp và timeline.
 const tabs: Tab[] = [
-  { to: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
-  { to: "/leads", label: "Leads", icon: Users2 },
-  { to: "/pipeline", label: "Pipeline", icon: GitBranch },
+  { to: "/landings", label: "Landing", icon: Globe2 },
   { to: "/digital-card", label: "Danh thiếp", icon: IdCard },
+  { to: "/timeline", label: "Timeline", icon: Activity },
 ];
 
 const quickActions: Tab[] = [
-  { to: "/leads", label: "Thêm Lead", icon: Users2 },
-  { to: "/lead-capture", label: "Tự động tạo Lead", icon: Zap },
+  { to: "/landings", label: "Landing công khai", icon: Globe2 },
+  { to: "/digital-card", label: "Danh thiếp của tôi", icon: IdCard },
   { to: "/airdrop", label: "Chia sẻ AirDrop", icon: Send },
   { to: "/nfc-codes", label: "NFC & QR", icon: QrCode },
-  { to: "/appointments", label: "Đặt lịch hẹn", icon: CalendarClock },
 ];
 
 export function MobileTabBar() {
@@ -115,6 +112,7 @@ export function MobileTabBar() {
           {tabs.slice(2).map((t) => (
             <TabLink key={t.to} tab={t} active={pathname.startsWith(t.to)} />
           ))}
+          <span aria-hidden />
         </div>
       </nav>
     </>
