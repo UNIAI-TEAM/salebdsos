@@ -1727,6 +1727,7 @@ export type Database = {
           brochure_name: string | null
           brochure_url: string | null
           city: string | null
+          cover_mobile_url: string | null
           cover_url: string | null
           created_at: string
           cta_form_enabled: boolean
@@ -1736,6 +1737,7 @@ export type Database = {
           description: string | null
           developer: string | null
           gallery: Json
+          gallery_mobile: string[]
           id: string
           location: string | null
           meta: Json
@@ -1754,6 +1756,7 @@ export type Database = {
           brochure_name?: string | null
           brochure_url?: string | null
           city?: string | null
+          cover_mobile_url?: string | null
           cover_url?: string | null
           created_at?: string
           cta_form_enabled?: boolean
@@ -1763,6 +1766,7 @@ export type Database = {
           description?: string | null
           developer?: string | null
           gallery?: Json
+          gallery_mobile?: string[]
           id?: string
           location?: string | null
           meta?: Json
@@ -1781,6 +1785,7 @@ export type Database = {
           brochure_name?: string | null
           brochure_url?: string | null
           city?: string | null
+          cover_mobile_url?: string | null
           cover_url?: string | null
           created_at?: string
           cta_form_enabled?: boolean
@@ -1790,6 +1795,7 @@ export type Database = {
           description?: string | null
           developer?: string | null
           gallery?: Json
+          gallery_mobile?: string[]
           id?: string
           location?: string | null
           meta?: Json
