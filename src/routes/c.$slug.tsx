@@ -196,7 +196,39 @@ function PublicCard() {
           {card.bio && <p className="mt-3 text-[13px] opacity-90 leading-relaxed">{card.bio}</p>}
         </header>
 
-        <nav className="mt-7 space-y-2.5" aria-label="Liên hệ">
+        {/* Nút nhanh */}
+        <div className="mt-6 grid grid-cols-4 gap-2">
+          {[
+            { label: "Gọi", icon: Phone, href: phone ? `tel:${phone.replace(/\s/g, "")}` : null, onClick: undefined as (() => void) | undefined },
+            { label: "Zalo", icon: MessageCircle, href: zalo?.href ?? null, onClick: undefined },
+            { label: "Lưu liên hệ", icon: Download, href: null, onClick: saveContact },
+            { label: "Chia sẻ", icon: Share2, href: null, onClick: shareCard },
+          ]
+            .filter((a) => a.href || a.onClick)
+            .map((a) =>
+              a.href ? (
+                <a
+                  key={a.label}
+                  href={a.href}
+                  className="rounded-2xl bg-white/12 backdrop-blur py-3 grid place-items-center gap-1 text-[11px] font-semibold active:scale-[0.97] transition"
+                >
+                  <a.icon className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} />
+                  {a.label}
+                </a>
+              ) : (
+                <button
+                  key={a.label}
+                  onClick={a.onClick}
+                  className="rounded-2xl bg-white/12 backdrop-blur py-3 grid place-items-center gap-1 text-[11px] font-semibold active:scale-[0.97] transition"
+                >
+                  <a.icon style={{ width: 18, height: 18 }} />
+                  {a.label}
+                </button>
+              ),
+            )}
+        </div>
+
+        <nav className="mt-4 space-y-2.5" aria-label="Liên hệ">
           {fields.map((f, i) => {
             const isCta = f.type === "cta";
             return (
@@ -216,6 +248,66 @@ function PublicCard() {
             <p className="text-center text-xs opacity-60 py-4">Chưa có thông tin liên hệ</p>
           )}
         </nav>
+
+        {/* Dự án đang bán */}
+        {projects.length > 0 && (
+          <section className="mt-8">
+            <h2 className="text-[15px] font-semibold">Dự án tôi đang bán</h2>
+            <div className="mt-3 space-y-3">
+              {projects.map((p) => {
+                const inner = (
+                  <>
+                    <div className="h-36 w-full bg-white/10">
+                      {(p.cover_mobile_url || p.cover_url) && (
+                        <img
+                          src={p.cover_mobile_url || p.cover_url || ""}
+                          srcSet={
+                            p.cover_mobile_url && p.cover_url
+                              ? `${p.cover_mobile_url} 800w, ${p.cover_url} 1600w`
+                              : undefined
+                          }
+                          sizes="(max-width: 640px) 100vw, 448px"
+                          alt={p.name}
+                          loading="lazy"
+                          decoding="async"
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="p-3.5">
+                      <div className="text-[14px] font-semibold leading-snug">{p.name}</div>
+                      <div className="mt-1 flex items-center gap-2 text-[11.5px] opacity-80">
+                        {p.city && (
+                          <span className="inline-flex items-center gap-1">
+                            <MapPin style={{ width: 12, height: 12 }} /> {p.city}
+                          </span>
+                        )}
+                        {money(p.price_from, p.currency) && <span>· {money(p.price_from, p.currency)}</span>}
+                      </div>
+                      {p.landing_slug && (
+                        <div className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold" style={{ color: primary }}>
+                          Xem chi tiết & brochure <ArrowRight style={{ width: 13, height: 13 }} />
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+                const cls = "block rounded-2xl overflow-hidden bg-white/10 backdrop-blur active:scale-[0.99] transition";
+                return p.landing_slug ? (
+                  <a key={p.id} href={`/p/${p.landing_slug}`} onClick={() => trackProjectClick(p.id)} className={cls}>
+                    {inner}
+                  </a>
+                ) : (
+                  <div key={p.id} className={cls}>{inner}</div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Khách để lại thông tin */}
+        <LeadForm slug={card.slug} primary={primary} projects={projects.map((p) => ({ id: p.id, name: p.name }))} />
+
 
         {blocks.length > 0 && (
           <section className="mt-8 space-y-4">
