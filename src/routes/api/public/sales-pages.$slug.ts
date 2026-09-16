@@ -98,6 +98,18 @@ export const Route = createFileRoute("/api/public/sales-pages/$slug")({
           return json({ error: "Không gửi được, vui lòng thử lại." }, 500);
         }
 
+        // Thông báo cho sale phụ trách: khách mới để lại thông tin
+        const { error: nErr } = await supabaseAdmin.from("notifications").insert({
+          tenant_id: page.tenant_id,
+          user_id: page.owner_user_id ?? null,
+          type: "lead_new",
+          title: "Khách mới từ landing",
+          body: `${full_name} · ${phone}${page.title ? ` · ${page.title}` : ""}`,
+          link: `/leads?lead=${lead.id}`,
+          lead_id: lead.id,
+        });
+        if (nErr) console.error("[sales-page] notification", nErr.message);
+
         // Timeline: ghi nhận nguồn gốc lead
         const { error: aErr } = await supabaseAdmin.from("audit_logs").insert({
           tenant_id: page.tenant_id,
