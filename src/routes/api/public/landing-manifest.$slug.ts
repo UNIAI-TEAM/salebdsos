@@ -32,15 +32,24 @@ export const Route = createFileRoute("/api/public/landing-manifest/$slug")({
           name,
           short_name: name.slice(0, 12),
           description: description.slice(0, 200),
-          start_url: `/p/${page.slug}`,
+          lang: "vi",
+          dir: "ltr",
+          categories: ["business", "productivity"],
+          start_url: `/p/${page.slug}?src=pwa`,
           scope: `/p/${page.slug}`,
           display: "standalone",
+          display_override: ["standalone", "minimal-ui", "browser"],
           orientation: "portrait-primary",
           background_color: "#0B0F1A",
           theme_color: "#0B0F1A",
           icons: [
             { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
             { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+            { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+            { src: "/apple-touch-icon.png", sizes: "180x180", type: "image/png", purpose: "any" },
+          ],
+          shortcuts: [
+            { name: "Xem landing", short_name: "Landing", url: `/p/${page.slug}` },
           ],
         };
 
