@@ -456,7 +456,7 @@ function FilesPage() {
             <thead className="bg-muted/50 text-muted-foreground">
               <tr className="text-left">
                 <th className="px-3 py-2.5 w-9">
-                  <button onClick={toggleAll} className="text-muted-foreground hover:text-foreground" title="Chọn tất cả">
+                  <button onClick={toggleAll} className="grid h-9 w-9 place-items-center text-muted-foreground hover:text-foreground sm:h-7 sm:w-7" title="Chọn tất cả">
                     {allSelected ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
                   </button>
                 </th>
