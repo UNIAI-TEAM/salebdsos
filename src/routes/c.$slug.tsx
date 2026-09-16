@@ -1,9 +1,9 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, BadgeCheck } from "lucide-react";
+import { User, BadgeCheck, Phone, MessageCircle, Download, Share2, MapPin, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 
 const getPublicCard = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => d)
@@ -23,8 +23,52 @@ const getPublicCard = createServerFn({ method: "GET" })
       .eq("is_visible", true)
       .is("deleted_at", null)
       .order("position", { ascending: true });
-    return { ...card, blocks: blocks ?? [] };
+
+    // Dự án sale đang bán (gắn trong app) + landing công khai tương ứng
+    const { data: links } = await supabaseAdmin
+      .from("card_projects")
+      .select("project_id, position")
+      .eq("card_id", card.id)
+      .order("position", { ascending: true });
+
+    const projectIds = (links ?? []).map((l) => l.project_id);
+    let projects: {
+      id: string; name: string; city: string | null; status: string | null;
+      price_from: number | null; currency: string | null;
+      cover_url: string | null; cover_mobile_url: string | null;
+      landing_slug: string | null;
+    }[] = [];
+
+    if (projectIds.length) {
+      const [{ data: rows }, { data: pages }] = await Promise.all([
+        supabaseAdmin
+          .from("projects")
+          .select("id, name, city, status, price_from, currency, cover_url, cover_mobile_url")
+          .in("id", projectIds)
+          .is("deleted_at", null),
+        supabaseAdmin
+          .from("ai_sales_pages")
+          .select("project_id, slug, updated_at")
+          .in("project_id", projectIds)
+          .eq("is_published", true)
+          .is("deleted_at", null)
+          .order("updated_at", { ascending: false }),
+      ]);
+      const slugByProject = new Map<string, string>();
+      for (const p of pages ?? []) {
+        if (p.project_id && p.slug && !slugByProject.has(p.project_id)) {
+          slugByProject.set(p.project_id, p.slug);
+        }
+      }
+      projects = projectIds
+        .map((id) => (rows ?? []).find((r) => r.id === id))
+        .filter(Boolean)
+        .map((r) => ({ ...(r as any), landing_slug: slugByProject.get((r as any).id) ?? null }));
+    }
+
+    return { ...card, blocks: blocks ?? [], projects };
   });
+
 
 const TEMPLATES: Record<string, { bg: string; text: string }> = {
   "luxury-dark": { bg: "from-slate-900 via-[#0B0F1A] to-black", text: "text-white" },

@@ -61,6 +61,7 @@ import { Route as ApiPublicSalesPagesSlugRouteImport } from './routes/api/public
 import { Route as ApiPublicQCodeRouteImport } from './routes/api/public/q.$code'
 import { Route as ApiPublicLeadFormsSlugRouteImport } from './routes/api/public/lead-forms.$slug'
 import { Route as ApiPublicLandingManifestSlugRouteImport } from './routes/api/public/landing-manifest.$slug'
+import { Route as ApiPublicCardLeadsSlugRouteImport } from './routes/api/public/card-leads.$slug'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -322,6 +323,11 @@ const ApiPublicLandingManifestSlugRoute =
     path: '/api/public/landing-manifest/$slug',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCardLeadsSlugRoute = ApiPublicCardLeadsSlugRouteImport.update({
+  id: '/api/public/card-leads/$slug',
+  path: '/api/public/card-leads/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -370,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/customers/$id': typeof AppCustomersIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/customers/': typeof AppCustomersIndexRoute
+  '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
@@ -423,6 +430,7 @@ export interface FileRoutesByTo {
   '/customers/$id': typeof AppCustomersIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/customers': typeof AppCustomersIndexRoute
+  '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
@@ -478,6 +486,7 @@ export interface FileRoutesById {
   '/_app/customers/$id': typeof AppCustomersIdRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
   '/_app/customers/': typeof AppCustomersIndexRoute
+  '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
@@ -533,6 +542,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/projects/$id'
     | '/customers/'
+    | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
     | '/api/public/q/$code'
@@ -586,6 +596,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/projects/$id'
     | '/customers'
+    | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
     | '/api/public/q/$code'
@@ -640,6 +651,7 @@ export interface FileRouteTypes {
     | '/_app/customers/$id'
     | '/_app/projects/$id'
     | '/_app/customers/'
+    | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
     | '/api/public/q/$code'
@@ -660,6 +672,7 @@ export interface RootRouteChildren {
   FSlugRoute: typeof FSlugRoute
   PSlugRoute: typeof PSlugRoute
   ShareSlugRoute: typeof ShareSlugRoute
+  ApiPublicCardLeadsSlugRoute: typeof ApiPublicCardLeadsSlugRoute
   ApiPublicLandingManifestSlugRoute: typeof ApiPublicLandingManifestSlugRoute
   ApiPublicLeadFormsSlugRoute: typeof ApiPublicLeadFormsSlugRoute
   ApiPublicQCodeRoute: typeof ApiPublicQCodeRoute
@@ -1033,6 +1046,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicLandingManifestSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/card-leads/$slug': {
+      id: '/api/public/card-leads/$slug'
+      path: '/api/public/card-leads/$slug'
+      fullPath: '/api/public/card-leads/$slug'
+      preLoaderRoute: typeof ApiPublicCardLeadsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1147,6 +1167,7 @@ const rootRouteChildren: RootRouteChildren = {
   FSlugRoute: FSlugRoute,
   PSlugRoute: PSlugRoute,
   ShareSlugRoute: ShareSlugRoute,
+  ApiPublicCardLeadsSlugRoute: ApiPublicCardLeadsSlugRoute,
   ApiPublicLandingManifestSlugRoute: ApiPublicLandingManifestSlugRoute,
   ApiPublicLeadFormsSlugRoute: ApiPublicLeadFormsSlugRoute,
   ApiPublicQCodeRoute: ApiPublicQCodeRoute,
