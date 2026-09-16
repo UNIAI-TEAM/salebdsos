@@ -2,8 +2,8 @@ FROM node:22-alpine AS build
 
 WORKDIR /app
 
-COPY package.json package-lock.json* bun.lock* ./
-RUN npm install
+COPY package.json bun.lock* ./
+RUN apk add --no-cache curl && curl -fsSL https://bun.sh/install | bash && ln -s /root/.bun/bin/bun /usr/local/bin/bun && bun install --frozen-lockfile
 
 COPY . .
 
