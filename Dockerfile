@@ -3,7 +3,8 @@ FROM node:22-alpine AS build
 WORKDIR /app
 
 COPY package.json bun.lock* ./
-RUN apk add --no-cache curl && curl -fsSL https://bun.sh/install | bash && ln -s /root/.bun/bin/bun /usr/local/bin/bun && bun install --frozen-lockfile
+COPY --from=oven/bun:1 /usr/local/bin/bun /usr/local/bin/bun
+RUN bun install --frozen-lockfile
 
 COPY . .
 
