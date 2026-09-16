@@ -419,7 +419,7 @@ function FilesPage() {
                   key={t.v}
                   onClick={() => { setScope(t.v); setSelected(new Set()); }}
                   className={[
-                    "h-7 px-3 rounded",
+                    "h-9 px-3 rounded sm:h-7",
                     scope === t.v ? "bg-card shadow-soft text-foreground" : "text-muted-foreground hover:text-foreground",
                   ].join(" ")}
                 >
