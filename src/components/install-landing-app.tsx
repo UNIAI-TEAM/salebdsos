@@ -4,7 +4,7 @@ import { Download, Share2, X } from "lucide-react";
 
 type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 
-export function InstallLandingApp({ slug, title }: { slug: string; title: string }) {
+export function InstallLandingApp({ title }: { slug?: string; title: string }) {
   const [promptEvent, setPromptEvent] = useState<InstallEvent | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [installed, setInstalled] = useState(false);
