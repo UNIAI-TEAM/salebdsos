@@ -121,6 +121,7 @@ function RootComponent() {
       <AuthProvider>
         <ServiceWorkerRegistrar />
         <Outlet />
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );
