@@ -9,32 +9,6 @@ export function InstallLandingApp({ slug, title }: { slug: string; title: string
   const [showHelp, setShowHelp] = useState(false);
   const [installed, setInstalled] = useState(false);
 
-  // Gắn manifest riêng của landing để icon mở đúng trang này.
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    const href = `/api/public/landing-manifest/${slug}`;
-    document.querySelectorAll<HTMLLinkElement>('link[rel="manifest"]').forEach((l) => l.remove());
-    const link = document.createElement("link");
-    link.rel = "manifest";
-    link.href = href;
-    document.head.appendChild(link);
-
-    const setMeta = (name: string, content: string) => {
-      let m = document.head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
-      if (!m) {
-        m = document.createElement("meta");
-        m.name = name;
-        document.head.appendChild(m);
-      }
-      m.content = content;
-    };
-    setMeta("apple-mobile-web-app-capable", "yes");
-    setMeta("apple-mobile-web-app-status-bar-style", "black-translucent");
-    setMeta("apple-mobile-web-app-title", title.slice(0, 20));
-
-    return () => link.remove();
-  }, [slug, title]);
-
   useEffect(() => {
     const onPrompt = (e: Event) => {
       e.preventDefault();
