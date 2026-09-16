@@ -354,3 +354,53 @@ export const updateCustomerAppointmentStatus = createServerFn({ method: "POST" }
     });
     return { ok: true };
   });
+
+// Ghi note nhanh cho khách: lưu vào ghi chú khách và đẩy lên timeline.
+export const addCustomerNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        customerId: z.string().uuid(),
+        note: z.string().trim().min(1).max(2000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: customer, error: cErr } = await supabase
+      .from("customers")
+      .select("id,notes")
+      .eq("tenant_id", data.tenantId)
+      .eq("id", data.customerId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (cErr) throw new Error(cErr.message);
+    if (!customer) throw new Error("Không tìm thấy khách hàng");
+
+    const stamp = new Date().toLocaleString("vi-VN");
+    const merged = [`[${stamp}] ${data.note}`, customer.notes || ""].filter(Boolean).join("\n");
+    const { error } = await supabase
+      .from("customers")
+      .update({ notes: merged.slice(0, 20000) })
+      .eq("tenant_id", data.tenantId)
+      .eq("id", data.customerId);
+    if (error) throw new Error(error.message);
+
+    await supabase
+      .from("pipeline_deals")
+      .update({ last_activity_at: new Date().toISOString() })
+      .eq("tenant_id", data.tenantId)
+      .eq("customer_id", data.customerId)
+      .is("deleted_at", null);
+
+    await logTimeline(supabase, {
+      tenantId: data.tenantId,
+      actor: userId,
+      action: "customer.note",
+      entityId: data.customerId,
+      diff: { note: data.note },
+    });
+    return { ok: true };
+  });

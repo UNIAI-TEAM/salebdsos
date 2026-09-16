@@ -29,6 +29,7 @@ const ACTION_LABEL_VI: Record<string, string> = {
   "customer.updated": "Cập nhật khách hàng",
   "customer.transaction": "Ghi nhận giao dịch",
   "customer.transaction_deleted": "Xoá giao dịch",
+  "customer.note": "Ghi chú khách hàng",
   "customer.appointment": "Đặt lịch gặp",
   "customer.appointment_status": "Cập nhật lịch gặp",
   "appointment.created": "Tạo lịch hẹn",

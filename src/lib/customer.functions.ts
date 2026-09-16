@@ -79,6 +79,15 @@ export const createCustomer = createServerFn({ method: "POST" })
     };
     const { data: row, error } = await supabase.from("customers").insert(insert).select(SELECT).single();
     if (error) throw new Error(error.message);
+    // Đồng bộ timeline
+    await supabase.from("audit_logs").insert({
+      tenant_id: tenantId,
+      actor_user_id: userId,
+      action: "customer.created",
+      entity: "customer",
+      entity_id: row.id,
+      diff: { full_name: row.full_name, phone: row.phone, email: row.email },
+    });
     return row;
   });
 
