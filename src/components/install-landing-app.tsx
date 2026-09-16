@@ -1,4 +1,4 @@
-// Nút "Cài landing này thành app": đổi manifest sang manifest riêng của landing rồi mời cài.
+// Nút "Cài landing này thành app" (manifest riêng do LandingBrowserMeta gắn).
 import { useEffect, useState } from "react";
 import { Download, Share2, X } from "lucide-react";
 
