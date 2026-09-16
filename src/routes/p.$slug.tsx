@@ -230,6 +230,7 @@ function PublicSalesPage() {
             ) : null}
           </div>
           <div className="mt-5 flex justify-center">
+            <LandingBrowserMeta slug={page.slug ?? ""} title={page.title || "Landing"} />
             <InstallLandingApp slug={page.slug ?? ""} title={page.title || "Landing"} />
           </div>
           {mounted && page.slug ? (
