@@ -32,7 +32,23 @@ export const Route = createFileRoute("/p/$slug")({
       meta.push({ property: "og:image", content: heroUrl });
       meta.push({ name: "twitter:image", content: heroUrl });
     }
-    return { meta };
+    const slug = loaderData?.slug || "";
+    const url = `https://salebdsos.lovable.app/p/${slug}`;
+    meta.push({ property: "og:url", content: url });
+    meta.push({ property: "og:site_name", content: "SaleBDS OS" });
+    meta.push({ name: "theme-color", content: "#0B0F1A" });
+    meta.push({ name: "apple-mobile-web-app-capable", content: "yes" });
+    meta.push({ name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" });
+    meta.push({ name: "apple-mobile-web-app-title", content: title.slice(0, 20) });
+    meta.push({ name: "mobile-web-app-capable", content: "yes" });
+    meta.push({ name: "format-detection", content: "telephone=yes" });
+    const links = [
+      { rel: "canonical", href: url },
+      { rel: "manifest", href: `/api/public/landing-manifest/${slug}` },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+    ];
+    return { meta, links };
   },
   component: PublicSalesPage,
   errorComponent: () => (
