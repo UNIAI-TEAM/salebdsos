@@ -127,6 +127,53 @@ function PublicCard() {
     id: string; block_type: string; position: number; config: Record<string, unknown> | null;
   }[];
   const fields = (Array.isArray(card.fields) ? card.fields : []) as { type?: string; label: string; value?: string; href?: string }[];
+  const projects = ((card as any).projects ?? []) as {
+    id: string; name: string; city: string | null; status: string | null;
+    price_from: number | null; currency: string | null;
+    cover_url: string | null; cover_mobile_url: string | null; landing_slug: string | null;
+  }[];
+
+  const phone = fields.find((f) => f.type === "phone")?.value ?? null;
+  const zalo = fields.find((f) => f.type === "zalo");
+
+  const trackProjectClick = (projectId: string) => {
+    supabase.from("interaction_events").insert({
+      card_id: card.id,
+      tenant_id: card.tenant_id,
+      source: "project_click",
+      referrer: projectId,
+      user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : null,
+    }).then(() => {});
+  };
+
+  const saveContact = () => {
+    const lines = [
+      "BEGIN:VCARD", "VERSION:3.0",
+      `FN:${card.display_name}`,
+      card.company ? `ORG:${card.company}` : "",
+      card.title ? `TITLE:${card.title}` : "",
+      phone ? `TEL;TYPE=CELL:${phone}` : "",
+      `URL:${typeof window !== "undefined" ? window.location.href : ""}`,
+      "END:VCARD",
+    ].filter(Boolean);
+    const blob = new Blob([lines.join("\n")], { type: "text/vcard" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${card.slug}.vcf`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const shareCard = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (typeof navigator !== "undefined" && (navigator as any).share) {
+      try { await (navigator as any).share({ title: card.display_name, url }); return; } catch { /* ignore */ }
+    }
+    if (typeof navigator !== "undefined") navigator.clipboard?.writeText(url);
+  };
+
+  const money = (v: number | null, cur: string | null) =>
+    v == null ? null : `từ ${(v / 1_000_000_000).toFixed(1).replace(/\.0$/, "")} tỷ${cur && cur !== "VND" ? ` ${cur}` : ""}`;
+
 
   return (
     <main className={`min-h-screen bg-gradient-to-b ${tmpl.bg} ${tmpl.text}`}>
