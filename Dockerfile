@@ -1,16 +1,16 @@
-FROM node:22-alpine AS build
+FROM oven/bun:1 AS build
 
 WORKDIR /app
 
 COPY package.json bun.lock* ./
-COPY --from=oven/bun:1 /usr/local/bin/bun /usr/local/bin/bun
+
 RUN bun install --frozen-lockfile
 
 COPY . .
 
 # Lovable TanStack Start defaults to Cloudflare nitro output; VPS Docker needs node-server.
 ENV NITRO_PRESET=node-server
-RUN npm run build
+RUN bun run build
 
 FROM node:22-alpine AS runtime
 
