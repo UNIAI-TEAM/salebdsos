@@ -42,12 +42,9 @@ export const Route = createFileRoute("/p/$slug")({
     meta.push({ name: "apple-mobile-web-app-title", content: title.slice(0, 20) });
     meta.push({ name: "mobile-web-app-capable", content: "yes" });
     meta.push({ name: "format-detection", content: "telephone=yes" });
-    const links = [
-      { rel: "canonical", href: url },
-      { rel: "manifest", href: `/api/public/landing-manifest/${slug}` },
-      { rel: "icon", type: "image/png", href: "/favicon.png" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
-    ];
+    // Không thêm lại manifest/icon ở đây: root đã có sẵn, manifest riêng của
+    // landing được gắn trong LandingBrowserMeta để tránh 2 thẻ manifest.
+    const links = [{ rel: "canonical", href: url }];
     return { meta, links };
   },
   component: PublicSalesPage,
