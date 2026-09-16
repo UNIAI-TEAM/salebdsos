@@ -82,6 +82,18 @@ export const Route = createFileRoute("/api/public/lead-forms/$slug")({
           return json({ error: "Không gửi được, vui lòng thử lại." }, 500);
         }
 
+        // Thông báo trong app cho cả workspace (form không gắn sale phụ trách)
+        const { error: nErr } = await supabaseAdmin.from("notifications").insert({
+          tenant_id: form.tenant_id,
+          user_id: null,
+          type: "lead_new",
+          title: "Khách mới từ landing",
+          body: [payload["full_name"], payload["phone"]].filter(Boolean).join(" · ") || "Có khách để lại thông tin",
+          link: `/leads?lead=${lead.id}`,
+          lead_id: lead.id,
+        });
+        if (nErr) console.error("[lead-form] notification", nErr.message);
+
         const { error: subErr } = await supabaseAdmin.from("lead_submissions").insert({
           tenant_id: form.tenant_id,
           form_id: form.id,

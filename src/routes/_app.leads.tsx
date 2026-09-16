@@ -30,7 +30,12 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getLeadScore, explainLeadScoreAI, bandFromScore, SCORE_LABEL, type ScoreBand } from "@/lib/lead-score.functions";
 
-export const Route = createFileRoute("/_app/leads")({ component: LeadsPage });
+export const Route = createFileRoute("/_app/leads")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    lead: typeof search.lead === "string" ? search.lead : undefined,
+  }),
+  component: LeadsPage,
+});
 
 const STATUS_LABEL: Record<LeadStatus, string> = {
   new: "Mới", contacted: "Đã liên hệ", consulting: "Đang tư vấn",
@@ -65,6 +70,7 @@ function fmtDate(s: string) {
 }
 
 function LeadsPage() {
+  const { lead: leadParam } = Route.useSearch();
   const { currentTenant, canEdit } = useAuth();
   const tenantId = currentTenant?.id;
   const qc = useQueryClient();
@@ -74,10 +80,14 @@ function LeadsPage() {
   const [sourceF, setSourceF] = useState<string>("");
   const [projectF, setProjectF] = useState<string>("");
   const [page, setPage] = useState(1);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(leadParam ?? null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorLead, setEditorLead] = useState<Partial<Lead> | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+
+  useEffect(() => {
+    if (leadParam) setOpenId(leadParam);
+  }, [leadParam]);
 
   const fnList = useServerFn(listLeads);
   const fnStats = useServerFn(getLeadStats);

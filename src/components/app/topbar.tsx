@@ -1,5 +1,6 @@
-import { Bell, HelpCircle, Search, ChevronDown, Menu, PanelLeft } from "lucide-react";
+import { HelpCircle, Search, ChevronDown, Menu, PanelLeft } from "lucide-react";
 import { useRouterState } from "@tanstack/react-router";
+import { NotificationBell } from "@/components/app/notification-bell";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
 import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
 
@@ -70,10 +71,7 @@ export function AppTopbar() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          <button className="relative p-2 rounded-lg hover:bg-muted transition">
-            <Bell className="h-5 w-5 text-muted-foreground" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
-          </button>
+          <NotificationBell />
           <button className="p-2 rounded-lg hover:bg-muted transition">
             <HelpCircle className="h-5 w-5 text-muted-foreground" />
           </button>
