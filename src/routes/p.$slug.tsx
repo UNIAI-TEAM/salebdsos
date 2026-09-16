@@ -5,6 +5,7 @@ import { CheckCircle2, Gift, Quote, MapPin, ArrowRight, FileText, Share2, Calend
 import { toast } from "sonner";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
 import { InstallLandingApp } from "@/components/install-landing-app";
+import { LandingBrowserMeta } from "@/components/landing-browser-meta";
 import { Button } from "@/components/ui/button";
 import { warmLanding, warmOfflineAssets } from "@/lib/pwa";
 
