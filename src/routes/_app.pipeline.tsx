@@ -367,7 +367,7 @@ function Column({
             <span className="text-[12.5px] font-semibold truncate">{stage.name}</span>
             <span className="text-[10.5px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-bold">{count}</span>
           </div>
-          <button className="text-muted-foreground hover:text-foreground" aria-label="more">
+          <button className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground hover:text-foreground sm:h-7 sm:w-7" aria-label="more">
             <MoreHorizontal className="h-4 w-4" />
           </button>
         </div>
@@ -429,20 +429,20 @@ function DealCard({
         <div className="flex items-center gap-1.5 shrink-0">
           {onAiPrompt && (
             <button onClick={(e) => { e.stopPropagation(); onAiPrompt(); }}
-              className="h-6 w-6 rounded-full bg-primary/10 text-primary grid place-items-center hover:bg-primary/20"
+              className="h-8 w-8 sm:h-6 sm:w-6 rounded-full bg-primary/10 text-primary grid place-items-center hover:bg-primary/20"
               title="Prompt AI theo giai đoạn" aria-label="ai-prompt">
               <Sparkles className="h-3 w-3" />
             </button>
           )}
           {lead?.phone && (
             <a href={`tel:${lead.phone}`} onClick={(e) => e.stopPropagation()}
-              className="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 grid place-items-center hover:bg-emerald-100" aria-label="call">
+              className="h-8 w-8 sm:h-6 sm:w-6 rounded-full bg-emerald-50 text-emerald-600 grid place-items-center hover:bg-emerald-100" aria-label="call">
               <Phone className="h-3 w-3" />
             </a>
           )}
           {lead?.email && (
             <a href={`mailto:${lead.email}`} onClick={(e) => e.stopPropagation()}
-              className="h-6 w-6 rounded-full bg-blue-50 text-blue-600 grid place-items-center hover:bg-blue-100" aria-label="email">
+              className="h-8 w-8 sm:h-6 sm:w-6 rounded-full bg-blue-50 text-blue-600 grid place-items-center hover:bg-blue-100" aria-label="email">
               <Mail className="h-3 w-3" />
             </a>
           )}
@@ -605,7 +605,7 @@ function DealSheet({
         <SheetHeader>
           <SheetTitle className="flex items-center justify-between">
             <span className="truncate">Chi tiết deal</span>
-            <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+            <button onClick={onClose} aria-label="Đóng" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
           </SheetTitle>
         </SheetHeader>
         <div className="mt-4 space-y-4">

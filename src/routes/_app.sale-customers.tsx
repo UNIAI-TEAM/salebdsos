@@ -181,7 +181,7 @@ function SaleCustomersPage() {
                 <Link
                   to="/customers/$id"
                   params={{ id: c.id }}
-                  className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted"
                   aria-label="Xem chi tiết khách"
                 >
                   <ChevronRight className="h-4 w-4" />

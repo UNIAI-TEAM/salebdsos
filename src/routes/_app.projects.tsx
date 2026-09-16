@@ -147,7 +147,7 @@ function ProjectsPage() {
                         {p.status && <span className={["inline-flex px-2 py-1 rounded-md text-[11.5px] font-semibold", STATUS_TONE[p.status] ?? "bg-muted"].join(" ")}>{STATUS_LABEL[p.status] ?? p.status}</span>}
                       </td>
                       <td className="px-3 py-3 text-right pr-5">
-                        <Link to="/projects/$id" params={{ id: p.id }} className="inline-flex items-center gap-1 text-primary text-[12.5px] font-semibold hover:underline">
+                        <Link to="/projects/$id" params={{ id: p.id }} className="inline-flex min-h-9 items-center gap-1 px-1 -mx-1 text-primary text-[12.5px] font-semibold hover:underline">
                           <Eye className="h-3.5 w-3.5" /> Mở
                         </Link>
                       </td>

@@ -64,7 +64,7 @@ export function MobileTabBar() {
               type="button"
               aria-label="Đóng"
               onClick={() => setOpen(false)}
-              className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+              className="grid h-10 w-10 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
