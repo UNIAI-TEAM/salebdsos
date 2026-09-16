@@ -349,3 +349,75 @@ function PublicCard() {
     </main>
   );
 }
+
+function LeadForm({
+  slug, primary, projects,
+}: { slug: string; primary: string; projects: { id: string; name: string }[] }) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [projectId, setProjectId] = useState("");
+  const [notes, setNotes] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "done">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setState("sending"); setError(null);
+    try {
+      const res = await fetch(`/api/public/card-leads/${slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ full_name: name, phone, project_id: projectId || null, notes: notes || null }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Không gửi được, vui lòng thử lại.");
+      setState("done");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không gửi được.");
+      setState("idle");
+    }
+  };
+
+  const input = "w-full rounded-xl bg-white/12 backdrop-blur px-3.5 py-3 text-[13.5px] placeholder:opacity-60 outline-none focus:ring-2 focus:ring-white/30";
+
+  if (state === "done") {
+    return (
+      <section className="mt-8 rounded-2xl bg-white/10 backdrop-blur p-5 text-center">
+        <CheckCircle2 className="h-7 w-7 mx-auto" />
+        <div className="mt-2 text-[14px] font-semibold">Đã nhận thông tin của bạn</div>
+        <p className="mt-1 text-[12.5px] opacity-80">Tôi sẽ liên hệ lại trong thời gian sớm nhất.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mt-8 rounded-2xl bg-white/10 backdrop-blur p-4">
+      <h2 className="text-[15px] font-semibold">Để lại thông tin, tôi tư vấn ngay</h2>
+      <form className="mt-3 space-y-2.5" onSubmit={submit}>
+        <input className={input} placeholder="Họ và tên" value={name} onChange={(e) => setName(e.target.value)} required />
+        <input className={input} placeholder="Số điện thoại" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+        {projects.length > 0 && (
+          <select className={input} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+            <option value="">Dự án quan tâm (tuỳ chọn)</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id} className="text-slate-900">{p.name}</option>
+            ))}
+          </select>
+        )}
+        <textarea className={input} rows={2} placeholder="Nhu cầu, ngân sách… (tuỳ chọn)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+        {error && <p className="text-[12px] text-red-200">{error}</p>}
+        <button
+          type="submit"
+          disabled={state === "sending"}
+          className="w-full rounded-xl py-3.5 text-sm font-semibold disabled:opacity-60 inline-flex items-center justify-center gap-2 active:scale-[0.98] transition"
+          style={{ backgroundColor: primary }}
+        >
+          {state === "sending" && <Loader2 className="h-4 w-4 animate-spin" />}
+          Gửi thông tin
+        </button>
+        <p className="text-[11px] opacity-60 text-center">Thông tin chỉ dùng để liên hệ tư vấn.</p>
+      </form>
+    </section>
+  );
+}
+
