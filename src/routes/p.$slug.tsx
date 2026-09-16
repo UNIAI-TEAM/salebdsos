@@ -5,6 +5,7 @@ import { CheckCircle2, Gift, Quote, MapPin, ArrowRight, FileText, Share2, Calend
 import { toast } from "sonner";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
 import { InstallLandingApp } from "@/components/install-landing-app";
+import { LandingBrowserMeta } from "@/components/landing-browser-meta";
 import { Button } from "@/components/ui/button";
 import { warmLanding, warmOfflineAssets } from "@/lib/pwa";
 
@@ -32,7 +33,20 @@ export const Route = createFileRoute("/p/$slug")({
       meta.push({ property: "og:image", content: heroUrl });
       meta.push({ name: "twitter:image", content: heroUrl });
     }
-    return { meta };
+    const slug = loaderData?.slug || "";
+    const url = `https://salebdsos.lovable.app/p/${slug}`;
+    meta.push({ property: "og:url", content: url });
+    meta.push({ property: "og:site_name", content: "SaleBDS OS" });
+    meta.push({ name: "theme-color", content: "#0B0F1A" });
+    meta.push({ name: "apple-mobile-web-app-capable", content: "yes" });
+    meta.push({ name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" });
+    meta.push({ name: "apple-mobile-web-app-title", content: title.slice(0, 20) });
+    meta.push({ name: "mobile-web-app-capable", content: "yes" });
+    meta.push({ name: "format-detection", content: "telephone=yes" });
+    // Không thêm lại manifest/icon ở đây: root đã có sẵn, manifest riêng của
+    // landing được gắn trong LandingBrowserMeta để tránh 2 thẻ manifest.
+    const links = [{ rel: "canonical", href: url }];
+    return { meta, links };
   },
   component: PublicSalesPage,
   errorComponent: () => (
@@ -216,6 +230,7 @@ function PublicSalesPage() {
             ) : null}
           </div>
           <div className="mt-5 flex justify-center">
+            <LandingBrowserMeta slug={page.slug ?? ""} title={page.title || "Landing"} />
             <InstallLandingApp slug={page.slug ?? ""} title={page.title || "Landing"} />
           </div>
           {mounted && page.slug ? (
