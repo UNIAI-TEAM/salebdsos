@@ -520,7 +520,7 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("ai_sales_pages")
-      .select("id,tenant_id,title,output,cta,slug,views_count,project_id")
+      .select("id,tenant_id,title,output,cta,slug,views_count,project_id,owner_user_id")
       .eq("slug", data.slug)
       .eq("is_published", true)
       .is("deleted_at", null)
