@@ -8,10 +8,14 @@ import {
   getOrCreateMyCard, updateMyCard, checkSlugAvailable,
 } from "@/lib/card.functions";
 import {
+  listProjectOptions, listCardProjects, setCardProjects, getCardQrStats,
+} from "@/lib/card-projects.functions";
+import {
   User, Phone, Mail, MessageCircle, Globe2, Link2, Plus, Trash2, Save,
   Smartphone, Monitor, Eye, Copy, Check, QrCode as QrIcon, Upload,
-  Sparkles, Palette, Settings2, ExternalLink, Loader2, BadgeCheck,
+  Sparkles, Palette, Settings2, ExternalLink, Loader2, BadgeCheck, Building2,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import { QrCode as QrCodeBlock } from "@/components/qr-code";
 
