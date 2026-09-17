@@ -84,7 +84,16 @@ function PublicProjectQrPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
-  useEffect(() => setOrigin(window.location.origin), []);
+  useEffect(() => {
+    setOrigin(window.location.origin);
+    // Gắn mã QR vào phiên để mọi điểm chạm sau đó đều gắn đúng kênh
+    try {
+      sessionStorage.setItem("sbds_pq", data.code);
+    } catch {
+      /* bỏ qua nếu trình duyệt chặn */
+    }
+  }, [data.code]);
+
 
   const phone = sale?.phone || p.ctaPhone || null;
   const priceFrom = money(p.priceFrom as number | null, p.currency);
