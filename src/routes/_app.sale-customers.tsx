@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Users, Search, Plus, CalendarPlus, StickyNote, Phone, MessageSquare, ChevronRight } from "lucide-react";
+import { Users, Search, Plus, CalendarPlus, StickyNote, Phone, MessageSquare, ChevronRight, QrCode as QrIcon, Copy, UserPlus } from "lucide-react";
 
 import { useAuth } from "@/hooks/use-auth";
 import { PageHeader } from "@/components/app/ui";
@@ -14,9 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { QrCode } from "@/components/qr-code";
 import { warmOfflineCache } from "@/lib/pwa";
 import { listCustomers, createCustomer } from "@/lib/customer.functions";
 import { createCustomerAppointment, addCustomerNote } from "@/lib/customer-detail.functions";
+import { ensureMyQrCard, listMyQrLeads, convertQrLeadToCustomer } from "@/lib/my-qr.functions";
+
 
 export const Route = createFileRoute("/_app/sale-customers")({
   head: () => ({
