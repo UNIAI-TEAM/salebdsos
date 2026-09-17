@@ -3,7 +3,7 @@ import {
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
   Wallet, QrCode, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
-  PanelLeftClose, PanelLeftOpen, X, BookMarked, Activity,
+  PanelLeftClose, PanelLeftOpen, X, BookMarked, Activity, Route as RouteIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
@@ -48,6 +48,7 @@ const groups: Group[] = [
       { to: "/prompt-library", label: "Thư viện prompt", icon: BookMarked, roles: ["owner", "admin", "manager", "agent"] },
       { to: "/marketing", label: "Marketing & Campaign", icon: Megaphone, roles: ["owner", "admin", "manager"] },
       { to: "/analytics", label: "Báo cáo & Analytics", icon: BarChart3, roles: ["owner", "admin", "manager"] },
+      { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon, roles: ["owner", "admin", "manager", "agent"] },
     ],
   },
   {

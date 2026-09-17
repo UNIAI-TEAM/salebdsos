@@ -194,3 +194,160 @@ export const listJourneySessions = createServerFn({ method: "GET" })
       steps: [...s.steps].reverse(),
     }));
   });
+
+/** Hành trình khách theo từng dự án: mốc thời gian, kênh QR, trang đã xem, trạng thái. */
+export const listProjectJourney = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        tenantId: z.string().uuid(),
+        projectId: z.string().uuid(),
+        days: z.number().int().min(1).max(180).default(30),
+        stage: z.string().max(40).optional(),
+        limit: z.number().int().min(1).max(100).default(40),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const since = new Date(Date.now() - data.days * 864e5).toISOString();
+    const { data: rows, error } = await context.supabase
+      .from("project_touchpoints")
+      .select("id,session_id,event_type,channel,device_type,referrer,meta,lead_id,qr_code_id,occurred_at")
+      .eq("tenant_id", data.tenantId)
+      .eq("project_id", data.projectId)
+      .gte("occurred_at", since)
+      .order("occurred_at", { ascending: false })
+      .limit(8000);
+    if (error) throw error;
+    const touches = rows ?? [];
+
+    type Sess = {
+      session_id: string;
+      first_at: string;
+      last_at: string;
+      channel: string | null;
+      device: string | null;
+      referrer: string | null;
+      lead_id: string | null;
+      qr_code_id: string | null;
+      events: Set<string>;
+      steps: { event_type: string; label: string; at: string; channel: string | null }[];
+    };
+    const map = new Map<string, Sess>();
+    for (const t of touches) {
+      const s =
+        map.get(t.session_id) ??
+        ({
+          session_id: t.session_id,
+          first_at: t.occurred_at,
+          last_at: t.occurred_at,
+          channel: t.channel,
+          device: t.device_type,
+          referrer: t.referrer,
+          lead_id: t.lead_id,
+          qr_code_id: t.qr_code_id,
+          events: new Set<string>(),
+          steps: [],
+        } as Sess);
+      // rows đi từ mới -> cũ
+      s.first_at = t.occurred_at;
+      if (t.occurred_at > s.last_at) s.last_at = t.occurred_at;
+      if (!s.channel) s.channel = t.channel;
+      if (!s.device) s.device = t.device_type;
+      if (!s.referrer) s.referrer = t.referrer;
+      if (!s.lead_id) s.lead_id = t.lead_id;
+      if (!s.qr_code_id) s.qr_code_id = t.qr_code_id;
+      s.events.add(t.event_type);
+      if (s.steps.length < 40)
+        s.steps.push({
+          event_type: t.event_type,
+          label: TOUCH_LABEL[t.event_type] ?? t.event_type,
+          at: t.occurred_at,
+          channel: t.channel,
+        });
+      map.set(t.session_id, s);
+    }
+
+    const qrIds = [...new Set([...map.values()].map((s) => s.qr_code_id).filter(Boolean))] as string[];
+    const qrLabel = new Map<string, string>();
+    if (qrIds.length) {
+      const { data: qrs } = await context.supabase
+        .from("project_qr_codes")
+        .select("id,code,label,channel")
+        .in("id", qrIds);
+      for (const q of qrs ?? [])
+        qrLabel.set(q.id, `${q.label ?? CHANNEL_LABEL[q.channel] ?? q.channel} · ${q.code}`);
+    }
+
+    const leadIds = [...new Set([...map.values()].map((s) => s.lead_id).filter(Boolean))] as string[];
+    const leads = new Map<string, { full_name: string | null; phone: string | null; status: string }>();
+    if (leadIds.length) {
+      const { data: ls } = await context.supabase
+        .from("leads")
+        .select("id,full_name,phone,status")
+        .in("id", leadIds);
+      for (const l of ls ?? [])
+        leads.set(l.id, { full_name: l.full_name, phone: l.phone, status: l.status });
+    }
+
+    const ORDER = [...JOURNEY_FUNNEL].map((s) => s.key);
+    const sessions = [...map.values()]
+      .map((s) => {
+        let idx = -1;
+        for (let i = ORDER.length - 1; i >= 0; i--) {
+          const key = ORDER[i]!;
+          const hit =
+            key === "call_click"
+              ? s.events.has("call_click") || s.events.has("zalo_click")
+              : s.events.has(key);
+          if (hit) {
+            idx = i;
+            break;
+          }
+        }
+        const step = idx >= 0 ? JOURNEY_FUNNEL[idx]! : null;
+        const lead = s.lead_id ? (leads.get(s.lead_id) ?? null) : null;
+        const status = lead
+          ? "lead"
+          : s.events.has("form_submit")
+            ? "lead"
+            : s.events.has("call_click") || s.events.has("zalo_click")
+              ? "hot"
+              : s.events.size > 2
+                ? "warm"
+                : "cold";
+        return {
+          session_id: s.session_id,
+          first_at: s.first_at,
+          last_at: s.last_at,
+          duration_sec: Math.max(
+            0,
+            Math.round((new Date(s.last_at).getTime() - new Date(s.first_at).getTime()) / 1000),
+          ),
+          channel: s.channel,
+          channel_label: s.channel ? (CHANNEL_LABEL[s.channel] ?? s.channel) : null,
+          device: s.device,
+          referrer: s.referrer,
+          qr_label: s.qr_code_id ? (qrLabel.get(s.qr_code_id) ?? null) : null,
+          stage_key: step?.key ?? null,
+          stage_label: step?.label ?? "Chưa xác định",
+          stage_index: idx,
+          stage_total: ORDER.length,
+          status,
+          lead,
+          touch_count: s.steps.length,
+          steps: [...s.steps].reverse(),
+        };
+      })
+      .sort((a, b) => (a.last_at < b.last_at ? 1 : -1));
+
+    const filtered = data.stage ? sessions.filter((s) => s.stage_key === data.stage) : sessions;
+    return {
+      totalSessions: sessions.length,
+      totalTouches: touches.length,
+      leadSessions: sessions.filter((s) => s.status === "lead").length,
+      hotSessions: sessions.filter((s) => s.status === "hot").length,
+      sessions: filtered.slice(0, data.limit),
+    };
+  });
