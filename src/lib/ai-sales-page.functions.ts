@@ -543,11 +543,11 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
         if (e) console.error("[sales-page] view count", e.message);
       });
 
-    let project: { name: string; location: string | null; cover_url: string | null } | null = null;
+    let project: { name: string; location: string | null; cover_url: string | null; cta_phone: string | null } | null = null;
     let appointments: PublicProjectAppointment[] = [];
     if (row.project_id) {
       const [{ data: p }, { data: publicAppointments, error: appointmentsError }] = await Promise.all([
-        supabaseAdmin.from("projects").select("name,location,cover_url").eq("id", row.project_id).maybeSingle(),
+        supabaseAdmin.from("projects").select("name,location,cover_url,cta_phone").eq("id", row.project_id).maybeSingle(),
         supabaseAdmin
           .from("appointments")
           .select("id,title,location,starts_at,ends_at")
@@ -573,6 +573,15 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
         .eq("user_id", row.owner_user_id)
         .maybeSingle();
       sale = profile ?? null;
+    }
+    // Chưa có hồ sơ chuyên viên → dùng hotline tư vấn của dự án
+    if (!sale?.phone && project?.cta_phone) {
+      sale = {
+        full_name: sale?.full_name ?? null,
+        phone: project.cta_phone,
+        email: sale?.email ?? null,
+        avatar_url: sale?.avatar_url ?? null,
+      };
     }
 
     return {
