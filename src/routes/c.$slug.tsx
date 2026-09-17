@@ -176,7 +176,6 @@ function PublicCard() {
 
   return (
     <main className="min-h-screen overflow-hidden bg-digital-canvas font-card-sans text-digital-ink">
-      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,var(--digital-blue),transparent_68%)] opacity-15" />
       <div className="relative mx-auto max-w-md px-5 pb-12 pt-[max(2rem,env(safe-area-inset-top))]">
         <section className="digital-card-glass overflow-hidden rounded-3xl border border-digital-ink/10 px-5 pb-6 pt-8 shadow-2xl">
         <header className="text-center">
@@ -193,7 +192,7 @@ function PublicCard() {
         </header>
 
         <div className="mt-7 rounded-3xl bg-digital-ink p-4 shadow-xl shadow-digital-blue/10">
-          <QrCode value={origin ? `${origin}/c/${card.slug}?utm_source=qr_card` : `/c/${card.slug}?utm_source=qr_card`} size={224} />
+          <QrCode value={origin ? `${origin}/c/${card.slug}?utm_source=qr_card` : `/c/${card.slug}?utm_source=qr_card`} size={224} showDownload={false} />
         </div>
         <p className="mt-3 text-center text-xs italic text-digital-ink/45">Quét mã để lưu thông tin liên hệ ngay</p>
 
@@ -240,7 +239,7 @@ function PublicCard() {
               {projects.map((p) => {
                 const inner = (
                   <>
-                    <div className="h-36 w-full bg-white/10">
+                    <div className="h-36 w-full bg-digital-glass">
                       {(p.cover_mobile_url || p.cover_url) && (
                         <img
                           src={p.cover_mobile_url || p.cover_url || ""}
@@ -268,7 +267,7 @@ function PublicCard() {
                         {money(p.price_from, p.currency) && <span>· {money(p.price_from, p.currency)}</span>}
                       </div>
                       {p.landing_slug && (
-                        <div className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold" style={{ color: primary }}>
+                        <div className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-digital-blue">
                           Xem chi tiết & brochure <ArrowRight style={{ width: 13, height: 13 }} />
                         </div>
                       )}
@@ -298,7 +297,7 @@ function PublicCard() {
               const cfg = (b.config ?? {}) as Record<string, any>;
               const items: any[] = Array.isArray(cfg.items) ? cfg.items : [];
               return (
-                <article key={b.id} className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+                <article key={b.id} className="digital-card-glass rounded-2xl border border-digital-ink/10 p-4">
                   {cfg.title && <h2 className="text-[15px] font-semibold">{cfg.title}</h2>}
                   {cfg.text && <p className="mt-1.5 text-[13px] leading-relaxed opacity-90">{cfg.text}</p>}
                   {items.length > 0 && (

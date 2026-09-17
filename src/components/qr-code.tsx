@@ -8,9 +8,10 @@ interface Props {
   size?: number;
   label?: string;
   filename?: string;
+  showDownload?: boolean;
 }
 
-export function QrCode({ value, size = 220, label, filename = "qr-code" }: Props) {
+export function QrCode({ value, size = 220, label, filename = "qr-code", showDownload = true }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
   const [dataUrl, setDataUrl] = useState("");
 
@@ -29,7 +30,7 @@ export function QrCode({ value, size = 220, label, filename = "qr-code" }: Props
     <div className="inline-flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border">
       <canvas ref={ref} />
       {label && <div className="text-xs font-medium text-slate-700">{label}</div>}
-      {dataUrl && (
+      {showDownload && dataUrl && (
         <a
           href={dataUrl}
           download={`${filename}.png`}

@@ -13,7 +13,7 @@ import {
 import {
   User, Phone, Mail, MessageCircle, Globe2, Link2, Plus, Trash2, Save,
   Smartphone, Monitor, Eye, Copy, Check, QrCode as QrIcon, Upload,
-  Sparkles, Palette, Settings2, ExternalLink, Loader2, BadgeCheck, Building2,
+  Sparkles, Palette, Settings2, ExternalLink, Loader2, BadgeCheck, Building2, Download, Share2,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -539,7 +539,7 @@ function DigitalCardPage() {
                 <Eye className="h-3 w-3" /> Mở thật
               </Link>
             </div>
-            <MobilePreview draft={draft} tmpl={tmpl} publicUrl={publicUrl} hasProjects={selectedProjects.length > 0} />
+            <MobilePreview draft={draft} publicUrl={publicUrl} hasProjects={selectedProjects.length > 0} />
           </div>
         </aside>
       </div>
@@ -547,7 +547,7 @@ function DigitalCardPage() {
       {/* Mobile preview drawer for small screens */}
       <div className="xl:hidden">
         <div className="text-xs text-muted-foreground mb-2 inline-flex items-center gap-1.5"><Smartphone className="h-3.5 w-3.5" /> Xem trước</div>
-        <MobilePreview draft={draft} tmpl={tmpl} publicUrl={publicUrl} hasProjects={selectedProjects.length > 0} />
+        <MobilePreview draft={draft} publicUrl={publicUrl} hasProjects={selectedProjects.length > 0} />
       </div>
     </div>
   );
@@ -601,7 +601,7 @@ function CopyLink({ url, compact }: { url: string; compact?: boolean }) {
   );
 }
 
-function MobilePreview({ draft, publicUrl, hasProjects }: { draft: any; tmpl: typeof TEMPLATES[number]; publicUrl: string; hasProjects: boolean }) {
+function MobilePreview({ draft, publicUrl, hasProjects }: { draft: any; publicUrl: string; hasProjects: boolean }) {
   const fields: Field[] = draft.fields ?? [];
   const phone = fields.find((field) => field.type === "phone");
   const zalo = fields.find((field) => field.type === "zalo");
@@ -621,7 +621,7 @@ function MobilePreview({ draft, publicUrl, hasProjects }: { draft: any; tmpl: ty
 
         <div className="digital-card-glass mt-5 rounded-2xl border border-digital-ink/10 p-3">
           <div className="rounded-xl bg-digital-ink p-2">
-            <QrCodeBlock value={publicUrl} size={174} />
+            <QrCodeBlock value={publicUrl} size={174} showDownload={false} />
           </div>
         </div>
         <p className="mt-3 text-center text-[10px] italic text-digital-ink/45">Quét mã để lưu thông tin liên hệ ngay</p>
