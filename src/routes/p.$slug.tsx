@@ -303,7 +303,7 @@ function PublicSalesPage() {
       ) : null}
 
       {page.appointments.length > 0 ? (
-        <section className="mx-auto max-w-3xl px-4 pb-10 sm:px-6 sm:pb-14">
+        <section data-touch="schedule_view" className="mx-auto max-w-3xl px-4 pb-10 sm:px-6 sm:pb-14">
           <h2 className="text-[20px] font-bold tracking-tight">Lịch sự kiện sắp tới</h2>
           <ol className="relative mt-5 space-y-3 border-l border-border pl-5">
             {page.appointments.map((appointment) => {
