@@ -111,9 +111,12 @@ function PublicProjectQrPage() {
           full_name: String(fd.get("full_name") ?? ""),
           phone: String(fd.get("phone") ?? ""),
           note: String(fd.get("note") ?? "") || undefined,
+          session_id: getTouchSessionId() || undefined,
         },
       });
+      trackTouch("form_submit");
       setSent(true);
+
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : "Không gửi được, vui lòng thử lại.");
     } finally {
