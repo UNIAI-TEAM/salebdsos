@@ -189,6 +189,105 @@ function SaleCustomersPage() {
         />
       </div>
 
+      {/* QR riêng của tôi */}
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="shrink-0 self-center">
+            {cardUrl ? (
+              <QrCode value={cardUrl} size={132} filename={`qr-${myCard.data?.slug ?? "sale"}`} />
+            ) : (
+              <div className="grid h-[132px] w-[132px] place-items-center rounded-2xl border border-border">
+                <QrIcon className="h-6 w-6 text-muted-foreground" />
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">QR riêng của tôi</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Khách quét mã này sẽ thấy thông tin của bạn và các dự án bạn đang bán. Mọi lượt quét và khách để lại thông tin
+              đều tự lên timeline.
+            </p>
+            {cardUrl && (
+              <p className="mt-2 truncate text-xs font-medium text-primary">{cardUrl}</p>
+            )}
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:max-w-xs">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 justify-center text-xs"
+                disabled={!cardUrl}
+                onClick={() => {
+                  void navigator.clipboard.writeText(cardUrl);
+                  toast.success("Đã copy link");
+                }}
+              >
+                <Copy className="mr-1 h-3.5 w-3.5" /> Copy link
+              </Button>
+              <Button asChild variant="outline" size="sm" className="h-9 justify-center text-xs">
+                <Link to="/digital-card">
+                  <QrIcon className="mr-1 h-3.5 w-3.5" /> Sửa danh thiếp
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Khách quét QR */}
+      {(qrLeads.data?.length ?? 0) > 0 && (
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <p className="text-sm font-semibold">Khách quét QR của tôi</p>
+          <ul className="mt-3 space-y-2.5">
+            {qrLeads.data!.map((l) => (
+              <li key={l.id} className="rounded-xl border border-border p-3">
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{l.full_name || l.phone || "Khách quét QR"}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {[l.phone, l.project_name].filter(Boolean).join(" • ") || "Chưa có liên hệ"}
+                    </p>
+                  </div>
+                  {l.converted_customer_id ? (
+                    <Badge variant="secondary" className="shrink-0 text-[10px]">Đã là khách hàng</Badge>
+                  ) : null}
+                </div>
+                <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {l.phone && (
+                    <>
+                      <Button asChild variant="outline" size="sm" className="h-9 justify-center text-xs">
+                        <a href={`tel:${l.phone}`}><Phone className="mr-1 h-3.5 w-3.5" /> Gọi</a>
+                      </Button>
+                      <Button asChild variant="outline" size="sm" className="h-9 justify-center text-xs">
+                        <a href={`https://zalo.me/${l.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">
+                          <MessageSquare className="mr-1 h-3.5 w-3.5" /> Zalo
+                        </a>
+                      </Button>
+                    </>
+                  )}
+                  {l.converted_customer_id ? (
+                    <Button asChild variant="outline" size="sm" className="h-9 justify-center text-xs">
+                      <Link to="/customers/$id" params={{ id: l.converted_customer_id }}>
+                        <ChevronRight className="mr-1 h-3.5 w-3.5" /> Xem khách
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="h-9 justify-center text-xs"
+                      disabled={convertM.isPending || !canEdit}
+                      onClick={() => convertM.mutate(l.id)}
+                    >
+                      <UserPlus className="mr-1 h-3.5 w-3.5" /> Thành khách hàng
+                    </Button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+
       {customers.isLoading ? (
         <div className="rounded-2xl border border-border p-8 text-center text-sm text-muted-foreground">Đang tải…</div>
       ) : items.length === 0 ? (
