@@ -404,7 +404,7 @@ function PublicSalesPage() {
             <QrCode
               value={`${window.location.origin}/api/public/pq/${page.qrCode}`}
               size={200}
-              label={page.project?.name ?? page.title}
+              label={page.project?.name ?? page.title ?? undefined}
               filename={`qr-${page.slug}`}
             />
           </div>
