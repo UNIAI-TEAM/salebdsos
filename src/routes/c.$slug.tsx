@@ -3,7 +3,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, BadgeCheck, Phone, MessageCircle, Download, Share2, MapPin, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
+import { User, BadgeCheck, Phone, MessageCircle, Download, Share2, MapPin, ArrowRight, Loader2, CheckCircle2, Building2, Check } from "lucide-react";
+import { QrCode } from "@/components/qr-code";
+import { Button } from "@/components/ui/button";
 
 const getPublicCard = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => d)
@@ -70,14 +72,6 @@ const getPublicCard = createServerFn({ method: "GET" })
   });
 
 
-const TEMPLATES: Record<string, { bg: string; text: string }> = {
-  "luxury-dark": { bg: "from-slate-900 via-[#0B0F1A] to-black", text: "text-white" },
-  "skyline": { bg: "from-sky-500 via-indigo-600 to-violet-700", text: "text-white" },
-  "minimal": { bg: "from-zinc-50 to-zinc-100", text: "text-zinc-900" },
-  "premium": { bg: "from-violet-700 via-fuchsia-700 to-rose-600", text: "text-white" },
-  "ocean": { bg: "from-blue-900 via-cyan-700 to-teal-700", text: "text-white" },
-};
-
 export const Route = createFileRoute("/c/$slug")({
   loader: ({ params }) => getPublicCard({ data: { slug: params.slug } }),
   component: PublicCard,
@@ -101,9 +95,10 @@ export const Route = createFileRoute("/c/$slug")({
 
 function PublicCard() {
   const card = Route.useLoaderData();
-  const themeKey = (card.theme as any)?.template ?? "luxury-dark";
-  const primary = (card.theme as any)?.primary ?? "#A855F7";
-  const tmpl = TEMPLATES[themeKey] ?? TEMPLATES["luxury-dark"];
+  const [origin, setOrigin] = useState("");
+  const [shared, setShared] = useState(false);
+
+  useEffect(() => setOrigin(window.location.origin), []);
 
   useEffect(() => {
     const search = new URLSearchParams(window.location.search);
@@ -168,7 +163,11 @@ function PublicCard() {
     if (typeof navigator !== "undefined" && (navigator as any).share) {
       try { await (navigator as any).share({ title: card.display_name, url }); return; } catch { /* ignore */ }
     }
-    if (typeof navigator !== "undefined") navigator.clipboard?.writeText(url);
+    if (typeof navigator !== "undefined") {
+      await navigator.clipboard?.writeText(url);
+      setShared(true);
+      window.setTimeout(() => setShared(false), 1800);
+    }
   };
 
   const money = (v: number | null, cur: string | null) =>
@@ -176,69 +175,53 @@ function PublicCard() {
 
 
   return (
-    <main className={`min-h-screen bg-gradient-to-b ${tmpl.bg} ${tmpl.text}`}>
-      <div className="max-w-md mx-auto px-5 pt-10 pb-12">
+    <main className="min-h-screen overflow-hidden bg-digital-canvas font-card-sans text-digital-ink">
+      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,var(--digital-blue),transparent_68%)] opacity-15" />
+      <div className="relative mx-auto max-w-md px-5 pb-12 pt-[max(2rem,env(safe-area-inset-top))]">
+        <section className="digital-card-glass overflow-hidden rounded-3xl border border-digital-ink/10 px-5 pb-6 pt-8 shadow-2xl">
         <header className="text-center">
-          <div className="h-24 w-24 mx-auto rounded-full bg-white/10 overflow-hidden ring-2 ring-white/20">
+          <div className="mx-auto h-24 w-24 overflow-hidden rounded-full bg-digital-glass ring-2 ring-digital-blue ring-offset-4 ring-offset-digital-surface">
             {card.avatar_url ? (
               <img src={card.avatar_url} alt={card.display_name} className="h-full w-full object-cover" loading="eager" />
             ) : (
               <div className="h-full w-full grid place-items-center"><User className="h-9 w-9 opacity-60" /></div>
             )}
           </div>
-          {card.company && (
-            <div className="mt-3 inline-flex items-center gap-1 text-xs opacity-85">
-              {card.company} <BadgeCheck className="h-3.5 w-3.5" />
-            </div>
-          )}
-          <h1 className="mt-1 text-2xl font-bold leading-tight">{card.display_name}</h1>
-          {card.title && <p className="text-sm opacity-85">{card.title}</p>}
-          {card.bio && <p className="mt-3 text-[13px] opacity-90 leading-relaxed">{card.bio}</p>}
+          <h1 className="mt-5 font-card-serif text-2xl font-bold leading-tight">{card.display_name}</h1>
+          {card.title && <p className="mt-2 text-xs font-semibold uppercase text-digital-blue">{card.title}</p>}
+          {card.company && <div className="mt-1 inline-flex items-center gap-1 text-xs text-digital-ink/50">{card.company} <BadgeCheck className="h-3.5 w-3.5" /></div>}
         </header>
 
-        {/* Nút nhanh */}
-        <div className="mt-6 grid grid-cols-4 gap-2">
-          {[
-            { label: "Gọi", icon: Phone, href: phone ? `tel:${phone.replace(/\s/g, "")}` : null, onClick: undefined as (() => void) | undefined },
-            { label: "Zalo", icon: MessageCircle, href: zalo?.href ?? null, onClick: undefined },
-            { label: "Lưu liên hệ", icon: Download, href: null, onClick: saveContact },
-            { label: "Chia sẻ", icon: Share2, href: null, onClick: shareCard },
-          ]
-            .filter((a) => a.href || a.onClick)
-            .map((a) =>
-              a.href ? (
-                <a
-                  key={a.label}
-                  href={a.href}
-                  className="rounded-2xl bg-white/12 backdrop-blur py-3 grid place-items-center gap-1 text-[11px] font-semibold active:scale-[0.97] transition"
-                >
-                  <a.icon className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} />
-                  {a.label}
-                </a>
-              ) : (
-                <button
-                  key={a.label}
-                  onClick={a.onClick}
-                  className="rounded-2xl bg-white/12 backdrop-blur py-3 grid place-items-center gap-1 text-[11px] font-semibold active:scale-[0.97] transition"
-                >
-                  <a.icon style={{ width: 18, height: 18 }} />
-                  {a.label}
-                </button>
-              ),
-            )}
+        <div className="mt-7 rounded-3xl bg-digital-ink p-4 shadow-xl shadow-digital-blue/10">
+          <QrCode value={origin ? `${origin}/c/${card.slug}?utm_source=qr_card` : `/c/${card.slug}?utm_source=qr_card`} size={224} />
+        </div>
+        <p className="mt-3 text-center text-xs italic text-digital-ink/45">Quét mã để lưu thông tin liên hệ ngay</p>
+
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          {phone && <a href={`tel:${phone.replace(/\s/g, "")}`} className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-digital-blue text-sm font-semibold text-primary-foreground transition active:scale-[0.98]"><Phone className="h-4 w-4" />Gọi điện</a>}
+          {zalo?.href && <a href={zalo.href} target="_blank" rel="noreferrer" className="digital-card-glass flex min-h-12 items-center justify-center gap-2 rounded-xl border border-digital-ink/10 text-sm font-semibold transition active:scale-[0.98]"><MessageCircle className="h-4 w-4" />Zalo</a>}
+          <Button type="button" variant="ghost" onClick={saveContact} className="digital-card-glass col-span-2 h-12 rounded-xl border border-digital-ink/10 text-digital-ink hover:bg-digital-glass hover:text-digital-ink"><Download className="h-4 w-4" />Lưu danh bạ</Button>
         </div>
 
-        <nav className="mt-4 space-y-2.5" aria-label="Liên hệ">
-          {fields.map((f, i) => {
-            const isCta = f.type === "cta";
+        <div className="mt-6 flex items-center justify-between border-t border-digital-ink/10 pt-5 text-sm">
+          <Button type="button" variant="ghost" onClick={shareCard} className="h-10 px-2 text-digital-ink/60 hover:bg-digital-glass hover:text-digital-ink">
+            {shared ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}{shared ? "Đã sao chép" : "Chia sẻ"}
+          </Button>
+          {projects.length > 0 && <a href="#projects" className="inline-flex min-h-10 items-center gap-1 font-semibold text-digital-blue">Xem danh sách dự án <ArrowRight className="h-4 w-4" /></a>}
+        </div>
+        </section>
+
+        {card.bio && <p className="mx-auto mt-6 max-w-sm text-center text-[13px] leading-relaxed text-digital-ink/65">{card.bio}</p>}
+
+        <nav className="mt-6 space-y-2.5" aria-label="Liên hệ">
+          {fields.filter((f) => !["phone", "zalo"].includes(f.type ?? "")).map((f, i) => {
             return (
               <a
                 key={i}
                 href={f.href || "#"}
                 target={f.href?.startsWith("http") ? "_blank" : undefined}
                 rel="noreferrer"
-                className="block w-full text-center rounded-xl py-3.5 text-sm font-semibold backdrop-blur transition active:scale-[0.98]"
-                style={{ backgroundColor: isCta ? primary : "rgba(255,255,255,0.14)" }}
+                className={`digital-card-glass block w-full rounded-xl border py-3.5 text-center text-sm font-semibold transition active:scale-[0.98] ${f.type === "cta" ? "border-digital-blue bg-digital-blue text-primary-foreground" : "border-digital-ink/10"}`}
               >
                 {f.label}
               </a>
@@ -251,8 +234,8 @@ function PublicCard() {
 
         {/* Dự án đang bán */}
         {projects.length > 0 && (
-          <section className="mt-8">
-            <h2 className="text-[15px] font-semibold">Dự án tôi đang bán</h2>
+          <section id="projects" className="mt-10 scroll-mt-5">
+            <h2 className="flex items-center gap-2 font-card-serif text-lg font-bold"><Building2 className="h-5 w-5 text-digital-blue" />Dự án tôi đang bán</h2>
             <div className="mt-3 space-y-3">
               {projects.map((p) => {
                 const inner = (
@@ -292,7 +275,7 @@ function PublicCard() {
                     </div>
                   </>
                 );
-                const cls = "block rounded-2xl overflow-hidden bg-white/10 backdrop-blur active:scale-[0.99] transition";
+                const cls = "digital-card-glass block overflow-hidden rounded-2xl border border-digital-ink/10 active:scale-[0.99] transition";
                 return p.landing_slug ? (
                   <a key={p.id} href={`/p/${p.landing_slug}`} onClick={() => trackProjectClick(p.id)} className={cls}>
                     {inner}
@@ -306,7 +289,7 @@ function PublicCard() {
         )}
 
         {/* Khách để lại thông tin */}
-        <LeadForm slug={card.slug} primary={primary} projects={projects.map((p) => ({ id: p.id, name: p.name }))} />
+        <LeadForm slug={card.slug} projects={projects.map((p) => ({ id: p.id, name: p.name }))} />
 
 
         {blocks.length > 0 && (
@@ -351,8 +334,8 @@ function PublicCard() {
 }
 
 function LeadForm({
-  slug, primary, projects,
-}: { slug: string; primary: string; projects: { id: string; name: string }[] }) {
+  slug, projects,
+}: { slug: string; projects: { id: string; name: string }[] }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [projectId, setProjectId] = useState("");
@@ -378,11 +361,11 @@ function LeadForm({
     }
   };
 
-  const input = "w-full rounded-xl bg-white/12 backdrop-blur px-3.5 py-3 text-[13.5px] placeholder:opacity-60 outline-none focus:ring-2 focus:ring-white/30";
+  const input = "digital-card-glass w-full rounded-xl border border-digital-ink/10 px-3.5 py-3 text-[13.5px] text-digital-ink placeholder:text-digital-ink/45 outline-none focus:ring-2 focus:ring-digital-blue/50";
 
   if (state === "done") {
     return (
-      <section className="mt-8 rounded-2xl bg-white/10 backdrop-blur p-5 text-center">
+      <section className="digital-card-glass mt-8 rounded-2xl border border-digital-ink/10 p-5 text-center">
         <CheckCircle2 className="h-7 w-7 mx-auto" />
         <div className="mt-2 text-[14px] font-semibold">Đã nhận thông tin của bạn</div>
         <p className="mt-1 text-[12.5px] opacity-80">Tôi sẽ liên hệ lại trong thời gian sớm nhất.</p>
@@ -391,7 +374,7 @@ function LeadForm({
   }
 
   return (
-    <section className="mt-8 rounded-2xl bg-white/10 backdrop-blur p-4">
+    <section className="digital-card-glass mt-8 rounded-2xl border border-digital-ink/10 p-4">
       <h2 className="text-[15px] font-semibold">Để lại thông tin, tôi tư vấn ngay</h2>
       <form className="mt-3 space-y-2.5" onSubmit={submit}>
         <input className={input} placeholder="Họ và tên" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -400,21 +383,20 @@ function LeadForm({
           <select className={input} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
             <option value="">Dự án quan tâm (tuỳ chọn)</option>
             {projects.map((p) => (
-              <option key={p.id} value={p.id} className="text-slate-900">{p.name}</option>
+            <option key={p.id} value={p.id} className="text-foreground">{p.name}</option>
             ))}
           </select>
         )}
         <textarea className={input} rows={2} placeholder="Nhu cầu, ngân sách… (tuỳ chọn)" value={notes} onChange={(e) => setNotes(e.target.value)} />
-        {error && <p className="text-[12px] text-red-200">{error}</p>}
-        <button
+        {error && <p className="text-[12px] text-destructive">{error}</p>}
+        <Button
           type="submit"
           disabled={state === "sending"}
-          className="w-full rounded-xl py-3.5 text-sm font-semibold disabled:opacity-60 inline-flex items-center justify-center gap-2 active:scale-[0.98] transition"
-          style={{ backgroundColor: primary }}
+          className="h-12 w-full rounded-xl bg-digital-blue text-sm font-semibold text-primary-foreground active:scale-[0.98]"
         >
           {state === "sending" && <Loader2 className="h-4 w-4 animate-spin" />}
           Gửi thông tin
-        </button>
+        </Button>
         <p className="text-[11px] opacity-60 text-center">Thông tin chỉ dùng để liên hệ tư vấn.</p>
       </form>
     </section>
