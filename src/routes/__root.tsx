@@ -61,7 +61,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
       { name: "theme-color", content: "#0B0F1A" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
@@ -115,12 +115,29 @@ function ServiceWorkerRegistrar() {
   return null;
 }
 
+/** Chặn pinch-zoom / double-tap zoom trên điện thoại (iOS bỏ qua user-scalable=no). */
+function PreventZoomGestures() {
+  React.useEffect(() => {
+    const prevent = (e: Event) => e.preventDefault();
+    document.addEventListener("gesturestart", prevent);
+    document.addEventListener("gesturechange", prevent);
+    document.addEventListener("gestureend", prevent);
+    return () => {
+      document.removeEventListener("gesturestart", prevent);
+      document.removeEventListener("gesturechange", prevent);
+      document.removeEventListener("gestureend", prevent);
+    };
+  }, []);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ServiceWorkerRegistrar />
+        <PreventZoomGestures />
         <Outlet />
         <Toaster />
       </AuthProvider>
