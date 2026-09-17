@@ -53,6 +53,7 @@ import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
 import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
 import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
 import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.index'
+import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
 import { Route as AppCustomersIdRouteImport } from './routes/_app.customers.$id'
 import { Route as AppAiFollowupCustomerIdRouteImport } from './routes/_app.ai-followup.$customerId'
@@ -283,6 +284,11 @@ const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
   path: '/customers/',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicProjectTouchRoute = ApiPublicProjectTouchRouteImport.update({
+  id: '/api/public/project-touch',
+  path: '/api/public/project-touch',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -381,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/customers/$id': typeof AppCustomersIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/customers/': typeof AppCustomersIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
@@ -436,6 +443,7 @@ export interface FileRoutesByTo {
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/customers/$id': typeof AppCustomersIdRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/customers': typeof AppCustomersIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
@@ -493,6 +501,7 @@ export interface FileRoutesById {
   '/_app/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/_app/customers/$id': typeof AppCustomersIdRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/_app/customers/': typeof AppCustomersIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
@@ -550,6 +559,7 @@ export interface FileRouteTypes {
     | '/ai-followup/$customerId'
     | '/customers/$id'
     | '/projects/$id'
+    | '/api/public/project-touch'
     | '/customers/'
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
@@ -605,6 +615,7 @@ export interface FileRouteTypes {
     | '/ai-followup/$customerId'
     | '/customers/$id'
     | '/projects/$id'
+    | '/api/public/project-touch'
     | '/customers'
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
@@ -661,6 +672,7 @@ export interface FileRouteTypes {
     | '/_app/ai-followup/$customerId'
     | '/_app/customers/$id'
     | '/_app/projects/$id'
+    | '/api/public/project-touch'
     | '/_app/customers/'
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
@@ -684,6 +696,7 @@ export interface RootRouteChildren {
   FSlugRoute: typeof FSlugRoute
   PSlugRoute: typeof PSlugRoute
   ShareSlugRoute: typeof ShareSlugRoute
+  ApiPublicProjectTouchRoute: typeof ApiPublicProjectTouchRoute
   ApiPublicCardLeadsSlugRoute: typeof ApiPublicCardLeadsSlugRoute
   ApiPublicLandingManifestSlugRoute: typeof ApiPublicLandingManifestSlugRoute
   ApiPublicLeadFormsSlugRoute: typeof ApiPublicLeadFormsSlugRoute
@@ -1003,6 +1016,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCustomersIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/project-touch': {
+      id: '/api/public/project-touch'
+      path: '/api/public/project-touch'
+      fullPath: '/api/public/project-touch'
+      preLoaderRoute: typeof ApiPublicProjectTouchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/projects/$id': {
       id: '/_app/projects/$id'
       path: '/$id'
@@ -1187,6 +1207,7 @@ const rootRouteChildren: RootRouteChildren = {
   FSlugRoute: FSlugRoute,
   PSlugRoute: PSlugRoute,
   ShareSlugRoute: ShareSlugRoute,
+  ApiPublicProjectTouchRoute: ApiPublicProjectTouchRoute,
   ApiPublicCardLeadsSlugRoute: ApiPublicCardLeadsSlugRoute,
   ApiPublicLandingManifestSlugRoute: ApiPublicLandingManifestSlugRoute,
   ApiPublicLeadFormsSlugRoute: ApiPublicLeadFormsSlugRoute,
