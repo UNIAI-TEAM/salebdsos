@@ -275,6 +275,8 @@ function ProjectQuickEdit({ id, tenantId }: { id: string; tenantId: string }) {
 
         <ProjectAppointments projectId={id} tenantId={tenantId} />
 
+        <ProjectQrCodes projectId={id} tenantId={p?.tenant_id ?? tenantId} projectName={p?.name} />
+
         {/* Landing công khai */}
         <section className="space-y-2">
           <span className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">Link landing</span>
