@@ -14,7 +14,10 @@ type TouchType =
   | "share_click"
   | "form_open"
   | "form_submit"
-  | "scroll_end";
+  | "scroll_end"
+  | "card_view"
+  | "card_project_click"
+  | "card_save_contact";
 
 const SID_KEY = "sbds_sid";
 
@@ -51,7 +54,7 @@ function getQrCode(): string | null {
 
 let queue: { type: TouchType; meta?: Record<string, string | number | boolean> }[] = [];
 let timer: ReturnType<typeof setTimeout> | null = null;
-let target: { slug?: string; projectId?: string } | null = null;
+let target: { slug?: string; projectId?: string; cardSlug?: string } | null = null;
 
 function flush() {
   if (!queue.length || !target) return;
@@ -63,6 +66,7 @@ function flush() {
     body: JSON.stringify({
       ...(target.slug ? { slug: target.slug } : {}),
       ...(target.projectId ? { projectId: target.projectId } : {}),
+      ...(target.cardSlug ? { cardSlug: target.cardSlug } : {}),
       sessionId: getTouchSessionId(),
       qrCode: getQrCode(),
       events,
@@ -83,11 +87,18 @@ export function trackTouch(type: TouchType, meta?: Record<string, string | numbe
  * mở trang, cuộn hết trang, các khối được đánh dấu `data-touch`
  * và các thao tác bấm được đánh dấu `data-touch-click`.
  */
-function useTouchTracking(next: { slug?: string; projectId?: string }, viewType: TouchType) {
-  const key = next.slug ?? next.projectId ?? "";
+function useTouchTracking(
+  next: { slug?: string; projectId?: string; cardSlug?: string },
+  viewType: TouchType,
+) {
+  const key = next.slug ?? next.projectId ?? next.cardSlug ?? "";
   useEffect(() => {
     if (!key) return;
-    target = next.slug ? { slug: next.slug } : { projectId: next.projectId as string };
+    target = next.slug
+      ? { slug: next.slug }
+      : next.projectId
+        ? { projectId: next.projectId }
+        : { cardSlug: next.cardSlug as string };
     trackTouch(viewType, { path: window.location.pathname });
 
     let scrolled = false;
@@ -148,3 +159,8 @@ export function ProjectTouchTracker({ projectId }: { projectId: string }) {
   return null;
 }
 
+/** Gắn tracker cho danh thiếp số công khai (/c/<slug>). */
+export function CardTouchTracker({ cardSlug }: { cardSlug: string }) {
+  useTouchTracking({ cardSlug }, "card_view");
+  return null;
+}

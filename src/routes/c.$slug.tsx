@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, BadgeCheck, Phone, MessageCircle, Download, Share2, MapPin, ArrowRight, Loader2, CheckCircle2, Building2, Check } from "lucide-react";
 import { QrCode } from "@/components/qr-code";
 import { Button } from "@/components/ui/button";
+import { CardTouchTracker, trackTouch } from "@/components/landing-touch-tracker";
 
 const getPublicCard = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => d)
@@ -132,6 +133,7 @@ function PublicCard() {
   const zalo = fields.find((f) => f.type === "zalo");
 
   const trackProjectClick = (projectId: string) => {
+    trackTouch("card_project_click", { project_id: projectId });
     supabase.from("interaction_events").insert({
       card_id: card.id,
       tenant_id: card.tenant_id,
@@ -142,6 +144,7 @@ function PublicCard() {
   };
 
   const saveContact = () => {
+    trackTouch("card_save_contact");
     const lines = [
       "BEGIN:VCARD", "VERSION:3.0",
       `FN:${card.display_name}`,
@@ -159,6 +162,7 @@ function PublicCard() {
   };
 
   const shareCard = async () => {
+    trackTouch("share_click", { from: "digital_card" });
     const url = typeof window !== "undefined" ? window.location.href : "";
     if (typeof navigator !== "undefined" && (navigator as any).share) {
       try { await (navigator as any).share({ title: card.display_name, url }); return; } catch { /* ignore */ }
@@ -176,6 +180,7 @@ function PublicCard() {
 
   return (
     <main className="min-h-screen overflow-hidden bg-digital-canvas font-card-sans text-digital-ink">
+      <CardTouchTracker cardSlug={card.slug} />
       <div className="relative mx-auto max-w-md px-5 pb-12 pt-[max(2rem,env(safe-area-inset-top))]">
         <section className="digital-card-glass overflow-hidden rounded-3xl border border-digital-ink/10 px-5 pb-6 pt-8 shadow-2xl">
         <header className="text-center">
@@ -197,8 +202,8 @@ function PublicCard() {
         <p className="mt-3 text-center text-xs italic text-digital-ink/45">Quét mã để lưu thông tin liên hệ ngay</p>
 
         <div className="mt-6 grid grid-cols-2 gap-3">
-          {phone && <a href={`tel:${phone.replace(/\s/g, "")}`} className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-digital-blue text-sm font-semibold text-primary-foreground transition active:scale-[0.98]"><Phone className="h-4 w-4" />Gọi điện</a>}
-          {zalo?.href && <a href={zalo.href} target="_blank" rel="noreferrer" className="digital-card-glass flex min-h-12 items-center justify-center gap-2 rounded-xl border border-digital-ink/10 text-sm font-semibold transition active:scale-[0.98]"><MessageCircle className="h-4 w-4" />Zalo</a>}
+          {phone && <a href={`tel:${phone.replace(/\s/g, "")}`} onClick={() => trackTouch("call_click", { from: "digital_card" })} className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-digital-blue text-sm font-semibold text-primary-foreground transition active:scale-[0.98]"><Phone className="h-4 w-4" />Gọi điện</a>}
+          {zalo?.href && <a href={zalo.href} target="_blank" rel="noreferrer" onClick={() => trackTouch("zalo_click", { from: "digital_card" })} className="digital-card-glass flex min-h-12 items-center justify-center gap-2 rounded-xl border border-digital-ink/10 text-sm font-semibold transition active:scale-[0.98]"><MessageCircle className="h-4 w-4" />Zalo</a>}
           <Button type="button" variant="ghost" onClick={saveContact} className="digital-card-glass col-span-2 h-12 rounded-xl border border-digital-ink/10 text-digital-ink hover:bg-digital-glass hover:text-digital-ink"><Download className="h-4 w-4" />Lưu danh bạ</Button>
         </div>
 
@@ -353,6 +358,7 @@ function LeadForm({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "Không gửi được, vui lòng thử lại.");
+      trackTouch("form_submit", { from: "digital_card", ...(projectId ? { project_id: projectId } : {}) });
       setState("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không gửi được.");
