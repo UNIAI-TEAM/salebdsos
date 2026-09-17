@@ -14,7 +14,10 @@ type TouchType =
   | "share_click"
   | "form_open"
   | "form_submit"
-  | "scroll_end";
+  | "scroll_end"
+  | "card_view"
+  | "card_project_click"
+  | "card_save_contact";
 
 const SID_KEY = "sbds_sid";
 
@@ -51,7 +54,7 @@ function getQrCode(): string | null {
 
 let queue: { type: TouchType; meta?: Record<string, string | number | boolean> }[] = [];
 let timer: ReturnType<typeof setTimeout> | null = null;
-let target: { slug?: string; projectId?: string } | null = null;
+let target: { slug?: string; projectId?: string; cardSlug?: string } | null = null;
 
 function flush() {
   if (!queue.length || !target) return;
@@ -63,6 +66,7 @@ function flush() {
     body: JSON.stringify({
       ...(target.slug ? { slug: target.slug } : {}),
       ...(target.projectId ? { projectId: target.projectId } : {}),
+      ...(target.cardSlug ? { cardSlug: target.cardSlug } : {}),
       sessionId: getTouchSessionId(),
       qrCode: getQrCode(),
       events,

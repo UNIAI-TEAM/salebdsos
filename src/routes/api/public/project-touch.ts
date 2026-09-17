@@ -19,10 +19,14 @@ export const TOUCH_EVENTS = [
   "form_open",
   "form_submit",
   "scroll_end",
+  "card_view",
+  "card_project_click",
+  "card_save_contact",
 ] as const;
 
 const Body = z.object({
   slug: z.string().trim().min(1).max(80).optional(),
+  cardSlug: z.string().trim().min(1).max(80).optional(),
   projectId: z.string().uuid().optional(),
   sessionId: z.string().trim().min(8).max(64),
   qrCode: z.string().trim().max(40).optional().nullable(),
@@ -83,6 +87,48 @@ export const Route = createFileRoute("/api/public/project-touch")({
 
         let tenantId: string | null = null;
         let projectId: string | null = parsed.projectId ?? null;
+
+        // Danh thiếp số: ghi điểm chạm cho các dự án sale đang gắn trên card
+        if (parsed.cardSlug && !projectId) {
+          const { data: card } = await supabaseAdmin
+            .from("cards")
+            .select("id,tenant_id")
+            .eq("slug", parsed.cardSlug)
+            .eq("is_published", true)
+            .is("deleted_at", null)
+            .maybeSingle();
+          if (!card) return json({ error: "no_card" }, 404);
+          const { data: links } = await supabaseAdmin
+            .from("card_projects")
+            .select("project_id")
+            .eq("card_id", card.id)
+            .order("position", { ascending: true })
+            .limit(10);
+          const ids = (links ?? []).map((l) => l.project_id);
+          if (!ids.length) return json({ ok: true, skipped: "no_project" });
+          const ua0 = request.headers.get("user-agent") || "";
+          const device0 = new UAParser(ua0).getResult().device.type || "desktop";
+          const cardRows = ids.flatMap((pid) =>
+            parsed.events.map((e) => ({
+              tenant_id: card.tenant_id,
+              project_id: pid,
+              qr_code_id: null,
+              session_id: parsed.sessionId,
+              event_type: e.type,
+              channel: "digital_card",
+              meta: { ...(e.meta ?? {}), card_slug: parsed.cardSlug as string },
+              device_type: device0,
+              referrer: request.headers.get("referer")?.slice(0, 300) ?? null,
+              ip_hash: ipHash,
+            })),
+          );
+          const { error: cardErr } = await supabaseAdmin.from("project_touchpoints").insert(cardRows);
+          if (cardErr) {
+            console.error("[project-touch] card insert", cardErr.message);
+            return json({ error: "failed" }, 500);
+          }
+          return json({ ok: true });
+        }
         if (parsed.slug) {
           const { data: page } = await supabaseAdmin
             .from("ai_sales_pages")

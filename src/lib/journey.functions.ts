@@ -30,6 +30,9 @@ export const TOUCH_LABEL: Record<string, string> = {
   form_open: "Mở form",
   form_submit: "Gửi thông tin",
   scroll_end: "Xem hết trang",
+  card_view: "Mở danh thiếp số",
+  card_project_click: "Bấm xem dự án từ danh thiếp",
+  card_save_contact: "Lưu danh bạ từ danh thiếp",
 };
 
 const CHANNEL_LABEL: Record<string, string> = {
