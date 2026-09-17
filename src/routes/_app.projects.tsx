@@ -111,7 +111,39 @@ function ProjectsPage() {
               Chưa có dự án nào. Bấm “Thêm dự án” để bắt đầu.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Mobile: danh sách dạng thẻ, thao tác bằng ngón tay */}
+            <ul className="divide-y divide-border md:hidden">
+              {(projects.data ?? []).map((p) => (
+                <li key={p.id}>
+                  <Link
+                    to="/projects/$id"
+                    params={{ id: p.id }}
+                    className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 p-4 active:bg-muted/40"
+                  >
+                    <div className="grid h-14 w-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-muted">
+                      {p.cover_url ? <img src={p.cover_url} alt={p.name} className="h-full w-full object-cover" /> : <Building2 className="h-5 w-5 text-muted-foreground" />}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-[14px] font-semibold">{p.name}</div>
+                      <div className="mt-0.5 truncate text-[12px] text-muted-foreground">
+                        {[p.developer, p.location ?? p.city].filter(Boolean).join(" · ") || "—"}
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        {p.status && (
+                          <span className={["inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold", STATUS_TONE[p.status] ?? "bg-muted"].join(" ")}>
+                            {STATUS_LABEL[p.status] ?? p.status}
+                          </span>
+                        )}
+                        {p.property_type && <span className="text-[11.5px] text-muted-foreground">{p.property_type}</span>}
+                      </div>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-[13px]">
                 <thead>
                   <tr className="text-left text-[11.5px] uppercase tracking-wide text-muted-foreground bg-muted/30">
