@@ -237,10 +237,10 @@ function ProjectDialog({ onSubmit, loading }: { onSubmit: (v: any) => void; load
   });
   const set = (k: string, val: any) => setV({ ...v, [k]: val });
   return (
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="max-h-[90vh] w-[calc(100vw-1.5rem)] max-w-2xl overflow-y-auto">
       <DialogHeader><DialogTitle>Thêm dự án mới</DialogTitle></DialogHeader>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2"><Label>Tên dự án *</Label><Input value={v.name} onChange={(e) => set("name", e.target.value)} /></div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="sm:col-span-2"><Label>Tên dự án *</Label><Input value={v.name} onChange={(e) => set("name", e.target.value)} /></div>
         <div><Label>Chủ đầu tư</Label><Input value={v.developer} onChange={(e) => set("developer", e.target.value)} /></div>
         <div><Label>Vị trí</Label><Input value={v.location} onChange={(e) => set("location", e.target.value)} /></div>
         <div><Label>Thành phố</Label><Input value={v.city} onChange={(e) => set("city", e.target.value)} /></div>
@@ -262,8 +262,8 @@ function ProjectDialog({ onSubmit, loading }: { onSubmit: (v: any) => void; load
         <div><Label>Giá đến</Label><Input type="number" value={v.price_to} onChange={(e) => set("price_to", e.target.value)} /></div>
         <div><Label>Đơn vị</Label><Input value={v.currency} onChange={(e) => set("currency", e.target.value)} /></div>
         <div><Label>Hotline CTA</Label><Input value={v.cta_phone} onChange={(e) => set("cta_phone", e.target.value)} /></div>
-        <div className="col-span-2"><Label>Mô tả</Label><Textarea rows={2} value={v.description} onChange={(e) => set("description", e.target.value)} /></div>
-        <div className="col-span-2"><Label>Chính sách bán hàng</Label><Textarea rows={3} value={v.sales_policy} onChange={(e) => set("sales_policy", e.target.value)} /></div>
+        <div className="sm:col-span-2"><Label>Mô tả</Label><Textarea rows={2} value={v.description} onChange={(e) => set("description", e.target.value)} /></div>
+        <div className="sm:col-span-2"><Label>Chính sách bán hàng</Label><Textarea rows={3} value={v.sales_policy} onChange={(e) => set("sales_policy", e.target.value)} /></div>
       </div>
       <DialogFooter>
         <Button
