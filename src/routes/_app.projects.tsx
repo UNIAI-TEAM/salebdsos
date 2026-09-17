@@ -188,6 +188,8 @@ function ProjectsPage() {
                 </tbody>
               </table>
             </div>
+            </>
+
           )}
         </div>
 
