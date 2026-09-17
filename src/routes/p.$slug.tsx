@@ -86,6 +86,7 @@ function ShareLanding({ url, title }: { url: string; title: string }) {
       toast?.error?.("Viber chỉ mở được trên điện thoại.");
       return;
     }
+    trackTouch("share_click", { app });
     window.open(href, "_blank", "noopener,noreferrer");
   };
   return (
