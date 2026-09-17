@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
 import { InstallLandingApp } from "@/components/install-landing-app";
 import { LandingBrowserMeta } from "@/components/landing-browser-meta";
-import { LandingTouchTracker, trackTouch } from "@/components/landing-touch-tracker";
+import { LandingTouchTracker, trackTouch, getTouchSessionId } from "@/components/landing-touch-tracker";
 import { Button } from "@/components/ui/button";
 import { warmLanding, warmOfflineAssets } from "@/lib/pwa";
 
