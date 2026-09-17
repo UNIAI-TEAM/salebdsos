@@ -19,7 +19,19 @@ import {
 import { toast } from "sonner";
 import { QrCode as QrCodeBlock } from "@/components/qr-code";
 
-export const Route = createFileRoute("/_app/digital-card")({ component: DigitalCardPage });
+export const Route = createFileRoute("/_app/digital-card")({
+  component: DigitalCardPage,
+  head: () => ({
+    meta: [
+      { title: "Danh thiếp số | SaleBDS OS" },
+      { name: "description", content: "Tạo và chia sẻ danh thiếp số chuyên nghiệp dành cho Sale bất động sản." },
+      { property: "og:title", content: "Danh thiếp số | SaleBDS OS" },
+      { property: "og:description", content: "Tạo và chia sẻ danh thiếp số chuyên nghiệp dành cho Sale bất động sản." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+});
 
 type Field = {
   type: "phone" | "email" | "zalo" | "messenger" | "website" | "address" | "social" | "cta" | "link";
@@ -527,7 +539,7 @@ function DigitalCardPage() {
                 <Eye className="h-3 w-3" /> Mở thật
               </Link>
             </div>
-            <MobilePreview draft={draft} tmpl={tmpl} />
+            <MobilePreview draft={draft} tmpl={tmpl} publicUrl={publicUrl} hasProjects={selectedProjects.length > 0} />
           </div>
         </aside>
       </div>
@@ -535,7 +547,7 @@ function DigitalCardPage() {
       {/* Mobile preview drawer for small screens */}
       <div className="xl:hidden">
         <div className="text-xs text-muted-foreground mb-2 inline-flex items-center gap-1.5"><Smartphone className="h-3.5 w-3.5" /> Xem trước</div>
-        <MobilePreview draft={draft} tmpl={tmpl} />
+        <MobilePreview draft={draft} tmpl={tmpl} publicUrl={publicUrl} hasProjects={selectedProjects.length > 0} />
       </div>
     </div>
   );
@@ -589,37 +601,39 @@ function CopyLink({ url, compact }: { url: string; compact?: boolean }) {
   );
 }
 
-function MobilePreview({ draft, tmpl }: { draft: any; tmpl: typeof TEMPLATES[number] }) {
+function MobilePreview({ draft, publicUrl, hasProjects }: { draft: any; tmpl: typeof TEMPLATES[number]; publicUrl: string; hasProjects: boolean }) {
   const fields: Field[] = draft.fields ?? [];
-  const primary = draft.theme?.primary ?? "#A855F7";
+  const phone = fields.find((field) => field.type === "phone");
+  const zalo = fields.find((field) => field.type === "zalo");
   return (
-    <div className="mx-auto w-[300px] rounded-[2rem] border-[10px] border-slate-900 shadow-2xl bg-slate-900 overflow-hidden">
-      <div className={`bg-gradient-to-b ${tmpl.bg} ${tmpl.text} h-[560px] overflow-y-auto scrollbar-thin`}>
-        <div className="px-5 pt-7 pb-6 text-center">
-          <div className="h-20 w-20 mx-auto rounded-full bg-white/10 overflow-hidden ring-2 ring-white/20">
-            {draft.avatar_url ? <img src={draft.avatar_url} className="h-full w-full object-cover" /> : <div className="h-full w-full grid place-items-center"><User className="h-8 w-8 opacity-60" /></div>}
+    <div className="mx-auto w-[300px] overflow-hidden rounded-[2rem] border-[9px] border-digital-canvas bg-digital-canvas shadow-2xl">
+      <div className="h-[590px] overflow-y-auto bg-digital-canvas px-5 pb-6 pt-7 font-card-sans text-digital-ink scrollbar-thin">
+        <div className="text-center">
+          <div className="mx-auto h-20 w-20 overflow-hidden rounded-full bg-digital-glass ring-2 ring-digital-blue ring-offset-4 ring-offset-digital-surface">
+            {draft.avatar_url ? <img src={draft.avatar_url} alt={draft.display_name || "Ảnh đại diện"} className="h-full w-full object-cover" /> : <div className="grid h-full w-full place-items-center"><User className="h-8 w-8 opacity-60" /></div>}
           </div>
-          <div className="mt-3 inline-flex items-center gap-1 text-[11px] opacity-80">
-            {draft.company} {draft.company && <BadgeCheck className="h-3 w-3" />}
+          <h2 className="mt-4 font-card-serif text-lg font-bold leading-tight">{draft.display_name || "Họ và tên"}</h2>
+          <div className="mt-2 flex flex-col items-center gap-1">
+            {draft.title && <p className="text-[10px] font-semibold uppercase text-digital-blue">{draft.title}</p>}
+            {draft.company && <div className="inline-flex items-center gap-1 text-[10px] opacity-55">{draft.company} <BadgeCheck className="h-3 w-3" /></div>}
           </div>
-          <h2 className="mt-1 text-lg font-bold leading-tight">{draft.display_name || "Họ và tên"}</h2>
-          {draft.title && <p className="text-xs opacity-80">{draft.title}</p>}
-          {draft.bio && <p className="mt-2 text-[12px] opacity-85 leading-relaxed">{draft.bio}</p>}
         </div>
-        <div className="px-4 pb-6 space-y-2">
-          {fields.map((f, i) => (
-            <a
-              key={i}
-              href={f.href || "#"}
-              target="_blank"
-              rel="noreferrer"
-              className="block w-full text-center rounded-xl py-3 text-[13px] font-semibold backdrop-blur"
-              style={{ backgroundColor: f.type === "cta" ? primary : "rgba(255,255,255,0.12)" }}
-            >
-              {f.label}
-            </a>
-          ))}
-          {fields.length === 0 && <div className="text-center text-[11px] opacity-60 py-6">Thêm liên hệ ở bên trái</div>}
+
+        <div className="digital-card-glass mt-5 rounded-2xl border border-digital-ink/10 p-3">
+          <div className="rounded-xl bg-digital-ink p-2">
+            <QrCodeBlock value={publicUrl} size={174} />
+          </div>
+        </div>
+        <p className="mt-3 text-center text-[10px] italic text-digital-ink/45">Quét mã để lưu thông tin liên hệ ngay</p>
+
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <div className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-digital-blue text-[11px] font-semibold text-primary-foreground"><Phone className="h-3.5 w-3.5" />{phone?.label || "Gọi điện"}</div>
+          <div className="digital-card-glass flex h-11 items-center justify-center gap-1.5 rounded-xl border border-digital-ink/10 text-[11px] font-semibold"><MessageCircle className="h-3.5 w-3.5" />{zalo?.label || "Zalo"}</div>
+          <div className="digital-card-glass col-span-2 flex h-11 items-center justify-center gap-1.5 rounded-xl border border-digital-ink/10 text-[11px] font-semibold"><Download className="h-3.5 w-3.5" />Lưu danh bạ</div>
+        </div>
+        <div className="mt-5 flex items-center justify-between border-t border-digital-ink/10 pt-4 text-[10px]">
+          <span className="inline-flex items-center gap-1 text-digital-ink/60"><Share2 className="h-3.5 w-3.5" />Chia sẻ</span>
+          {hasProjects && <span className="inline-flex items-center gap-1 font-semibold text-digital-blue">Xem danh sách dự án <ExternalLink className="h-3 w-3" /></span>}
         </div>
       </div>
     </div>
