@@ -153,6 +153,7 @@ function PublicSalesPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          session_id: getTouchSessionId(),
           full_name: fd.get("full_name"),
           phone: fd.get("phone"),
           email: fd.get("email"),
