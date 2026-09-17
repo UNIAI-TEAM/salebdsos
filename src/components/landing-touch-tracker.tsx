@@ -148,5 +148,3 @@ export function ProjectTouchTracker({ projectId }: { projectId: string }) {
   return null;
 }
 
-  return null;
-}
