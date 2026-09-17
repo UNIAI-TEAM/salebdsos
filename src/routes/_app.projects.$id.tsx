@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { optimizeImage } from "@/lib/image-optim";
 import { ProjectAppointments } from "@/components/app/project-appointments";
+import { ProjectQrCodes } from "@/components/app/project-qr-codes";
 
 
 export const Route = createFileRoute("/_app/projects/$id")({ component: ProjectDetailPage });
