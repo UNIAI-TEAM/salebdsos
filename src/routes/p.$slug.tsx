@@ -176,7 +176,7 @@ function PublicSalesPage() {
 
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-screen bg-background pb-[max(5.5rem,calc(4.5rem+env(safe-area-inset-bottom)))] text-foreground sm:pb-0">
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
         <div className="relative mx-auto max-w-4xl px-4 py-12 text-center sm:px-6 sm:py-20">
