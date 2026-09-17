@@ -54,20 +54,9 @@ export const Route = createFileRoute("/api/public/pq/$code")({
             if (error) console.error("[pq] scan count", error.message);
           });
 
-        // Ưu tiên landing công khai của dự án, nếu chưa có thì về trang dự án nội bộ
-        const { data: page } = await supabaseAdmin
-          .from("ai_sales_pages")
-          .select("slug")
-          .eq("project_id", qr.project_id)
-          .eq("is_published", true)
-          .is("deleted_at", null)
-          .order("updated_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        // Luôn về trang dự án công khai: khách thấy rõ thông tin dự án + sale
+        const target = `/du-an/${encodeURIComponent(code)}`;
 
-        const target = page?.slug
-          ? `/p/${page.slug}?pq=${encodeURIComponent(code)}`
-          : `/?pq=${encodeURIComponent(code)}`;
 
         return new Response(null, {
           status: 302,
