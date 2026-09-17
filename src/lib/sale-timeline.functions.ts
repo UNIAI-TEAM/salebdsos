@@ -118,11 +118,18 @@ export const getSaleTimeline = createServerFn({ method: "GET" })
         .order("occurred_at", { ascending: false })
         .limit(data.limit);
       (events ?? []).forEach((e: any) => {
+        const who = cardName.get(e.card_id) ? ` ${cardName.get(e.card_id)}` : "";
         items.push({
           id: `ev-${e.id}`,
           kind: "view",
           at: e.occurred_at,
-          title: `Có người xem danh thiếp${cardName.get(e.card_id) ? ` ${cardName.get(e.card_id)}` : ""}`,
+          title:
+            e.source === "project_click"
+              ? `Khách bấm xem dự án từ danh thiếp${who}`
+              : e.source === "qr_card_lead"
+                ? `Khách để lại thông tin từ QR danh thiếp${who}`
+                : `Có người xem danh thiếp${who}`,
+
           detail: SOURCE_LABEL_VI[e.source] ?? e.source,
           meta: [e.device_type, e.country].filter(Boolean).join(" • ") || null,
         });
