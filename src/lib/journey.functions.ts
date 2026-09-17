@@ -14,7 +14,9 @@ export const JOURNEY_FUNNEL = [
 ] as const;
 
 export const TOUCH_LABEL: Record<string, string> = {
+  qr_sent: "Sale gửi QR qua email",
   qr_scan: "Quét mã QR",
+
   landing_view: "Mở landing",
   gallery_view: "Xem thư viện ảnh",
   image_view: "Xem ảnh dự án",
