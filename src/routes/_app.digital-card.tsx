@@ -114,6 +114,48 @@ function DigitalCardPage() {
     onError: (e: any) => toast.error(e.message ?? "Lưu thất bại"),
   });
 
+  // Dự án gắn vào danh thiếp + thống kê QR
+  const fetchProjectOptions = useServerFn(listProjectOptions);
+  const fetchCardProjects = useServerFn(listCardProjects);
+  const saveCardProjects = useServerFn(setCardProjects);
+  const fetchQrStats = useServerFn(getCardQrStats);
+
+  const projectsQ = useQuery({
+    queryKey: ["card-project-options", tenantId],
+    queryFn: () => fetchProjectOptions({ data: { tenantId: tenantId! } }),
+    enabled: !!tenantId,
+  });
+  const cardProjectsQ = useQuery({
+    queryKey: ["card-projects", card?.id],
+    queryFn: () => fetchCardProjects({ data: { cardId: card!.id } }),
+    enabled: !!card?.id,
+  });
+  const statsQ = useQuery({
+    queryKey: ["card-qr-stats", tenantId, card?.id],
+    queryFn: () => fetchQrStats({ data: { tenantId: tenantId!, cardId: card!.id, days: 30 } }),
+    enabled: !!tenantId && !!card?.id,
+  });
+
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [projectsLoaded, setProjectsLoaded] = useState(false);
+  useEffect(() => {
+    if (cardProjectsQ.data && !projectsLoaded) {
+      setSelectedProjects(cardProjectsQ.data);
+      setProjectsLoaded(true);
+    }
+  }, [cardProjectsQ.data, projectsLoaded]);
+
+  const saveProjectsMu = useMutation({
+    mutationFn: () =>
+      saveCardProjects({ data: { tenantId: tenantId!, cardId: card!.id, projectIds: selectedProjects } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["card-projects", card?.id] });
+      toast.success("Đã cập nhật dự án trên danh thiếp");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Lưu thất bại"),
+  });
+
+
   // Avatar upload
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
