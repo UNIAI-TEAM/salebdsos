@@ -76,7 +76,13 @@ function ProjectDetailPage() {
 
   const save = useMutation({
     mutationFn: (vals: any) => upsert({ data: { ...vals, id, tenant_id: vals.tenant_id ?? tenantId! } }),
-    onSuccess: () => { toast.success("Đã lưu"); setForm(null); qc.invalidateQueries({ queryKey: ["project", id] }); },
+    onSuccess: () => {
+      toast.success("Đã lưu");
+      setForm(null);
+      qc.invalidateQueries({ queryKey: ["project", id] });
+      qc.invalidateQueries({ queryKey: ["project-qr", tenantId, id] });
+      qc.invalidateQueries({ queryKey: ["project-landings", tenantId, id] });
+    },
     onError: (e: any) => toast.error(e?.message ?? "Lỗi"),
   });
 

@@ -61,6 +61,31 @@ export const getProject = createServerFn({ method: "GET" })
     return { project: p, cards: (links ?? []).map((l: any) => ({ ...l.cards, position: l.position })) };
   });
 
+async function ensureGeneralQr(supabase: any, row: any, userId: string) {
+  if (!row?.id) return;
+  const { data: existing } = await supabase
+    .from("project_qr_codes").select("id").eq("project_id", row.id).limit(1);
+  if (existing && existing.length > 0) return;
+  const alphabet = "abcdefghijkmnpqrstuvwxyz23456789";
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    let code = "";
+    for (let i = 0; i < 8; i += 1) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+    const { error: qrErr } = await supabase.from("project_qr_codes").insert({
+      tenant_id: row.tenant_id,
+      project_id: row.id,
+      code,
+      channel: "general",
+      label: "QR chung",
+      created_by: userId,
+    });
+    if (!qrErr) break;
+    if (!/duplicate|unique/i.test(qrErr.message)) {
+      console.error("[project] auto QR", qrErr.message);
+      break;
+    }
+  }
+}
+
 export const upsertProject = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => ProjectInput.parse(i))
@@ -70,33 +95,13 @@ export const upsertProject = createServerFn({ method: "POST" })
       const { data: row, error } = await context.supabase
         .from("projects").update(payload).eq("id", data.id).select().single();
       if (error) throw error;
+      await ensureGeneralQr(context.supabase, row, context.userId);
       return row;
     }
     const { data: row, error } = await context.supabase
       .from("projects").insert(payload).select().single();
     if (error) throw error;
-
-    // Tự sinh mã QR chung cho dự án mới
-    if (row?.id) {
-      const alphabet = "abcdefghijkmnpqrstuvwxyz23456789";
-      for (let attempt = 0; attempt < 5; attempt += 1) {
-        let code = "";
-        for (let i = 0; i < 8; i += 1) code += alphabet[Math.floor(Math.random() * alphabet.length)];
-        const { error: qrErr } = await context.supabase.from("project_qr_codes").insert({
-          tenant_id: row.tenant_id,
-          project_id: row.id,
-          code,
-          channel: "general",
-          label: "QR chung",
-          created_by: context.userId,
-        });
-        if (!qrErr) break;
-        if (!/duplicate|unique/i.test(qrErr.message)) {
-          console.error("[project] auto QR", qrErr.message);
-          break;
-        }
-      }
-    }
+    await ensureGeneralQr(context.supabase, row, context.userId);
     return row;
   });
 
