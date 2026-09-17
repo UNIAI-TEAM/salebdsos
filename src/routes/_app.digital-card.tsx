@@ -8,10 +8,14 @@ import {
   getOrCreateMyCard, updateMyCard, checkSlugAvailable,
 } from "@/lib/card.functions";
 import {
+  listProjectOptions, listCardProjects, setCardProjects, getCardQrStats,
+} from "@/lib/card-projects.functions";
+import {
   User, Phone, Mail, MessageCircle, Globe2, Link2, Plus, Trash2, Save,
   Smartphone, Monitor, Eye, Copy, Check, QrCode as QrIcon, Upload,
-  Sparkles, Palette, Settings2, ExternalLink, Loader2, BadgeCheck,
+  Sparkles, Palette, Settings2, ExternalLink, Loader2, BadgeCheck, Building2,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import { QrCode as QrCodeBlock } from "@/components/qr-code";
 
@@ -113,6 +117,48 @@ function DigitalCardPage() {
     },
     onError: (e: any) => toast.error(e.message ?? "Lưu thất bại"),
   });
+
+  // Dự án gắn vào danh thiếp + thống kê QR
+  const fetchProjectOptions = useServerFn(listProjectOptions);
+  const fetchCardProjects = useServerFn(listCardProjects);
+  const saveCardProjects = useServerFn(setCardProjects);
+  const fetchQrStats = useServerFn(getCardQrStats);
+
+  const projectsQ = useQuery({
+    queryKey: ["card-project-options", tenantId],
+    queryFn: () => fetchProjectOptions({ data: { tenantId: tenantId! } }),
+    enabled: !!tenantId,
+  });
+  const cardProjectsQ = useQuery({
+    queryKey: ["card-projects", card?.id],
+    queryFn: () => fetchCardProjects({ data: { cardId: card!.id } }),
+    enabled: !!card?.id,
+  });
+  const statsQ = useQuery({
+    queryKey: ["card-qr-stats", tenantId, card?.id],
+    queryFn: () => fetchQrStats({ data: { tenantId: tenantId!, cardId: card!.id, days: 30 } }),
+    enabled: !!tenantId && !!card?.id,
+  });
+
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [projectsLoaded, setProjectsLoaded] = useState(false);
+  useEffect(() => {
+    if (cardProjectsQ.data && !projectsLoaded) {
+      setSelectedProjects(cardProjectsQ.data);
+      setProjectsLoaded(true);
+    }
+  }, [cardProjectsQ.data, projectsLoaded]);
+
+  const saveProjectsMu = useMutation({
+    mutationFn: () =>
+      saveCardProjects({ data: { tenantId: tenantId!, cardId: card!.id, projectIds: selectedProjects } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["card-projects", card?.id] });
+      toast.success("Đã cập nhật dự án trên danh thiếp");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Lưu thất bại"),
+  });
+
 
   // Avatar upload
   const fileRef = useRef<HTMLInputElement>(null);
@@ -349,6 +395,85 @@ function DigitalCardPage() {
               </div>
             </div>
           </Section>
+
+          {/* Dự án đang bán */}
+          <Section id="projects" icon={Building2} title="Dự án tôi đang bán">
+            {projectsQ.isLoading ? (
+              <div className="py-6 grid place-items-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+            ) : (projectsQ.data ?? []).length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Chưa có dự án trong workspace.{" "}
+                <Link to="/sale-projects" className="text-primary font-medium">Thêm dự án</Link>
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Chọn dự án để khách quét QR thấy ngay danh sách dự án bạn đang bán, kèm link landing & brochure.
+                </p>
+                <div className="space-y-2">
+                  {(projectsQ.data ?? []).map((p: any) => {
+                    const idx = selectedProjects.indexOf(p.id);
+                    const on = idx >= 0;
+                    return (
+                      <label
+                        key={p.id}
+                        className={[
+                          "flex items-center gap-3 rounded-xl border p-2.5 cursor-pointer transition",
+                          on ? "border-primary bg-primary-soft/40" : "border-border hover:border-primary/40",
+                        ].join(" ")}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          onChange={(e) =>
+                            setSelectedProjects((prev) =>
+                              e.target.checked ? [...prev, p.id].slice(0, 12) : prev.filter((x) => x !== p.id),
+                            )
+                          }
+                          className="h-4 w-4 rounded border-border"
+                        />
+                        <div className="h-10 w-14 rounded-lg bg-muted overflow-hidden shrink-0">
+                          {(p.cover_mobile_url || p.cover_url) && (
+                            <img src={p.cover_mobile_url || p.cover_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[13px] font-semibold truncate">{p.name}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">{p.city || p.status || "—"}</div>
+                        </div>
+                        {on && <span className="ml-auto text-[11px] font-semibold text-primary">#{idx + 1}</span>}
+                      </label>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={() => saveProjectsMu.mutate()}
+                  disabled={saveProjectsMu.isPending}
+                  className="mt-3 inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-[13px] font-semibold disabled:opacity-60"
+                >
+                  {saveProjectsMu.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Lưu danh sách dự án
+                </button>
+              </>
+            )}
+
+            {statsQ.data && (
+              <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { l: "Lượt xem (30 ngày)", v: statsQ.data.views },
+                  { l: "Quét QR", v: statsQ.data.qr },
+                  { l: "Bấm vào dự án", v: statsQ.data.projectClicks },
+                  { l: "Khách để lại SĐT", v: statsQ.data.leads },
+                ].map((k) => (
+                  <div key={k.l} className="rounded-xl border border-border p-3">
+                    <div className="text-[18px] font-bold tabular-nums">{k.v.toLocaleString("vi-VN")}</div>
+                    <div className="text-[11px] text-muted-foreground">{k.l}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
+
 
           {/* Share */}
           <Section id="share" icon={QrIcon} title="Chia sẻ & QR · NFC">
