@@ -8,6 +8,8 @@ import { InstallLandingApp } from "@/components/install-landing-app";
 import { LandingBrowserMeta } from "@/components/landing-browser-meta";
 import { LandingTouchTracker, trackTouch, getTouchSessionId } from "@/components/landing-touch-tracker";
 import { Button } from "@/components/ui/button";
+import { QrCode } from "@/components/qr-code";
+
 import { warmLanding, warmOfflineAssets } from "@/lib/pwa";
 
 export const Route = createFileRoute("/p/$slug")({
