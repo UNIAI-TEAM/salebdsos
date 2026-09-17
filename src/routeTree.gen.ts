@@ -26,6 +26,7 @@ import { Route as AppWalletRouteImport } from './routes/_app.wallet'
 import { Route as AppTimelineRouteImport } from './routes/_app.timeline'
 import { Route as AppTeamRouteImport } from './routes/_app.team'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppSalesDirectoryRouteImport } from './routes/_app.sales-directory'
 import { Route as AppSaleProjectsRouteImport } from './routes/_app.sale-projects'
 import { Route as AppSaleLandingsRouteImport } from './routes/_app.sale-landings'
 import { Route as AppSaleCustomersRouteImport } from './routes/_app.sale-customers'
@@ -150,6 +151,11 @@ const AppTeamRoute = AppTeamRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSalesDirectoryRoute = AppSalesDirectoryRouteImport.update({
+  id: '/sales-directory',
+  path: '/sales-directory',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSaleProjectsRoute = AppSaleProjectsRouteImport.update({
@@ -394,6 +400,7 @@ export interface FileRoutesByFullPath {
   '/sale-customers': typeof AppSaleCustomersRoute
   '/sale-landings': typeof AppSaleLandingsRoute
   '/sale-projects': typeof AppSaleProjectsRoute
+  '/sales-directory': typeof AppSalesDirectoryRoute
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
   '/timeline': typeof AppTimelineRoute
@@ -452,6 +459,7 @@ export interface FileRoutesByTo {
   '/sale-customers': typeof AppSaleCustomersRoute
   '/sale-landings': typeof AppSaleLandingsRoute
   '/sale-projects': typeof AppSaleProjectsRoute
+  '/sales-directory': typeof AppSalesDirectoryRoute
   '/settings': typeof AppSettingsRoute
   '/team': typeof AppTeamRoute
   '/timeline': typeof AppTimelineRoute
@@ -513,6 +521,7 @@ export interface FileRoutesById {
   '/_app/sale-customers': typeof AppSaleCustomersRoute
   '/_app/sale-landings': typeof AppSaleLandingsRoute
   '/_app/sale-projects': typeof AppSaleProjectsRoute
+  '/_app/sales-directory': typeof AppSalesDirectoryRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/team': typeof AppTeamRoute
   '/_app/timeline': typeof AppTimelineRoute
@@ -574,6 +583,7 @@ export interface FileRouteTypes {
     | '/sale-customers'
     | '/sale-landings'
     | '/sale-projects'
+    | '/sales-directory'
     | '/settings'
     | '/team'
     | '/timeline'
@@ -632,6 +642,7 @@ export interface FileRouteTypes {
     | '/sale-customers'
     | '/sale-landings'
     | '/sale-projects'
+    | '/sales-directory'
     | '/settings'
     | '/team'
     | '/timeline'
@@ -692,6 +703,7 @@ export interface FileRouteTypes {
     | '/_app/sale-customers'
     | '/_app/sale-landings'
     | '/_app/sale-projects'
+    | '/_app/sales-directory'
     | '/_app/settings'
     | '/_app/team'
     | '/_app/timeline'
@@ -860,6 +872,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sales-directory': {
+      id: '/_app/sales-directory'
+      path: '/sales-directory'
+      fullPath: '/sales-directory'
+      preLoaderRoute: typeof AppSalesDirectoryRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/sale-projects': {
@@ -1207,6 +1226,7 @@ interface AppRouteChildren {
   AppSaleCustomersRoute: typeof AppSaleCustomersRoute
   AppSaleLandingsRoute: typeof AppSaleLandingsRoute
   AppSaleProjectsRoute: typeof AppSaleProjectsRoute
+  AppSalesDirectoryRoute: typeof AppSalesDirectoryRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTeamRoute: typeof AppTeamRoute
   AppTimelineRoute: typeof AppTimelineRoute
@@ -1244,6 +1264,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSaleCustomersRoute: AppSaleCustomersRoute,
   AppSaleLandingsRoute: AppSaleLandingsRoute,
   AppSaleProjectsRoute: AppSaleProjectsRoute,
+  AppSalesDirectoryRoute: AppSalesDirectoryRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTeamRoute: AppTeamRoute,
   AppTimelineRoute: AppTimelineRoute,
