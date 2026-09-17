@@ -75,6 +75,28 @@ export const upsertProject = createServerFn({ method: "POST" })
     const { data: row, error } = await context.supabase
       .from("projects").insert(payload).select().single();
     if (error) throw error;
+
+    // Tự sinh mã QR chung cho dự án mới
+    if (row?.id) {
+      const alphabet = "abcdefghijkmnpqrstuvwxyz23456789";
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        let code = "";
+        for (let i = 0; i < 8; i += 1) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+        const { error: qrErr } = await context.supabase.from("project_qr_codes").insert({
+          tenant_id: row.tenant_id,
+          project_id: row.id,
+          code,
+          channel: "general",
+          label: "QR chung",
+          created_by: context.userId,
+        });
+        if (!qrErr) break;
+        if (!/duplicate|unique/i.test(qrErr.message)) {
+          console.error("[project] auto QR", qrErr.message);
+          break;
+        }
+      }
+    }
     return row;
   });
 
