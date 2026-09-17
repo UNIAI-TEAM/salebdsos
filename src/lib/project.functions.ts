@@ -103,29 +103,7 @@ const money = (v: number | null, cur: string) =>
  * Tự sinh landing công khai cho dự án nếu chưa có, để mã QR trỏ trực tiếp
  * vào landing thay vì sale phải tạo & gán tay.
  */
-async function ensureProjectLanding(supabase: any, row: any, userId: string) {
-  if (!row?.id) return;
-  const { data: existing } = await supabase
-    .from("ai_sales_pages")
-    .select("id,slug,is_published")
-    .eq("project_id", row.id)
-    .is("deleted_at", null)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (existing?.slug && existing.is_published) return;
-  if (existing?.id) {
-    // Đã có landing nhưng chưa công khai / chưa có link → hoàn thiện.
-    const base = slugifyVi(row.name || "du-an") || "du-an";
-    const slug = existing.slug || `${base}-${existing.id.slice(0, 6)}`;
-    const { error } = await supabase
-      .from("ai_sales_pages")
-      .update({ slug, is_published: true, status: "published" })
-      .eq("id", existing.id);
-    if (error) console.error("[project] auto landing publish", error.message);
-    return;
-  }
-
+function buildLandingOutput(row: any) {
   const cur = row.currency || "VND";
   const highlights = Array.isArray(row.unit_highlights)
     ? (row.unit_highlights as unknown[]).filter((x): x is string => typeof x === "string")
@@ -140,7 +118,7 @@ async function ensureProjectLanding(supabase: any, row: any, userId: string) {
         ? `Giá từ ${money(row.price_from, cur)}`
         : null;
 
-  const output = {
+  return {
     headline: row.name,
     subheadline:
       [row.developer, row.location ?? row.city, row.property_type].filter(Boolean).join(" • ") ||
@@ -159,6 +137,42 @@ async function ensureProjectLanding(supabase: any, row: any, userId: string) {
     brochure_name: row.brochure_name ?? null,
     auto_generated: true,
   };
+}
+
+/**
+ * Tự sinh landing công khai cho dự án nếu chưa có, để mã QR trỏ trực tiếp
+ * vào landing. Nếu landing đã do hệ thống tự sinh thì cập nhật lại nội dung
+ * (tên, ảnh hero, brochure, tiện ích) mỗi khi dự án được sửa.
+ */
+async function ensureProjectLanding(supabase: any, row: any, userId: string) {
+  if (!row?.id) return;
+  const { data: existing } = await supabase
+    .from("ai_sales_pages")
+    .select("id,slug,is_published,output,title")
+    .eq("project_id", row.id)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing?.id) {
+    const auto = Boolean((existing.output as any)?.auto_generated);
+    const base = slugifyVi(row.name || "du-an") || "du-an";
+    const slug = existing.slug || `${base}-${existing.id.slice(0, 6)}`;
+    const patch: Record<string, unknown> = { slug, is_published: true, status: "published" };
+    if (auto) {
+      // Landing do hệ thống tạo → đồng bộ nội dung theo dữ liệu dự án mới nhất.
+      patch["output"] = { ...(existing.output as any), ...buildLandingOutput(row) };
+      patch["title"] = row.name;
+    }
+    if (existing.slug && existing.is_published && !auto) return;
+    const { error } = await supabase.from("ai_sales_pages").update(patch).eq("id", existing.id);
+    if (error) console.error("[project] auto landing sync", error.message);
+    return;
+  }
+
+  const output = buildLandingOutput(row);
+
 
   const { data: page, error } = await supabase
     .from("ai_sales_pages")
