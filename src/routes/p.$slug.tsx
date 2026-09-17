@@ -392,6 +392,25 @@ function PublicSalesPage() {
         </section>
       ) : null}
 
+      {page.qrCode && mounted ? (
+        <section className="mx-auto max-w-3xl px-4 pb-10 sm:px-6 sm:pb-14">
+          <h2 className="text-[20px] font-bold tracking-tight">Mã QR dự án</h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Quét hoặc chia sẻ mã QR này để mở nhanh thông tin dự án.
+          </p>
+          <div className="mt-4 flex justify-center">
+            <QrCode
+              value={`${window.location.origin}/api/public/pq/${page.qrCode}`}
+              size={200}
+              label={page.project?.name ?? page.title}
+              filename={`qr-${page.slug}`}
+            />
+          </div>
+        </section>
+      ) : null}
+
+
+
       <section id="lien-he" data-touch="form_open" className="scroll-mt-4 border-t border-border bg-muted/30 py-12 pb-[max(3rem,env(safe-area-inset-bottom))] sm:py-16">
         <div className="mx-auto max-w-lg px-4 sm:px-6">
           <h2 className="break-words text-center text-[20px] font-bold sm:text-[22px]">
