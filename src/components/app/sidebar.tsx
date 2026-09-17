@@ -48,6 +48,7 @@ const groups: Group[] = [
       { to: "/prompt-library", label: "Thư viện prompt", icon: BookMarked, roles: ["owner", "admin", "manager", "agent"] },
       { to: "/marketing", label: "Marketing & Campaign", icon: Megaphone, roles: ["owner", "admin", "manager"] },
       { to: "/analytics", label: "Báo cáo & Analytics", icon: BarChart3, roles: ["owner", "admin", "manager"] },
+      { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon, roles: ["owner", "admin", "manager", "agent"] },
     ],
   },
   {
