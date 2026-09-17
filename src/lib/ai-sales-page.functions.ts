@@ -545,8 +545,9 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
 
     let project: { name: string; location: string | null; cover_url: string | null; cta_phone: string | null } | null = null;
     let appointments: PublicProjectAppointment[] = [];
+    let qrCode: string | null = null;
     if (row.project_id) {
-      const [{ data: p }, { data: publicAppointments, error: appointmentsError }] = await Promise.all([
+      const [{ data: p }, { data: publicAppointments, error: appointmentsError }, { data: qr }] = await Promise.all([
         supabaseAdmin.from("projects").select("name,location,cover_url,cta_phone").eq("id", row.project_id).maybeSingle(),
         supabaseAdmin
           .from("appointments")
@@ -557,11 +558,21 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
           .gte("ends_at", new Date().toISOString())
           .order("starts_at", { ascending: true })
           .limit(12),
+        supabaseAdmin
+          .from("project_qr_codes")
+          .select("code")
+          .eq("project_id", row.project_id)
+          .eq("is_active", true)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle(),
       ]);
       project = p ?? null;
       if (appointmentsError) console.error("[sales-page] public appointments", appointmentsError.message);
       appointments = (publicAppointments ?? []) as PublicProjectAppointment[];
+      qrCode = qr?.code ?? null;
     }
+
 
     // Thông tin chuyên viên phụ trách để khách liên hệ trực tiếp
     let sale: { full_name: string | null; phone: string | null; email: string | null; avatar_url: string | null } | null =
