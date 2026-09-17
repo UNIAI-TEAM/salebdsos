@@ -18,6 +18,7 @@ import {
 import { warmOfflineCache, warmOfflineAssets } from "@/lib/pwa";
 import { optimizeImageVariants, formatBytes } from "@/lib/image-optim";
 import { ProjectAppointments } from "@/components/app/project-appointments";
+import { ProjectQrCodes } from "@/components/app/project-qr-codes";
 
 import { Building2, Search, Upload, FileText, Link2, ImageIcon, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
