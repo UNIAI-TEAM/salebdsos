@@ -54,12 +54,44 @@ function SaleCustomersPage() {
   const fnCreate = useServerFn(createCustomer);
   const fnAppt = useServerFn(createCustomerAppointment);
   const fnNote = useServerFn(addCustomerNote);
+  const fnEnsureCard = useServerFn(ensureMyQrCard);
+  const fnQrLeads = useServerFn(listMyQrLeads);
+  const fnConvert = useServerFn(convertQrLeadToCustomer);
 
   const customers = useQuery({
     queryKey: ["sale-customers", tenantId, q],
     queryFn: () => fnList({ data: { tenantId: tenantId!, search: q || undefined, page: 1, pageSize: 50 } }),
     enabled: !!tenantId,
   });
+
+  const myCard = useQuery({
+    queryKey: ["my-qr-card", tenantId],
+    queryFn: () => fnEnsureCard({ data: { tenantId: tenantId! } }),
+    enabled: !!tenantId,
+    staleTime: 5 * 60_000,
+  });
+
+  const qrLeads = useQuery({
+    queryKey: ["my-qr-leads", tenantId],
+    queryFn: () => fnQrLeads({ data: { tenantId: tenantId!, limit: 30 } }),
+    enabled: !!tenantId,
+  });
+
+  const convertM = useMutation({
+    mutationFn: (leadId: string) => fnConvert({ data: { tenantId: tenantId!, leadId } }),
+    onSuccess: (r: any) => {
+      toast.success(r?.created ? "Đã chuyển thành khách hàng" : "Khách này đã có trong danh sách");
+      qc.invalidateQueries({ queryKey: ["my-qr-leads", tenantId] });
+      qc.invalidateQueries({ queryKey: ["sale-customers", tenantId] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Không chuyển được"),
+  });
+
+  const cardUrl =
+    typeof window !== "undefined" && myCard.data?.slug
+      ? `${window.location.origin}/c/${myCard.data.slug}`
+      : "";
+
 
   useEffect(() => {
     void warmOfflineCache(["/sale-customers", "/timeline", "/sale-projects"]);
