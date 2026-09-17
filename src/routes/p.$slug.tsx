@@ -330,7 +330,7 @@ function PublicSalesPage() {
         </section>
       ) : null}
 
-      <section id="lien-he" className="scroll-mt-4 border-t border-border bg-muted/30 py-12 pb-[max(3rem,env(safe-area-inset-bottom))] sm:py-16">
+      <section id="lien-he" data-touch="form_open" className="scroll-mt-4 border-t border-border bg-muted/30 py-12 pb-[max(3rem,env(safe-area-inset-bottom))] sm:py-16">
         <div className="mx-auto max-w-lg px-4 sm:px-6">
           <h2 className="break-words text-center text-[20px] font-bold sm:text-[22px]">
             {s("form_intro") || "Để lại thông tin để được tư vấn"}
