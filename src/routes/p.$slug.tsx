@@ -477,6 +477,30 @@ function PublicSalesPage() {
           )}
         </div>
       </section>
+
+      {/* Thanh hành động cố định trên mobile */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:hidden">
+        <div className="grid grid-cols-2 gap-2">
+          {page.sale?.phone ? (
+            <a
+              href={`tel:${page.sale.phone}`}
+              onClick={() => trackTouch("call_click")}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background text-[14px] font-semibold"
+            >
+              <Phone className="h-4 w-4" /> Gọi sale
+            </a>
+          ) : (
+            <span />
+          )}
+          <a
+            href="#lien-he"
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary text-[14px] font-semibold text-primary-foreground"
+          >
+            {s("cta_primary") || "Nhận tư vấn"}
+          </a>
+        </div>
+      </div>
     </main>
+
   );
 }
