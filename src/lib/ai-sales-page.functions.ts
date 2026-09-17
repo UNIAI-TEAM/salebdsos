@@ -604,7 +604,9 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       output: (row.output ?? {}) as SalesPageOutput,
       project,
       appointments,
+      qrCode,
       sale,
+
     };
 
   });
