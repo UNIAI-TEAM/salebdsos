@@ -247,6 +247,62 @@ function PublicSalesPage() {
         </div>
       </section>
 
+      {page.sale?.full_name || page.sale?.phone ? (
+        <section className="mx-auto mt-6 max-w-3xl px-4 sm:px-6">
+          <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+            <div className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Chuyên viên tư vấn
+            </div>
+            <div className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+              <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full bg-muted text-[16px] font-bold">
+                {page.sale.avatar_url ? (
+                  <img
+                    src={page.sale.avatar_url}
+                    alt={page.sale.full_name ?? "Chuyên viên tư vấn"}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  (page.sale.full_name ?? "S").slice(0, 1).toUpperCase()
+                )}
+              </div>
+              <div className="min-w-0 text-left">
+                <div className="truncate text-[15px] font-semibold">
+                  {page.sale.full_name || "Chuyên viên tư vấn"}
+                </div>
+                {page.sale.phone ? (
+                  <div className="truncate text-[13px] text-muted-foreground">{page.sale.phone}</div>
+                ) : null}
+                {page.sale.email ? (
+                  <div className="truncate text-[12.5px] text-muted-foreground">{page.sale.email}</div>
+                ) : null}
+              </div>
+            </div>
+            {page.sale.phone ? (
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <a
+                  href={`tel:${page.sale.phone}`}
+                  onClick={() => trackTouch("call_click")}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[14px] font-semibold text-primary-foreground hover:bg-primary/90"
+                >
+                  <Phone className="h-4 w-4" /> Gọi ngay
+                </a>
+                <a
+                  href={`https://zalo.me/${page.sale.phone.replace(/[^\d]/g, "")}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => trackTouch("share_click", { app: "zalo_contact" })}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 text-[14px] font-semibold hover:bg-muted"
+                >
+                  <MessageCircle className="h-4 w-4" /> Chat Zalo
+                </a>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+
+
       {benefits.length > 0 ? (
         <section className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
           <h2 className="text-[20px] font-bold tracking-tight">Điểm nổi bật</h2>
