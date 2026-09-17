@@ -211,6 +211,7 @@ export const upsertProject = createServerFn({ method: "POST" })
       .from("projects").insert(payload).select().single();
     if (error) throw error;
     await ensureGeneralQr(context.supabase, row, context.userId);
+    await ensureProjectLanding(context.supabase, row, context.userId);
     return row;
   });
 
