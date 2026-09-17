@@ -233,6 +233,8 @@ function ProjectDetailPage() {
 
           {tenantId && <ProjectAppointments projectId={id} tenantId={tenantId} />}
 
+          <ProjectQrCodes projectId={id} tenantId={p.tenant_id ?? tenantId!} projectName={p.name} />
+
           {/* Landing công khai */}
           <SectionCard
             title="Landing công khai"
