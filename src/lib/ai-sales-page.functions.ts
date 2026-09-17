@@ -520,7 +520,7 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("ai_sales_pages")
-      .select("id,tenant_id,title,output,cta,slug,views_count,project_id")
+      .select("id,tenant_id,title,output,cta,slug,views_count,project_id,owner_user_id")
       .eq("slug", data.slug)
       .eq("is_published", true)
       .is("deleted_at", null)
@@ -543,11 +543,11 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
         if (e) console.error("[sales-page] view count", e.message);
       });
 
-    let project: { name: string; location: string | null; cover_url: string | null } | null = null;
+    let project: { name: string; location: string | null; cover_url: string | null; cta_phone: string | null } | null = null;
     let appointments: PublicProjectAppointment[] = [];
     if (row.project_id) {
       const [{ data: p }, { data: publicAppointments, error: appointmentsError }] = await Promise.all([
-        supabaseAdmin.from("projects").select("name,location,cover_url").eq("id", row.project_id).maybeSingle(),
+        supabaseAdmin.from("projects").select("name,location,cover_url,cta_phone").eq("id", row.project_id).maybeSingle(),
         supabaseAdmin
           .from("appointments")
           .select("id,title,location,starts_at,ends_at")
@@ -562,6 +562,28 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       if (appointmentsError) console.error("[sales-page] public appointments", appointmentsError.message);
       appointments = (publicAppointments ?? []) as PublicProjectAppointment[];
     }
+
+    // Thông tin chuyên viên phụ trách để khách liên hệ trực tiếp
+    let sale: { full_name: string | null; phone: string | null; email: string | null; avatar_url: string | null } | null =
+      null;
+    if (row.owner_user_id) {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("full_name,phone,email,avatar_url")
+        .eq("user_id", row.owner_user_id)
+        .maybeSingle();
+      sale = profile ?? null;
+    }
+    // Chưa có hồ sơ chuyên viên → dùng hotline tư vấn của dự án
+    if (!sale?.phone && project?.cta_phone) {
+      sale = {
+        full_name: sale?.full_name ?? null,
+        phone: project.cta_phone,
+        email: sale?.email ?? null,
+        avatar_url: sale?.avatar_url ?? null,
+      };
+    }
+
     return {
       id: row.id,
       tenantId: row.tenant_id,
@@ -571,7 +593,9 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       output: (row.output ?? {}) as SalesPageOutput,
       project,
       appointments,
+      sale,
     };
+
   });
 
 // ---------------------------------------------------------------------------

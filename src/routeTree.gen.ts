@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShareSlugRouteImport } from './routes/share.$slug'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as FSlugRouteImport } from './routes/f.$slug'
+import { Route as DuAnCodeRouteImport } from './routes/du-an.$code'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AcceptInviteTokenRouteImport } from './routes/accept-invite.$token'
 import { Route as AppWalletRouteImport } from './routes/_app.wallet'
@@ -113,6 +114,11 @@ const PSlugRoute = PSlugRouteImport.update({
 const FSlugRoute = FSlugRouteImport.update({
   id: '/f/$slug',
   path: '/f/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DuAnCodeRoute = DuAnCodeRouteImport.update({
+  id: '/du-an/$code',
+  path: '/du-an/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CSlugRoute = CSlugRouteImport.update({
@@ -387,6 +393,7 @@ export interface FileRoutesByFullPath {
   '/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
+  '/du-an/$code': typeof DuAnCodeRoute
   '/f/$slug': typeof FSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/share/$slug': typeof ShareSlugRoute
@@ -443,6 +450,7 @@ export interface FileRoutesByTo {
   '/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
+  '/du-an/$code': typeof DuAnCodeRoute
   '/f/$slug': typeof FSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/share/$slug': typeof ShareSlugRoute
@@ -502,6 +510,7 @@ export interface FileRoutesById {
   '/_app/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
   '/c/$slug': typeof CSlugRoute
+  '/du-an/$code': typeof DuAnCodeRoute
   '/f/$slug': typeof FSlugRoute
   '/p/$slug': typeof PSlugRoute
   '/share/$slug': typeof ShareSlugRoute
@@ -561,6 +570,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/accept-invite/$token'
     | '/c/$slug'
+    | '/du-an/$code'
     | '/f/$slug'
     | '/p/$slug'
     | '/share/$slug'
@@ -617,6 +627,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/accept-invite/$token'
     | '/c/$slug'
+    | '/du-an/$code'
     | '/f/$slug'
     | '/p/$slug'
     | '/share/$slug'
@@ -675,6 +686,7 @@ export interface FileRouteTypes {
     | '/_app/wallet'
     | '/accept-invite/$token'
     | '/c/$slug'
+    | '/du-an/$code'
     | '/f/$slug'
     | '/p/$slug'
     | '/share/$slug'
@@ -703,6 +715,7 @@ export interface RootRouteChildren {
   VerifyEmailRoute: typeof VerifyEmailRoute
   AcceptInviteTokenRoute: typeof AcceptInviteTokenRoute
   CSlugRoute: typeof CSlugRoute
+  DuAnCodeRoute: typeof DuAnCodeRoute
   FSlugRoute: typeof FSlugRoute
   PSlugRoute: typeof PSlugRoute
   ShareSlugRoute: typeof ShareSlugRoute
@@ -786,6 +799,13 @@ declare module '@tanstack/react-router' {
       path: '/f/$slug'
       fullPath: '/f/$slug'
       preLoaderRoute: typeof FSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/du-an/$code': {
+      id: '/du-an/$code'
+      path: '/du-an/$code'
+      fullPath: '/du-an/$code'
+      preLoaderRoute: typeof DuAnCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/c/$slug': {
@@ -1223,6 +1243,7 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyEmailRoute: VerifyEmailRoute,
   AcceptInviteTokenRoute: AcceptInviteTokenRoute,
   CSlugRoute: CSlugRoute,
+  DuAnCodeRoute: DuAnCodeRoute,
   FSlugRoute: FSlugRoute,
   PSlugRoute: PSlugRoute,
   ShareSlugRoute: ShareSlugRoute,
