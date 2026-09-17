@@ -164,6 +164,7 @@ function PublicSalesPage() {
       });
       const out = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !out.ok) throw new Error(out.error || "Không gửi được.");
+      trackTouch("form_submit");
       setSent(true);
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : "Không gửi được.");
