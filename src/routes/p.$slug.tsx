@@ -286,6 +286,7 @@ function PublicSalesPage() {
             href={s("brochure_url")}
             target="_blank"
             rel="noreferrer"
+            onClick={() => trackTouch("brochure_download", { name: s("brochure_name") || "brochure" })}
             className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors hover:bg-muted sm:rounded-2xl sm:p-4"
           >
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
