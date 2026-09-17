@@ -13,7 +13,9 @@ import {
   Share2,
 } from "lucide-react";
 import { getPublicProjectByQr, submitProjectQrLead } from "@/lib/public-project.functions";
+import { ProjectTouchTracker, getTouchSessionId, trackTouch } from "@/components/landing-touch-tracker";
 import { Button } from "@/components/ui/button";
+
 
 export const Route = createFileRoute("/du-an/$code")({
   loader: async ({ params }) => {
@@ -82,7 +84,16 @@ function PublicProjectQrPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
-  useEffect(() => setOrigin(window.location.origin), []);
+  useEffect(() => {
+    setOrigin(window.location.origin);
+    // Gắn mã QR vào phiên để mọi điểm chạm sau đó đều gắn đúng kênh
+    try {
+      sessionStorage.setItem("sbds_pq", data.code);
+    } catch {
+      /* bỏ qua nếu trình duyệt chặn */
+    }
+  }, [data.code]);
+
 
   const phone = sale?.phone || p.ctaPhone || null;
   const priceFrom = money(p.priceFrom as number | null, p.currency);
@@ -100,9 +111,12 @@ function PublicProjectQrPage() {
           full_name: String(fd.get("full_name") ?? ""),
           phone: String(fd.get("phone") ?? ""),
           note: String(fd.get("note") ?? "") || undefined,
+          session_id: getTouchSessionId() || undefined,
         },
       });
+      trackTouch("form_submit");
       setSent(true);
+
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : "Không gửi được, vui lòng thử lại.");
     } finally {
@@ -125,6 +139,7 @@ function PublicProjectQrPage() {
 
   return (
     <main className="min-h-screen bg-background pb-[max(5.5rem,calc(4.5rem+env(safe-area-inset-bottom)))] text-foreground">
+      <ProjectTouchTracker projectId={p.id} />
       {/* Ảnh bìa + tên dự án */}
       <section className="relative">
         {p.coverUrl ? (
@@ -159,6 +174,7 @@ function PublicProjectQrPage() {
               <button
                 type="button"
                 onClick={share}
+                data-touch-click="share_click"
                 aria-label="Chia sẻ dự án"
                 className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border bg-background text-muted-foreground transition-colors hover:bg-muted"
               >
@@ -207,12 +223,14 @@ function PublicProjectQrPage() {
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 <a
                   href={`tel:${phone}`}
+                  data-touch-click="call_click"
                   className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[14px] font-semibold text-primary-foreground hover:bg-primary/90"
                 >
                   <Phone className="h-4 w-4" /> Gọi ngay
                 </a>
                 <a
                   href={`https://zalo.me/${phone.replace(/[^\d]/g, "")}`}
+                  data-touch-click="zalo_click"
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 text-[14px] font-semibold hover:bg-muted"
@@ -245,7 +263,7 @@ function PublicProjectQrPage() {
 
       {/* Hình ảnh dự án */}
       {p.gallery.length > 0 ? (
-        <section className="mt-5">
+        <section className="mt-5" data-touch="gallery_view">
           <h2 className="mx-auto max-w-3xl px-4 text-[18px] font-bold tracking-tight sm:px-6">Hình ảnh</h2>
           <div className="mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:px-6">
             {p.gallery.map((g, i) => (
@@ -263,7 +281,7 @@ function PublicProjectQrPage() {
 
       {/* Chính sách bán hàng */}
       {p.salesPolicy ? (
-        <section className="mx-auto mt-5 max-w-3xl px-4 sm:px-6">
+        <section className="mx-auto mt-5 max-w-3xl px-4 sm:px-6" data-touch="policy_view">
           <h2 className="text-[18px] font-bold tracking-tight">Chính sách bán hàng</h2>
           <p className="mt-3 whitespace-pre-line break-words rounded-xl border border-border bg-card p-4 text-[14px] leading-relaxed">
             {p.salesPolicy}
@@ -276,6 +294,7 @@ function PublicProjectQrPage() {
         <section className="mx-auto mt-5 max-w-3xl px-4 sm:px-6">
           <a
             href={p.brochureUrl}
+            data-touch-click="brochure_download"
             target="_blank"
             rel="noreferrer"
             className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors hover:bg-muted"
@@ -294,7 +313,7 @@ function PublicProjectQrPage() {
 
       {/* Lịch sự kiện */}
       {data.appointments.length > 0 ? (
-        <section className="mx-auto mt-5 max-w-3xl px-4 sm:px-6">
+        <section className="mx-auto mt-5 max-w-3xl px-4 sm:px-6" data-touch="schedule_view">
           <h2 className="text-[18px] font-bold tracking-tight">Sự kiện sắp tới</h2>
           <ul className="mt-3 space-y-2.5">
             {data.appointments.map((a) => {
@@ -330,7 +349,7 @@ function PublicProjectQrPage() {
       ) : null}
 
       {/* Form nhận tư vấn */}
-      <section id="lien-he" className="mx-auto mt-6 max-w-lg scroll-mt-4 px-4 sm:px-6">
+      <section id="lien-he" data-touch="form_open" className="mx-auto mt-6 max-w-lg scroll-mt-4 px-4 sm:px-6">
         <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
           <h2 className="text-[18px] font-bold tracking-tight">Nhận bảng giá & tư vấn</h2>
           {sent ? (
@@ -392,6 +411,7 @@ function PublicProjectQrPage() {
           {phone ? (
             <a
               href={`tel:${phone}`}
+              data-touch-click="call_click"
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background text-[14px] font-semibold"
             >
               <Phone className="h-4 w-4" /> Gọi sale
@@ -401,6 +421,7 @@ function PublicProjectQrPage() {
           )}
           <a
             href="#lien-he"
+            data-touch-click="form_open"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary text-[14px] font-semibold text-primary-foreground"
           >
             Nhận bảng giá
