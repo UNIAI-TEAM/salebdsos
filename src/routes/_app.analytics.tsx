@@ -252,6 +252,8 @@ function AnalyticsPage() {
           </RankList>
         </SectionCard>
       </div>
+
+      {tenantId && <CustomerJourney tenantId={tenantId} days={days} />}
     </div>
   );
 }
