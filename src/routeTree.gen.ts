@@ -52,6 +52,7 @@ import { Route as AppAirdropRouteImport } from './routes/_app.airdrop'
 import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
 import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
 import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
+import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.index'
 import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.index'
 import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
@@ -279,6 +280,11 @@ const AppAiFollowupRoute = AppAiFollowupRouteImport.update({
   path: '/ai-followup',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProjectsIndexRoute = AppProjectsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppProjectsRoute,
+} as any)
 const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
   id: '/customers/',
   path: '/customers/',
@@ -389,6 +395,7 @@ export interface FileRoutesByFullPath {
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/customers/': typeof AppCustomersIndexRoute
+  '/projects/': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
@@ -425,7 +432,6 @@ export interface FileRoutesByTo {
   '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
-  '/projects': typeof AppProjectsRouteWithChildren
   '/prompt-library': typeof AppPromptLibraryRoute
   '/qr-sharing': typeof AppQrSharingRoute
   '/sale-customers': typeof AppSaleCustomersRoute
@@ -445,6 +451,7 @@ export interface FileRoutesByTo {
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/customers': typeof AppCustomersIndexRoute
+  '/projects': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
@@ -503,6 +510,7 @@ export interface FileRoutesById {
   '/_app/projects/$id': typeof AppProjectsIdRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/_app/customers/': typeof AppCustomersIndexRoute
+  '/_app/projects/': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
@@ -561,6 +569,7 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/api/public/project-touch'
     | '/customers/'
+    | '/projects/'
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
@@ -597,7 +606,6 @@ export interface FileRouteTypes {
     | '/nfc-codes'
     | '/pipeline'
     | '/products'
-    | '/projects'
     | '/prompt-library'
     | '/qr-sharing'
     | '/sale-customers'
@@ -617,6 +625,7 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/api/public/project-touch'
     | '/customers'
+    | '/projects'
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
@@ -674,6 +683,7 @@ export interface FileRouteTypes {
     | '/_app/projects/$id'
     | '/api/public/project-touch'
     | '/_app/customers/'
+    | '/_app/projects/'
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
@@ -1009,6 +1019,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiFollowupRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/projects/': {
+      id: '/_app/projects/'
+      path: '/'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof AppProjectsIndexRouteImport
+      parentRoute: typeof AppProjectsRoute
+    }
     '/_app/customers/': {
       id: '/_app/customers/'
       path: '/customers'
@@ -1110,10 +1127,12 @@ const AppAiFollowupRouteWithChildren = AppAiFollowupRoute._addFileChildren(
 
 interface AppProjectsRouteChildren {
   AppProjectsIdRoute: typeof AppProjectsIdRoute
+  AppProjectsIndexRoute: typeof AppProjectsIndexRoute
 }
 
 const AppProjectsRouteChildren: AppProjectsRouteChildren = {
   AppProjectsIdRoute: AppProjectsIdRoute,
+  AppProjectsIndexRoute: AppProjectsIndexRoute,
 }
 
 const AppProjectsRouteWithChildren = AppProjectsRoute._addFileChildren(
