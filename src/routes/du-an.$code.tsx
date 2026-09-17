@@ -13,7 +13,9 @@ import {
   Share2,
 } from "lucide-react";
 import { getPublicProjectByQr, submitProjectQrLead } from "@/lib/public-project.functions";
+import { ProjectTouchTracker, getTouchSessionId, trackTouch } from "@/components/landing-touch-tracker";
 import { Button } from "@/components/ui/button";
+
 
 export const Route = createFileRoute("/du-an/$code")({
   loader: async ({ params }) => {
