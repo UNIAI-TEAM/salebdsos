@@ -86,6 +86,114 @@ async function ensureGeneralQr(supabase: any, row: any, userId: string) {
   }
 }
 
+const slugifyVi = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/gi, "d")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+
+const money = (v: number | null, cur: string) =>
+  v == null ? null : `${new Intl.NumberFormat("vi-VN").format(v)} ${cur}`;
+
+/**
+ * Tự sinh landing công khai cho dự án nếu chưa có, để mã QR trỏ trực tiếp
+ * vào landing thay vì sale phải tạo & gán tay.
+ */
+async function ensureProjectLanding(supabase: any, row: any, userId: string) {
+  if (!row?.id) return;
+  const { data: existing } = await supabase
+    .from("ai_sales_pages")
+    .select("id,slug,is_published")
+    .eq("project_id", row.id)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (existing?.slug && existing.is_published) return;
+  if (existing?.id) {
+    // Đã có landing nhưng chưa công khai / chưa có link → hoàn thiện.
+    const base = slugifyVi(row.name || "du-an") || "du-an";
+    const slug = existing.slug || `${base}-${existing.id.slice(0, 6)}`;
+    const { error } = await supabase
+      .from("ai_sales_pages")
+      .update({ slug, is_published: true, status: "published" })
+      .eq("id", existing.id);
+    if (error) console.error("[project] auto landing publish", error.message);
+    return;
+  }
+
+  const cur = row.currency || "VND";
+  const highlights = Array.isArray(row.unit_highlights)
+    ? (row.unit_highlights as unknown[]).filter((x): x is string => typeof x === "string")
+    : [];
+  const gallery = Array.isArray(row.gallery)
+    ? (row.gallery as unknown[]).filter((x): x is string => typeof x === "string")
+    : [];
+  const priceLine =
+    money(row.price_from ?? null, cur) && money(row.price_to ?? null, cur)
+      ? `Giá từ ${money(row.price_from, cur)} đến ${money(row.price_to, cur)}`
+      : money(row.price_from ?? null, cur)
+        ? `Giá từ ${money(row.price_from, cur)}`
+        : null;
+
+  const output = {
+    headline: row.name,
+    subheadline:
+      [row.developer, row.location ?? row.city, row.property_type].filter(Boolean).join(" • ") ||
+      "Dự án bất động sản",
+    benefits: highlights.length
+      ? highlights.slice(0, 6)
+      : [priceLine, row.location ?? row.city, row.status].filter(Boolean),
+    offer: priceLine,
+    cta_primary: "Nhận tư vấn ngay",
+    form_intro: "Để lại thông tin, chuyên viên sẽ liên hệ tư vấn chi tiết.",
+    hero_image_url: row.cover_url ?? null,
+    hero_image_mobile_url: row.cover_mobile_url ?? null,
+    gallery,
+    gallery_mobile: Array.isArray(row.gallery_mobile) ? row.gallery_mobile : [],
+    brochure_url: row.brochure_url ?? null,
+    brochure_name: row.brochure_name ?? null,
+    auto_generated: true,
+  };
+
+  const { data: page, error } = await supabase
+    .from("ai_sales_pages")
+    .insert({
+      tenant_id: row.tenant_id,
+      owner_user_id: userId,
+      project_id: row.id,
+      title: row.name,
+      tone: "professional",
+      cta: "Nhận tư vấn ngay",
+      output,
+      status: "generated",
+    })
+    .select("id")
+    .single();
+  if (error || !page) {
+    console.error("[project] auto landing", error?.message);
+    return;
+  }
+
+  const base = slugifyVi(row.name || "du-an") || "du-an";
+  for (let i = 0; i < 5; i += 1) {
+    const slug = i === 0 ? `${base}-${page.id.slice(0, 6)}` : `${base}-${page.id.slice(0, 6)}-${i}`;
+    const { error: pErr } = await supabase
+      .from("ai_sales_pages")
+      .update({ slug, is_published: true, status: "published" })
+      .eq("id", page.id);
+    if (!pErr) return;
+    if (!/duplicate|unique/i.test(pErr.message)) {
+      console.error("[project] auto landing slug", pErr.message);
+      return;
+    }
+  }
+}
+
 export const upsertProject = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => ProjectInput.parse(i))
@@ -96,12 +204,14 @@ export const upsertProject = createServerFn({ method: "POST" })
         .from("projects").update(payload).eq("id", data.id).select().single();
       if (error) throw error;
       await ensureGeneralQr(context.supabase, row, context.userId);
+      await ensureProjectLanding(context.supabase, row, context.userId);
       return row;
     }
     const { data: row, error } = await context.supabase
       .from("projects").insert(payload).select().single();
     if (error) throw error;
     await ensureGeneralQr(context.supabase, row, context.userId);
+    await ensureProjectLanding(context.supabase, row, context.userId);
     return row;
   });
 
