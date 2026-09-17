@@ -201,13 +201,13 @@ export const syncSalesCards = createServerFn({ method: "POST" })
         continue;
       }
 
-      const patch: Record<string, unknown> = {};
+      const patch: Record<string, any> = {};
       if (p?.full_name && card.display_name !== p.full_name) patch['display_name'] = p.full_name;
       if (!card.title) patch['title'] = title;
       if (!card.company && company) patch['company'] = company;
       if (!card.avatar_url && p?.avatar_url) patch['avatar_url'] = p.avatar_url;
       if (Object.keys(patch).length) {
-        const { error } = await supabaseAdmin.from("cards").update(patch).eq("id", card.id);
+        const { error } = await supabaseAdmin.from("cards").update(patch as any).eq("id", card.id);
         if (!error) updated += 1;
       }
     }
