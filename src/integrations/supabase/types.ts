@@ -1779,6 +1779,140 @@ export type Database = {
           },
         ]
       }
+      project_qr_codes: {
+        Row: {
+          channel: string
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          label: string | null
+          project_id: string
+          scan_count: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          project_id: string
+          scan_count?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          project_id?: string
+          scan_count?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_qr_codes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_qr_codes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_touchpoints: {
+        Row: {
+          channel: string | null
+          device_type: string | null
+          event_type: string
+          id: number
+          ip_hash: string | null
+          lead_id: string | null
+          meta: Json
+          occurred_at: string
+          project_id: string
+          qr_code_id: string | null
+          referrer: string | null
+          session_id: string
+          tenant_id: string
+        }
+        Insert: {
+          channel?: string | null
+          device_type?: string | null
+          event_type: string
+          id?: number
+          ip_hash?: string | null
+          lead_id?: string | null
+          meta?: Json
+          occurred_at?: string
+          project_id: string
+          qr_code_id?: string | null
+          referrer?: string | null
+          session_id: string
+          tenant_id: string
+        }
+        Update: {
+          channel?: string | null
+          device_type?: string | null
+          event_type?: string
+          id?: number
+          ip_hash?: string | null
+          lead_id?: string | null
+          meta?: Json
+          occurred_at?: string
+          project_id?: string
+          qr_code_id?: string | null
+          referrer?: string | null
+          session_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_touchpoints_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_touchpoints_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_touchpoints_qr_code_id_fkey"
+            columns: ["qr_code_id"]
+            isOneToOne: false
+            referencedRelation: "project_qr_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_touchpoints_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           brochure_name: string | null
@@ -2305,6 +2439,7 @@ export type Database = {
         Args: { _day?: string }
         Returns: undefined
       }
+      bump_project_qr_scan: { Args: { _code: string }; Returns: undefined }
       bump_sales_page_conversion: {
         Args: { _page_id: string; _tenant_id: string }
         Returns: undefined
