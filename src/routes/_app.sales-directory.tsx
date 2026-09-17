@@ -62,8 +62,8 @@ function SalesDirectoryPage() {
     <div className="space-y-5">
       <PageHeader
         title="Danh sách Sale"
-        subtitle="Mỗi sale một danh thiếp số riêng, kèm QR các dự án đang bán — tự đồng bộ khi hồ sơ hoặc dự án thay đổi."
-        actions={
+        sub="Mỗi sale một danh thiếp số riêng, kèm QR các dự án đang bán — tự đồng bộ khi hồ sơ hoặc dự án thay đổi."
+        action={
           canSync ? (
             <button
               onClick={() => syncMu.mutate()}
