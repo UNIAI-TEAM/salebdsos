@@ -48,11 +48,17 @@ const ACTION_LABEL_VI: Record<string, string> = {
 
 const SOURCE_LABEL_VI: Record<string, string> = {
   nfc: "Chạm NFC",
-  qr: "Quét QR",
+  qr: "Quét QR danh thiếp",
+  lockscreen: "Quét QR trên màn hình khoá",
+  project_click: "Bấm xem dự án đang bán",
+  qr_card_lead: "Khách để lại thông tin từ QR",
+  qr_card: "Quét QR danh thiếp",
+  "QR danh thiếp": "Quét QR danh thiếp",
   link: "Mở qua link",
   social: "Từ mạng xã hội",
   direct: "Truy cập trực tiếp",
 };
+
 
 function labelAction(action: string) {
   return ACTION_LABEL_VI[action] ?? action.replace(/[._]/g, " ");
@@ -112,11 +118,18 @@ export const getSaleTimeline = createServerFn({ method: "GET" })
         .order("occurred_at", { ascending: false })
         .limit(data.limit);
       (events ?? []).forEach((e: any) => {
+        const who = cardName.get(e.card_id) ? ` ${cardName.get(e.card_id)}` : "";
         items.push({
           id: `ev-${e.id}`,
           kind: "view",
           at: e.occurred_at,
-          title: `Có người xem danh thiếp${cardName.get(e.card_id) ? ` ${cardName.get(e.card_id)}` : ""}`,
+          title:
+            e.source === "project_click"
+              ? `Khách bấm xem dự án từ danh thiếp${who}`
+              : e.source === "qr_card_lead"
+                ? `Khách để lại thông tin từ QR danh thiếp${who}`
+                : `Có người xem danh thiếp${who}`,
+
           detail: SOURCE_LABEL_VI[e.source] ?? e.source,
           meta: [e.device_type, e.country].filter(Boolean).join(" • ") || null,
         });
