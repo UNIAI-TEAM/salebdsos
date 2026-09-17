@@ -595,6 +595,23 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       };
     }
 
+    // Danh thiếp số của chuyên viên để khách quét/lưu ngay trên landing
+    let saleCard:
+      | { slug: string; display_name: string; title: string | null; company: string | null; avatar_url: string | null }
+      | null = null;
+    if (row.owner_user_id) {
+      const { data: card } = await supabaseAdmin
+        .from("cards")
+        .select("slug,display_name,title,company,avatar_url")
+        .eq("owner_user_id", row.owner_user_id)
+        .eq("is_published", true)
+        .is("deleted_at", null)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      saleCard = card ?? null;
+    }
+
     return {
       id: row.id,
       tenantId: row.tenant_id,
@@ -606,8 +623,9 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       appointments,
       qrCode,
       sale,
-
+      saleCard,
     };
+
 
   });
 
