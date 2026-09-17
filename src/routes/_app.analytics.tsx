@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
+import { CustomerJourney } from "@/components/app/customer-journey";
 import {
   BarChart3, Users2, Target, Radio, QrCode, Link2, Share2, MousePointerClick,
 } from "lucide-react";
