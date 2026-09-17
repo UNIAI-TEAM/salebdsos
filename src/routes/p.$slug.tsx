@@ -303,6 +303,49 @@ function PublicSalesPage() {
         </section>
       ) : null}
 
+      {page.saleCard ? (
+        <section className="mx-auto mt-6 max-w-3xl px-4 sm:px-6">
+          <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+            <div className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Danh thiếp số
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+              <div className="mx-auto shrink-0">
+                <QrCode
+                  value={
+                    mounted
+                      ? `${window.location.origin}/c/${page.saleCard.slug}?utm_source=landing_qr`
+                      : `/c/${page.saleCard.slug}?utm_source=landing_qr`
+                  }
+                  size={168}
+                  showDownload={false}
+                />
+              </div>
+              <div className="min-w-0 text-center sm:text-left">
+                <div className="truncate text-[16px] font-bold">{page.saleCard.display_name}</div>
+                {page.saleCard.title ? (
+                  <div className="truncate text-[13px] text-muted-foreground">{page.saleCard.title}</div>
+                ) : null}
+                {page.saleCard.company ? (
+                  <div className="truncate text-[12.5px] text-muted-foreground">{page.saleCard.company}</div>
+                ) : null}
+                <p className="mt-2 text-[13px] text-muted-foreground">
+                  Quét mã hoặc mở danh thiếp để lưu liên hệ chuyên viên ngay.
+                </p>
+                <a
+                  href={`/c/${page.saleCard.slug}?utm_source=landing_link`}
+                  onClick={() => trackTouch("share_click", { app: "digital_card" })}
+                  className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 text-[14px] font-semibold hover:bg-muted"
+                >
+                  Mở danh thiếp <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+
 
 
       {benefits.length > 0 ? (
