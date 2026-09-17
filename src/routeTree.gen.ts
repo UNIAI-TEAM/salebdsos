@@ -59,6 +59,7 @@ import { Route as AppAiFollowupCustomerIdRouteImport } from './routes/_app.ai-fo
 import { Route as ApiPublicTCodeRouteImport } from './routes/api/public/t.$code'
 import { Route as ApiPublicSalesPagesSlugRouteImport } from './routes/api/public/sales-pages.$slug'
 import { Route as ApiPublicQCodeRouteImport } from './routes/api/public/q.$code'
+import { Route as ApiPublicPqCodeRouteImport } from './routes/api/public/pq.$code'
 import { Route as ApiPublicLeadFormsSlugRouteImport } from './routes/api/public/lead-forms.$slug'
 import { Route as ApiPublicLandingManifestSlugRouteImport } from './routes/api/public/landing-manifest.$slug'
 import { Route as ApiPublicCardLeadsSlugRouteImport } from './routes/api/public/card-leads.$slug'
@@ -312,6 +313,11 @@ const ApiPublicQCodeRoute = ApiPublicQCodeRouteImport.update({
   path: '/api/public/q/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPqCodeRoute = ApiPublicPqCodeRouteImport.update({
+  id: '/api/public/pq/$code',
+  path: '/api/public/pq/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicLeadFormsSlugRoute = ApiPublicLeadFormsSlugRouteImport.update({
   id: '/api/public/lead-forms/$slug',
   path: '/api/public/lead-forms/$slug',
@@ -379,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
+  '/api/public/pq/$code': typeof ApiPublicPqCodeRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
   '/api/public/sales-pages/$slug': typeof ApiPublicSalesPagesSlugRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
@@ -433,6 +440,7 @@ export interface FileRoutesByTo {
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
+  '/api/public/pq/$code': typeof ApiPublicPqCodeRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
   '/api/public/sales-pages/$slug': typeof ApiPublicSalesPagesSlugRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
@@ -489,6 +497,7 @@ export interface FileRoutesById {
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
+  '/api/public/pq/$code': typeof ApiPublicPqCodeRoute
   '/api/public/q/$code': typeof ApiPublicQCodeRoute
   '/api/public/sales-pages/$slug': typeof ApiPublicSalesPagesSlugRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
@@ -545,6 +554,7 @@ export interface FileRouteTypes {
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
+    | '/api/public/pq/$code'
     | '/api/public/q/$code'
     | '/api/public/sales-pages/$slug'
     | '/api/public/t/$code'
@@ -599,6 +609,7 @@ export interface FileRouteTypes {
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
+    | '/api/public/pq/$code'
     | '/api/public/q/$code'
     | '/api/public/sales-pages/$slug'
     | '/api/public/t/$code'
@@ -654,6 +665,7 @@ export interface FileRouteTypes {
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
+    | '/api/public/pq/$code'
     | '/api/public/q/$code'
     | '/api/public/sales-pages/$slug'
     | '/api/public/t/$code'
@@ -675,6 +687,7 @@ export interface RootRouteChildren {
   ApiPublicCardLeadsSlugRoute: typeof ApiPublicCardLeadsSlugRoute
   ApiPublicLandingManifestSlugRoute: typeof ApiPublicLandingManifestSlugRoute
   ApiPublicLeadFormsSlugRoute: typeof ApiPublicLeadFormsSlugRoute
+  ApiPublicPqCodeRoute: typeof ApiPublicPqCodeRoute
   ApiPublicQCodeRoute: typeof ApiPublicQCodeRoute
   ApiPublicSalesPagesSlugRoute: typeof ApiPublicSalesPagesSlugRoute
   ApiPublicTCodeRoute: typeof ApiPublicTCodeRoute
@@ -1032,6 +1045,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicQCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/pq/$code': {
+      id: '/api/public/pq/$code'
+      path: '/api/public/pq/$code'
+      fullPath: '/api/public/pq/$code'
+      preLoaderRoute: typeof ApiPublicPqCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/lead-forms/$slug': {
       id: '/api/public/lead-forms/$slug'
       path: '/api/public/lead-forms/$slug'
@@ -1170,6 +1190,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCardLeadsSlugRoute: ApiPublicCardLeadsSlugRoute,
   ApiPublicLandingManifestSlugRoute: ApiPublicLandingManifestSlugRoute,
   ApiPublicLeadFormsSlugRoute: ApiPublicLeadFormsSlugRoute,
+  ApiPublicPqCodeRoute: ApiPublicPqCodeRoute,
   ApiPublicQCodeRoute: ApiPublicQCodeRoute,
   ApiPublicSalesPagesSlugRoute: ApiPublicSalesPagesSlugRoute,
   ApiPublicTCodeRoute: ApiPublicTCodeRoute,
