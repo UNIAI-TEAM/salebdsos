@@ -129,6 +129,8 @@
   html, body {
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    /* Chặn double-tap zoom, vẫn cho phép cuộn dọc/ngang */
+    touch-action: pan-x pan-y;
   }
   body {
     background-color: var(--color-background);
