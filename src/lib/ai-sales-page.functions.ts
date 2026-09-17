@@ -562,6 +562,19 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       if (appointmentsError) console.error("[sales-page] public appointments", appointmentsError.message);
       appointments = (publicAppointments ?? []) as PublicProjectAppointment[];
     }
+
+    // Thông tin chuyên viên phụ trách để khách liên hệ trực tiếp
+    let sale: { full_name: string | null; phone: string | null; email: string | null; avatar_url: string | null } | null =
+      null;
+    if (row.owner_user_id) {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("full_name,phone,email,avatar_url")
+        .eq("user_id", row.owner_user_id)
+        .maybeSingle();
+      sale = profile ?? null;
+    }
+
     return {
       id: row.id,
       tenantId: row.tenant_id,
@@ -571,7 +584,9 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       output: (row.output ?? {}) as SalesPageOutput,
       project,
       appointments,
+      sale,
     };
+
   });
 
 // ---------------------------------------------------------------------------
