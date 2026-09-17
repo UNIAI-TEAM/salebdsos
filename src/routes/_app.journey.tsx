@@ -96,7 +96,7 @@ function JourneyPage() {
     <div className="space-y-4">
       <PageHeader
         title="Hành trình khách hàng theo dự án"
-        description="Xem từng khách quét QR: thời gian, trang đã xem, kênh QR và trạng thái quan tâm."
+        sub="Xem từng khách quét QR: thời gian, trang đã xem, kênh QR và trạng thái quan tâm."
       />
 
       <div className="grid gap-2 sm:grid-cols-3">
@@ -138,10 +138,10 @@ function JourneyPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <KpiCard title="Khách theo dõi" value={(d?.totalSessions ?? 0).toLocaleString("vi-VN")} icon={Users2} />
-        <KpiCard title="Điểm chạm" value={(d?.totalTouches ?? 0).toLocaleString("vi-VN")} icon={RouteIcon} />
-        <KpiCard title="Đã để lại thông tin" value={(d?.leadSessions ?? 0).toLocaleString("vi-VN")} icon={QrCode} />
-        <KpiCard title="Quan tâm cao" value={(d?.hotSessions ?? 0).toLocaleString("vi-VN")} icon={Flame} />
+        <KpiCard label="Khách theo dõi" value={(d?.totalSessions ?? 0).toLocaleString("vi-VN")} delta={0} icon={Users2} />
+        <KpiCard label="Điểm chạm" value={(d?.totalTouches ?? 0).toLocaleString("vi-VN")} delta={0} icon={RouteIcon} />
+        <KpiCard label="Đã để lại thông tin" value={(d?.leadSessions ?? 0).toLocaleString("vi-VN")} delta={0} icon={QrCode} />
+        <KpiCard label="Quan tâm cao" value={(d?.hotSessions ?? 0).toLocaleString("vi-VN")} delta={0} icon={Flame} />
       </div>
 
       <SectionCard title="Dòng thời gian từng khách">
