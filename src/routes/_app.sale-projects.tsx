@@ -18,6 +18,7 @@ import {
 import { warmOfflineCache, warmOfflineAssets } from "@/lib/pwa";
 import { optimizeImageVariants, formatBytes } from "@/lib/image-optim";
 import { ProjectAppointments } from "@/components/app/project-appointments";
+import { ProjectQrCodes } from "@/components/app/project-qr-codes";
 
 import { Building2, Search, Upload, FileText, Link2, ImageIcon, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
@@ -274,6 +275,8 @@ function ProjectQuickEdit({ id, tenantId }: { id: string; tenantId: string }) {
         </section>
 
         <ProjectAppointments projectId={id} tenantId={tenantId} />
+
+        <ProjectQrCodes projectId={id} tenantId={p?.tenant_id ?? tenantId} projectName={p?.name} />
 
         {/* Landing công khai */}
         <section className="space-y-2">

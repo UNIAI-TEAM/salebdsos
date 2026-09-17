@@ -57,6 +57,7 @@ export const Route = createFileRoute("/api/public/sales-pages/$slug")({
         const budget = str(body["budget"], 60);
         const timeline = str(body["timeline"], 60);
         const note = str(body["note"], 1000);
+        const session_id = str(body["session_id"], 64);
         if (!full_name) return json({ error: "Vui lòng nhập họ tên." }, 400);
         if (!phone) return json({ error: "Vui lòng nhập số điện thoại." }, 400);
         if (!/^[0-9+()\s.-]{8,20}$/.test(phone))
@@ -96,6 +97,16 @@ export const Route = createFileRoute("/api/public/sales-pages/$slug")({
         if (error || !lead) {
           console.error("[sales-page] lead insert", error?.message);
           return json({ error: "Không gửi được, vui lòng thử lại." }, 500);
+        }
+
+        // Gắn toàn bộ hành trình trước đó của khách vào lead này
+        if (session_id) {
+          const { error: jErr } = await supabaseAdmin
+            .from("project_touchpoints")
+            .update({ lead_id: lead.id })
+            .eq("session_id", session_id)
+            .is("lead_id", null);
+          if (jErr) console.error("[sales-page] journey link", jErr.message);
         }
 
         // Thông báo cho sale phụ trách: khách mới để lại thông tin

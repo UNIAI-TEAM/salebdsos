@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { getPublicSalesPage } from "@/lib/ai-sales-page.functions";
 import { InstallLandingApp } from "@/components/install-landing-app";
 import { LandingBrowserMeta } from "@/components/landing-browser-meta";
+import { LandingTouchTracker, trackTouch, getTouchSessionId } from "@/components/landing-touch-tracker";
 import { Button } from "@/components/ui/button";
 import { warmLanding, warmOfflineAssets } from "@/lib/pwa";
 
@@ -85,6 +86,7 @@ function ShareLanding({ url, title }: { url: string; title: string }) {
       toast?.error?.("Viber chỉ mở được trên điện thoại.");
       return;
     }
+    trackTouch("share_click", { app });
     window.open(href, "_blank", "noopener,noreferrer");
   };
   return (
@@ -151,6 +153,7 @@ function PublicSalesPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          session_id: getTouchSessionId(),
           full_name: fd.get("full_name"),
           phone: fd.get("phone"),
           email: fd.get("email"),
@@ -162,6 +165,7 @@ function PublicSalesPage() {
       });
       const out = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !out.ok) throw new Error(out.error || "Không gửi được.");
+      trackTouch("form_submit");
       setSent(true);
     } catch (e2) {
       setErr(e2 instanceof Error ? e2.message : "Không gửi được.");
@@ -231,6 +235,7 @@ function PublicSalesPage() {
           </div>
           <div className="mt-5 flex justify-center">
             <LandingBrowserMeta slug={page.slug ?? ""} title={page.title || "Landing"} />
+            <LandingTouchTracker slug={page.slug ?? ""} />
             <InstallLandingApp slug={page.slug ?? ""} title={page.title || "Landing"} />
           </div>
           {mounted && page.slug ? (
@@ -286,6 +291,7 @@ function PublicSalesPage() {
             href={s("brochure_url")}
             target="_blank"
             rel="noreferrer"
+            onClick={() => trackTouch("brochure_download", { name: s("brochure_name") || "brochure" })}
             className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors hover:bg-muted sm:rounded-2xl sm:p-4"
           >
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
@@ -303,7 +309,7 @@ function PublicSalesPage() {
       ) : null}
 
       {page.appointments.length > 0 ? (
-        <section className="mx-auto max-w-3xl px-4 pb-10 sm:px-6 sm:pb-14">
+        <section data-touch="schedule_view" className="mx-auto max-w-3xl px-4 pb-10 sm:px-6 sm:pb-14">
           <h2 className="text-[20px] font-bold tracking-tight">Lịch sự kiện sắp tới</h2>
           <ol className="relative mt-5 space-y-3 border-l border-border pl-5">
             {page.appointments.map((appointment) => {
@@ -330,7 +336,7 @@ function PublicSalesPage() {
         </section>
       ) : null}
 
-      <section id="lien-he" className="scroll-mt-4 border-t border-border bg-muted/30 py-12 pb-[max(3rem,env(safe-area-inset-bottom))] sm:py-16">
+      <section id="lien-he" data-touch="form_open" className="scroll-mt-4 border-t border-border bg-muted/30 py-12 pb-[max(3rem,env(safe-area-inset-bottom))] sm:py-16">
         <div className="mx-auto max-w-lg px-4 sm:px-6">
           <h2 className="break-words text-center text-[20px] font-bold sm:text-[22px]">
             {s("form_intro") || "Để lại thông tin để được tư vấn"}
