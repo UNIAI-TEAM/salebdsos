@@ -120,27 +120,56 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       .eq("tenant_id", data.tenantId);
     if (data.projectId) productQuery = productQuery.eq("project_id", data.projectId);
 
-    const [leadsQ, dealsQ, productsQ, projectsQ] = await Promise.all([
+    let contractQuery = supabase
+      .from("contracts")
+      .select("id,project_id,product_id,lead_id,deal_id,owner_user_id,net_price,status")
+      .eq("tenant_id", data.tenantId)
+      .is("deleted_at", null)
+      .in("status", ["active", "completed"]);
+    if (data.projectId) contractQuery = contractQuery.eq("project_id", data.projectId);
+    if (ownerFilter) contractQuery = contractQuery.eq("owner_user_id", ownerFilter);
+
+    const [leadsQ, dealsQ, productsQ, projectsQ, contractsQ] = await Promise.all([
       leadQuery,
       dealQuery,
       productQuery,
       supabase.from("projects").select("id,name").eq("tenant_id", data.tenantId).is("deleted_at", null),
+      contractQuery,
     ]);
     if (leadsQ.error) throw new Error(leadsQ.error.message);
     if (dealsQ.error) throw new Error(dealsQ.error.message);
     if (productsQ.error) throw new Error(productsQ.error.message);
     if (projectsQ.error) throw new Error(projectsQ.error.message);
+    if (contractsQ.error) throw new Error(contractsQ.error.message);
 
     const leads = leadsQ.data ?? [];
     const deals = dealsQ.data ?? [];
     const products = productsQ.data ?? [];
+    const contracts = contractsQ.data ?? [];
     const projectName = new Map((projectsQ.data ?? []).map((row) => [row.id, row.name]));
+
+    // Tiền đã thu theo từng hợp đồng
+    const collectedByContract = new Map<string, number>();
+    if (contracts.length) {
+      const { data: installments } = await supabase
+        .from("contract_installments")
+        .select("contract_id,paid_amount")
+        .in("contract_id", contracts.map((row) => row.id));
+      for (const row of installments ?? []) {
+        collectedByContract.set(
+          row.contract_id,
+          (collectedByContract.get(row.contract_id) ?? 0) + Number(row.paid_amount ?? 0),
+        );
+      }
+    }
 
     const dealById = new Map(deals.map((row) => [row.id, row]));
     const cartLeadIds = new Set<string>();
     const contractLeadIds = new Set<string>();
     const cartProducts: typeof products = [];
     const contractProducts: typeof products = [];
+    // Giá trị hợp đồng và tiền đã thu gán về lead tương ứng
+    const contractMoneyByLead = new Map<string, { value: number; collected: number }>();
 
     for (const product of products) {
       const status = product.listing_status ?? "available";
@@ -150,30 +179,39 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       if (isCart) cartProducts.push(product);
       if (isContract) contractProducts.push(product);
       const deal = product.deal_id ? dealById.get(product.deal_id) : undefined;
-      if (deal?.lead_id) {
-        cartLeadIds.add(deal.lead_id);
-        if (isContract || deal.status === "won") contractLeadIds.add(deal.lead_id);
-      }
+      if (deal?.lead_id) cartLeadIds.add(deal.lead_id);
     }
 
-    // Giao dịch không gắn sản phẩm vẫn tính là đã vào giỏ hàng / đã ký hợp đồng
+    // Giao dịch không gắn sản phẩm vẫn tính là đã vào giỏ hàng
     for (const deal of deals) {
       if (!deal.lead_id) continue;
       cartLeadIds.add(deal.lead_id);
-      if (deal.status === "won") contractLeadIds.add(deal.lead_id);
     }
 
-    const projectBuckets = new Map<string, { label: string; submitted: number; cart: number; contract: number }>();
-    const sourceBuckets = new Map<string, { label: string; submitted: number; cart: number; contract: number }>();
+    let contractValueTotal = 0;
+    let collectedTotal = 0;
+    for (const row of contracts) {
+      const value = Number(row.net_price ?? 0);
+      const collected = collectedByContract.get(row.id) ?? 0;
+      contractValueTotal += value;
+      collectedTotal += collected;
+      const leadId = row.lead_id ?? (row.deal_id ? dealById.get(row.deal_id)?.lead_id ?? null : null);
+      if (!leadId) continue;
+      cartLeadIds.add(leadId);
+      contractLeadIds.add(leadId);
+      const bucket = contractMoneyByLead.get(leadId) ?? { value: 0, collected: 0 };
+      bucket.value += value;
+      bucket.collected += collected;
+      contractMoneyByLead.set(leadId, bucket);
+    }
 
-    const ensure = (
-      map: Map<string, { label: string; submitted: number; cart: number; contract: number }>,
-      key: string,
-      label: string,
-    ) => {
+    const projectBuckets = new Map<string, Bucket>();
+    const sourceBuckets = new Map<string, Bucket>();
+
+    const ensure = (map: Map<string, Bucket>, key: string, label: string) => {
       const existing = map.get(key);
       if (existing) return existing;
-      const fresh = { label, submitted: 0, cart: 0, contract: 0 };
+      const fresh: Bucket = { label, submitted: 0, cart: 0, contract: 0, contractValue: 0, collected: 0 };
       map.set(key, fresh);
       return fresh;
     };
@@ -186,6 +224,7 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       submitted += 1;
       const inCart = cartLeadIds.has(lead.id);
       const inContract = contractLeadIds.has(lead.id);
+      const money = contractMoneyByLead.get(lead.id);
       if (inCart) cart += 1;
       if (inContract) contract += 1;
 
@@ -195,15 +234,18 @@ export const getFunnelReport = createServerFn({ method: "GET" })
         projectKey,
         lead.project_id ? projectName.get(lead.project_id) ?? "Dự án đã xoá" : "Chưa gắn dự án",
       );
-      projectBucket.submitted += 1;
-      if (inCart) projectBucket.cart += 1;
-      if (inContract) projectBucket.contract += 1;
-
       const sourceLabel = normalizeSource(lead.source);
       const sourceBucket = ensure(sourceBuckets, sourceLabel, sourceLabel);
-      sourceBucket.submitted += 1;
-      if (inCart) sourceBucket.cart += 1;
-      if (inContract) sourceBucket.contract += 1;
+
+      for (const bucket of [projectBucket, sourceBucket]) {
+        bucket.submitted += 1;
+        if (inCart) bucket.cart += 1;
+        if (inContract) bucket.contract += 1;
+        if (money) {
+          bucket.contractValue += money.value;
+          bucket.collected += money.collected;
+        }
+      }
     }
 
     return {
@@ -218,6 +260,10 @@ export const getFunnelReport = createServerFn({ method: "GET" })
         submittedToCart: rate(cart, submitted),
         cartToContract: rate(contract, cart),
         submittedToContract: rate(contract, submitted),
+        contractCount: contracts.length,
+        contractValue: Math.round(contractValueTotal),
+        collected: Math.round(collectedTotal),
+        collectRate: rate(collectedTotal, contractValueTotal),
       },
       inventory: {
         held: cartProducts.length,
