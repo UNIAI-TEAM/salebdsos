@@ -155,13 +155,6 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       };
     }).sort((a, b) => b.interactions - a.interactions || b.customersServed - a.customersServed || a.name.localeCompare(b.name, "vi"));
 
-    /* Card events without a project stay only in the all-project total. */
-    for (const touch of activeTouches) {
-      if (["qr_scan", "card_view"].includes(touch.event_type)) {
-        interactionKeys.add(`${touch.session_id}:${touch.event_type}:${touch.occurred_at}`);
-      }
-    }
-
     const identified = submittedLeads
       .filter((lead) => Boolean(submittedContactKey(lead)))
       .filter((lead) => cardIds.includes(lead.card_id ?? "") || /qr|landing/i.test(lead.source ?? ""))
