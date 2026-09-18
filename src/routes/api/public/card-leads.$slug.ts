@@ -1,6 +1,7 @@
 // Khách quét QR danh thiếp để lại thông tin: POST /api/public/card-leads/<slug>
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assignLeadOwner } from "@/lib/lead-routing.server";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -48,11 +49,17 @@ export const Route = createFileRoute("/api/public/card-leads/$slug")({
           if (!linked) projectId = null;
         }
 
+        const assignment = await assignLeadOwner({
+          tenantId: card.tenant_id,
+          projectId: projectId,
+          currentOwnerId: card.owner_user_id,
+        });
+
         const { data: lead, error: leadErr } = await supabaseAdmin
           .from("leads")
           .insert({
             tenant_id: card.tenant_id,
-            owner_user_id: card.owner_user_id,
+            owner_user_id: assignment.ownerUserId,
             card_id: card.id,
             project_id: projectId,
             full_name: fullName,
@@ -60,7 +67,11 @@ export const Route = createFileRoute("/api/public/card-leads/$slug")({
             notes,
             source: "QR danh thiếp",
             status: "new",
-            meta: { card_slug: params.slug },
+            meta: {
+              card_slug: params.slug,
+              sla_minutes: assignment.slaMinutes,
+              sla_due_at: assignment.slaDueAt,
+            },
           })
           .select("id")
           .single();
@@ -71,7 +82,7 @@ export const Route = createFileRoute("/api/public/card-leads/$slug")({
 
         const { error: nErr } = await supabaseAdmin.from("notifications").insert({
           tenant_id: card.tenant_id,
-          user_id: card.owner_user_id,
+          user_id: assignment.ownerUserId,
           type: "lead_new",
           title: "Khách mới từ QR danh thiếp",
           body: [fullName, phone].filter(Boolean).join(" · "),

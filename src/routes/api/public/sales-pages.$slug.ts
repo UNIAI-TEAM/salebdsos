@@ -1,6 +1,7 @@
 // Public lead capture from a published AI sales page: POST /api/public/sales-pages/<slug>
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assignLeadOwner } from "@/lib/lead-routing.server";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -74,12 +75,18 @@ export const Route = createFileRoute("/api/public/sales-pages/$slug")({
           .maybeSingle();
         if (!page) return json({ error: "Trang không tồn tại." }, 404);
 
+        const assignment = await assignLeadOwner({
+          tenantId: page.tenant_id,
+          projectId: page.project_id,
+          currentOwnerId: page.owner_user_id,
+        });
+
         const { data: lead, error } = await supabaseAdmin
           .from("leads")
           .insert({
             tenant_id: page.tenant_id,
             project_id: page.project_id,
-            owner_user_id: page.owner_user_id,
+            owner_user_id: assignment.ownerUserId,
             full_name,
             phone,
             email,
@@ -90,7 +97,13 @@ export const Route = createFileRoute("/api/public/sales-pages/$slug")({
             source: "Landing Page",
             status: "new",
             tags: ["landing"],
-            meta: { sales_page_id: page.id, sales_page_slug: params.slug },
+            meta: {
+              sales_page_id: page.id,
+              sales_page_slug: params.slug,
+              auto_assigned: assignment.autoAssigned,
+              sla_minutes: assignment.slaMinutes,
+              sla_due_at: assignment.slaDueAt,
+            },
           })
           .select("id")
           .single();
@@ -112,7 +125,7 @@ export const Route = createFileRoute("/api/public/sales-pages/$slug")({
         // Thông báo cho sale phụ trách: khách mới để lại thông tin
         const { error: nErr } = await supabaseAdmin.from("notifications").insert({
           tenant_id: page.tenant_id,
-          user_id: page.owner_user_id ?? null,
+          user_id: assignment.ownerUserId ?? null,
           type: "lead_new",
           title: "Khách mới từ landing",
           body: `${full_name} · ${phone}${page.title ? ` · ${page.title}` : ""}`,
