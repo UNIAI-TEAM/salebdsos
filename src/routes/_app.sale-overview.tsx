@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Building2, CalendarClock, CheckCircle2, FileSignature, QrCode, RefreshCw, ScanLine, UserRoundCheck, Users2 } from "lucide-react";
+import { Activity, Building2, CalendarClock, CheckCircle2, FileSignature, QrCode, RefreshCw, ScanLine, UserRoundCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getSaleOverview } from "@/lib/sale-overview.functions";
 import { PageHeader, SectionCard } from "@/components/app/ui";

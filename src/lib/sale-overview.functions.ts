@@ -35,6 +35,7 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       .select("role")
       .eq("tenant_id", data.tenantId)
       .eq("user_id", ownerId)
+      .limit(1)
       .maybeSingle();
     if (!targetRole || !SALE_ROLES.has(targetRole.role)) throw new Error("Không tìm thấy Sale trong workspace này");
 
@@ -65,7 +66,7 @@ export const getSaleOverview = createServerFn({ method: "GET" })
     if (linksError) throw new Error(linksError.message);
     const projectIds = [...new Set((links ?? []).map((link) => link.project_id))];
 
-    const [projectsQ, ownedQrQ, touchesQ, cardEventsQ] = await Promise.all([
+    const [projectsQ, ownedQrQ, touchesQ, cardEventsQ, projectEventsQ] = await Promise.all([
       projectIds.length
         ? supabase.from("projects").select("id,name").in("id", projectIds)
         : Promise.resolve({ data: [], error: null }),
@@ -76,8 +77,11 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       cardIds.length
         ? supabase.from("interaction_events").select("id,card_id,source,device_type,country,occurred_at").in("card_id", cardIds).gte("occurred_at", since).order("occurred_at", { ascending: false }).limit(4000)
         : Promise.resolve({ data: [], error: null }),
+      projectIds.length
+        ? supabase.from("appointments").select("id,project_id,title,location,starts_at,ends_at,status").eq("tenant_id", data.tenantId).eq("is_published", true).in("project_id", projectIds).gte("starts_at", now.toISOString()).lte("starts_at", scheduleEnd).order("starts_at", { ascending: true }).limit(100)
+        : Promise.resolve({ data: [], error: null }),
     ]);
-    const secondError = [projectsQ.error, ownedQrQ.error, touchesQ.error, cardEventsQ.error].find(Boolean);
+    const secondError = [projectsQ.error, ownedQrQ.error, touchesQ.error, cardEventsQ.error, projectEventsQ.error].find(Boolean);
     if (secondError) throw new Error(secondError.message);
 
     const projectNames = new Map((projectsQ.data ?? []).map((project) => [project.id, project.name]));
@@ -145,7 +149,7 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       customerName: Array.isArray(item.customers) ? item.customers[0]?.full_name ?? null : item.customers?.full_name ?? null,
       projectName: item.project_id ? projectNames.get(item.project_id) ?? null : null,
     }));
-    const events = (appointmentsQ.data ?? []).filter((item) => item.is_published).slice(0, 12).map((item) => ({
+    const events = (projectEventsQ.data ?? []).slice(0, 12).map((item) => ({
       id: item.id,
       title: item.title,
       location: item.location,
