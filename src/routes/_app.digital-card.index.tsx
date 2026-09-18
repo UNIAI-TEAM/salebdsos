@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Pencil } from "lucide-react";
+import { Pencil, UserSquare2, QrCode, Send } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getOrCreateMyCard } from "@/lib/card.functions";
 import { listCardProjects, listProjectOptions } from "@/lib/card-projects.functions";
