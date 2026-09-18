@@ -48,6 +48,7 @@ import { Route as AppLandingsRouteImport } from './routes/_app.landings'
 import { Route as AppJourneyRouteImport } from './routes/_app.journey'
 import { Route as AppInventoryRouteImport } from './routes/_app.inventory'
 import { Route as AppInboxRouteImport } from './routes/_app.inbox'
+import { Route as AppFunnelReportRouteImport } from './routes/_app.funnel-report'
 import { Route as AppFilesRouteImport } from './routes/_app.files'
 import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
 import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
@@ -275,6 +276,11 @@ const AppInboxRoute = AppInboxRouteImport.update({
   path: '/inbox',
   getParentRoute: () => AppRoute,
 } as any)
+const AppFunnelReportRoute = AppFunnelReportRouteImport.update({
+  id: '/funnel-report',
+  path: '/funnel-report',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppFilesRoute = AppFilesRouteImport.update({
   id: '/files',
   path: '/files',
@@ -458,6 +464,7 @@ export interface FileRoutesByFullPath {
   '/digital-card': typeof AppDigitalCardRouteWithChildren
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/files': typeof AppFilesRoute
+  '/funnel-report': typeof AppFunnelReportRoute
   '/inbox': typeof AppInboxRoute
   '/inventory': typeof AppInventoryRoute
   '/journey': typeof AppJourneyRoute
@@ -529,6 +536,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/files': typeof AppFilesRoute
+  '/funnel-report': typeof AppFunnelReportRoute
   '/inbox': typeof AppInboxRoute
   '/inventory': typeof AppInventoryRoute
   '/journey': typeof AppJourneyRoute
@@ -602,6 +610,7 @@ export interface FileRoutesById {
   '/_app/digital-card': typeof AppDigitalCardRouteWithChildren
   '/_app/dynamic-qr': typeof AppDynamicQrRoute
   '/_app/files': typeof AppFilesRoute
+  '/_app/funnel-report': typeof AppFunnelReportRoute
   '/_app/inbox': typeof AppInboxRoute
   '/_app/inventory': typeof AppInventoryRoute
   '/_app/journey': typeof AppJourneyRoute
@@ -676,6 +685,7 @@ export interface FileRouteTypes {
     | '/digital-card'
     | '/dynamic-qr'
     | '/files'
+    | '/funnel-report'
     | '/inbox'
     | '/inventory'
     | '/journey'
@@ -747,6 +757,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dynamic-qr'
     | '/files'
+    | '/funnel-report'
     | '/inbox'
     | '/inventory'
     | '/journey'
@@ -819,6 +830,7 @@ export interface FileRouteTypes {
     | '/_app/digital-card'
     | '/_app/dynamic-qr'
     | '/_app/files'
+    | '/_app/funnel-report'
     | '/_app/inbox'
     | '/_app/inventory'
     | '/_app/journey'
@@ -1176,6 +1188,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInboxRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/funnel-report': {
+      id: '/_app/funnel-report'
+      path: '/funnel-report'
+      fullPath: '/funnel-report'
+      preLoaderRoute: typeof AppFunnelReportRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/files': {
       id: '/_app/files'
       path: '/files'
@@ -1457,6 +1476,7 @@ interface AppRouteChildren {
   AppDigitalCardRoute: typeof AppDigitalCardRouteWithChildren
   AppDynamicQrRoute: typeof AppDynamicQrRoute
   AppFilesRoute: typeof AppFilesRoute
+  AppFunnelReportRoute: typeof AppFunnelReportRoute
   AppInboxRoute: typeof AppInboxRoute
   AppInventoryRoute: typeof AppInventoryRoute
   AppJourneyRoute: typeof AppJourneyRoute
@@ -1500,6 +1520,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDigitalCardRoute: AppDigitalCardRouteWithChildren,
   AppDynamicQrRoute: AppDynamicQrRoute,
   AppFilesRoute: AppFilesRoute,
+  AppFunnelReportRoute: AppFunnelReportRoute,
   AppInboxRoute: AppInboxRoute,
   AppInventoryRoute: AppInventoryRoute,
   AppJourneyRoute: AppJourneyRoute,

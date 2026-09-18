@@ -1,4 +1,5 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import {
+  Filter, Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
@@ -71,6 +72,7 @@ const groups: Group[] = [
     items: [
       { to: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
       { to: "/sale-overview", label: "Tổng quan Sale", icon: ContactRound },
+      { to: "/funnel-report", label: "Báo cáo phễu", icon: Filter },
       { to: "/analytics", label: "Báo cáo & Analytics", icon: BarChart3, roles: ["owner", "admin", "manager"] },
     ],
   },
