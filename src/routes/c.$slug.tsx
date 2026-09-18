@@ -7,13 +7,14 @@ import { User, BadgeCheck, Phone, MessageCircle, Download, Share2, MapPin, Arrow
 import { QrCode } from "@/components/qr-code";
 import { Button } from "@/components/ui/button";
 import { CardTouchTracker, trackTouch } from "@/components/landing-touch-tracker";
+import { SaleTrustMetrics } from "@/components/sale-trust-metrics";
 
 const getPublicCard = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => d)
   .handler(async ({ data }) => {
     const { data: card, error } = await supabaseAdmin
       .from("cards")
-      .select("id, slug, display_name, title, company, bio, avatar_url, theme, fields, tenant_id")
+      .select("id, slug, display_name, title, company, bio, avatar_url, theme, fields, tenant_id, owner_user_id")
       .eq("slug", data.slug)
       .eq("is_published", true)
       .is("deleted_at", null)
@@ -69,7 +70,9 @@ const getPublicCard = createServerFn({ method: "GET" })
         .map((r) => ({ ...(r as any), landing_slug: slugByProject.get((r as any).id) ?? null }));
     }
 
-    return { ...card, blocks: blocks ?? [], projects };
+    const { getPublicSaleMetrics } = await import("@/lib/public-sale-metrics.server");
+    const metrics = await getPublicSaleMetrics(card.tenant_id, card.owner_user_id);
+    return { ...card, blocks: blocks ?? [], projects, metrics };
   });
 
 
@@ -216,6 +219,8 @@ function PublicCard() {
         </section>
 
         {card.bio && <p className="mx-auto mt-6 max-w-sm text-center text-[13px] leading-relaxed text-digital-ink/65">{card.bio}</p>}
+
+        <SaleTrustMetrics metrics={card.metrics} variant="digital" className="mt-6" />
 
         <nav className="mt-6 space-y-2.5" aria-label="Liên hệ">
           {fields.filter((f) => !["phone", "zalo"].includes(f.type ?? "")).map((f, i) => {

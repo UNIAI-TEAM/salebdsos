@@ -9,6 +9,7 @@ import { LandingBrowserMeta } from "@/components/landing-browser-meta";
 import { LandingTouchTracker, trackTouch, getTouchSessionId } from "@/components/landing-touch-tracker";
 import { Button } from "@/components/ui/button";
 import { QrCode } from "@/components/qr-code";
+import { SaleTrustMetrics } from "@/components/sale-trust-metrics";
 
 import { warmLanding, warmOfflineAssets } from "@/lib/pwa";
 
@@ -341,6 +342,7 @@ function PublicSalesPage() {
                 </a>
               </div>
             </div>
+            <SaleTrustMetrics metrics={page.saleCard.metrics} className="mt-5 shadow-none" />
           </div>
         </section>
       ) : null}
