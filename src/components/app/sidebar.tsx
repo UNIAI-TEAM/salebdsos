@@ -3,7 +3,7 @@ import {
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
   Wallet, QrCode, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
-  PanelLeftClose, PanelLeftOpen, X, BookMarked, Activity, Route as RouteIcon, ContactRound,
+  PanelLeftClose, PanelLeftOpen, X, BookMarked, Route as RouteIcon, ContactRound,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
@@ -77,15 +77,24 @@ const groups: Group[] = [
   },
 ];
 
-/** Chế độ Sale trên điện thoại: gọn nhất, không lặp lại thanh dưới. */
+/** PWA trên điện thoại: chỉ giữ công cụ Sale phụ và khu quản trị theo quyền. */
 const saleMobileGroups: Group[] = [
   {
-    label: "Dành cho Sale",
+    label: "Sale",
     items: [
-      { to: "/digital-card", label: "Danh thiếp", icon: IdCard },
-      { to: "/sale-overview", label: "Tổng quan Sale", icon: ContactRound },
       { to: "/landings", label: "Landing công khai", icon: Globe2 },
-      { to: "/timeline", label: "Timeline", icon: Activity },
+      { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon },
+      { to: "/content-library", label: "Kho nội dung", icon: BookMarked },
+      { to: "/airdrop", label: "Chia sẻ danh thiếp", icon: Send },
+    ],
+  },
+  {
+    label: "Quản trị",
+    items: [
+      { to: "/sales-directory", label: "Quản lý Sale", icon: IdCard, roles: ["owner", "admin", "manager"] },
+      { to: "/members", label: "Thành viên & vai trò", icon: ShieldCheck, roles: ["owner", "admin"] },
+      { to: "/analytics", label: "Báo cáo", icon: BarChart3, roles: ["owner", "admin", "manager"] },
+      { to: "/settings", label: "Cài đặt", icon: Settings, roles: ["owner", "admin"] },
     ],
   },
 ];

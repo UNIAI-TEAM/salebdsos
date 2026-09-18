@@ -15,3 +15,4 @@
 
 - [x] Tách Tổng quan Sale theo từng dự án với bộ lọc toàn trang và bảng so sánh.
 - [x] Tạo trang Quản lý Sale: mời qua email, sửa hồ sơ/danh thiếp và ngừng hoạt động an toàn.
+- [x] Tối ưu PWA: thanh dưới 4 mục, nút QR giữa và menu bên chỉ còn Sale/Quản trị.
