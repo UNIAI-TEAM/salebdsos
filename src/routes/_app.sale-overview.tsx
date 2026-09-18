@@ -101,13 +101,22 @@ function SaleOverviewPage() {
             <Badge variant="secondary" className="shrink-0"><span className="mr-1 h-1.5 w-1.5 rounded-full bg-success" />Tự cập nhật</Badge>
           </section>
 
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <Metric icon={ScanLine} label="Lượt tương tác" value={String(data.metrics.interactions)} hint="QR và Digital Card · 30 ngày" />
-            <Metric icon={UserRoundCheck} label="Khách đã phục vụ" value={String(data.metrics.customersServed)} hint="Không tính trùng liên hệ" />
-            <Metric icon={FileSignature} label="Hợp đồng đã ký" value={String(data.metrics.contractsSigned)} hint="Giao dịch thành công" />
-            <Metric icon={Building2} label="Dự án đã bán" value={String(data.metrics.projectsSold)} hint="Có giao dịch thành công" />
-            <Metric icon={CheckCircle2} label="Tỷ lệ chuyển đổi" value={`${data.metrics.conversionRate}%`} hint="Hợp đồng trên tổng lead" />
-          </div>
+          <section aria-labelledby="sale-metrics-title">
+            <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h2 id="sale-metrics-title" className="text-base font-bold text-foreground">Chỉ số tổng hợp</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">Số liệu thật từ khách gửi thông tin và giao dịch của Sale.</p>
+              </div>
+              <Badge variant="outline" className="shrink-0">Không tính trùng liên hệ</Badge>
+            </div>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+              <Metric icon={ScanLine} label="Lượt tương tác" value={String(data.metrics.interactions)} hint="QR và Digital Card · 30 ngày" />
+              <Metric icon={UserRoundCheck} label="Khách đã gửi thông tin" value={String(data.metrics.customersServed)} hint="Theo số điện thoại hoặc email" />
+              <Metric icon={FileSignature} label="Hợp đồng đã ký" value={String(data.metrics.contractsSigned)} hint="Giao dịch thành công · toàn thời gian" />
+              <Metric icon={Building2} label="Dự án đã bán" value={String(data.metrics.projectsSold)} hint="Dự án có giao dịch thành công" />
+              <Metric icon={CheckCircle2} label="Tỷ lệ chuyển đổi" value={`${data.metrics.conversionRate}%`} hint="Hợp đồng trên khách gửi thông tin" />
+            </div>
+          </section>
 
           <div className="grid gap-4 xl:grid-cols-2">
             <SectionCard title="Lịch hẹn sắp tới" action={<Link to="/appointments" className="text-xs font-medium text-primary">Xem lịch</Link>}>
@@ -119,7 +128,7 @@ function SaleOverviewPage() {
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
-            <SectionCard title={`Khách đã xác định · ${data.identified.length}`}>
+            <SectionCard title={`Khách đã gửi thông tin · ${data.identified.length}`}>
               {data.identified.length === 0 ? <Empty text="Chưa có khách để lại thông tin." /> : <ul className="space-y-2">{data.identified.map((lead) => <li key={lead.id} className="rounded-xl border border-border p-3"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="truncate text-sm font-semibold">{lead.name}</p><p className="truncate text-xs text-muted-foreground">{[lead.phone, lead.projectName].filter(Boolean).join(" · ")}</p></div><Badge variant="secondary" className="shrink-0 text-[10px]">{STATUS_LABEL[lead.status] ?? lead.status}</Badge></div><p className="mt-1 text-[11px] text-muted-foreground">{formatTime(lead.at)}{lead.source ? ` · ${lead.source}` : ""}</p></li>)}</ul>}
             </SectionCard>
             <SectionCard title={`Lượt quét ẩn danh · ${data.anonymous.length}`}>

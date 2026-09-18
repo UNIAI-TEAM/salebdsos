@@ -12,8 +12,19 @@ const Input = z.object({
   days: z.number().int().min(1).max(180).default(30),
 });
 
-function contactKey(row: { id: string; phone?: string | null; email?: string | null }) {
-  return row.phone?.replace(/\D/g, "") || row.email?.trim().toLowerCase() || row.id;
+function submittedContactKey(row: { phone?: string | null; email?: string | null }) {
+  const phone = row.phone?.replace(/\D/g, "");
+  const email = row.email?.trim().toLowerCase();
+  return phone || email || null;
+}
+
+function isCustomerSubmission(row: { source?: string | null; meta?: unknown }) {
+  const source = row.source?.trim().toLowerCase() ?? "";
+  const meta = row.meta && typeof row.meta === "object" && !Array.isArray(row.meta)
+    ? row.meta as Record<string, unknown>
+    : {};
+  return source === "landing page" || source === "qr danh thiếp" || source.startsWith("qr:") ||
+    Boolean(meta["sales_page_id"] || meta["sales_page_slug"] || meta["card_slug"] || meta["qr_code"] || meta["lead_form_id"] || meta["submitted_form"]);
 }
 
 export const getSaleOverview = createServerFn({ method: "GET" })
@@ -43,18 +54,17 @@ export const getSaleOverview = createServerFn({ method: "GET" })
     const now = new Date();
     const scheduleEnd = new Date(now.getTime() + 60 * 86400_000).toISOString();
 
-    const [profileQ, membersQ, cardsQ, dealsQ, customersQ, leadsQ, appointmentsQ] = await Promise.all([
+    const [profileQ, membersQ, cardsQ, dealsQ, leadsQ, appointmentsQ] = await Promise.all([
       supabase.from("profiles").select("user_id,full_name,email,phone,avatar_url").eq("user_id", ownerId).maybeSingle(),
       canManage
         ? supabase.from("user_roles").select("user_id,role").eq("tenant_id", data.tenantId)
         : Promise.resolve({ data: [], error: null }),
       supabase.from("cards").select("id,slug").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null),
       supabase.from("pipeline_deals").select("id,project_id,customer_id,value,currency,status,closed_at").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null),
-      supabase.from("customers").select("id,full_name,phone,email,created_at").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null),
-      supabase.from("leads").select("id,full_name,phone,email,source,status,project_id,card_id,created_at").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null).order("created_at", { ascending: false }).limit(200),
+      supabase.from("leads").select("id,full_name,phone,email,source,status,project_id,card_id,created_at,meta").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null).order("created_at", { ascending: false }),
       supabase.from("appointments").select("id,project_id,customer_id,lead_id,title,location,starts_at,ends_at,status,is_published,assigned_to,created_by,customers(full_name)").eq("tenant_id", data.tenantId).or(`assigned_to.eq.${ownerId},created_by.eq.${ownerId}`).gte("starts_at", now.toISOString()).lte("starts_at", scheduleEnd).order("starts_at", { ascending: true }).limit(100),
     ]);
-    const firstError = [profileQ.error, cardsQ.error, dealsQ.error, customersQ.error, leadsQ.error, appointmentsQ.error].find(Boolean);
+    const firstError = [profileQ.error, cardsQ.error, dealsQ.error, leadsQ.error, appointmentsQ.error].find(Boolean);
     if (firstError) throw new Error(firstError.message);
 
     const cards = cardsQ.data ?? [];
@@ -101,16 +111,15 @@ export const getSaleOverview = createServerFn({ method: "GET" })
     for (const event of cardEventsQ.data ?? []) interactionKeys.add(`card:${event.id}`);
 
     const leads = leadsQ.data ?? [];
-    const customers = customersQ.data ?? [];
-    const servedKeys = new Set([
-      ...customers.map(contactKey),
-      ...leads.map(contactKey),
-    ]);
+    const submittedLeads = leads.filter(isCustomerSubmission);
+    const servedKeys = new Set(
+      submittedLeads.map(submittedContactKey).filter((key): key is string => Boolean(key)),
+    );
     const wonDeals = (dealsQ.data ?? []).filter((deal) => deal.status === "won");
     const wonProjects = new Set(wonDeals.map((deal) => deal.project_id).filter(Boolean));
 
-    const identified = leads
-      .filter((lead) => Boolean(lead.full_name || lead.phone || lead.email))
+    const identified = submittedLeads
+      .filter((lead) => Boolean(submittedContactKey(lead)))
       .filter((lead) => cardIds.includes(lead.card_id ?? "") || /qr|landing/i.test(lead.source ?? ""))
       .slice(0, 20)
       .map((lead) => ({
@@ -201,7 +210,7 @@ export const getSaleOverview = createServerFn({ method: "GET" })
         customersServed: servedKeys.size,
         contractsSigned: wonDeals.length,
         projectsSold: wonProjects.size,
-        conversionRate: leads.length ? Math.round((wonDeals.length / leads.length) * 1000) / 10 : 0,
+        conversionRate: servedKeys.size ? Math.round((wonDeals.length / servedKeys.size) * 1000) / 10 : 0,
       },
       appointments,
       events,
