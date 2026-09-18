@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Pencil } from "lucide-react";
+import { Pencil, UserSquare2, QrCode, Send } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getOrCreateMyCard } from "@/lib/card.functions";
 import { listCardProjects, listProjectOptions } from "@/lib/card-projects.functions";
@@ -32,5 +32,27 @@ function DigitalCardPage() {
   const selected = new Set(selectedQ.data ?? []);
   const projects = (projectsQ.data ?? []).filter((project) => selected.has(project.id));
   const publicUrl = typeof window === "undefined" ? `/c/${cardQ.data.slug}` : `${window.location.origin}/c/${cardQ.data.slug}`;
-  return <div className="space-y-4"><div className="flex justify-end"><Link to="/digital-card/edit" className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-medium"><Pencil className="h-4 w-4" />Sửa danh thiếp</Link></div><DigitalCardPresentation card={cardQ.data} projects={projects} publicUrl={publicUrl} /></div>;
+  const actions = [
+    { to: "/digital-card/edit", label: "Sửa danh thiếp", icon: Pencil },
+    { to: "/profile", label: "Profile", icon: UserSquare2 },
+    { to: "/nfc-codes", label: "NFC & QR", icon: QrCode },
+    { to: "/airdrop", label: "AirDrop", icon: Send },
+  ] as const;
+  return (
+    <div className="space-y-4">
+      <DigitalCardPresentation card={cardQ.data} projects={projects} publicUrl={publicUrl} />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {actions.map((a) => (
+          <Link
+            key={a.to}
+            to={a.to}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground"
+          >
+            <a.icon className="h-4 w-4" />
+            {a.label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
 }
