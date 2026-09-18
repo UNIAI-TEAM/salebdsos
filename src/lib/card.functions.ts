@@ -167,14 +167,28 @@ export const updateMyCard = createServerFn({ method: "POST" })
   .inputValidator((d: z.infer<typeof updateInput>) => updateInput.parse(d))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
+    const patch = { ...data.patch } as Record<string, unknown>;
+
+    // Sale tự sửa danh tính -> khoá lại để tự đồng bộ hồ sơ không ghi đè
+    const identity = ["display_name", "title", "company", "avatar_url"] as const;
+    const touched = identity.filter((k) => k in data.patch);
+    if (touched.length) {
+      const { data: current } = await supabase.from("cards").select("theme").eq("id", data.id).maybeSingle();
+      const theme = { ...((current?.theme ?? {}) as Record<string, unknown>), ...((patch.theme ?? {}) as Record<string, unknown>) };
+      const locked = new Set(Array.isArray(theme.locked) ? (theme.locked as string[]) : []);
+      touched.forEach((k) => locked.add(k));
+      patch.theme = { ...theme, locked: Array.from(locked) };
+    }
+
     const { data: row, error } = await supabase
       .from("cards")
-      .update(data.patch as any)
+      .update(patch as any)
       .eq("id", data.id)
       .select("*")
       .single();
     if (error) throw new Error(error.message);
     return row;
+
   });
 
 export const checkSlugAvailable = createServerFn({ method: "POST" })
