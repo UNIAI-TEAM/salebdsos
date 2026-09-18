@@ -23,7 +23,9 @@ const themeSchema = z.object({
   primary: z.string().max(20).optional(),
   background: z.string().max(40).optional(),
   font: z.string().max(40).optional(),
+  locked: z.array(z.string().max(40)).max(20).optional(),
 }).partial();
+
 
 function slugify(s: string) {
   return s
