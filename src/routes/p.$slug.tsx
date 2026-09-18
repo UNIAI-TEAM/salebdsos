@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { QrCode } from "@/components/qr-code";
 import { SaleTrustMetrics } from "@/components/sale-trust-metrics";
 import { LandingChat } from "@/components/public/landing-chat";
+import { RequestContactButtons } from "@/components/public/request-contact";
 import {
   KindPriceTable,
   KindStatusBoard,
@@ -287,26 +288,15 @@ function PublicSalesPage() {
                 ) : null}
               </div>
             </div>
-            {page.sale.phone ? (
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                <a
-                  href={`tel:${page.sale.phone}`}
-                  onClick={() => trackTouch("call_click")}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[14px] font-semibold text-primary-foreground hover:bg-primary/90"
-                >
-                  <Phone className="h-4 w-4" /> Gọi ngay
-                </a>
-                <a
-                  href={`https://zalo.me/${page.sale.phone.replace(/[^\d]/g, "")}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => trackTouch("share_click", { app: "zalo_contact" })}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 text-[14px] font-semibold hover:bg-muted"
-                >
-                  <MessageCircle className="h-4 w-4" /> Chat Zalo
-                </a>
-              </div>
-            ) : null}
+            <RequestContactButtons
+              kind="page"
+              slug={page.slug ?? ""}
+              zaloLink={page.channels?.zalo.enabled ? page.channels.zalo.oaLink || null : null}
+              zaloName={page.channels?.zalo.oaName || null}
+              className="mt-4"
+              onOpen={(channel) => trackTouch(channel === "call" ? "call_click" : "share_click", { channel })}
+              onSent={(channel) => trackTouch("form_submit", { channel })}
+            />
           </div>
         </section>
       ) : null}
@@ -569,16 +559,23 @@ function PublicSalesPage() {
       {/* Thanh hành động cố định trên mobile */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:hidden">
         <div className="grid grid-cols-2 gap-2">
-          {page.sale?.phone ? (
+          {page.channels?.zalo.enabled && page.channels.zalo.oaLink ? (
             <a
-              href={`tel:${page.sale.phone}`}
-              onClick={() => trackTouch("call_click")}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background text-[14px] font-semibold"
+              href={page.channels.zalo.oaLink}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => trackTouch("share_click", { channel: "zalo_oa" })}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#0068FF] text-[14px] font-semibold text-white"
             >
-              <Phone className="h-4 w-4" /> Gọi sale
+              <MessageCircle className="h-4 w-4" /> Chat Zalo
             </a>
           ) : (
-            <span />
+            <a
+              href="#lien-he"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background text-[14px] font-semibold"
+            >
+              <MessageCircle className="h-4 w-4" /> Nhắn cho sale
+            </a>
           )}
           <a
             href="#lien-he"
