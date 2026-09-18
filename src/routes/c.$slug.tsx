@@ -348,7 +348,7 @@ function LeadForm({
 }: { slug: string; projects: { id: string; name: string }[] }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [projectId, setProjectId] = useState("");
+  const [projectId, setProjectId] = useState(projects.length === 1 ? projects[0].id : "");
   const [notes, setNotes] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState<string | null>(null);
