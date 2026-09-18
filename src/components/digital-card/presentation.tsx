@@ -53,6 +53,41 @@ export function DigitalCardPresentation({ card, projects, publicUrl }: { card: D
 
 function Action({ icon: Icon, label, onClick, active }: { icon: typeof Share2; label: string; onClick: () => void; active?: boolean }) { return <Button type="button" variant="ghost" onClick={onClick} className="h-20 rounded-none flex-col gap-2 px-1 text-center text-xs font-normal text-muted-foreground hover:bg-muted hover:text-foreground">{active ? <Check className="h-5 w-5 text-success" /> : <Icon className="h-5 w-5 text-foreground" />}{label}</Button>; }
 
+/** Chế độ "Đưa khách quét": toàn màn hình, chỉ QR lớn + tên để khách quét ngay. */
+export function CardScanOverlay({ card, publicUrl, onClose }: { card: DigitalCardData; publicUrl: string; onClose: () => void }) {
+  const fields = fieldsOf(card.fields);
+  const phone = fields.find((field) => field.type === "phone");
+  const zalo = fields.find((field) => field.type === "zalo");
+  return (
+    <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-6 overflow-y-auto bg-digital-canvas px-6 py-10 text-center font-card-sans">
+      <button
+        type="button"
+        aria-label="Đóng chế độ đưa khách quét"
+        onClick={onClose}
+        className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-full border border-gold/40 bg-digital-glass text-digital-ink"
+      >
+        ✕
+      </button>
+      <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-gold/60 bg-digital-surface">
+        {card.avatar_url ? <img src={card.avatar_url} alt={card.display_name} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center"><User className="h-9 w-9 text-digital-ink/50" /></div>}
+      </div>
+      <div>
+        <h1 className="break-words text-2xl font-bold text-digital-ink">{card.display_name}</h1>
+        {card.title ? <p className="mt-1 text-sm font-semibold text-gold">{card.title}</p> : null}
+        {card.company ? <p className="mt-0.5 text-sm text-digital-ink/70">{card.company}</p> : null}
+      </div>
+      <div className="rounded-2xl bg-white p-4 shadow-card">
+        <QrCode value={publicUrl} size={220} showDownload={false} />
+      </div>
+      <p className="max-w-xs text-sm leading-relaxed text-digital-ink/70">Quét mã để mở danh thiếp, lưu liên hệ và xem các dự án đang bán.</p>
+      <div className="flex flex-wrap justify-center gap-2">
+        {phone?.href ? <a href={phone.href} className="inline-flex min-h-11 items-center rounded-lg border border-gold/35 bg-digital-glass px-4 text-sm font-medium text-digital-ink">{phone.label || "Gọi điện"}</a> : null}
+        {zalo?.href ? <a href={zalo.href} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-lg border border-gold/35 bg-digital-glass px-4 text-sm font-medium text-digital-ink">{zalo.label || "Zalo"}</a> : null}
+      </div>
+    </div>
+  );
+}
+
 export function ProfilePresentation({ card, projects, publicUrl }: { card: DigitalCardData; projects: Project[]; publicUrl: string }) {
   const fields = fieldsOf(card.fields);
   return <div className="mx-auto max-w-5xl space-y-8">
