@@ -573,6 +573,36 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       qrCode = qr?.code ?? null;
     }
 
+    // Giỏ hàng còn trống được bật hiển thị công khai
+    let inventory: Array<{
+      id: string;
+      code: string | null;
+      name: string;
+      product_type: string | null;
+      zone: string | null;
+      floor: number | null;
+      area: number | null;
+      bedrooms: number | null;
+      direction: string | null;
+      price: number;
+      currency: string;
+    }> = [];
+    if (row.project_id) {
+      const { data: units } = await supabaseAdmin
+        .from("products")
+        .select("id,code,name,product_type,zone,floor,area,bedrooms,direction,price,currency")
+        .eq("project_id", row.project_id)
+        .eq("is_public", true)
+        .eq("status", "active")
+        .eq("listing_status", "available")
+        .order("zone", { ascending: true })
+        .order("floor", { ascending: true })
+        .limit(60);
+      inventory = units ?? [];
+    }
+
+
+
 
     // Thông tin chuyên viên phụ trách để khách liên hệ trực tiếp
     let sale: { full_name: string | null; phone: string | null; email: string | null; avatar_url: string | null } | null =
@@ -628,6 +658,7 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       project,
       appointments,
       qrCode,
+      inventory,
       sale,
       saleCard,
     };

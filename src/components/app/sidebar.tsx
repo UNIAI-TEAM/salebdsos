@@ -4,6 +4,7 @@ import {
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
   Wallet, QrCode, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
   PanelLeftClose, PanelLeftOpen, X, BookMarked, Route as RouteIcon, ContactRound,
+  LayoutGrid,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
@@ -22,7 +23,8 @@ const groups: Group[] = [
     label: "Dự án & sản phẩm",
     items: [
       { to: "/projects", label: "Dự án", icon: Building2 },
-      { to: "/products", label: "Sản phẩm / giỏ hàng", icon: Package },
+      { to: "/inventory", label: "Giỏ hàng (căn / lô)", icon: LayoutGrid },
+      { to: "/products", label: "Sản phẩm khác", icon: Package },
       { to: "/files", label: "Tài liệu & Brochure", icon: FolderArchive },
       { to: "/landings", label: "Landing dự án", icon: Globe2, roles: ["owner", "admin", "manager", "agent"] },
       { to: "/ai-sales-page", label: "AI tạo Landing", icon: Sparkles, badge: "AI", roles: ["owner", "admin", "manager"] },
@@ -88,7 +90,8 @@ const saleMobileGroups: Group[] = [
     label: "Dự án & sản phẩm",
     items: [
       { to: "/landings", label: "Landing dự án", icon: Globe2 },
-      { to: "/products", label: "Sản phẩm / giỏ hàng", icon: Package },
+      { to: "/inventory", label: "Giỏ hàng (căn / lô)", icon: LayoutGrid },
+      { to: "/products", label: "Sản phẩm khác", icon: Package },
       { to: "/files", label: "Tài liệu & Brochure", icon: FolderArchive },
     ],
   },

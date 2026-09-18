@@ -304,6 +304,47 @@ function PublicSalesPage() {
         </section>
       ) : null}
 
+      {page.inventory && page.inventory.length > 0 ? (
+        <section className="mx-auto mt-6 max-w-3xl px-4 sm:px-6">
+          <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+            <div className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Sản phẩm còn trống
+            </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {page.inventory.map((u) => (
+                <div key={u.id} className="rounded-xl border border-border p-3">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <div className="truncate text-[14px] font-bold">{u.code || u.name}</div>
+                    <div className="shrink-0 text-[13px] font-semibold text-primary">
+                      {u.price
+                        ? u.price >= 1_000_000_000
+                          ? `${(u.price / 1_000_000_000).toFixed(1)} tỷ`
+                          : `${Math.round(u.price / 1_000_000)} tr`
+                        : "Liên hệ"}
+                    </div>
+                  </div>
+                  <div className="mt-1 text-[12.5px] text-muted-foreground">
+                    {[
+                      u.zone ? `Khu/toà ${u.zone}` : null,
+                      u.floor != null ? `Tầng ${u.floor}` : null,
+                      u.area ? `${u.area} m²` : null,
+                      u.bedrooms ? `${u.bedrooms} PN` : null,
+                      u.direction,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-[12px] text-muted-foreground">
+              Thông tin cập nhật trực tiếp từ giỏ hàng, sản phẩm đã giữ chỗ hoặc đã bán sẽ tự ẩn.
+            </p>
+          </div>
+        </section>
+      ) : null}
+
+
       {page.saleCard ? (
         <section className="mx-auto mt-6 max-w-3xl px-4 sm:px-6">
           <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">

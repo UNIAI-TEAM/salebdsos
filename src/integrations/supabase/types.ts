@@ -1673,59 +1673,166 @@ export type Database = {
           },
         ]
       }
+      product_status_history: {
+        Row: {
+          changed_by: string | null
+          from_status: Database["public"]["Enums"]["listing_status"] | null
+          id: number
+          note: string | null
+          occurred_at: string
+          product_id: string
+          tenant_id: string
+          to_status: Database["public"]["Enums"]["listing_status"]
+        }
+        Insert: {
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["listing_status"] | null
+          id?: number
+          note?: string | null
+          occurred_at?: string
+          product_id: string
+          tenant_id: string
+          to_status: Database["public"]["Enums"]["listing_status"]
+        }
+        Update: {
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["listing_status"] | null
+          id?: number
+          note?: string | null
+          occurred_at?: string
+          product_id?: string
+          tenant_id?: string
+          to_status?: Database["public"]["Enums"]["listing_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_status_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_status_history_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
+          area: number | null
           attributes: Json
+          bathrooms: number | null
+          bedrooms: number | null
           category: string | null
+          code: string | null
           created_at: string
           created_by: string | null
           currency: string
+          deal_id: string | null
           description: string | null
+          direction: string | null
+          floor: number | null
+          hold_expires_at: string | null
           id: string
           image_url: string | null
+          is_public: boolean
+          legal_status: string | null
+          listing_status: Database["public"]["Enums"]["listing_status"]
           name: string
           price: number
+          product_type: Database["public"]["Enums"]["property_kind"] | null
+          project_id: string | null
           sku: string | null
           status: string
           tenant_id: string
           unit: string | null
           updated_at: string
+          usable_area: number | null
+          zone: string | null
         }
         Insert: {
+          area?: number | null
           attributes?: Json
+          bathrooms?: number | null
+          bedrooms?: number | null
           category?: string | null
+          code?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
+          deal_id?: string | null
           description?: string | null
+          direction?: string | null
+          floor?: number | null
+          hold_expires_at?: string | null
           id?: string
           image_url?: string | null
+          is_public?: boolean
+          legal_status?: string | null
+          listing_status?: Database["public"]["Enums"]["listing_status"]
           name: string
           price?: number
+          product_type?: Database["public"]["Enums"]["property_kind"] | null
+          project_id?: string | null
           sku?: string | null
           status?: string
           tenant_id: string
           unit?: string | null
           updated_at?: string
+          usable_area?: number | null
+          zone?: string | null
         }
         Update: {
+          area?: number | null
           attributes?: Json
+          bathrooms?: number | null
+          bedrooms?: number | null
           category?: string | null
+          code?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
+          deal_id?: string | null
           description?: string | null
+          direction?: string | null
+          floor?: number | null
+          hold_expires_at?: string | null
           id?: string
           image_url?: string | null
+          is_public?: boolean
+          legal_status?: string | null
+          listing_status?: Database["public"]["Enums"]["listing_status"]
           name?: string
           price?: number
+          product_type?: Database["public"]["Enums"]["property_kind"] | null
+          project_id?: string | null
           sku?: string | null
           status?: string
           tenant_id?: string
           unit?: string | null
           updated_at?: string
+          usable_area?: number | null
+          zone?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "products_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -2468,6 +2575,16 @@ export type Database = {
         | "consulting"
         | "quoted"
         | "deposit"
+      listing_status:
+        | "available"
+        | "locked"
+        | "reserved"
+        | "negotiating"
+        | "deposited"
+        | "contracted"
+        | "sold"
+        | "liquidated"
+      property_kind: "apartment" | "land_plot" | "townhouse" | "social_housing"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2615,6 +2732,17 @@ export const Constants = {
         "quoted",
         "deposit",
       ],
+      listing_status: [
+        "available",
+        "locked",
+        "reserved",
+        "negotiating",
+        "deposited",
+        "contracted",
+        "sold",
+        "liquidated",
+      ],
+      property_kind: ["apartment", "land_plot", "townhouse", "social_housing"],
     },
   },
 } as const
