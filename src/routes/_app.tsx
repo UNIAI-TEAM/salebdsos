@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-  const { loading, session, tenants, isPlatformAdmin } = useAuth();
+  const { loading, session, tenants, tenantsLoaded, isPlatformAdmin } = useAuth();
   const nav = useNavigate();
 
   useEffect(() => {
@@ -23,15 +23,12 @@ function AppLayout() {
       nav({ to: "/login", replace: true });
       return;
     }
-    if (tenants.length > 0 || isPlatformAdmin) return;
-    // Wait briefly for tenants to load before deciding to redirect to onboarding.
-    const t = setTimeout(() => {
-      if (tenants.length === 0 && !isPlatformAdmin) {
-        nav({ to: "/onboarding", replace: true });
-      }
-    }, 1500);
-    return () => clearTimeout(t);
-  }, [loading, session, tenants.length, isPlatformAdmin, nav]);
+    // Chỉ chuyển sang thiết lập khi đã tải xong và thật sự chưa có workspace.
+    if (!tenantsLoaded) return;
+    if (tenants.length === 0 && !isPlatformAdmin) {
+      nav({ to: "/onboarding", replace: true });
+    }
+  }, [loading, session, tenantsLoaded, tenants.length, isPlatformAdmin, nav]);
 
   if (loading || !session) {
     return (
