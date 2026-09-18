@@ -354,7 +354,7 @@ function InventoryPage() {
       <PageHeader
         title="Giỏ hàng dự án"
         sub="Căn hộ, đất nền, nhà phố và nhà ở xã hội — trạng thái bán theo thời gian thực."
-        actions={
+        action={
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload className="mr-1.5 h-4 w-4" /> Nhập tệp
@@ -467,7 +467,7 @@ function InventoryPage() {
       ) : view === "grid" ? (
         <div className="space-y-4">
           {grouped.map(([group, items]) => (
-            <SectionCard key={group} title={group} sub={`${items.length} sản phẩm`}>
+            <SectionCard key={group} title={group}>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
                 {items.map((r) => (
                   <button
@@ -490,7 +490,7 @@ function InventoryPage() {
           ))}
         </div>
       ) : (
-        <SectionCard title="Danh sách sản phẩm" sub={`${rows.length} dòng`}>
+        <SectionCard title="Danh sách sản phẩm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs text-muted-foreground">
