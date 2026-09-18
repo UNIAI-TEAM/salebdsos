@@ -1,5 +1,5 @@
 // Hộp thoại hội thoại gộp theo khách + cuộc gọi có ghi âm
-import { createServerFn, getRequest } from "@tanstack/react-start";
+import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { CHANNELS_KEY, channelSettingsSchema, parseChannelSettings } from "@/lib/channels";
@@ -260,7 +260,14 @@ export const sendMessage = createServerFn({ method: "POST" })
           to: email,
           subject: data.subject || "Thông tin dự án",
           text: data.body,
-          origin: new URL(getRequest().url).origin,
+          origin: await (async () => {
+            const { getRequest } = await import("@tanstack/react-start/server");
+            try {
+              return new URL(getRequest().url).origin;
+            } catch {
+              return null;
+            }
+          })(),
         });
         status = result.status;
         externalId = result.externalId;
