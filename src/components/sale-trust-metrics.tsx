@@ -19,7 +19,7 @@ export function SaleTrustMetrics({ metrics, variant = "standard", className = ""
   const digital = variant === "digital";
   const embedded = variant === "embedded";
   const stats = [
-    [metrics.customersServed, "Khách hàng", "phục vụ"],
+    [metrics.customersServed, "Khách đã", "gửi thông tin"],
     [metrics.contractsSigned, "Hợp đồng", "đã ký"],
     [metrics.projectsSold, "Dự án", "đã bán"],
   ] as const;
