@@ -18,6 +18,8 @@ import {
 
 import { toast } from "sonner";
 import { QrCode as QrCodeBlock } from "@/components/qr-code";
+import { Button } from "@/components/ui/button";
+import { streamPortrait } from "@/lib/portrait-stream";
 
 export const Route = createFileRoute("/_app/digital-card/edit")({
   component: DigitalCardPage,
@@ -175,6 +177,9 @@ function DigitalCardPage() {
   // Avatar upload
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [generatingPortrait, setGeneratingPortrait] = useState(false);
+  const [portraitPreview, setPortraitPreview] = useState<string | null>(null);
+  const [portraitFinal, setPortraitFinal] = useState(false);
   const onAvatar = async (file: File) => {
     if (!tenantId || !card) return;
     if (file.size > 4 * 1024 * 1024) return toast.error("Ảnh tối đa 4MB");
@@ -191,6 +196,49 @@ function DigitalCardPage() {
       toast.success("Đã tải ảnh đại diện");
     } catch (e: any) {
       toast.error(e.message ?? "Tải ảnh thất bại");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const generatePortrait = async () => {
+    if (!card || !draft?.avatar_url) return toast.error("Vui lòng tải ảnh đại diện trước");
+    setGeneratingPortrait(true);
+    setPortraitPreview(null);
+    setPortraitFinal(false);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Phiên đăng nhập đã hết hạn");
+      await streamPortrait(
+        { cardId: card.id, imageUrl: draft.avatar_url, accessToken },
+        (image, final) => { setPortraitPreview(image); setPortraitFinal(final); },
+      );
+      toast.success("Ảnh chân dung đã sẵn sàng để duyệt");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể tạo ảnh AI");
+    } finally {
+      setGeneratingPortrait(false);
+    }
+  };
+
+  const usePortrait = async () => {
+    if (!tenantId || !card || !portraitPreview || !portraitFinal) return;
+    setUploading(true);
+    try {
+      const blob = await fetch(portraitPreview).then((response) => response.blob());
+      const path = `${tenantId}/avatars/${card.id}-ai-${Date.now()}.png`;
+      const { error } = await supabase.storage.from("card-assets").upload(path, blob, {
+        cacheControl: "3600", upsert: false, contentType: "image/png",
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from("card-assets").getPublicUrl(path);
+      setDraft((value: any) => ({ ...value, avatar_url: data.publicUrl }));
+      setPortraitPreview(null);
+      setPortraitFinal(false);
+      toast.success("Đã chọn ảnh AI. Bấm Lưu thay đổi để cập nhật danh thiếp.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể lưu ảnh AI");
     } finally {
       setUploading(false);
     }
@@ -274,7 +322,7 @@ function DigitalCardPage() {
         <div className="space-y-5 min-w-0">
           {/* Profile */}
           <Section id="profile" icon={User} title="Thông tin cá nhân">
-            <div className="flex items-start gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
               <div className="shrink-0">
                 <div className="h-20 w-20 rounded-full bg-muted overflow-hidden grid place-items-center border border-border">
                   {draft.avatar_url ? (
@@ -283,13 +331,16 @@ function DigitalCardPage() {
                     <User className="h-8 w-8 text-muted-foreground" />
                   )}
                 </div>
-                <button
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
                   onClick={() => fileRef.current?.click()}
-                  className="mt-2 text-xs inline-flex items-center gap-1 text-primary font-medium"
+                  className="mt-1 h-8 px-0 text-xs"
                 >
                   {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
                   Đổi ảnh
-                </button>
+                </Button>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) onAvatar(f); e.target.value = ""; }} />
               </div>
@@ -312,6 +363,30 @@ function DigitalCardPage() {
                   />
                 </div>
               </div>
+            </div>
+            <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">Chân dung doanh nhân bằng AI</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Giữ khuôn mặt thật, phối vest tối và ánh sáng studio chuyên nghiệp. Ảnh chỉ được dùng sau khi bạn duyệt.</p>
+                </div>
+                <Button type="button" variant="outline" onClick={generatePortrait} disabled={!draft.avatar_url || generatingPortrait} className="shrink-0">
+                  {generatingPortrait ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                  {generatingPortrait ? "Đang tạo ảnh…" : "Tạo ảnh chuyên nghiệp"}
+                </Button>
+              </div>
+              {portraitPreview ? (
+                <div className="mt-4 grid gap-4 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-center">
+                  <div className="aspect-square overflow-hidden rounded-xl border border-border bg-card">
+                    <img src={portraitPreview} alt="Ảnh chân dung AI xem trước" className={`h-full w-full object-cover transition-[filter] ${portraitFinal ? "blur-0" : "blur-2xl"}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{portraitFinal ? "Ảnh đã hoàn tất" : "AI đang hoàn thiện ảnh"}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Kiểm tra khuôn mặt và phong thái trước khi dùng cho danh thiếp.</p>
+                    {portraitFinal ? <div className="mt-3 flex flex-wrap gap-2"><Button type="button" onClick={usePortrait} disabled={uploading}><Check />Dùng ảnh này</Button><Button type="button" variant="ghost" onClick={() => { setPortraitPreview(null); setPortraitFinal(false); }}>Bỏ ảnh</Button></div> : null}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </Section>
 
