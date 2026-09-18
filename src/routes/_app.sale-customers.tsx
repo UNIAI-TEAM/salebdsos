@@ -224,7 +224,7 @@ function SaleCustomersPage() {
                 <Copy className="mr-1 h-3.5 w-3.5" /> Copy link
               </Button>
               <Button asChild variant="outline" size="sm" className="h-9 justify-center text-xs">
-                <Link to="/digital-card" search={{}}>
+                <Link to="/digital-card">
                   <QrIcon className="mr-1 h-3.5 w-3.5" /> Sửa danh thiếp
                 </Link>
               </Button>

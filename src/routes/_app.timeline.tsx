@@ -115,7 +115,7 @@ function TimelinePage() {
         ) : (d?.items.length ?? 0) === 0 ? (
           <div className="py-8 text-center text-sm text-muted-foreground">
             Chưa có hoạt động nào. Hãy chia sẻ{" "}
-            <Link to="/digital-card" search={{}} className="text-primary hover:underline">danh thiếp</Link> hoặc{" "}
+            <Link to="/digital-card" className="text-primary hover:underline">danh thiếp</Link> hoặc{" "}
             <Link to="/landings" className="text-primary hover:underline">landing</Link> của bạn.
           </div>
         ) : (

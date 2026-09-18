@@ -8,8 +8,8 @@ import { listCardProjects, listProjectOptions } from "@/lib/card-projects.functi
 import { DigitalCardPresentation, CardScanOverlay } from "@/components/digital-card/presentation";
 
 export const Route = createFileRoute("/_app/digital-card/")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    present: search.present === true || search.present === "1" ? (true as boolean | undefined) : undefined,
+  validateSearch: (search: Record<string, unknown>): { present?: boolean } => ({
+    ...(search.present === true || search.present === "1" ? { present: true } : {}),
   }),
   component: DigitalCardPage,
   head: () => ({ meta: [
