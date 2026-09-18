@@ -9,6 +9,8 @@ import {
   PhoneCall,
   Search,
   Send,
+  Mail,
+  MessageSquare,
   Settings2,
   StickyNote,
 } from "lucide-react";
@@ -36,6 +38,7 @@ import {
   CALL_OUTCOMES,
   CHANNEL_LABEL,
   DEFAULT_CHANNEL_SETTINGS,
+  SMS_PROVIDERS,
   TELEPHONY_PROVIDERS,
   formatDuration,
   type ChannelSettings,
@@ -60,6 +63,16 @@ const CHANNEL_FILTERS = [
   { value: "web_chat", label: "Chat trên trang" },
   { value: "zalo", label: "Zalo OA" },
   { value: "call", label: "Gọi điện" },
+  { value: "sms", label: "SMS brandname" },
+  { value: "email", label: "Email" },
+] as const;
+
+const SEND_CHANNELS = [
+  { value: "auto", label: "Theo kênh của khách" },
+  { value: "zalo", label: "Zalo OA" },
+  { value: "sms", label: "SMS brandname" },
+  { value: "email", label: "Email" },
+  { value: "note", label: "Ghi chú nội bộ" },
 ] as const;
 
 function timeLabel(value: string) {
@@ -83,7 +96,8 @@ function InboxPage() {
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
-  const [asNote, setAsNote] = useState(false);
+  const [sendChannel, setSendChannel] = useState<string>("auto");
+  const [emailSubject, setEmailSubject] = useState("Thông tin dự án");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [config, setConfig] = useState<ChannelSettings>(DEFAULT_CHANNEL_SETTINGS);
   const [callDialog, setCallDialog] = useState<{ callId: string; phone: string } | null>(null);
@@ -126,12 +140,15 @@ function InboxPage() {
   const sendMutation = useMutation({
     mutationFn: () => {
       if (!tenantId || !activeId) throw new Error("Chưa chọn hội thoại");
+      const fallback = threadQuery.data?.conversation.channel === "zalo" ? "zalo" : "web_chat";
+      const channelToUse = sendChannel === "auto" ? fallback : sendChannel;
       return send({
         data: {
           tenantId,
           conversationId: activeId,
           body: draft.trim(),
-          channel: asNote ? "note" : (threadQuery.data?.conversation.channel === "zalo" ? "zalo" : "web_chat"),
+          channel: channelToUse as "web_chat" | "zalo" | "note" | "sms" | "email",
+          ...(channelToUse === "email" ? { subject: emailSubject } : {}),
         },
       });
     },
@@ -343,18 +360,42 @@ function InboxPage() {
               </div>
 
               <div className="mt-3 space-y-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Switch checked={asNote} onCheckedChange={setAsNote} id="note-mode" />
-                  <Label htmlFor="note-mode" className="cursor-pointer text-xs">
-                    <StickyNote className="mr-1 inline h-3.5 w-3.5" /> Ghi chú nội bộ (khách không thấy)
-                  </Label>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {SEND_CHANNELS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setSendChannel(option.value)}
+                      className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                        sendChannel === option.value
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      {option.value === "note" ? <StickyNote className="mr-1 inline h-3 w-3" /> : null}
+                      {option.label}
+                    </button>
+                  ))}
                 </div>
+                {sendChannel === "email" ? (
+                  <Input
+                    value={emailSubject}
+                    onChange={(event) => setEmailSubject(event.target.value)}
+                    placeholder="Tiêu đề email"
+                  />
+                ) : null}
                 <div className="flex gap-2">
                   <Textarea
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
                     rows={2}
-                    placeholder={asNote ? "Ghi chú cho đồng nghiệp…" : "Nhập tin nhắn trả lời khách…"}
+                    placeholder={
+                      sendChannel === "note"
+                        ? "Ghi chú cho đồng nghiệp…"
+                        : sendChannel === "sms"
+                          ? "Nội dung SMS (nên viết không dấu để tiết kì tiển)…"
+                          : "Nhập tin nhắn trả lời khách…"
+                    }
                   />
                   <Button
                     onClick={() => sendMutation.mutate()}
@@ -544,6 +585,76 @@ function InboxPage() {
               </div>
               <p className="mt-2 text-[11px] text-muted-foreground">
                 Chưa có khoá tổng đài thì cuộc gọi vẫn được ghi nhận để Sale gọi tay rồi dán đường dẫn ghi âm vào hồ sơ khách.
+              </p>
+            </div>
+            <div className="rounded-xl border border-border p-3">
+              <div className="flex items-center justify-between gap-3">
+                <Label className="text-sm font-semibold"><MessageSquare className="mr-1.5 inline h-4 w-4" />SMS brandname</Label>
+                <Switch
+                  checked={config.sms.enabled}
+                  onCheckedChange={(value) => setConfig((prev) => ({ ...prev, sms: { ...prev.sms, enabled: value } }))}
+                />
+              </div>
+              <Select
+                value={config.sms.provider}
+                onValueChange={(value) =>
+                  setConfig((prev) => ({ ...prev, sms: { ...prev.sms, provider: value as ChannelSettings["sms"]["provider"] } }))
+                }
+              >
+                <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SMS_PROVIDERS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                className="mt-2"
+                value={config.sms.brandname}
+                onChange={(event) => setConfig((prev) => ({ ...prev, sms: { ...prev.sms, brandname: event.target.value } }))}
+                placeholder="Brandname hiển thị, ví dụ SALEBDS"
+              />
+              <Textarea
+                className="mt-2"
+                rows={2}
+                value={config.sms.template}
+                onChange={(event) => setConfig((prev) => ({ ...prev, sms: { ...prev.sms, template: event.target.value } }))}
+                placeholder="Mẫu tin gửi khách sau khi để lại thông tin"
+              />
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Dùng {"{brand}"} để chèn brandname. Khi có hợp đồng brandname, gửi em khoá kết nối để tin gửi tự động.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-border p-3">
+              <div className="flex items-center justify-between gap-3">
+                <Label className="text-sm font-semibold"><Mail className="mr-1.5 inline h-4 w-4" />Email cho khách</Label>
+                <Switch
+                  checked={config.email.enabled}
+                  onCheckedChange={(value) => setConfig((prev) => ({ ...prev, email: { ...prev.email, enabled: value } }))}
+                />
+              </div>
+              <Input
+                className="mt-2"
+                value={config.email.senderName}
+                onChange={(event) => setConfig((prev) => ({ ...prev, email: { ...prev.email, senderName: event.target.value } }))}
+                placeholder="Tên người gửi, ví dụ Sàn SaleBDS"
+              />
+              <Input
+                className="mt-2"
+                value={config.email.replyTo}
+                onChange={(event) => setConfig((prev) => ({ ...prev, email: { ...prev.email, replyTo: event.target.value } }))}
+                placeholder="Email nhận phản hồi"
+              />
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <Label className="text-xs">Tự gửi email xác nhận khi khách để lại thông tin</Label>
+                <Switch
+                  checked={config.email.autoConfirm}
+                  onCheckedChange={(value) => setConfig((prev) => ({ ...prev, email: { ...prev.email, autoConfirm: value } }))}
+                />
+              </div>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Email gửi theo sự kiện cần tên miền gửi email đã xác thực. Chưa có thì nội dung vẫn lưu trong hộp thoại để gửi sau.
               </p>
             </div>
           </div>
