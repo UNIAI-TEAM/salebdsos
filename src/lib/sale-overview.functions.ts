@@ -9,6 +9,7 @@ const SALE_ROLES = new Set(["owner", "admin", "manager", "agent"]);
 const Input = z.object({
   tenantId: z.string().uuid(),
   ownerId: z.string().uuid().optional(),
+  projectId: z.string().uuid().optional(),
   days: z.number().int().min(1).max(180).default(30),
 });
 
@@ -54,7 +55,7 @@ export const getSaleOverview = createServerFn({ method: "GET" })
     const now = new Date();
     const scheduleEnd = new Date(now.getTime() + 60 * 86400_000).toISOString();
 
-    const [profileQ, membersQ, cardsQ, dealsQ, leadsQ, appointmentsQ] = await Promise.all([
+    const [profileQ, membersQ, cardsQ, dealsQ, leadsQ, appointmentsQ, ownedQrQ] = await Promise.all([
       supabase.from("profiles").select("user_id,full_name,email,phone,avatar_url").eq("user_id", ownerId).maybeSingle(),
       canManage
         ? supabase.from("user_roles").select("user_id,role").eq("tenant_id", data.tenantId)
@@ -63,8 +64,9 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       supabase.from("pipeline_deals").select("id,project_id,customer_id,value,currency,status,closed_at").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null),
       supabase.from("leads").select("id,full_name,phone,email,source,status,project_id,card_id,created_at,meta").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null).order("created_at", { ascending: false }),
       supabase.from("appointments").select("id,project_id,customer_id,lead_id,title,location,starts_at,ends_at,status,is_published,assigned_to,created_by,customers(full_name)").eq("tenant_id", data.tenantId).or(`assigned_to.eq.${ownerId},created_by.eq.${ownerId}`).gte("starts_at", now.toISOString()).lte("starts_at", scheduleEnd).order("starts_at", { ascending: true }).limit(100),
+      supabase.from("project_qr_codes").select("id,project_id,code,label,channel").eq("tenant_id", data.tenantId).eq("created_by", ownerId).eq("is_active", true),
     ]);
-    const firstError = [profileQ.error, cardsQ.error, dealsQ.error, leadsQ.error, appointmentsQ.error].find(Boolean);
+    const firstError = [profileQ.error, cardsQ.error, dealsQ.error, leadsQ.error, appointmentsQ.error, ownedQrQ.error].find(Boolean);
     if (firstError) throw new Error(firstError.message);
 
     const cards = cardsQ.data ?? [];
@@ -74,13 +76,18 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       ? await supabase.from("card_projects").select("project_id").in("card_id", cardIds)
       : { data: [], error: null };
     if (linksError) throw new Error(linksError.message);
-    const projectIds = [...new Set((links ?? []).map((link) => link.project_id))];
+    const projectIds = [...new Set([
+      ...(links ?? []).map((link) => link.project_id),
+      ...(ownedQrQ.data ?? []).map((qr) => qr.project_id),
+      ...(dealsQ.data ?? []).map((deal) => deal.project_id).filter((id): id is string => Boolean(id)),
+      ...(leadsQ.data ?? []).map((lead) => lead.project_id).filter((id): id is string => Boolean(id)),
+      ...(appointmentsQ.data ?? []).map((item) => item.project_id).filter((id): id is string => Boolean(id)),
+    ])];
 
-    const [projectsQ, ownedQrQ, touchesQ, cardEventsQ, projectEventsQ] = await Promise.all([
+    const [projectsQ, touchesQ, cardEventsQ, projectEventsQ] = await Promise.all([
       projectIds.length
         ? supabase.from("projects").select("id,name").in("id", projectIds)
         : Promise.resolve({ data: [], error: null }),
-      supabase.from("project_qr_codes").select("id,project_id,code,label,channel").eq("tenant_id", data.tenantId).eq("created_by", ownerId).eq("is_active", true),
       projectIds.length
         ? supabase.from("project_touchpoints").select("id,project_id,qr_code_id,lead_id,session_id,event_type,channel,device_type,occurred_at,meta").eq("tenant_id", data.tenantId).in("project_id", projectIds).gte("occurred_at", since).order("occurred_at", { ascending: false }).limit(8000)
         : Promise.resolve({ data: [], error: null }),
@@ -91,10 +98,12 @@ export const getSaleOverview = createServerFn({ method: "GET" })
         ? supabase.from("appointments").select("id,project_id,title,location,starts_at,ends_at,status").eq("tenant_id", data.tenantId).eq("is_published", true).in("project_id", projectIds).gte("starts_at", now.toISOString()).lte("starts_at", scheduleEnd).order("starts_at", { ascending: true }).limit(100)
         : Promise.resolve({ data: [], error: null }),
     ]);
-    const secondError = [projectsQ.error, ownedQrQ.error, touchesQ.error, cardEventsQ.error, projectEventsQ.error].find(Boolean);
+    const secondError = [projectsQ.error, touchesQ.error, cardEventsQ.error, projectEventsQ.error].find(Boolean);
     if (secondError) throw new Error(secondError.message);
 
-    const projectNames = new Map((projectsQ.data ?? []).map((project) => [project.id, project.name]));
+    const projects = (projectsQ.data ?? []).sort((a, b) => a.name.localeCompare(b.name, "vi"));
+    const projectNames = new Map(projects.map((project) => [project.id, project.name]));
+    if (data.projectId && !projectNames.has(data.projectId)) throw new Error("Dự án không thuộc Sale này");
     const ownedQrIds = new Set((ownedQrQ.data ?? []).map((qr) => qr.id));
     const relevantTouches = (touchesQ.data ?? []).filter((touch) => {
       const meta = (touch.meta ?? {}) as Record<string, unknown>;
@@ -102,21 +111,49 @@ export const getSaleOverview = createServerFn({ method: "GET" })
         (typeof meta["card_slug"] === "string" && cardSlugs.has(meta["card_slug"]));
     });
 
-    const interactionKeys = new Set<string>();
-    for (const touch of relevantTouches) {
-      if (["qr_scan", "card_view"].includes(touch.event_type)) {
-        interactionKeys.add(`${touch.session_id}:${touch.event_type}:${touch.occurred_at}`);
+    const interactionCount = (touches: typeof relevantTouches) => {
+      const keys = new Set<string>();
+      for (const touch of touches) {
+        if (["qr_scan", "card_view"].includes(touch.event_type)) {
+          keys.add(`${touch.session_id}:${touch.event_type}:${touch.occurred_at}`);
+        }
       }
+      return keys;
+    };
+    const activeTouches = data.projectId
+      ? relevantTouches.filter((touch) => touch.project_id === data.projectId)
+      : relevantTouches;
+    const interactionKeys = interactionCount(activeTouches);
+    if (!data.projectId) {
+      for (const event of cardEventsQ.data ?? []) interactionKeys.add(`card:${event.id}`);
     }
-    for (const event of cardEventsQ.data ?? []) interactionKeys.add(`card:${event.id}`);
 
     const leads = leadsQ.data ?? [];
-    const submittedLeads = leads.filter(isCustomerSubmission);
+    const activeLeads = data.projectId ? leads.filter((lead) => lead.project_id === data.projectId) : leads;
+    const submittedLeads = activeLeads.filter(isCustomerSubmission);
     const servedKeys = new Set(
       submittedLeads.map(submittedContactKey).filter((key): key is string => Boolean(key)),
     );
-    const wonDeals = (dealsQ.data ?? []).filter((deal) => deal.status === "won");
+    const allWonDeals = (dealsQ.data ?? []).filter((deal) => deal.status === "won");
+    const wonDeals = data.projectId ? allWonDeals.filter((deal) => deal.project_id === data.projectId) : allWonDeals;
     const wonProjects = new Set(wonDeals.map((deal) => deal.project_id).filter(Boolean));
+
+    const projectComparison = projects.map((project) => {
+      const projectTouches = relevantTouches.filter((touch) => touch.project_id === project.id);
+      const projectLeads = leads.filter((lead) => lead.project_id === project.id && isCustomerSubmission(lead));
+      const customerKeys = new Set(
+        projectLeads.map(submittedContactKey).filter((key): key is string => Boolean(key)),
+      );
+      const contractsSigned = allWonDeals.filter((deal) => deal.project_id === project.id).length;
+      return {
+        projectId: project.id,
+        name: project.name,
+        interactions: interactionCount(projectTouches).size,
+        customersServed: customerKeys.size,
+        contractsSigned,
+        conversionRate: customerKeys.size ? Math.round((contractsSigned / customerKeys.size) * 1000) / 10 : 0,
+      };
+    }).sort((a, b) => b.interactions - a.interactions || b.customersServed - a.customersServed || a.name.localeCompare(b.name, "vi"));
 
     const identified = submittedLeads
       .filter((lead) => Boolean(submittedContactKey(lead)))
@@ -135,7 +172,7 @@ export const getSaleOverview = createServerFn({ method: "GET" })
 
     const identifiedLeadIds = new Set(identified.map((lead) => lead.id));
     const anonymousBySession = new Map<string, typeof relevantTouches[number]>();
-    for (const touch of relevantTouches) {
+    for (const touch of activeTouches) {
       if (touch.lead_id && identifiedLeadIds.has(touch.lead_id)) continue;
       if (!anonymousBySession.has(touch.session_id)) anonymousBySession.set(touch.session_id, touch);
     }
@@ -148,7 +185,7 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       at: touch.occurred_at,
     }));
 
-    const appointments = (appointmentsQ.data ?? []).filter((item) => !item.is_published).slice(0, 12).map((item) => ({
+    const appointments = (appointmentsQ.data ?? []).filter((item) => !item.is_published && (!data.projectId || item.project_id === data.projectId)).slice(0, 12).map((item) => ({
       id: item.id,
       title: item.title,
       location: item.location,
@@ -158,7 +195,7 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       customerName: Array.isArray(item.customers) ? item.customers[0]?.full_name ?? null : item.customers?.full_name ?? null,
       projectName: item.project_id ? projectNames.get(item.project_id) ?? null : null,
     }));
-    const events = (projectEventsQ.data ?? []).slice(0, 12).map((item) => ({
+    const events = (projectEventsQ.data ?? []).filter((item) => !data.projectId || item.project_id === data.projectId).slice(0, 12).map((item) => ({
       id: item.id,
       title: item.title,
       location: item.location,
@@ -168,7 +205,7 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       projectName: item.project_id ? projectNames.get(item.project_id) ?? null : null,
     }));
 
-    const recentActivity = relevantTouches.slice(0, 25).map((touch) => ({
+    const recentActivity = activeTouches.slice(0, 25).map((touch) => ({
       id: String(touch.id),
       label: TOUCH_LABEL[touch.event_type] ?? touch.event_type,
       projectName: projectNames.get(touch.project_id) ?? "Dự án",
@@ -205,6 +242,10 @@ export const getSaleOverview = createServerFn({ method: "GET" })
         role: targetRole.role,
       },
       members,
+      projects,
+      selectedProjectId: data.projectId ?? null,
+      selectedProjectName: data.projectId ? projectNames.get(data.projectId) ?? null : null,
+      projectComparison,
       metrics: {
         interactions: interactionKeys.size,
         customersServed: servedKeys.size,

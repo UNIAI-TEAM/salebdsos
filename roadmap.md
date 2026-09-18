@@ -12,3 +12,5 @@
 - [x] Cho Sale tải ảnh và tạo chân dung doanh nhân bằng AI để duyệt trước khi dùng.
 - [x] Hiển thị số liệu uy tín xác thực trên landing công khai và danh thiếp Sale.
 - [x] Chỉ tính khách đã gửi thông tin, khử trùng số điện thoại/email và làm rõ chỉ số trên Tổng quan Sale.
+
+- [x] Tách Tổng quan Sale theo từng dự án với bộ lọc toàn trang và bảng so sánh.
