@@ -7,6 +7,7 @@ import { User, BadgeCheck, Phone, MessageCircle, Download, Share2, MapPin, Arrow
 import { QrCode } from "@/components/qr-code";
 import { Button } from "@/components/ui/button";
 import { CardTouchTracker, trackTouch } from "@/components/landing-touch-tracker";
+import { RequestContactButtons } from "@/components/public/request-contact";
 import { SaleTrustMetrics } from "@/components/sale-trust-metrics";
 
 const getPublicCard = createServerFn({ method: "GET" })
@@ -205,10 +206,15 @@ function PublicCard() {
         </div>
         <p className="mt-3 text-center text-xs italic text-digital-ink/45">Quét mã để lưu thông tin liên hệ ngay</p>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          {phone && <a href={`tel:${phone.replace(/\s/g, "")}`} onClick={() => trackTouch("call_click", { from: "digital_card" })} className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-digital-blue text-sm font-semibold text-primary-foreground transition active:scale-[0.98]"><Phone className="h-4 w-4" />Gọi điện</a>}
-          {zalo?.href && <a href={zalo.href} target="_blank" rel="noreferrer" onClick={() => trackTouch("zalo_click", { from: "digital_card" })} className="digital-card-glass flex min-h-12 items-center justify-center gap-2 rounded-xl border border-digital-ink/10 text-sm font-semibold transition active:scale-[0.98]"><MessageCircle className="h-4 w-4" />Zalo</a>}
-          <Button type="button" variant="ghost" onClick={saveContact} className="digital-card-glass col-span-2 h-12 rounded-xl border border-digital-ink/10 text-digital-ink hover:bg-digital-glass hover:text-digital-ink"><Download className="h-4 w-4" />Lưu danh bạ</Button>
+        <div className="mt-6 space-y-3">
+          <RequestContactButtons
+            kind="card"
+            slug={card.slug}
+            tone="dark"
+            onOpen={(channel) => trackTouch(channel === "call" ? "call_click" : "zalo_click", { from: "digital_card", channel })}
+            onSent={(channel) => trackTouch("card_save_contact", { from: "digital_card", channel })}
+          />
+          <Button type="button" variant="ghost" onClick={saveContact} className="digital-card-glass h-12 w-full rounded-xl border border-digital-ink/10 text-digital-ink hover:bg-digital-glass hover:text-digital-ink"><Download className="h-4 w-4" />Lưu danh bạ</Button>
         </div>
 
         <div className="mt-6 flex items-center justify-between border-t border-digital-ink/10 pt-5 text-sm">
