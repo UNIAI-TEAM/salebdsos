@@ -83,7 +83,10 @@ function FunnelTable({ rows, emptyText }: { rows: FunnelRow[]; emptyText: string
             <th className="py-2 pr-3 text-right font-medium">Giỏ hàng</th>
             <th className="py-2 pr-3 text-right font-medium">Hợp đồng</th>
             <th className="py-2 pr-3 text-right font-medium">Gửi → giỏ</th>
-            <th className="py-2 text-right font-medium">Gửi → hợp đồng</th>
+            <th className="py-2 pr-3 text-right font-medium">Gửi → hợp đồng</th>
+            <th className="py-2 pr-3 text-right font-medium">Giá trị HĐ</th>
+            <th className="py-2 pr-3 text-right font-medium">Đã thu</th>
+            <th className="py-2 text-right font-medium">Tỷ lệ thu</th>
           </tr>
         </thead>
         <tbody>
