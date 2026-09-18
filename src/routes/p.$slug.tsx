@@ -10,6 +10,12 @@ import { LandingTouchTracker, trackTouch, getTouchSessionId } from "@/components
 import { Button } from "@/components/ui/button";
 import { QrCode } from "@/components/qr-code";
 import { SaleTrustMetrics } from "@/components/sale-trust-metrics";
+import {
+  KindPriceTable,
+  KindStatusBoard,
+  groupUnitsByKind,
+  type UnitLike,
+} from "@/components/inventory/kind-tables";
 
 import { warmLanding, warmOfflineAssets } from "@/lib/pwa";
 
@@ -573,5 +579,60 @@ function PublicSalesPage() {
       </div>
     </main>
 
+  );
+}
+
+function PublicInventorySection({ units }: { units: UnitLike[] }) {
+  const groups = groupUnitsByKind(units);
+  const [activeKind, setActiveKind] = useState<string>(groups[0]?.kind ?? "apartment");
+  const active = groups.find((g) => g.kind === activeKind) ?? groups[0];
+  if (!active) return null;
+  const available = active.items.filter((u) => u.listing_status === "available");
+
+  return (
+    <section className="mx-auto mt-6 max-w-3xl px-4 sm:px-6">
+      <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+        <div className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Bảng giá & tình trạng sản phẩm
+        </div>
+        {groups.length > 1 ? (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {groups.map((g) => (
+              <button
+                key={g.kind}
+                type="button"
+                onClick={() => setActiveKind(g.kind)}
+                className={`rounded-full border px-3 py-1.5 text-[12.5px] font-semibold transition ${
+                  g.kind === active.kind
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {g.label} · {g.items.length}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-2 text-[14px] font-semibold">{active.label}</div>
+        )}
+
+        <KindStatusBoard kind={active.kind} items={active.items} className="mt-4" />
+
+        {available.length > 0 ? (
+          <div className="mt-5">
+            <div className="text-[12.5px] font-semibold">Bảng giá {active.label.toLowerCase()} còn trống</div>
+            <KindPriceTable kind={active.kind} items={available} showStatus={false} className="mt-2" />
+          </div>
+        ) : (
+          <p className="mt-4 text-[12.5px] text-muted-foreground">
+            Loại hình này hiện đã bán hết hoặc đang giữ chỗ — liên hệ để nhận suất mới nhất.
+          </p>
+        )}
+
+        <p className="mt-3 text-[12px] text-muted-foreground">
+          Giá và tình trạng cập nhật trực tiếp từ giỏ hàng của sàn, có thể thay đổi theo từng đợt mở bán.
+        </p>
+      </div>
+    </section>
   );
 }
