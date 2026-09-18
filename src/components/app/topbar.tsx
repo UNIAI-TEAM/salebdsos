@@ -6,7 +6,9 @@ import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
 
 const titles: Record<string, { title: string; sub: string }> = {
   "/dashboard": { title: "Tổng quan", sub: "Chào mừng bạn quay trở lại hệ thống" },
-  "/digital-card": { title: "Danh thiếp & Profile", sub: "Chỉnh sửa & chia sẻ danh thiếp số của bạn" },
+  "/digital-card/edit": { title: "Sửa danh thiếp", sub: "Nội dung, liên hệ, dự án và thiết kế" },
+  "/digital-card": { title: "Danh thiếp", sub: "Trình chiếu danh thiếp chuyên nghiệp cho khách hàng" },
+  "/profile": { title: "Profile", sub: "Hồ sơ chi tiết và dự án đang bán" },
   "/leads": { title: "Leads (CRM)", sub: "Quản lý & chăm sóc khách hàng tiềm năng" },
   "/customers": { title: "Khách hàng", sub: "Cơ sở dữ liệu khách hàng đã chuyển đổi" },
   "/projects": { title: "Dự án", sub: "Danh mục dự án bất động sản" },
@@ -28,7 +30,9 @@ const titles: Record<string, { title: string; sub: string }> = {
 
 export function AppTopbar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const meta = Object.entries(titles).find(([k]) => pathname.startsWith(k))?.[1] ?? titles["/dashboard"];
+  const meta = Object.entries(titles)
+    .sort(([a], [b]) => b.length - a.length)
+    .find(([k]) => pathname.startsWith(k))?.[1] ?? titles["/dashboard"];
   const { collapsed, toggle } = useSidebarCollapsed();
   const { toggle: toggleDrawer } = useMobileDrawer();
 

@@ -57,6 +57,7 @@ import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
 import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
 import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
 import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.index'
+import { Route as AppDigitalCardIndexRouteImport } from './routes/_app.digital-card.index'
 import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.index'
 import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
@@ -310,6 +311,11 @@ const AppProjectsIndexRoute = AppProjectsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppProjectsRoute,
 } as any)
+const AppDigitalCardIndexRoute = AppDigitalCardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppDigitalCardRoute,
+} as any)
 const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
   id: '/customers/',
   path: '/customers/',
@@ -430,6 +436,7 @@ export interface FileRoutesByFullPath {
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/customers/': typeof AppCustomersIndexRoute
+  '/digital-card/': typeof AppDigitalCardIndexRoute
   '/projects/': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
@@ -456,7 +463,6 @@ export interface FileRoutesByTo {
   '/card-designer': typeof AppCardDesignerRoute
   '/content-library': typeof AppContentLibraryRoute
   '/dashboard': typeof AppDashboardRoute
-  '/digital-card': typeof AppDigitalCardRouteWithChildren
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/files': typeof AppFilesRoute
   '/journey': typeof AppJourneyRoute
@@ -491,6 +497,7 @@ export interface FileRoutesByTo {
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/customers': typeof AppCustomersIndexRoute
+  '/digital-card': typeof AppDigitalCardIndexRoute
   '/projects': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
@@ -555,6 +562,7 @@ export interface FileRoutesById {
   '/_app/projects/$id': typeof AppProjectsIdRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/_app/customers/': typeof AppCustomersIndexRoute
+  '/_app/digital-card/': typeof AppDigitalCardIndexRoute
   '/_app/projects/': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
@@ -619,6 +627,7 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/api/public/project-touch'
     | '/customers/'
+    | '/digital-card/'
     | '/projects/'
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
@@ -645,7 +654,6 @@ export interface FileRouteTypes {
     | '/card-designer'
     | '/content-library'
     | '/dashboard'
-    | '/digital-card'
     | '/dynamic-qr'
     | '/files'
     | '/journey'
@@ -680,6 +688,7 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/api/public/project-touch'
     | '/customers'
+    | '/digital-card'
     | '/projects'
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
@@ -743,6 +752,7 @@ export interface FileRouteTypes {
     | '/_app/projects/$id'
     | '/api/public/project-touch'
     | '/_app/customers/'
+    | '/_app/digital-card/'
     | '/_app/projects/'
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
@@ -1115,6 +1125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProjectsIndexRouteImport
       parentRoute: typeof AppProjectsRoute
     }
+    '/_app/digital-card/': {
+      id: '/_app/digital-card/'
+      path: '/'
+      fullPath: '/digital-card/'
+      preLoaderRoute: typeof AppDigitalCardIndexRouteImport
+      parentRoute: typeof AppDigitalCardRoute
+    }
     '/_app/customers/': {
       id: '/_app/customers/'
       path: '/customers'
@@ -1223,10 +1240,12 @@ const AppAiFollowupRouteWithChildren = AppAiFollowupRoute._addFileChildren(
 
 interface AppDigitalCardRouteChildren {
   AppDigitalCardEditRoute: typeof AppDigitalCardEditRoute
+  AppDigitalCardIndexRoute: typeof AppDigitalCardIndexRoute
 }
 
 const AppDigitalCardRouteChildren: AppDigitalCardRouteChildren = {
   AppDigitalCardEditRoute: AppDigitalCardEditRoute,
+  AppDigitalCardIndexRoute: AppDigitalCardIndexRoute,
 }
 
 const AppDigitalCardRouteWithChildren = AppDigitalCardRoute._addFileChildren(
