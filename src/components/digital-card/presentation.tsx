@@ -5,7 +5,7 @@ import { QrCode } from "@/components/qr-code";
 import { Button } from "@/components/ui/button";
 
 type Field = { type?: string; label: string; value?: string | null; href?: string | null };
-type Project = { id: string; name: string; city?: string | null; cover_url?: string | null; cover_mobile_url?: string | null };
+type Project = { id: string; name: string; city?: string | null; cover_url?: string | null; cover_mobile_url?: string | null; qr_code?: string | null };
 export type DigitalCardData = { slug: string; display_name: string; title?: string | null; company?: string | null; bio?: string | null; avatar_url?: string | null; fields?: unknown };
 const fieldsOf = (value: unknown) => Array.isArray(value) ? value as Field[] : [];
 
