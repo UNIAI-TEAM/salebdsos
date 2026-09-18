@@ -54,18 +54,17 @@ export const getSaleOverview = createServerFn({ method: "GET" })
     const now = new Date();
     const scheduleEnd = new Date(now.getTime() + 60 * 86400_000).toISOString();
 
-    const [profileQ, membersQ, cardsQ, dealsQ, customersQ, leadsQ, appointmentsQ] = await Promise.all([
+    const [profileQ, membersQ, cardsQ, dealsQ, leadsQ, appointmentsQ] = await Promise.all([
       supabase.from("profiles").select("user_id,full_name,email,phone,avatar_url").eq("user_id", ownerId).maybeSingle(),
       canManage
         ? supabase.from("user_roles").select("user_id,role").eq("tenant_id", data.tenantId)
         : Promise.resolve({ data: [], error: null }),
       supabase.from("cards").select("id,slug").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null),
       supabase.from("pipeline_deals").select("id,project_id,customer_id,value,currency,status,closed_at").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null),
-      supabase.from("customers").select("id,full_name,phone,email,created_at").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null),
-      supabase.from("leads").select("id,full_name,phone,email,source,status,project_id,card_id,created_at,meta").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null).order("created_at", { ascending: false }).limit(200),
+      supabase.from("leads").select("id,full_name,phone,email,source,status,project_id,card_id,created_at,meta").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null).order("created_at", { ascending: false }),
       supabase.from("appointments").select("id,project_id,customer_id,lead_id,title,location,starts_at,ends_at,status,is_published,assigned_to,created_by,customers(full_name)").eq("tenant_id", data.tenantId).or(`assigned_to.eq.${ownerId},created_by.eq.${ownerId}`).gte("starts_at", now.toISOString()).lte("starts_at", scheduleEnd).order("starts_at", { ascending: true }).limit(100),
     ]);
-    const firstError = [profileQ.error, cardsQ.error, dealsQ.error, customersQ.error, leadsQ.error, appointmentsQ.error].find(Boolean);
+    const firstError = [profileQ.error, cardsQ.error, dealsQ.error, leadsQ.error, appointmentsQ.error].find(Boolean);
     if (firstError) throw new Error(firstError.message);
 
     const cards = cardsQ.data ?? [];
