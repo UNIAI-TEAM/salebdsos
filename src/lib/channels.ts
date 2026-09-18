@@ -10,6 +10,15 @@ export const TELEPHONY_PROVIDERS = [
   { value: "cmc", label: "CMC Contact Center" },
 ] as const;
 
+export const SMS_PROVIDERS = [
+  { value: "none", label: "Chưa kết nối" },
+  { value: "esms", label: "eSMS.vn" },
+  { value: "vnpt", label: "VNPT SMS" },
+  { value: "viettel", label: "Viettel SMS" },
+] as const;
+
+export type SmsProvider = (typeof SMS_PROVIDERS)[number]["value"];
+
 export type TelephonyProvider = (typeof TELEPHONY_PROVIDERS)[number]["value"];
 
 export const channelSettingsSchema = z.object({
@@ -38,6 +47,22 @@ export const channelSettingsSchema = z.object({
     recordCalls: z.boolean().default(true),
     /** Tự bóc băng ghi âm bằng AI */
     autoTranscribe: z.boolean().default(false),
+  }).default({}),
+  sms: z.object({
+    enabled: z.boolean().default(false),
+    provider: z.enum(["none", "esms", "vnpt", "viettel"]).default("none"),
+    /** Brandname hiển thị khi khách nhận tin */
+    brandname: z.string().max(40).default(""),
+    credentialsConfigured: z.boolean().default(false),
+    /** Mẫu tin gửi khách sau khi để lại thông tin */
+    template: z.string().max(300).default("{brand}: Cam on anh/chi da quan tam du an. Chuyen vien se lien he ngay."),
+  }).default({}),
+  email: z.object({
+    enabled: z.boolean().default(false),
+    senderName: z.string().max(120).default(""),
+    replyTo: z.string().max(160).default(""),
+    /** Tự gửi email xác nhận khi khách để lại thông tin */
+    autoConfirm: z.boolean().default(true),
   }).default({}),
 });
 

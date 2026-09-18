@@ -186,13 +186,14 @@ export const getConversation = createServerFn({ method: "GET" })
 
 export const sendMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { tenantId: string; conversationId: string; body: string; channel?: string }) =>
+  .inputValidator((d: { tenantId: string; conversationId: string; body: string; channel?: string; subject?: string }) =>
     z
       .object({
         tenantId: z.string().uuid(),
         conversationId: z.string().uuid(),
         body: z.string().trim().min(1).max(2000),
-        channel: z.enum(["web_chat", "zalo", "note"]).optional(),
+        channel: z.enum(["web_chat", "zalo", "note", "sms", "email"]).optional(),
+        subject: z.string().trim().max(160).optional(),
       })
       .parse(d),
   )
@@ -202,7 +203,7 @@ export const sendMessage = createServerFn({ method: "POST" })
 
     const { data: conv } = await supabase
       .from("conversations")
-      .select("id, channel, contact_zalo_id")
+      .select("id, channel, contact_zalo_id, contact_phone, contact_name, lead_id")
       .eq("tenant_id", data.tenantId)
       .eq("id", data.conversationId)
       .maybeSingle();
@@ -216,7 +217,8 @@ export const sendMessage = createServerFn({ method: "POST" })
       .maybeSingle();
     const senderName = profile?.full_name || profile?.email?.split("@")[0] || "Chuyên viên";
 
-    const { appendMessage, sendZaloMessage } = await import("@/lib/channels.server");
+    const { appendMessage, sendZaloMessage, sendSmsMessage, sendEmailMessage, loadChannelSettings } =
+      await import("@/lib/channels.server");
     let status = "sent";
     let externalId: string | null = null;
     let errorMessage: string | null = null;
@@ -230,6 +232,47 @@ export const sendMessage = createServerFn({ method: "POST" })
       status = result.status;
       externalId = result.externalId;
       errorMessage = result.error;
+    }
+
+    if (channel === "sms" || channel === "email") {
+      const settings = await loadChannelSettings(data.tenantId);
+      if (channel === "sms") {
+        const result = await sendSmsMessage({
+          settings,
+          phone: conv.contact_phone as string | null,
+          text: data.body,
+        });
+        status = result.status;
+        externalId = result.externalId;
+        errorMessage = result.error;
+      } else {
+        let email: string | null = null;
+        if (conv.lead_id) {
+          const { data: lead } = await supabase
+            .from("leads")
+            .select("email")
+            .eq("id", conv.lead_id as string)
+            .maybeSingle();
+          email = (lead?.email as string | null) ?? null;
+        }
+        const result = await sendEmailMessage({
+          settings,
+          to: email,
+          subject: data.subject || "Thông tin dự án",
+          text: data.body,
+          origin: await (async () => {
+            const { getRequest } = await import("@tanstack/react-start/server");
+            try {
+              return new URL(getRequest().url).origin;
+            } catch {
+              return null;
+            }
+          })(),
+        });
+        status = result.status;
+        externalId = result.externalId;
+        errorMessage = result.error;
+      }
     }
 
     const message = await appendMessage({

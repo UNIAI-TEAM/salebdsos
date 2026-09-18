@@ -1,5 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { startCall } from "@/lib/inbox.functions";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, AlarmClock, Building2, CalendarClock, CheckCircle2, FileSignature, PhoneCall, QrCode, RefreshCw, ScanLine, Snowflake, UserRoundCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -59,6 +62,20 @@ function SaleOverviewPage() {
   const { sale, project } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const fetchOverview = useServerFn(getSaleOverview);
+  const startCallFn = useServerFn(startCall);
+  const callMutation = useMutation({
+    mutationFn: (phone: string) => {
+      if (!tenantId) throw new Error("Chưa chọn workspace");
+      return startCallFn({ data: { tenantId, phone } });
+    },
+    onSuccess: (result) => {
+      toast[result.warning ? "info" : "success"](
+        result.warning ?? "Đã bắt đầu cuộc gọi qua tổng đài, ghi âm sẽ lưu vào hộp thoại.",
+      );
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const callLead = (phone: string) => callMutation.mutate(phone);
   const ownerId = sale || user?.id;
 
   const query = useQuery({
@@ -169,9 +186,15 @@ function SaleOverviewPage() {
                         <p className="text-[11px] font-medium text-destructive">Trễ {lead.overdueMinutes} phút · nhận lúc {formatTime(lead.at)}</p>
                       </div>
                       {lead.phone ? (
-                        <a href={`tel:${lead.phone}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground" aria-label={`Gọi ${lead.name}`}>
+                        <button
+                          type="button"
+                          onClick={() => callLead(lead.phone as string)}
+                          disabled={callMutation.isPending}
+                          className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground disabled:opacity-60"
+                          aria-label={`Gọi ${lead.name} qua tổng đài`}
+                        >
                           <PhoneCall className="h-4 w-4" />
-                        </a>
+                        </button>
                       ) : null}
                     </li>
                   ))}
