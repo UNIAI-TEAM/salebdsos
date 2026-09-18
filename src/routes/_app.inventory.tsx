@@ -253,25 +253,6 @@ function InventoryPage() {
   const soldCount = (byStatus["sold"] ?? 0) + (byStatus["contracted"] ?? 0);
   const absorption = totalAll ? Math.round((soldCount / totalAll) * 100) : 0;
 
-  const activeKind: PropertyKind =
-    kind !== "all" ? (kind as PropertyKind) : (rows[0]?.product_type ?? "apartment");
-  const viewMode = KIND_CONFIG[activeKind].view;
-
-  const grouped = useMemo(() => {
-    const map = new Map<string, Row[]>();
-    for (const r of rows) {
-      const key =
-        viewMode === "floor-grid"
-          ? `${r.zone ?? "—"} • Tầng ${r.floor ?? "—"}`
-          : viewMode === "zone-grid"
-            ? `Khu ${r.zone ?? "—"}`
-            : "Danh sách";
-      const arr = map.get(key) ?? [];
-      arr.push(r);
-      map.set(key, arr);
-    }
-    return [...map.entries()];
-  }, [rows, viewMode]);
 
   const kindGroups = useMemo(() => groupUnitsByKind(rows as unknown as UnitLike[]), [rows]);
 
