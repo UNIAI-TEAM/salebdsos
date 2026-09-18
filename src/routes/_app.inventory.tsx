@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
-  Building2, Plus, LayoutGrid, Upload, Pencil, Trash2, Search, History, Rows3,
+  Building2, Plus, LayoutGrid, Upload, Pencil, Trash2, Search, History, Rows3, Table2,
 } from "lucide-react";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,9 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { parseCsv } from "@/lib/csv-import";
+import {
+  KindPriceTable, KindStatusBoard, groupUnitsByKind, type UnitLike,
+} from "@/components/inventory/kind-tables";
 import {
   KIND_CONFIG, KIND_OPTIONS, LISTING_STATUSES, LISTING_STATUS_LABEL,
   LISTING_STATUS_TONE, OPEN_STATUSES, kindLabel,
@@ -118,7 +121,7 @@ function InventoryPage() {
   const [zone, setZone] = useState<string>("all");
   const [term, setTerm] = useState("");
   const [termInput, setTermInput] = useState("");
-  const [view, setView] = useState<"grid" | "table">("grid");
+  const [view, setView] = useState<"grid" | "price" | "table">("grid");
   const [editing, setEditing] = useState<FormState | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [statusTarget, setStatusTarget] = useState<Row | null>(null);
@@ -250,25 +253,8 @@ function InventoryPage() {
   const soldCount = (byStatus["sold"] ?? 0) + (byStatus["contracted"] ?? 0);
   const absorption = totalAll ? Math.round((soldCount / totalAll) * 100) : 0;
 
-  const activeKind: PropertyKind =
-    kind !== "all" ? (kind as PropertyKind) : (rows[0]?.product_type ?? "apartment");
-  const viewMode = KIND_CONFIG[activeKind].view;
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, Row[]>();
-    for (const r of rows) {
-      const key =
-        viewMode === "floor-grid"
-          ? `${r.zone ?? "—"} • Tầng ${r.floor ?? "—"}`
-          : viewMode === "zone-grid"
-            ? `Khu ${r.zone ?? "—"}`
-            : "Danh sách";
-      const arr = map.get(key) ?? [];
-      arr.push(r);
-      map.set(key, arr);
-    }
-    return [...map.entries()];
-  }, [rows, viewMode]);
+  const kindGroups = useMemo(() => groupUnitsByKind(rows as unknown as UnitLike[]), [rows]);
 
   const openEdit = (r?: Row) => {
     if (!r) {
@@ -446,7 +432,10 @@ function InventoryPage() {
           ))}
           <div className="ml-auto flex gap-1">
             <Button size="sm" variant={view === "grid" ? "default" : "outline"} onClick={() => setView("grid")}>
-              <LayoutGrid className="mr-1.5 h-4 w-4" /> Lưới
+              <LayoutGrid className="mr-1.5 h-4 w-4" /> Bảng trạng thái
+            </Button>
+            <Button size="sm" variant={view === "price" ? "default" : "outline"} onClick={() => setView("price")}>
+              <Table2 className="mr-1.5 h-4 w-4" /> Bảng giá
             </Button>
             <Button size="sm" variant={view === "table" ? "default" : "outline"} onClick={() => setView("table")}>
               <Rows3 className="mr-1.5 h-4 w-4" /> Bảng
@@ -466,26 +455,21 @@ function InventoryPage() {
         </SectionCard>
       ) : view === "grid" ? (
         <div className="space-y-4">
-          {grouped.map(([group, items]) => (
-            <SectionCard key={group} title={group}>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
-                {items.map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => openEdit(r)}
-                    className={`rounded-lg border p-3 text-left transition hover:shadow-sm ${LISTING_STATUS_TONE[r.listing_status]}`}
-                  >
-                    <div className="truncate text-sm font-semibold">{r.code || r.name}</div>
-                    <div className="mt-0.5 text-[11px] opacity-80">
-                      {r.area ? `${r.area} m²` : "—"}
-                      {r.bedrooms ? ` · ${r.bedrooms}PN` : ""}
-                    </div>
-                    <div className="mt-1 text-[11px] font-medium">{money(r.price, r.currency)}</div>
-                    <div className="mt-1 text-[11px] opacity-80">{LISTING_STATUS_LABEL[r.listing_status]}</div>
-                  </button>
-                ))}
-              </div>
+          {kindGroups.map((g) => (
+            <SectionCard key={g.kind} title={`${g.label} · ${g.items.length} sản phẩm`}>
+              <KindStatusBoard
+                kind={g.kind}
+                items={g.items}
+                onSelect={(u) => openEdit(rows.find((r) => r.id === u.id))}
+              />
+            </SectionCard>
+          ))}
+        </div>
+      ) : view === "price" ? (
+        <div className="space-y-4">
+          {kindGroups.map((g) => (
+            <SectionCard key={g.kind} title={`Bảng giá · ${g.label}`}>
+              <KindPriceTable kind={g.kind} items={g.items} />
             </SectionCard>
           ))}
         </div>

@@ -3,6 +3,8 @@
 export const PROPERTY_KINDS = [
   "apartment",
   "land_plot",
+  "subdivision",
+  "house_land",
   "townhouse",
   "social_housing",
 ] as const;
@@ -100,7 +102,7 @@ export const KIND_CONFIG: Record<PropertyKind, KindConfig> = {
   },
   land_plot: {
     key: "land_plot",
-    label: "Đất nền / phân lô",
+    label: "Đất nền",
     codeLabel: "Mã lô",
     zoneLabel: "Khu",
     view: "zone-grid",
@@ -115,9 +117,47 @@ export const KIND_CONFIG: Record<PropertyKind, KindConfig> = {
       { key: "legal_status", label: "Pháp lý", store: "column", type: "select", options: LEGAL },
     ],
   },
+  subdivision: {
+    key: "subdivision",
+    label: "Phân lô",
+    codeLabel: "Số lô",
+    zoneLabel: "Block / dãy",
+    view: "zone-grid",
+    fields: [
+      { key: "zone", label: "Block / dãy", store: "column", type: "text", placeholder: "B2" },
+      { key: "code", label: "Số lô", store: "column", type: "text", placeholder: "B2-15" },
+      { key: "area", label: "Diện tích", store: "column", type: "number", suffix: "m²" },
+      { key: "frontage", label: "Mặt tiền", store: "attr", type: "number", suffix: "m" },
+      { key: "depth", label: "Chiều sâu", store: "attr", type: "number", suffix: "m" },
+      { key: "road_width", label: "Đường trước lô", store: "attr", type: "number", suffix: "m" },
+      { key: "corner", label: "Lô góc", store: "attr", type: "select", options: ["Có", "Không"] },
+      { key: "direction", label: "Hướng", store: "column", type: "select", options: DIRECTIONS },
+      { key: "legal_status", label: "Pháp lý", store: "column", type: "select", options: LEGAL },
+    ],
+  },
+  house_land: {
+    key: "house_land",
+    label: "Nhà đất",
+    codeLabel: "Mã sản phẩm",
+    zoneLabel: "Khu / phường",
+    view: "list",
+    fields: [
+      { key: "zone", label: "Khu / phường", store: "column", type: "text" },
+      { key: "code", label: "Mã sản phẩm", store: "column", type: "text" },
+      { key: "address", label: "Địa chỉ", store: "attr", type: "text" },
+      { key: "area", label: "Diện tích đất", store: "column", type: "number", suffix: "m²" },
+      { key: "build_area", label: "Diện tích xây dựng", store: "attr", type: "number", suffix: "m²" },
+      { key: "floors", label: "Số tầng", store: "attr", type: "number" },
+      { key: "frontage", label: "Mặt tiền", store: "attr", type: "number", suffix: "m" },
+      { key: "bedrooms", label: "Phòng ngủ", store: "column", type: "number" },
+      { key: "bathrooms", label: "Phòng tắm", store: "column", type: "number" },
+      { key: "direction", label: "Hướng", store: "column", type: "select", options: DIRECTIONS },
+      { key: "legal_status", label: "Pháp lý", store: "column", type: "select", options: LEGAL },
+    ],
+  },
   townhouse: {
     key: "townhouse",
-    label: "Nhà phố / nhà đất / shophouse",
+    label: "Nhà phố / shophouse",
     codeLabel: "Mã sản phẩm",
     zoneLabel: "Khu",
     view: "list",
@@ -161,6 +201,87 @@ export const KIND_OPTIONS = PROPERTY_KINDS.map((k) => ({
   value: k,
   label: KIND_CONFIG[k].label,
 }));
+
+/** Cột của bảng giá riêng cho từng loại hình. */
+export type PriceColumn = {
+  key: string;
+  label: string;
+  /** column = cột products, attr = attributes, computed = tính toán */
+  store: "column" | "attr" | "computed";
+  align?: "left" | "right";
+  suffix?: string;
+};
+
+const COL_CODE = (label: string): PriceColumn => ({ key: "code", label, store: "column" });
+const COL_PRICE: PriceColumn[] = [
+  { key: "price", label: "Giá bán", store: "column", align: "right" },
+  { key: "unit_price", label: "Đơn giá / m²", store: "computed", align: "right" },
+];
+
+export const KIND_PRICE_COLUMNS: Record<PropertyKind, PriceColumn[]> = {
+  apartment: [
+    COL_CODE("Mã căn"),
+    { key: "zone", label: "Toà", store: "column" },
+    { key: "floor", label: "Tầng", store: "column", align: "right" },
+    { key: "unit_kind", label: "Loại căn", store: "attr" },
+    { key: "area", label: "Tim tường", store: "column", align: "right", suffix: "m²" },
+    { key: "usable_area", label: "Thông thuỷ", store: "column", align: "right", suffix: "m²" },
+    { key: "bedrooms", label: "PN", store: "column", align: "right" },
+    { key: "direction", label: "Hướng", store: "column" },
+    ...COL_PRICE,
+  ],
+  land_plot: [
+    COL_CODE("Mã lô"),
+    { key: "zone", label: "Khu", store: "column" },
+    { key: "area", label: "Diện tích", store: "column", align: "right", suffix: "m²" },
+    { key: "frontage", label: "Mặt tiền", store: "attr", align: "right", suffix: "m" },
+    { key: "road_width", label: "Đường", store: "attr", align: "right", suffix: "m" },
+    { key: "direction", label: "Hướng", store: "column" },
+    { key: "legal_status", label: "Pháp lý", store: "column" },
+    ...COL_PRICE,
+  ],
+  subdivision: [
+    COL_CODE("Số lô"),
+    { key: "zone", label: "Block", store: "column" },
+    { key: "area", label: "Diện tích", store: "column", align: "right", suffix: "m²" },
+    { key: "frontage", label: "Mặt tiền", store: "attr", align: "right", suffix: "m" },
+    { key: "depth", label: "Chiều sâu", store: "attr", align: "right", suffix: "m" },
+    { key: "corner", label: "Lô góc", store: "attr" },
+    { key: "legal_status", label: "Pháp lý", store: "column" },
+    ...COL_PRICE,
+  ],
+  house_land: [
+    COL_CODE("Mã sản phẩm"),
+    { key: "address", label: "Địa chỉ", store: "attr" },
+    { key: "area", label: "Đất", store: "column", align: "right", suffix: "m²" },
+    { key: "build_area", label: "Xây dựng", store: "attr", align: "right", suffix: "m²" },
+    { key: "floors", label: "Tầng", store: "attr", align: "right" },
+    { key: "bedrooms", label: "PN", store: "column", align: "right" },
+    { key: "legal_status", label: "Pháp lý", store: "column" },
+    ...COL_PRICE,
+  ],
+  townhouse: [
+    COL_CODE("Mã sản phẩm"),
+    { key: "zone", label: "Khu / tuyến", store: "column" },
+    { key: "area", label: "Đất", store: "column", align: "right", suffix: "m²" },
+    { key: "build_area", label: "Xây dựng", store: "attr", align: "right", suffix: "m²" },
+    { key: "floors", label: "Tầng", store: "attr", align: "right" },
+    { key: "bedrooms", label: "PN", store: "column", align: "right" },
+    { key: "direction", label: "Hướng", store: "column" },
+    ...COL_PRICE,
+  ],
+  social_housing: [
+    COL_CODE("Mã căn"),
+    { key: "zone", label: "Toà", store: "column" },
+    { key: "floor", label: "Tầng", store: "column", align: "right" },
+    { key: "area", label: "Tim tường", store: "column", align: "right", suffix: "m²" },
+    { key: "usable_area", label: "Thông thuỷ", store: "column", align: "right", suffix: "m²" },
+    { key: "bedrooms", label: "PN", store: "column", align: "right" },
+    { key: "regulated_price", label: "Giá quy định", store: "attr", align: "right", suffix: "đ/m²" },
+    { key: "dossier_status", label: "Hồ sơ", store: "attr" },
+    ...COL_PRICE,
+  ],
+};
 
 export function kindLabel(kind?: string | null) {
   return kind && kind in KIND_CONFIG ? KIND_CONFIG[kind as PropertyKind].label : "Khác";
