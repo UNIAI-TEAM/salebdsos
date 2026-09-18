@@ -590,7 +590,7 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       listing_status: string | null;
       price: number;
       currency: string;
-      attributes: Record<string, unknown> | null;
+      attributes: Record<string, string | number | boolean | null> | null;
     }> = [];
     if (row.project_id) {
       const { data: units } = await supabaseAdmin
