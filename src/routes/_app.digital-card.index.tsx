@@ -1,13 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { Pencil, UserSquare2, QrCode, Send } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getOrCreateMyCard } from "@/lib/card.functions";
 import { listCardProjects, listProjectOptions } from "@/lib/card-projects.functions";
-import { DigitalCardPresentation } from "@/components/digital-card/presentation";
+import { DigitalCardPresentation, CardScanOverlay } from "@/components/digital-card/presentation";
 
 export const Route = createFileRoute("/_app/digital-card/")({
+  validateSearch: (search: Record<string, unknown>): { present?: boolean } => ({
+    ...(search.present === true || search.present === "1" ? { present: true } : {}),
+  }),
   component: DigitalCardPage,
   head: () => ({ meta: [
     { title: "Danh thiếp của tôi | SaleBDS OS" },
@@ -21,6 +24,8 @@ export const Route = createFileRoute("/_app/digital-card/")({
 
 function DigitalCardPage() {
   const { currentTenant } = useAuth();
+  const { present } = Route.useSearch();
+  const nav = useNavigate();
   const tenantId = currentTenant?.id;
   const getCard = useServerFn(getOrCreateMyCard);
   const getProjects = useServerFn(listProjectOptions);
@@ -32,6 +37,7 @@ function DigitalCardPage() {
   const selected = new Set(selectedQ.data ?? []);
   const projects = (projectsQ.data ?? []).filter((project) => selected.has(project.id));
   const publicUrl = typeof window === "undefined" ? `/c/${cardQ.data.slug}` : `${window.location.origin}/c/${cardQ.data.slug}`;
+  const closePresent = () => nav({ to: "/digital-card", search: {} });
   const actions = [
     { to: "/digital-card/edit", label: "Sửa danh thiếp", icon: Pencil },
     { to: "/profile", label: "Profile", icon: UserSquare2 },
@@ -53,6 +59,7 @@ function DigitalCardPage() {
           </Link>
         ))}
       </div>
+      {present ? <CardScanOverlay card={cardQ.data} publicUrl={publicUrl} onClose={closePresent} /> : null}
     </div>
   );
 }

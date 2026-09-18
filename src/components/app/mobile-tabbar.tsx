@@ -29,7 +29,7 @@ export function MobileTabBar() {
           <button
             type="button"
             aria-label="Đưa khách quét danh thiếp"
-            onClick={() => nav({ to: "/digital-card" })}
+            onClick={() => nav({ to: "/digital-card", search: { present: true } })}
             className="-mt-6 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-4 ring-background transition-transform duration-200 active:scale-95"
           >
             <QrCode className="h-6 w-6" />
