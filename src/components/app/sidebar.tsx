@@ -6,6 +6,7 @@ import {
   PanelLeftClose, PanelLeftOpen, X, BookMarked, Route as RouteIcon, ContactRound,
   LayoutGrid,
   Filter,
+  FileSignature,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
@@ -38,6 +39,7 @@ const groups: Group[] = [
       { to: "/lead-capture", label: "Tự động tạo Lead", icon: Zap, badge: "Auto" },
       { to: "/customers", label: "Khách hàng", icon: UserSquare2 },
       { to: "/pipeline", label: "Pipeline", icon: GitBranch },
+      { to: "/contracts", label: "Hợp đồng & hoa hồng", icon: FileSignature },
       { to: "/appointments", label: "Lịch hẹn", icon: CalendarClock },
       { to: "/lead-routing", label: "Phân phối lead", icon: Zap, roles: ["owner", "admin", "manager"] },
       { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon, roles: ["owner", "admin", "manager", "agent"] },

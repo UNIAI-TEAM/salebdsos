@@ -938,6 +938,256 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_commissions: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          beneficiary_name: string | null
+          beneficiary_user_id: string | null
+          contract_id: string
+          created_at: string
+          id: string
+          note: string | null
+          paid_at: string | null
+          percent: number | null
+          role_label: string | null
+          status: Database["public"]["Enums"]["commission_status"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          beneficiary_name?: string | null
+          beneficiary_user_id?: string | null
+          contract_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          paid_at?: string | null
+          percent?: number | null
+          role_label?: string | null
+          status?: Database["public"]["Enums"]["commission_status"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          beneficiary_name?: string | null
+          beneficiary_user_id?: string | null
+          contract_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          paid_at?: string | null
+          percent?: number | null
+          role_label?: string | null
+          status?: Database["public"]["Enums"]["commission_status"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_commissions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_commissions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_installments: {
+        Row: {
+          amount: number
+          contract_id: string
+          created_at: string
+          due_date: string | null
+          id: string
+          name: string
+          note: string | null
+          paid_amount: number
+          paid_at: string | null
+          percent: number | null
+          position: number
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          contract_id: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          name: string
+          note?: string | null
+          paid_amount?: number
+          paid_at?: string | null
+          percent?: number | null
+          position?: number
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          contract_id?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          name?: string
+          note?: string | null
+          paid_amount?: number
+          paid_at?: string | null
+          percent?: number | null
+          position?: number
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_installments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_installments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          code: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          deal_id: string | null
+          deleted_at: string | null
+          discount_amount: number
+          id: string
+          lead_id: string | null
+          net_price: number
+          note: string | null
+          owner_user_id: string | null
+          product_id: string | null
+          project_id: string | null
+          sale_price: number
+          signed_at: string | null
+          status: Database["public"]["Enums"]["contract_status"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          deal_id?: string | null
+          deleted_at?: string | null
+          discount_amount?: number
+          id?: string
+          lead_id?: string | null
+          net_price?: number
+          note?: string | null
+          owner_user_id?: string | null
+          product_id?: string | null
+          project_id?: string | null
+          sale_price?: number
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["contract_status"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          deal_id?: string | null
+          deleted_at?: string | null
+          discount_amount?: number
+          id?: string
+          lead_id?: string | null
+          net_price?: number
+          note?: string | null
+          owner_user_id?: string | null
+          product_id?: string | null
+          project_id?: string | null
+          sale_price?: number
+          signed_at?: string | null
+          status?: Database["public"]["Enums"]["contract_status"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_messages: {
         Row: {
           attachment_url: string | null
@@ -2833,6 +3083,8 @@ export type Database = {
         | "agent"
         | "viewer"
         | "platform_admin"
+      commission_status: "pending" | "approved" | "paid"
+      contract_status: "draft" | "active" | "completed" | "cancelled"
       conv_channel: "web_chat" | "zalo" | "call" | "sms" | "email" | "note"
       conv_direction: "in" | "out"
       deal_status: "open" | "won" | "lost"
@@ -2997,6 +3249,8 @@ export const Constants = {
         "viewer",
         "platform_admin",
       ],
+      commission_status: ["pending", "approved", "paid"],
+      contract_status: ["draft", "active", "completed", "cancelled"],
       conv_channel: ["web_chat", "zalo", "call", "sms", "email", "note"],
       conv_direction: ["in", "out"],
       deal_status: ["open", "won", "lost"],

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -508,6 +508,11 @@ function InventoryPage() {
                         <Button size="sm" variant="outline" onClick={() => { setStatusTarget(r); setStatusNext(r.listing_status); }}>
                           Đổi trạng thái
                         </Button>
+                        {["reserved", "negotiating", "deposited"].includes(r.listing_status) ? (
+                          <Button size="sm" variant="secondary" asChild>
+                            <Link to="/contracts">Lập hợp đồng</Link>
+                          </Button>
+                        ) : null}
                         <Button size="icon" variant="ghost" onClick={() => setHistoryFor(r)}>
                           <History className="h-4 w-4" />
                         </Button>

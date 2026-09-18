@@ -27,6 +27,13 @@ export const Route = createFileRoute("/_app/funnel-report")({
   component: FunnelReportPage,
 });
 
+const money = (value: number) =>
+  value >= 1_000_000_000
+    ? `${(value / 1_000_000_000).toFixed(1)} tỷ`
+    : value >= 1_000_000
+      ? `${Math.round(value / 1_000_000)} tr`
+      : new Intl.NumberFormat("vi-VN").format(Math.round(value || 0));
+
 const DAY_OPTIONS = [
   { value: "7", label: "7 ngày" },
   { value: "30", label: "30 ngày" },
@@ -75,7 +82,7 @@ function FunnelTable({ rows, emptyText }: { rows: FunnelRow[]; emptyText: string
   const max = Math.max(...rows.map((row) => row.submitted), 1);
   return (
     <div className="-mx-1 overflow-x-auto px-1">
-      <table className="w-full min-w-[560px] text-sm">
+      <table className="w-full min-w-[860px] text-sm">
         <thead>
           <tr className="text-left text-[11px] uppercase tracking-wide text-muted-foreground">
             <th className="py-2 pr-3 font-medium">Nhóm</th>
@@ -83,7 +90,10 @@ function FunnelTable({ rows, emptyText }: { rows: FunnelRow[]; emptyText: string
             <th className="py-2 pr-3 text-right font-medium">Giỏ hàng</th>
             <th className="py-2 pr-3 text-right font-medium">Hợp đồng</th>
             <th className="py-2 pr-3 text-right font-medium">Gửi → giỏ</th>
-            <th className="py-2 text-right font-medium">Gửi → hợp đồng</th>
+            <th className="py-2 pr-3 text-right font-medium">Gửi → hợp đồng</th>
+            <th className="py-2 pr-3 text-right font-medium">Giá trị HĐ</th>
+            <th className="py-2 pr-3 text-right font-medium">Đã thu</th>
+            <th className="py-2 text-right font-medium">Tỷ lệ thu</th>
           </tr>
         </thead>
         <tbody>
@@ -97,7 +107,10 @@ function FunnelTable({ rows, emptyText }: { rows: FunnelRow[]; emptyText: string
               <td className="py-3 pr-3 text-right">{row.cart}</td>
               <td className="py-3 pr-3 text-right">{row.contract}</td>
               <td className="py-3 pr-3 text-right text-muted-foreground">{row.submittedToCart}%</td>
-              <td className="py-3 text-right font-medium">{row.submittedToContract}%</td>
+              <td className="py-3 pr-3 text-right font-medium">{row.submittedToContract}%</td>
+              <td className="py-3 pr-3 text-right">{money(row.contractValue)}</td>
+              <td className="py-3 pr-3 text-right">{money(row.collected)}</td>
+              <td className="py-3 text-right text-muted-foreground">{row.collectRate}%</td>
             </tr>
           ))}
         </tbody>
@@ -188,7 +201,7 @@ function FunnelReportPage() {
               icon={FileSignature}
               label="Ký hợp đồng"
               value={data.totals.contract}
-              hint="Giao dịch Thành công hoặc sản phẩm đã ký / đã bán"
+              hint="Hợp đồng hiệu lực hoặc đã hoàn tất"
               rate={`${data.totals.cartToContract}% từ giỏ hàng`}
             />
             <Stage
