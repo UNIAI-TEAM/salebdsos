@@ -654,7 +654,18 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       }
     }
 
+    const { loadChannelSettings } = await import("@/lib/channels.server");
+    const channels = await loadChannelSettings(row.tenant_id);
+
     return {
+      channels: {
+        webChat: channels.webChat,
+        zalo: {
+          enabled: channels.zalo.enabled,
+          oaName: channels.zalo.oaName,
+          oaLink: channels.zalo.oaLink,
+        },
+      },
       id: row.id,
       tenantId: row.tenant_id,
       title: row.title,

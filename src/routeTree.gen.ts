@@ -47,6 +47,7 @@ import { Route as AppLeadCaptureRouteImport } from './routes/_app.lead-capture'
 import { Route as AppLandingsRouteImport } from './routes/_app.landings'
 import { Route as AppJourneyRouteImport } from './routes/_app.journey'
 import { Route as AppInventoryRouteImport } from './routes/_app.inventory'
+import { Route as AppInboxRouteImport } from './routes/_app.inbox'
 import { Route as AppFilesRouteImport } from './routes/_app.files'
 import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
 import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
@@ -63,6 +64,8 @@ import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
 import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.index'
 import { Route as AppDigitalCardIndexRouteImport } from './routes/_app.digital-card.index'
 import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.index'
+import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/zalo-webhook'
+import { Route as ApiPublicTelephonyWebhookRouteImport } from './routes/api/public/telephony-webhook'
 import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
 import { Route as AppDigitalCardEditRouteImport } from './routes/_app.digital-card.edit'
@@ -74,6 +77,7 @@ import { Route as ApiPublicQCodeRouteImport } from './routes/api/public/q.$code'
 import { Route as ApiPublicPqCodeRouteImport } from './routes/api/public/pq.$code'
 import { Route as ApiPublicLeadFormsSlugRouteImport } from './routes/api/public/lead-forms.$slug'
 import { Route as ApiPublicLandingManifestSlugRouteImport } from './routes/api/public/landing-manifest.$slug'
+import { Route as ApiPublicChatSlugRouteImport } from './routes/api/public/chat.$slug'
 import { Route as ApiPublicCardLeadsSlugRouteImport } from './routes/api/public/card-leads.$slug'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -265,6 +269,11 @@ const AppInventoryRoute = AppInventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => AppRoute,
 } as any)
+const AppInboxRoute = AppInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppFilesRoute = AppFilesRouteImport.update({
   id: '/files',
   path: '/files',
@@ -345,6 +354,17 @@ const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
   path: '/customers/',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicZaloWebhookRoute = ApiPublicZaloWebhookRouteImport.update({
+  id: '/api/public/zalo-webhook',
+  path: '/api/public/zalo-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTelephonyWebhookRoute =
+  ApiPublicTelephonyWebhookRouteImport.update({
+    id: '/api/public/telephony-webhook',
+    path: '/api/public/telephony-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicProjectTouchRoute = ApiPublicProjectTouchRouteImport.update({
   id: '/api/public/project-touch',
   path: '/api/public/project-touch',
@@ -401,6 +421,11 @@ const ApiPublicLandingManifestSlugRoute =
     path: '/api/public/landing-manifest/$slug',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicChatSlugRoute = ApiPublicChatSlugRouteImport.update({
+  id: '/api/public/chat/$slug',
+  path: '/api/public/chat/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCardLeadsSlugRoute = ApiPublicCardLeadsSlugRouteImport.update({
   id: '/api/public/card-leads/$slug',
   path: '/api/public/card-leads/$slug',
@@ -427,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/digital-card': typeof AppDigitalCardRouteWithChildren
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/files': typeof AppFilesRoute
+  '/inbox': typeof AppInboxRoute
   '/inventory': typeof AppInventoryRoute
   '/journey': typeof AppJourneyRoute
   '/landings': typeof AppLandingsRoute
@@ -463,10 +489,13 @@ export interface FileRoutesByFullPath {
   '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
+  '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
+  '/api/public/zalo-webhook': typeof ApiPublicZaloWebhookRoute
   '/customers/': typeof AppCustomersIndexRoute
   '/digital-card/': typeof AppDigitalCardIndexRoute
   '/projects/': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
+  '/api/public/chat/$slug': typeof ApiPublicChatSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/pq/$code': typeof ApiPublicPqCodeRoute
@@ -493,6 +522,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/files': typeof AppFilesRoute
+  '/inbox': typeof AppInboxRoute
   '/inventory': typeof AppInventoryRoute
   '/journey': typeof AppJourneyRoute
   '/landings': typeof AppLandingsRoute
@@ -528,10 +558,13 @@ export interface FileRoutesByTo {
   '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
+  '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
+  '/api/public/zalo-webhook': typeof ApiPublicZaloWebhookRoute
   '/customers': typeof AppCustomersIndexRoute
   '/digital-card': typeof AppDigitalCardIndexRoute
   '/projects': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
+  '/api/public/chat/$slug': typeof ApiPublicChatSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/pq/$code': typeof ApiPublicPqCodeRoute
@@ -561,6 +594,7 @@ export interface FileRoutesById {
   '/_app/digital-card': typeof AppDigitalCardRouteWithChildren
   '/_app/dynamic-qr': typeof AppDynamicQrRoute
   '/_app/files': typeof AppFilesRoute
+  '/_app/inbox': typeof AppInboxRoute
   '/_app/inventory': typeof AppInventoryRoute
   '/_app/journey': typeof AppJourneyRoute
   '/_app/landings': typeof AppLandingsRoute
@@ -597,10 +631,13 @@ export interface FileRoutesById {
   '/_app/digital-card/edit': typeof AppDigitalCardEditRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
+  '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
+  '/api/public/zalo-webhook': typeof ApiPublicZaloWebhookRoute
   '/_app/customers/': typeof AppCustomersIndexRoute
   '/_app/digital-card/': typeof AppDigitalCardIndexRoute
   '/_app/projects/': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
+  '/api/public/chat/$slug': typeof ApiPublicChatSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/pq/$code': typeof ApiPublicPqCodeRoute
@@ -630,6 +667,7 @@ export interface FileRouteTypes {
     | '/digital-card'
     | '/dynamic-qr'
     | '/files'
+    | '/inbox'
     | '/inventory'
     | '/journey'
     | '/landings'
@@ -666,10 +704,13 @@ export interface FileRouteTypes {
     | '/digital-card/edit'
     | '/projects/$id'
     | '/api/public/project-touch'
+    | '/api/public/telephony-webhook'
+    | '/api/public/zalo-webhook'
     | '/customers/'
     | '/digital-card/'
     | '/projects/'
     | '/api/public/card-leads/$slug'
+    | '/api/public/chat/$slug'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
     | '/api/public/pq/$code'
@@ -696,6 +737,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dynamic-qr'
     | '/files'
+    | '/inbox'
     | '/inventory'
     | '/journey'
     | '/landings'
@@ -731,10 +773,13 @@ export interface FileRouteTypes {
     | '/digital-card/edit'
     | '/projects/$id'
     | '/api/public/project-touch'
+    | '/api/public/telephony-webhook'
+    | '/api/public/zalo-webhook'
     | '/customers'
     | '/digital-card'
     | '/projects'
     | '/api/public/card-leads/$slug'
+    | '/api/public/chat/$slug'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
     | '/api/public/pq/$code'
@@ -763,6 +808,7 @@ export interface FileRouteTypes {
     | '/_app/digital-card'
     | '/_app/dynamic-qr'
     | '/_app/files'
+    | '/_app/inbox'
     | '/_app/inventory'
     | '/_app/journey'
     | '/_app/landings'
@@ -799,10 +845,13 @@ export interface FileRouteTypes {
     | '/_app/digital-card/edit'
     | '/_app/projects/$id'
     | '/api/public/project-touch'
+    | '/api/public/telephony-webhook'
+    | '/api/public/zalo-webhook'
     | '/_app/customers/'
     | '/_app/digital-card/'
     | '/_app/projects/'
     | '/api/public/card-leads/$slug'
+    | '/api/public/chat/$slug'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
     | '/api/public/pq/$code'
@@ -827,7 +876,10 @@ export interface RootRouteChildren {
   PSlugRoute: typeof PSlugRoute
   ShareSlugRoute: typeof ShareSlugRoute
   ApiPublicProjectTouchRoute: typeof ApiPublicProjectTouchRoute
+  ApiPublicTelephonyWebhookRoute: typeof ApiPublicTelephonyWebhookRoute
+  ApiPublicZaloWebhookRoute: typeof ApiPublicZaloWebhookRoute
   ApiPublicCardLeadsSlugRoute: typeof ApiPublicCardLeadsSlugRoute
+  ApiPublicChatSlugRoute: typeof ApiPublicChatSlugRoute
   ApiPublicLandingManifestSlugRoute: typeof ApiPublicLandingManifestSlugRoute
   ApiPublicLeadFormsSlugRoute: typeof ApiPublicLeadFormsSlugRoute
   ApiPublicPqCodeRoute: typeof ApiPublicPqCodeRoute
@@ -1104,6 +1156,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInventoryRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/inbox': {
+      id: '/_app/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof AppInboxRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/files': {
       id: '/_app/files'
       path: '/files'
@@ -1216,6 +1275,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCustomersIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/zalo-webhook': {
+      id: '/api/public/zalo-webhook'
+      path: '/api/public/zalo-webhook'
+      fullPath: '/api/public/zalo-webhook'
+      preLoaderRoute: typeof ApiPublicZaloWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/telephony-webhook': {
+      id: '/api/public/telephony-webhook'
+      path: '/api/public/telephony-webhook'
+      fullPath: '/api/public/telephony-webhook'
+      preLoaderRoute: typeof ApiPublicTelephonyWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/project-touch': {
       id: '/api/public/project-touch'
       path: '/api/public/project-touch'
@@ -1293,6 +1366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicLandingManifestSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/chat/$slug': {
+      id: '/api/public/chat/$slug'
+      path: '/api/public/chat/$slug'
+      fullPath: '/api/public/chat/$slug'
+      preLoaderRoute: typeof ApiPublicChatSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/card-leads/$slug': {
       id: '/api/public/card-leads/$slug'
       path: '/api/public/card-leads/$slug'
@@ -1357,6 +1437,7 @@ interface AppRouteChildren {
   AppDigitalCardRoute: typeof AppDigitalCardRouteWithChildren
   AppDynamicQrRoute: typeof AppDynamicQrRoute
   AppFilesRoute: typeof AppFilesRoute
+  AppInboxRoute: typeof AppInboxRoute
   AppInventoryRoute: typeof AppInventoryRoute
   AppJourneyRoute: typeof AppJourneyRoute
   AppLandingsRoute: typeof AppLandingsRoute
@@ -1399,6 +1480,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDigitalCardRoute: AppDigitalCardRouteWithChildren,
   AppDynamicQrRoute: AppDynamicQrRoute,
   AppFilesRoute: AppFilesRoute,
+  AppInboxRoute: AppInboxRoute,
   AppInventoryRoute: AppInventoryRoute,
   AppJourneyRoute: AppJourneyRoute,
   AppLandingsRoute: AppLandingsRoute,
@@ -1445,7 +1527,10 @@ const rootRouteChildren: RootRouteChildren = {
   PSlugRoute: PSlugRoute,
   ShareSlugRoute: ShareSlugRoute,
   ApiPublicProjectTouchRoute: ApiPublicProjectTouchRoute,
+  ApiPublicTelephonyWebhookRoute: ApiPublicTelephonyWebhookRoute,
+  ApiPublicZaloWebhookRoute: ApiPublicZaloWebhookRoute,
   ApiPublicCardLeadsSlugRoute: ApiPublicCardLeadsSlugRoute,
+  ApiPublicChatSlugRoute: ApiPublicChatSlugRoute,
   ApiPublicLandingManifestSlugRoute: ApiPublicLandingManifestSlugRoute,
   ApiPublicLeadFormsSlugRoute: ApiPublicLeadFormsSlugRoute,
   ApiPublicPqCodeRoute: ApiPublicPqCodeRoute,
