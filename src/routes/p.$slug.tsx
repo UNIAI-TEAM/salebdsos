@@ -342,7 +342,7 @@ function PublicSalesPage() {
                 </a>
               </div>
             </div>
-            <SaleTrustMetrics metrics={page.saleCard.metrics} className="mt-5 shadow-none" />
+            <SaleTrustMetrics metrics={page.saleCard.metrics} variant="embedded" className="mt-5" />
           </div>
         </section>
       ) : null}

@@ -20,6 +20,7 @@ const getPublicCard = createServerFn({ method: "GET" })
       .is("deleted_at", null)
       .maybeSingle();
     if (error || !card) throw notFound();
+    if (!card.owner_user_id) throw notFound();
     const { data: blocks } = await supabaseAdmin
       .from("card_blocks")
       .select("id, block_type, position, config")

@@ -1,9 +1,15 @@
 import { BadgeCheck, Eye } from "lucide-react";
-import type { PublicSaleMetrics } from "@/lib/public-sale-metrics.server";
+export type PublicSaleMetrics = {
+  customersServed: number;
+  contractsSigned: number;
+  projectsSold: number;
+  interactions30d: number;
+  updatedAt: string;
+};
 
 type Props = {
   metrics: PublicSaleMetrics;
-  variant?: "digital" | "standard";
+  variant?: "digital" | "standard" | "embedded";
   className?: string;
 };
 
@@ -11,6 +17,7 @@ const formatter = new Intl.NumberFormat("vi-VN");
 
 export function SaleTrustMetrics({ metrics, variant = "standard", className = "" }: Props) {
   const digital = variant === "digital";
+  const embedded = variant === "embedded";
   const stats = [
     [metrics.customersServed, "Khách hàng", "phục vụ"],
     [metrics.contractsSigned, "Hợp đồng", "đã ký"],
@@ -20,7 +27,7 @@ export function SaleTrustMetrics({ metrics, variant = "standard", className = ""
   return (
     <section
       aria-label="Số liệu uy tín đã xác thực"
-      className={`${digital ? "border-digital-ink/10 bg-digital-glass text-digital-ink" : "border-border bg-card text-card-foreground shadow-card"} overflow-hidden rounded-2xl border p-5 ${className}`}
+      className={`${digital ? "border-digital-ink/10 bg-digital-glass text-digital-ink" : embedded ? "border-t border-border pt-5 text-card-foreground" : "border-border bg-card text-card-foreground shadow-card"} overflow-hidden ${embedded ? "" : "rounded-2xl border p-5"} ${className}`}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-success">
