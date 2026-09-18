@@ -14,3 +14,4 @@
 - [x] Chỉ tính khách đã gửi thông tin, khử trùng số điện thoại/email và làm rõ chỉ số trên Tổng quan Sale.
 
 - [x] Tách Tổng quan Sale theo từng dự án với bộ lọc toàn trang và bảng so sánh.
+- [x] Tạo trang Quản lý Sale: mời qua email, sửa hồ sơ/danh thiếp và ngừng hoạt động an toàn.

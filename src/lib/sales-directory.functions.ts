@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const SALE_ROLES = ["owner", "admin", "manager", "agent"] as const;
+const SALE_ROLES = ["manager", "agent"] as const;
 const MANAGE_ROLES = ["owner", "admin", "manager", "platform_admin"];
 const ADMIN_ROLES = ["owner", "admin", "platform_admin"];
 
@@ -101,7 +101,7 @@ export const listSalesDirectory = createServerFn({ method: "GET" })
 
     const sales = (roles ?? []).filter((r) => (SALE_ROLES as readonly string[]).includes(r.role));
     const userIds = Array.from(new Set(sales.map((r) => r.user_id)));
-    if (!userIds.length) return { sales: [] as any[] };
+    if (!userIds.length) return { sales: [] as any[], invitations: [] as any[] };
 
     const [{ data: profiles }, { data: cards }] = await Promise.all([
       supabase.from("profiles").select("user_id, full_name, email, phone, avatar_url").in("user_id", userIds),
@@ -149,6 +149,13 @@ export const listSalesDirectory = createServerFn({ method: "GET" })
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const confirmation = new Map<string, string | null>();
+    await Promise.all(userIds.map(async (uid) => {
+      const { data } = await supabaseAdmin.auth.admin.getUserById(uid);
+      confirmation.set(uid, data.user?.email_confirmed_at ?? null);
+    }));
+
     return {
       sales: userIds.map((uid) => {
         const p = profiles?.find((x) => x.user_id === uid);
@@ -161,6 +168,7 @@ export const listSalesDirectory = createServerFn({ method: "GET" })
           fullName: p?.full_name ?? p?.email?.split("@")[0] ?? "Chưa đặt tên",
           email: p?.email ?? null,
           phone: p?.phone ?? null,
+          emailConfirmedAt: confirmation.get(uid) ?? null,
           avatarUrl: card?.avatar_url ?? p?.avatar_url ?? null,
           card: card
             ? {
