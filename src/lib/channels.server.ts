@@ -175,3 +175,110 @@ export async function appendMessage(args: {
 
   return message;
 }
+
+/** Gửi SMS brandname. Chưa có khoá nhà cung cấp → pending để tin vẫn nằm trong hộp thoại. */
+export async function sendSmsMessage(args: {
+  settings: ChannelSettings;
+  phone: string | null;
+  text: string;
+}): Promise<DispatchResult> {
+  const sms = args.settings.sms;
+  if (!args.phone) return { status: "failed", externalId: null, error: "Khách chưa có số điện thoại." };
+  if (!sms.enabled) {
+    return { status: "pending", externalId: null, error: "Kênh SMS chưa được bật trong Cấu hình kênh liên lạc." };
+  }
+
+  if (sms.provider === "esms") {
+    const apiKey = process.env["ESMS_API_KEY"];
+    const secretKey = process.env["ESMS_SECRET_KEY"];
+    if (!apiKey || !secretKey) {
+      return {
+        status: "pending",
+        externalId: null,
+        error: "Chưa có khoá eSMS — tin đã lưu, sẽ gửi sau khi kết nối.",
+      };
+    }
+    try {
+      const response = await fetch("https://rest.esms.vn/MainService.svc/json/SendMultipleMessage_V4_post_json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ApiKey: apiKey,
+          SecretKey: secretKey,
+          Phone: args.phone.replace(/\D/g, ""),
+          Content: args.text.slice(0, 500),
+          Brandname: sms.brandname || undefined,
+          SmsType: sms.brandname ? "2" : "8",
+        }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        CodeResult?: string;
+        ErrorMessage?: string;
+        SMSID?: string;
+      };
+      if (!response.ok || payload.CodeResult !== "100") {
+        return {
+          status: "failed",
+          externalId: null,
+          error: payload.ErrorMessage || `Nhà cung cấp SMS trả lỗi ${payload.CodeResult ?? response.status}`,
+        };
+      }
+      return { status: "sent", externalId: payload.SMSID ?? null, error: null };
+    } catch (error) {
+      return { status: "failed", externalId: null, error: (error as Error).message };
+    }
+  }
+
+  return {
+    status: "pending",
+    externalId: null,
+    error: "Nhà cung cấp SMS chưa được kết nối — tin đã lưu để gửi sau.",
+  };
+}
+
+/** Gửi email cho khách. Cần tên miền gửi email đã xác thực; chưa có → pending. */
+export async function sendEmailMessage(args: {
+  settings: ChannelSettings;
+  to: string | null;
+  subject: string;
+  text: string;
+  origin?: string | null;
+}): Promise<DispatchResult> {
+  if (!args.to) return { status: "failed", externalId: null, error: "Khách chưa có email." };
+  if (!args.settings.email.enabled) {
+    return { status: "pending", externalId: null, error: "Kênh email chưa được bật trong Cấu hình kênh liên lạc." };
+  }
+  const origin = args.origin || process.env["PUBLIC_SITE_URL"];
+  if (!origin) {
+    return {
+      status: "pending",
+      externalId: null,
+      error: "Chưa thiết lập tên miền gửi email — nội dung đã lưu, sẽ gửi sau khi thiết lập.",
+    };
+  }
+  try {
+    const response = await fetch(`${origin}/lovable/email/transactional/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        templateName: "agent-message",
+        recipientEmail: args.to,
+        templateData: { subject: args.subject, message: args.text },
+      }),
+    });
+    if (!response.ok) {
+      return {
+        status: "pending",
+        externalId: null,
+        error: "Chưa thiết lập tên miền gửi email — nội dung đã lưu, sẽ gửi sau khi thiết lập.",
+      };
+    }
+    return { status: "sent", externalId: null, error: null };
+  } catch {
+    return {
+      status: "pending",
+      externalId: null,
+      error: "Chưa thiết lập tên miền gửi email — nội dung đã lưu, sẽ gửi sau khi thiết lập.",
+    };
+  }
+}
