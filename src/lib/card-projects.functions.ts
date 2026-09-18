@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-/** Danh sách dự án của workspace để sale chọn gắn vào danh thiếp */
+/** Danh sách dự án của workspace để sale chọn gắn vào danh thiếp (kèm QR dự án) */
 export const listProjectOptions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid() }).parse(d))
@@ -16,8 +16,22 @@ export const listProjectOptions = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    const list = rows ?? [];
+    if (!list.length) return [];
+    const { data: qrs } = await context.supabase
+      .from("project_qr_codes")
+      .select("project_id, code, channel, scan_count")
+      .eq("tenant_id", data.tenantId)
+      .eq("is_active", true)
+      .in("project_id", list.map((p) => p.id))
+      .order("created_at", { ascending: true });
+    return list.map((p) => {
+      const qr = (qrs ?? []).find((q) => q.project_id === p.id && q.channel === "general")
+        ?? (qrs ?? []).find((q) => q.project_id === p.id);
+      return { ...p, qr_code: qr?.code ?? null, qr_scans: qr?.scan_count ?? 0 };
+    });
   });
+
 
 /** Các dự án đã gắn vào danh thiếp (theo thứ tự) */
 export const listCardProjects = createServerFn({ method: "GET" })

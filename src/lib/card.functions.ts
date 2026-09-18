@@ -23,7 +23,9 @@ const themeSchema = z.object({
   primary: z.string().max(20).optional(),
   background: z.string().max(40).optional(),
   font: z.string().max(40).optional(),
+  locked: z.array(z.string().max(40)).max(20).optional(),
 }).partial();
+
 
 function slugify(s: string) {
   return s
@@ -52,6 +54,16 @@ export const listMyCards = createServerFn({ method: "GET" })
     return rows ?? [];
   });
 
+/** Chức danh mặc định theo vai trò trong workspace */
+const ROLE_TITLE: Record<string, string> = {
+  owner: "Giám đốc sàn",
+  admin: "Quản trị sàn",
+  manager: "Trưởng phòng kinh doanh",
+  agent: "Chuyên viên kinh doanh",
+  viewer: "Thành viên",
+  platform_admin: "Platform Admin",
+};
+
 export const getOrCreateMyCard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { tenantId: string }) =>
@@ -59,25 +71,47 @@ export const getOrCreateMyCard = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const { data: existing } = await supabase
-      .from("cards")
-      .select("*")
-      .eq("tenant_id", data.tenantId)
-      .eq("owner_user_id", userId)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (existing) return existing;
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name, email, avatar_url")
-      .eq("user_id", userId)
-      .maybeSingle();
+    const [{ data: existing }, { data: profile }, { data: roleRow }, { data: tenant }] = await Promise.all([
+      supabase
+        .from("cards")
+        .select("*")
+        .eq("tenant_id", data.tenantId)
+        .eq("owner_user_id", userId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+      supabase.from("profiles").select("full_name, email, phone, avatar_url").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("tenant_id", data.tenantId).eq("user_id", userId).limit(1).maybeSingle(),
+      supabase.from("tenants").select("name").eq("id", data.tenantId).maybeSingle(),
+    ]);
 
-    const baseName = profile?.full_name || profile?.email?.split("@")[0] || "thanh-vien";
-    let baseSlug = slugify(baseName) || "thanh-vien";
+    const autoName = profile?.full_name || profile?.email?.split("@")[0] || "Họ và tên";
+    const autoTitle = ROLE_TITLE[roleRow?.role ?? "agent"] ?? "Chuyên viên kinh doanh";
+    const autoCompany = tenant?.name ?? null;
+    const autoAvatar = profile?.avatar_url ?? null;
+
+    if (existing) {
+      // Tự đồng bộ từ hồ sơ, trừ các trường sale đã tự sửa (theme.locked)
+      const theme = (existing.theme ?? {}) as Record<string, unknown>;
+      const locked = new Set(Array.isArray(theme.locked) ? (theme.locked as string[]) : []);
+      const patch: Record<string, unknown> = {};
+      if (!locked.has("display_name") && autoName && existing.display_name !== autoName) patch.display_name = autoName;
+      if (!locked.has("title") && existing.title !== autoTitle) patch.title = autoTitle;
+      if (!locked.has("company") && autoCompany && existing.company !== autoCompany) patch.company = autoCompany;
+      if (!locked.has("avatar_url") && autoAvatar && existing.avatar_url !== autoAvatar) patch.avatar_url = autoAvatar;
+      if (!Object.keys(patch).length) return existing;
+      const { data: synced } = await supabase
+        .from("cards")
+        .update(patch as never)
+        .eq("id", existing.id)
+        .select("*")
+        .single();
+      return synced ?? existing;
+    }
+
+    let baseSlug = slugify(autoName) || "thanh-vien";
     let slug = baseSlug;
     for (let i = 1; i < 50; i++) {
       const { data: clash } = await supabase
@@ -95,10 +129,15 @@ export const getOrCreateMyCard = createServerFn({ method: "POST" })
         tenant_id: data.tenantId,
         owner_user_id: userId,
         slug,
-        display_name: profile?.full_name || "Họ và tên",
-        avatar_url: profile?.avatar_url,
-        fields: [],
-        theme: { template: "luxury-dark", primary: "#A855F7", background: "skyline" },
+        display_name: autoName,
+        title: autoTitle,
+        company: autoCompany,
+        avatar_url: autoAvatar,
+        fields: [
+          ...(profile?.phone ? [{ type: "phone", label: "Gọi điện", value: profile.phone, href: `tel:${profile.phone}` }] : []),
+          ...(profile?.email ? [{ type: "email", label: "Email", value: profile.email, href: `mailto:${profile.email}` }] : []),
+        ],
+        theme: { template: "professional-dark", primary: "#2F6BFF", background: "skyline" },
         is_published: true,
       })
       .select("*")
@@ -106,6 +145,7 @@ export const getOrCreateMyCard = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return created;
   });
+
 
 const updateInput = z.object({
   id: z.string().uuid(),
@@ -127,14 +167,28 @@ export const updateMyCard = createServerFn({ method: "POST" })
   .inputValidator((d: z.infer<typeof updateInput>) => updateInput.parse(d))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
+    const patch = { ...data.patch } as Record<string, unknown>;
+
+    // Sale tự sửa danh tính -> khoá lại để tự đồng bộ hồ sơ không ghi đè
+    const identity = ["display_name", "title", "company", "avatar_url"] as const;
+    const touched = identity.filter((k) => k in data.patch);
+    if (touched.length) {
+      const { data: current } = await supabase.from("cards").select("theme").eq("id", data.id).maybeSingle();
+      const theme = { ...((current?.theme ?? {}) as Record<string, unknown>), ...((patch.theme ?? {}) as Record<string, unknown>) };
+      const locked = new Set(Array.isArray(theme.locked) ? (theme.locked as string[]) : []);
+      touched.forEach((k) => locked.add(k));
+      patch.theme = { ...theme, locked: Array.from(locked) };
+    }
+
     const { data: row, error } = await supabase
       .from("cards")
-      .update(data.patch as any)
+      .update(patch as any)
       .eq("id", data.id)
       .select("*")
       .single();
     if (error) throw new Error(error.message);
     return row;
+
   });
 
 export const checkSlugAvailable = createServerFn({ method: "POST" })

@@ -5,13 +5,15 @@ import { QrCode } from "@/components/qr-code";
 import { Button } from "@/components/ui/button";
 
 type Field = { type?: string; label: string; value?: string | null; href?: string | null };
-type Project = { id: string; name: string; city?: string | null; cover_url?: string | null; cover_mobile_url?: string | null };
+type Project = { id: string; name: string; city?: string | null; cover_url?: string | null; cover_mobile_url?: string | null; qr_code?: string | null };
 export type DigitalCardData = { slug: string; display_name: string; title?: string | null; company?: string | null; bio?: string | null; avatar_url?: string | null; fields?: unknown };
 const fieldsOf = (value: unknown) => Array.isArray(value) ? value as Field[] : [];
 
 export function DigitalCardPresentation({ card, projects, publicUrl }: { card: DigitalCardData; projects: Project[]; publicUrl: string }) {
   const [shared, setShared] = useState(false);
   const fields = fieldsOf(card.fields);
+  const origin = publicUrl.replace(/\/c\/.*$/, "");
+
   const phone = fields.find((field) => field.type === "phone");
   const zalo = fields.find((field) => field.type === "zalo");
   const share = async () => {
@@ -45,7 +47,7 @@ export function DigitalCardPresentation({ card, projects, publicUrl }: { card: D
       <div className="mx-auto rounded-lg bg-digital-ink p-2"><QrCode value={publicUrl} size={172} showDownload={false} /></div>
       <div className="min-w-0 text-center sm:text-left"><h2 className="text-lg font-semibold">QR danh thiếp của tôi</h2><p className="mt-1 text-sm leading-relaxed text-muted-foreground">Khách quét để mở Profile, lưu liên hệ và xem các dự án bạn đang bán.</p><div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">{phone?.href ? <a href={phone.href} className="inline-flex min-h-10 items-center rounded-lg border border-border px-3 text-sm">{phone.label || "Gọi điện"}</a> : null}{zalo?.href ? <a href={zalo.href} target="_blank" rel="noreferrer" className="inline-flex min-h-10 items-center rounded-lg border border-border px-3 text-sm">{zalo.label || "Zalo"}</a> : null}</div></div>
     </section>
-    {projects.length ? <section className="mt-4 rounded-xl border border-border bg-card p-5"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3"><div className="min-w-0"><h2 className="truncate text-lg font-semibold">Dự án đang bán</h2><p className="text-sm text-muted-foreground">{projects.length} dự án đã gắn vào danh thiếp</p></div><Link to="/profile" className="shrink-0 text-sm font-medium text-primary">Xem Profile</Link></div><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{projects.slice(0,3).map(project => <div key={project.id} className="flex items-center gap-3 rounded-lg border border-border p-3"><Building2 className="h-5 w-5 shrink-0 text-gold" /><div className="min-w-0"><p className="truncate text-sm font-medium">{project.name}</p><p className="truncate text-xs text-muted-foreground">{project.city || "Dự án bất động sản"}</p></div></div>)}</div></section> : null}
+    {projects.length ? <section className="mt-4 rounded-xl border border-border bg-card p-5"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3"><div className="min-w-0"><h2 className="truncate text-lg font-semibold">QR dự án đang bán</h2><p className="text-sm text-muted-foreground">Khách quét để mở đúng trang dự án bạn đang tư vấn</p></div><Link to="/profile" className="shrink-0 text-sm font-medium text-primary">Xem Profile</Link></div><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{projects.slice(0,6).map(project => <div key={project.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border p-3"><div className="flex min-w-0 items-center gap-3"><Building2 className="h-5 w-5 shrink-0 text-gold" /><div className="min-w-0"><p className="truncate text-sm font-medium">{project.name}</p><p className="truncate text-xs text-muted-foreground">{project.city || "Dự án bất động sản"}</p></div></div>{project.qr_code ? <div className="shrink-0 rounded-md bg-digital-ink p-1"><QrCode value={`${origin}/api/public/pq/${project.qr_code}`} size={64} showDownload={false} /></div> : <span className="shrink-0 text-xs text-muted-foreground">Chưa có QR</span>}</div>)}</div></section> : null}
   </div>;
 }
 
