@@ -21,6 +21,7 @@ import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as DuAnCodeRouteImport } from './routes/du-an.$code'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
+import { Route as ApiCardPortraitRouteImport } from './routes/api/card-portrait'
 import { Route as AcceptInviteTokenRouteImport } from './routes/accept-invite.$token'
 import { Route as AppWalletRouteImport } from './routes/_app.wallet'
 import { Route as AppTimelineRouteImport } from './routes/_app.timeline'
@@ -130,6 +131,11 @@ const DuAnCodeRoute = DuAnCodeRouteImport.update({
 const CSlugRoute = CSlugRouteImport.update({
   id: '/c/$slug',
   path: '/c/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCardPortraitRoute = ApiCardPortraitRouteImport.update({
+  id: '/api/card-portrait',
+  path: '/api/card-portrait',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AcceptInviteTokenRoute = AcceptInviteTokenRouteImport.update({
@@ -432,6 +438,7 @@ export interface FileRoutesByFullPath {
   '/timeline': typeof AppTimelineRoute
   '/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
+  '/api/card-portrait': typeof ApiCardPortraitRoute
   '/c/$slug': typeof CSlugRoute
   '/du-an/$code': typeof DuAnCodeRoute
   '/f/$slug': typeof FSlugRoute
@@ -494,6 +501,7 @@ export interface FileRoutesByTo {
   '/timeline': typeof AppTimelineRoute
   '/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
+  '/api/card-portrait': typeof ApiCardPortraitRoute
   '/c/$slug': typeof CSlugRoute
   '/du-an/$code': typeof DuAnCodeRoute
   '/f/$slug': typeof FSlugRoute
@@ -560,6 +568,7 @@ export interface FileRoutesById {
   '/_app/timeline': typeof AppTimelineRoute
   '/_app/wallet': typeof AppWalletRoute
   '/accept-invite/$token': typeof AcceptInviteTokenRoute
+  '/api/card-portrait': typeof ApiCardPortraitRoute
   '/c/$slug': typeof CSlugRoute
   '/du-an/$code': typeof DuAnCodeRoute
   '/f/$slug': typeof FSlugRoute
@@ -626,6 +635,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/wallet'
     | '/accept-invite/$token'
+    | '/api/card-portrait'
     | '/c/$slug'
     | '/du-an/$code'
     | '/f/$slug'
@@ -688,6 +698,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/wallet'
     | '/accept-invite/$token'
+    | '/api/card-portrait'
     | '/c/$slug'
     | '/du-an/$code'
     | '/f/$slug'
@@ -753,6 +764,7 @@ export interface FileRouteTypes {
     | '/_app/timeline'
     | '/_app/wallet'
     | '/accept-invite/$token'
+    | '/api/card-portrait'
     | '/c/$slug'
     | '/du-an/$code'
     | '/f/$slug'
@@ -784,6 +796,7 @@ export interface RootRouteChildren {
   ThankYouRoute: typeof ThankYouRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   AcceptInviteTokenRoute: typeof AcceptInviteTokenRoute
+  ApiCardPortraitRoute: typeof ApiCardPortraitRoute
   CSlugRoute: typeof CSlugRoute
   DuAnCodeRoute: typeof DuAnCodeRoute
   FSlugRoute: typeof FSlugRoute
@@ -883,6 +896,13 @@ declare module '@tanstack/react-router' {
       path: '/c/$slug'
       fullPath: '/c/$slug'
       preLoaderRoute: typeof CSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/card-portrait': {
+      id: '/api/card-portrait'
+      path: '/api/card-portrait'
+      fullPath: '/api/card-portrait'
+      preLoaderRoute: typeof ApiCardPortraitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/accept-invite/$token': {
@@ -1376,6 +1396,7 @@ const rootRouteChildren: RootRouteChildren = {
   ThankYouRoute: ThankYouRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   AcceptInviteTokenRoute: AcceptInviteTokenRoute,
+  ApiCardPortraitRoute: ApiCardPortraitRoute,
   CSlugRoute: CSlugRoute,
   DuAnCodeRoute: DuAnCodeRoute,
   FSlugRoute: FSlugRoute,
