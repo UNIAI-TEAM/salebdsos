@@ -38,8 +38,8 @@ const groups: Group[] = [
       { to: "/customers", label: "Khách hàng", icon: UserSquare2 },
       { to: "/pipeline", label: "Pipeline", icon: GitBranch },
       { to: "/appointments", label: "Lịch hẹn", icon: CalendarClock },
-      { to: "/lead-routing", label: "Phân phối lead", icon: Share2 },
-        { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon, roles: ["owner", "admin", "manager", "agent"] },
+      { to: "/lead-routing", label: "Phân phối lead", icon: Zap, roles: ["owner", "admin", "manager"] },
+      { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon, roles: ["owner", "admin", "manager", "agent"] },
     ],
   },
   {
