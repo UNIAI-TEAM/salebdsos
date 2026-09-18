@@ -35,9 +35,36 @@ function NotFoundComponent() {
   );
 }
 
+/** Lỗi tải mảnh mã cũ sau khi app có bản mới → tự tải lại 1 lần. */
+function isStaleChunkError(error: Error): boolean {
+  const m = `${error?.message ?? ""}`.toLowerCase();
+  return (
+    m.includes("importing a module script failed") ||
+    m.includes("failed to fetch dynamically imported module") ||
+    m.includes("error loading dynamically imported module") ||
+    m.includes("unable to preload css")
+  );
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const stale = isStaleChunkError(error);
+  React.useEffect(() => {
+    if (!stale || typeof window === "undefined") return;
+    const key = "stale-chunk-reloaded-at";
+    const last = Number(sessionStorage.getItem(key) || 0);
+    if (Date.now() - last < 20000) return;
+    sessionStorage.setItem(key, String(Date.now()));
+    window.location.reload();
+  }, [stale]);
+  if (stale) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <p className="text-sm text-muted-foreground">Đang cập nhật phiên bản mới…</p>
+      </div>
+    );
+  }
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
