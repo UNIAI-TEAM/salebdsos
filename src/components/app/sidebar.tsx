@@ -77,16 +77,14 @@ const groups: Group[] = [
   },
 ];
 
-/** Chế độ Sale trên điện thoại: chỉ landing công khai, danh thiếp và timeline. */
+/** Chế độ Sale trên điện thoại: gọn nhất, không lặp lại thanh dưới. */
 const saleMobileGroups: Group[] = [
   {
     label: "Dành cho Sale",
     items: [
-      { to: "/landings", label: "Landing công khai", icon: Globe2 },
-      { to: "/sale-overview", label: "Tổng quan Sale", icon: ContactRound },
       { to: "/digital-card", label: "Danh thiếp", icon: IdCard },
-      { to: "/profile", label: "Profile", icon: UserSquare2 },
-      { to: "/digital-card/edit", label: "Sửa danh thiếp", icon: Settings },
+      { to: "/sale-overview", label: "Tổng quan Sale", icon: ContactRound },
+      { to: "/landings", label: "Landing công khai", icon: Globe2 },
       { to: "/timeline", label: "Timeline", icon: Activity },
     ],
   },
