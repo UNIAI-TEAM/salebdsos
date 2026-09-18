@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Building2, CalendarClock, CheckCircle2, FileSignature, QrCode, RefreshCw, ScanLine, UserRoundCheck } from "lucide-react";
+import { Activity, AlarmClock, Building2, CalendarClock, CheckCircle2, FileSignature, PhoneCall, QrCode, RefreshCw, ScanLine, Snowflake, UserRoundCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getSaleOverview } from "@/lib/sale-overview.functions";
 import { PageHeader, SectionCard } from "@/components/app/ui";
@@ -146,6 +146,61 @@ function SaleOverviewPage() {
               </>
             )}
           </SectionCard>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <SectionCard
+              title={`Cần gọi ngay · ${data.slaAlerts.length}`}
+              action={
+                <Badge variant={data.slaAlerts.length ? "destructive" : "outline"} className="shrink-0 text-[10px]">
+                  Hạn gọi {data.routing.slaMinutes} phút
+                </Badge>
+              }
+            >
+              {data.slaAlerts.length === 0 ? (
+                <Empty text={data.slaDueSoon > 0 ? `${data.slaDueSoon} khách mới còn trong hạn gọi.` : "Không có khách nào trễ hạn gọi."} />
+              ) : (
+                <ul className="space-y-2">
+                  {data.slaAlerts.map((lead) => (
+                    <li key={lead.id} className="flex min-w-0 gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-3">
+                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-destructive/10 text-destructive"><AlarmClock className="h-4 w-4" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">{lead.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{[lead.phone, lead.projectName, lead.source].filter(Boolean).join(" · ")}</p>
+                        <p className="text-[11px] font-medium text-destructive">Trễ {lead.overdueMinutes} phút · nhận lúc {formatTime(lead.at)}</p>
+                      </div>
+                      {lead.phone ? (
+                        <a href={`tel:${lead.phone}`} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground" aria-label={`Gọi ${lead.name}`}>
+                          <PhoneCall className="h-4 w-4" />
+                        </a>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {!data.routing.enabled ? (
+                <p className="mt-3 text-[11px] text-muted-foreground">Phân phối khách tự động đang tắt — quản lý có thể bật trong mục Phân phối lead.</p>
+              ) : null}
+            </SectionCard>
+            <SectionCard
+              title={`Lead nguội · ${data.coldLeads.length}`}
+              action={<Badge variant="outline" className="shrink-0 text-[10px]">Không cập nhật {data.routing.coldDays} ngày</Badge>}
+            >
+              {data.coldLeads.length === 0 ? <Empty text="Tất cả khách đang chăm sóc đều được cập nhật." /> : (
+                <ul className="space-y-2">
+                  {data.coldLeads.map((lead) => (
+                    <li key={lead.id} className="flex min-w-0 gap-3 rounded-xl border border-border p-3">
+                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-warning/10 text-warning"><Snowflake className="h-4 w-4" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">{lead.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{[STATUS_LABEL[lead.status] ?? lead.status, lead.projectName].filter(Boolean).join(" · ")}</p>
+                        <p className="text-[11px] text-muted-foreground">Im lặng {lead.idleDays} ngày · cập nhật {formatTime(lead.at)}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
+          </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
             <SectionCard title="Lịch hẹn sắp tới" action={<Link to="/appointments" className="text-xs font-medium text-primary">Xem lịch</Link>}>
