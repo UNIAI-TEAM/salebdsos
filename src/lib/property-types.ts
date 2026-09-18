@@ -3,6 +3,8 @@
 export const PROPERTY_KINDS = [
   "apartment",
   "land_plot",
+  "subdivision",
+  "house_land",
   "townhouse",
   "social_housing",
 ] as const;
