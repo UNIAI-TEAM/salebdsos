@@ -597,7 +597,7 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
 
     // Danh thiếp số của chuyên viên để khách quét/lưu ngay trên landing
     let saleCard:
-      | { slug: string; display_name: string; title: string | null; company: string | null; avatar_url: string | null }
+      | { slug: string; display_name: string; title: string | null; company: string | null; avatar_url: string | null; metrics: import("@/components/sale-trust-metrics").PublicSaleMetrics }
       | null = null;
     if (row.owner_user_id) {
       const { data: card } = await supabaseAdmin
@@ -609,7 +609,13 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      saleCard = card ?? null;
+      if (card) {
+        const { getPublicSaleMetrics } = await import("@/lib/public-sale-metrics.server");
+        saleCard = {
+          ...card,
+          metrics: await getPublicSaleMetrics(row.tenant_id, row.owner_user_id),
+        };
+      }
     }
 
     return {
