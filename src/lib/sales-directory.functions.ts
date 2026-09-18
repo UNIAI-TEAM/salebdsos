@@ -207,17 +207,41 @@ export const inviteSale = createServerFn({ method: "POST" })
     email: z.string().trim().email().max(254),
     phone: z.string().trim().max(30).optional(),
     role: saleRoleSchema,
+    redirectTo: z.string().url().optional(),
   }).parse(d))
   .handler(async ({ context, data }) => {
     await assertSaleAdmin(context.supabase, context.userId, data.tenantId);
-    const { data: invitation, error } = await context.supabase.from("invitations").insert({
-      tenant_id: data.tenantId,
-      email: data.email.toLowerCase(),
-      role: data.role,
-      invited_by: context.userId,
-    }).select("id,token,email,role,expires_at").single();
-    if (error || !invitation) throw new Error(error?.message ?? "Không tạo được lời mời");
-    return { ...invitation, fullName: data.fullName, phone: data.phone ?? null };
+    const email = data.email.toLowerCase();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existingProfile } = await supabaseAdmin.from("profiles").select("user_id").eq("email", email).maybeSingle();
+    let targetUserId = existingProfile?.user_id as string | undefined;
+    let invited = false;
+    if (!targetUserId) {
+      const { data: invitedUser, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+        data: { full_name: data.fullName, phone: data.phone ?? null },
+        redirectTo: data.redirectTo,
+      });
+      if (inviteError || !invitedUser.user) throw new Error(inviteError?.message ?? "Không gửi được email mời");
+      targetUserId = invitedUser.user.id;
+      invited = true;
+    }
+    const { data: existingRole } = await supabaseAdmin.from("user_roles").select("id")
+      .eq("tenant_id", data.tenantId).eq("user_id", targetUserId).maybeSingle();
+    const [{ error: profileError }, { error: roleError }, { data: tenant }] = await Promise.all([
+      supabaseAdmin.from("profiles").upsert({
+        user_id: targetUserId, email, full_name: data.fullName, phone: data.phone ?? null, default_tenant_id: data.tenantId,
+      } as never, { onConflict: "user_id" }),
+      existingRole
+        ? supabaseAdmin.from("user_roles").update({ role: data.role } as never).eq("id", existingRole.id)
+        : supabaseAdmin.from("user_roles").insert({ tenant_id: data.tenantId, user_id: targetUserId, role: data.role } as never),
+      supabaseAdmin.from("tenants").select("name").eq("id", data.tenantId).maybeSingle(),
+    ]);
+    if (profileError) throw new Error(profileError.message);
+    if (roleError) throw new Error(roleError.message);
+    await ensureSaleCard(supabaseAdmin, {
+      tenantId: data.tenantId, userId: targetUserId, name: data.fullName, role: data.role, company: tenant?.name ?? null,
+    });
+    return { userId: targetUserId, email, invited };
   });
 
 const managedFieldSchema = z.object({
