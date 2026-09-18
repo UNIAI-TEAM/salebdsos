@@ -67,7 +67,7 @@ const groups: Group[] = [
     label: "Quản lý",
     items: [
       { to: "/members", label: "Thành viên & Vai trò", icon: ShieldCheck, roles: ["owner", "admin"] },
-      { to: "/sales-directory", label: "Danh sách Sale", icon: IdCard, roles: ["owner", "admin", "manager"] },
+      { to: "/sales-directory", label: "Quản lý Sale", icon: IdCard, roles: ["owner", "admin", "manager"] },
       { to: "/team", label: "Team Management", icon: Users2, roles: ["owner", "admin", "manager"] },
       { to: "/products", label: "Sản phẩm", icon: Package },
       { to: "/files", label: "Tài liệu & Brochure", icon: FolderArchive },
