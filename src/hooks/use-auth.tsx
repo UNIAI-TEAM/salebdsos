@@ -21,6 +21,8 @@ type AuthCtx = {
   user: User | null;
   loading: boolean;
   tenants: TenantSummary[];
+  /** Đã tải xong danh sách workspace của người dùng */
+  tenantsLoaded: boolean;
   isPlatformAdmin: boolean;
   currentTenant: TenantSummary | null;
   currentRole: Role | null;
@@ -43,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [tenants, setTenants] = useState<TenantSummary[]>([]);
+  const [tenantsLoaded, setTenantsLoaded] = useState(false);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [currentTenantId, setCurrentTenantId] = useState<string | null>(
     typeof window !== "undefined" ? localStorage.getItem(TENANT_KEY) : null,
@@ -67,6 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setTenantsLoaded(true);
     }
   }, [fetchTenants, currentTenantId]);
 
@@ -75,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       if (!s) {
         setTenants([]);
+        setTenantsLoaded(false);
         setIsPlatformAdmin(false);
         setCurrentTenantId(null);
         if (typeof window !== "undefined") localStorage.removeItem(TENANT_KEY);
@@ -110,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       loading,
       tenants,
+      tenantsLoaded,
       isPlatformAdmin,
       currentTenant,
       currentRole,
@@ -126,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       canEdit: permissionsFor(currentRole).edit,
       canManageMembers: permissionsFor(currentRole).manageMembers,
     };
-  }, [session, loading, tenants, isPlatformAdmin, currentTenantId, switchTenant, refreshTenants, signOut]);
+  }, [session, loading, tenants, tenantsLoaded, isPlatformAdmin, currentTenantId, switchTenant, refreshTenants, signOut]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
