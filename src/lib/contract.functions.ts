@@ -42,8 +42,8 @@ async function access(context: Ctx, tenantId: string) {
     .eq("user_id", context.userId);
   if (error) throw new Error(error.message);
   const roles = (data ?? []).map((r: any) => r.role as string);
-  if (!roles.some((r) => SALE_ROLES.has(r))) throw new Error("Bạn không có quyền xem hợp đồng của workspace này");
-  return { roles, canManage: roles.some((r) => MANAGER_ROLES.has(r)) };
+  if (!roles.some((r: string) => SALE_ROLES.has(r))) throw new Error("Bạn không có quyền xem hợp đồng của workspace này");
+  return { roles, canManage: roles.some((r: string) => MANAGER_ROLES.has(r)) };
 }
 
 async function loadContract(context: Ctx, id: string) {
@@ -322,7 +322,7 @@ export const updateContract = createServerFn({ method: "POST" })
     const { contract, canManage } = await guard(context as Ctx, data.id);
     if (data.ownerUserId !== undefined && !canManage) throw new Error("Chỉ quản lý được đổi người phụ trách");
 
-    const patch: Record<string, unknown> = {};
+    const patch: Record<string, any> = {};
     if (data.code !== undefined) patch.code = data.code;
     if (data.customerId !== undefined) patch.customer_id = data.customerId;
     if (data.ownerUserId !== undefined) patch.owner_user_id = data.ownerUserId;
@@ -557,7 +557,7 @@ export const setCommissionStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     await guard(context as Ctx, row.contract_id, true);
 
-    const patch: Record<string, unknown> = { status: data.status };
+    const patch: Record<string, any> = { status: data.status };
     if (data.status === "approved") {
       patch.approved_by = userId;
       patch.approved_at = new Date().toISOString();
