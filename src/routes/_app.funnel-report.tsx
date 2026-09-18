@@ -132,7 +132,7 @@ function FunnelReportPage() {
     <div className="space-y-4">
       <PageHeader
         title="Báo cáo phễu bán hàng"
-        description="Khách gửi thông tin → giỏ hàng → hợp đồng, kèm tỷ lệ chuyển đổi theo dự án và nguồn khách."
+        sub="Khách gửi thông tin → giỏ hàng → hợp đồng, kèm tỷ lệ chuyển đổi theo dự án và nguồn khách."
         action={
           <Button variant="outline" size="sm" onClick={() => query.refetch()} disabled={query.isFetching}>
             <RefreshCw className={`h-4 w-4 ${query.isFetching ? "animate-spin" : ""}`} />
