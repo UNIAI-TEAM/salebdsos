@@ -343,7 +343,7 @@ export const updateContract = createServerFn({ method: "POST" })
 
     const { data: row, error } = await context.supabase
       .from("contracts")
-      .update(patch)
+      .update(patch as never)
       .eq("id", data.id)
       .select(CONTRACT_SELECT)
       .single();
@@ -569,7 +569,7 @@ export const setCommissionStatus = createServerFn({ method: "POST" })
       patch.approved_by = null;
       patch.paid_at = null;
     }
-    const { error: upErr } = await supabase.from("contract_commissions").update(patch).eq("id", data.id);
+    const { error: upErr } = await supabase.from("contract_commissions").update(patch as never).eq("id", data.id);
     if (upErr) throw new Error(upErr.message);
     return { ok: true };
   });
