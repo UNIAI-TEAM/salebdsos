@@ -49,7 +49,7 @@ export function DigitalCardPresentation({ card, projects, publicUrl }: { card: D
   </div>;
 }
 
-function Action({ icon: Icon, label, onClick, active }: { icon: typeof Share2; label: string; onClick: () => void; active?: boolean }) { return <button type="button" onClick={onClick} className="flex min-h-20 flex-col items-center justify-center gap-2 px-1 text-center text-xs text-muted-foreground hover:bg-muted">{active ? <Check className="h-5 w-5 text-success" /> : <Icon className="h-5 w-5 text-foreground" />}{label}</button>; }
+function Action({ icon: Icon, label, onClick, active }: { icon: typeof Share2; label: string; onClick: () => void; active?: boolean }) { return <Button type="button" variant="ghost" onClick={onClick} className="h-20 rounded-none flex-col gap-2 px-1 text-center text-xs font-normal text-muted-foreground hover:bg-muted hover:text-foreground">{active ? <Check className="h-5 w-5 text-success" /> : <Icon className="h-5 w-5 text-foreground" />}{label}</Button>; }
 
 export function ProfilePresentation({ card, projects, publicUrl }: { card: DigitalCardData; projects: Project[]; publicUrl: string }) {
   const fields = fieldsOf(card.fields);

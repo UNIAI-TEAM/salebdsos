@@ -23,10 +23,10 @@ export const Route = createFileRoute("/_app/digital-card/edit")({
   component: DigitalCardPage,
   head: () => ({
     meta: [
-      { title: "Danh thiếp số | SaleBDS OS" },
-      { name: "description", content: "Tạo và chia sẻ danh thiếp số chuyên nghiệp dành cho Sale bất động sản." },
-      { property: "og:title", content: "Danh thiếp số | SaleBDS OS" },
-      { property: "og:description", content: "Tạo và chia sẻ danh thiếp số chuyên nghiệp dành cho Sale bất động sản." },
+      { title: "Sửa danh thiếp | SaleBDS OS" },
+      { name: "description", content: "Cập nhật nội dung, liên hệ, dự án và thiết kế danh thiếp Sale." },
+      { property: "og:title", content: "Sửa danh thiếp | SaleBDS OS" },
+      { property: "og:description", content: "Cập nhật nội dung, liên hệ, dự án và thiết kế danh thiếp Sale." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -225,7 +225,7 @@ function DigitalCardPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight">Danh thiếp & Profile</h1>
+          <h1 className="text-[22px] font-bold tracking-tight">Sửa danh thiếp</h1>
           <p className="text-[13px] text-muted-foreground mt-1">Tạo & chỉnh sửa danh thiếp điện tử của bạn.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
