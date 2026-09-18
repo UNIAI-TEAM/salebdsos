@@ -24,6 +24,9 @@ export type FunnelRow = {
   submittedToCart: number;
   cartToContract: number;
   submittedToContract: number;
+  contractValue: number;
+  collected: number;
+  collectRate: number;
 };
 
 function rate(numerator: number, denominator: number) {

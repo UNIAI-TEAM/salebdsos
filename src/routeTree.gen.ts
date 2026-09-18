@@ -53,6 +53,7 @@ import { Route as AppFilesRouteImport } from './routes/_app.files'
 import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
 import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppContractsRouteImport } from './routes/_app.contracts'
 import { Route as AppContentLibraryRouteImport } from './routes/_app.content-library'
 import { Route as AppCardDesignerRouteImport } from './routes/_app.card-designer'
 import { Route as AppAuthSettingsRouteImport } from './routes/_app.auth-settings'
@@ -301,6 +302,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppContractsRoute = AppContractsRouteImport.update({
+  id: '/contracts',
+  path: '/contracts',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppContentLibraryRoute = AppContentLibraryRouteImport.update({
   id: '/content-library',
   path: '/content-library',
@@ -460,6 +466,7 @@ export interface FileRoutesByFullPath {
   '/auth-settings': typeof AppAuthSettingsRoute
   '/card-designer': typeof AppCardDesignerRoute
   '/content-library': typeof AppContentLibraryRoute
+  '/contracts': typeof AppContractsRoute
   '/dashboard': typeof AppDashboardRoute
   '/digital-card': typeof AppDigitalCardRouteWithChildren
   '/dynamic-qr': typeof AppDynamicQrRoute
@@ -533,6 +540,7 @@ export interface FileRoutesByTo {
   '/auth-settings': typeof AppAuthSettingsRoute
   '/card-designer': typeof AppCardDesignerRoute
   '/content-library': typeof AppContentLibraryRoute
+  '/contracts': typeof AppContractsRoute
   '/dashboard': typeof AppDashboardRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/files': typeof AppFilesRoute
@@ -606,6 +614,7 @@ export interface FileRoutesById {
   '/_app/auth-settings': typeof AppAuthSettingsRoute
   '/_app/card-designer': typeof AppCardDesignerRoute
   '/_app/content-library': typeof AppContentLibraryRoute
+  '/_app/contracts': typeof AppContractsRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/digital-card': typeof AppDigitalCardRouteWithChildren
   '/_app/dynamic-qr': typeof AppDynamicQrRoute
@@ -681,6 +690,7 @@ export interface FileRouteTypes {
     | '/auth-settings'
     | '/card-designer'
     | '/content-library'
+    | '/contracts'
     | '/dashboard'
     | '/digital-card'
     | '/dynamic-qr'
@@ -754,6 +764,7 @@ export interface FileRouteTypes {
     | '/auth-settings'
     | '/card-designer'
     | '/content-library'
+    | '/contracts'
     | '/dashboard'
     | '/dynamic-qr'
     | '/files'
@@ -826,6 +837,7 @@ export interface FileRouteTypes {
     | '/_app/auth-settings'
     | '/_app/card-designer'
     | '/_app/content-library'
+    | '/_app/contracts'
     | '/_app/dashboard'
     | '/_app/digital-card'
     | '/_app/dynamic-qr'
@@ -1223,6 +1235,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/contracts': {
+      id: '/_app/contracts'
+      path: '/contracts'
+      fullPath: '/contracts'
+      preLoaderRoute: typeof AppContractsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/content-library': {
       id: '/_app/content-library'
       path: '/content-library'
@@ -1472,6 +1491,7 @@ interface AppRouteChildren {
   AppAuthSettingsRoute: typeof AppAuthSettingsRoute
   AppCardDesignerRoute: typeof AppCardDesignerRoute
   AppContentLibraryRoute: typeof AppContentLibraryRoute
+  AppContractsRoute: typeof AppContractsRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppDigitalCardRoute: typeof AppDigitalCardRouteWithChildren
   AppDynamicQrRoute: typeof AppDynamicQrRoute
@@ -1516,6 +1536,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAuthSettingsRoute: AppAuthSettingsRoute,
   AppCardDesignerRoute: AppCardDesignerRoute,
   AppContentLibraryRoute: AppContentLibraryRoute,
+  AppContractsRoute: AppContractsRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppDigitalCardRoute: AppDigitalCardRouteWithChildren,
   AppDynamicQrRoute: AppDynamicQrRoute,
