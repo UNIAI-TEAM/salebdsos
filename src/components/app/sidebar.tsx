@@ -5,6 +5,7 @@ import {
   Wallet, QrCode, MessagesSquare, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
   PanelLeftClose, PanelLeftOpen, X, BookMarked, Route as RouteIcon, ContactRound,
   LayoutGrid,
+  Filter,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
@@ -71,6 +72,7 @@ const groups: Group[] = [
     items: [
       { to: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
       { to: "/sale-overview", label: "Tổng quan Sale", icon: ContactRound },
+      { to: "/funnel-report", label: "Báo cáo phễu", icon: Filter },
       { to: "/analytics", label: "Báo cáo & Analytics", icon: BarChart3, roles: ["owner", "admin", "manager"] },
     ],
   },
