@@ -573,7 +573,7 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       qrCode = qr?.code ?? null;
     }
 
-    // Giỏ hàng còn trống được bật hiển thị công khai
+    // Giỏ hàng được bật hiển thị công khai — bảng giá & bảng trạng thái theo loại hình
     let inventory: Array<{
       id: string;
       code: string | null;
@@ -582,23 +582,29 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       zone: string | null;
       floor: number | null;
       area: number | null;
+      usable_area: number | null;
       bedrooms: number | null;
+      bathrooms: number | null;
       direction: string | null;
+      legal_status: string | null;
+      listing_status: string | null;
       price: number;
       currency: string;
+      attributes: Record<string, unknown> | null;
     }> = [];
     if (row.project_id) {
       const { data: units } = await supabaseAdmin
         .from("products")
-        .select("id,code,name,product_type,zone,floor,area,bedrooms,direction,price,currency")
+        .select(
+          "id,code,name,product_type,zone,floor,area,usable_area,bedrooms,bathrooms,direction,legal_status,listing_status,price,currency,attributes",
+        )
         .eq("project_id", row.project_id)
         .eq("is_public", true)
         .eq("status", "active")
-        .eq("listing_status", "available")
         .order("zone", { ascending: true })
         .order("floor", { ascending: true })
-        .limit(60);
-      inventory = units ?? [];
+        .limit(300);
+      inventory = (units ?? []) as typeof inventory;
     }
 
 
