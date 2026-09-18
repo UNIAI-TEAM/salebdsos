@@ -28,6 +28,7 @@ import { Route as AppTeamRouteImport } from './routes/_app.team'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppSalesDirectoryRouteImport } from './routes/_app.sales-directory'
 import { Route as AppSaleProjectsRouteImport } from './routes/_app.sale-projects'
+import { Route as AppSaleOverviewRouteImport } from './routes/_app.sale-overview'
 import { Route as AppSaleLandingsRouteImport } from './routes/_app.sale-landings'
 import { Route as AppSaleCustomersRouteImport } from './routes/_app.sale-customers'
 import { Route as AppQrSharingRouteImport } from './routes/_app.qr-sharing'
@@ -164,6 +165,11 @@ const AppSalesDirectoryRoute = AppSalesDirectoryRouteImport.update({
 const AppSaleProjectsRoute = AppSaleProjectsRouteImport.update({
   id: '/sale-projects',
   path: '/sale-projects',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSaleOverviewRoute = AppSaleOverviewRouteImport.update({
+  id: '/sale-overview',
+  path: '/sale-overview',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSaleLandingsRoute = AppSaleLandingsRouteImport.update({
@@ -418,6 +424,7 @@ export interface FileRoutesByFullPath {
   '/qr-sharing': typeof AppQrSharingRoute
   '/sale-customers': typeof AppSaleCustomersRoute
   '/sale-landings': typeof AppSaleLandingsRoute
+  '/sale-overview': typeof AppSaleOverviewRoute
   '/sale-projects': typeof AppSaleProjectsRoute
   '/sales-directory': typeof AppSalesDirectoryRoute
   '/settings': typeof AppSettingsRoute
@@ -479,6 +486,7 @@ export interface FileRoutesByTo {
   '/qr-sharing': typeof AppQrSharingRoute
   '/sale-customers': typeof AppSaleCustomersRoute
   '/sale-landings': typeof AppSaleLandingsRoute
+  '/sale-overview': typeof AppSaleOverviewRoute
   '/sale-projects': typeof AppSaleProjectsRoute
   '/sales-directory': typeof AppSalesDirectoryRoute
   '/settings': typeof AppSettingsRoute
@@ -544,6 +552,7 @@ export interface FileRoutesById {
   '/_app/qr-sharing': typeof AppQrSharingRoute
   '/_app/sale-customers': typeof AppSaleCustomersRoute
   '/_app/sale-landings': typeof AppSaleLandingsRoute
+  '/_app/sale-overview': typeof AppSaleOverviewRoute
   '/_app/sale-projects': typeof AppSaleProjectsRoute
   '/_app/sales-directory': typeof AppSalesDirectoryRoute
   '/_app/settings': typeof AppSettingsRoute
@@ -609,6 +618,7 @@ export interface FileRouteTypes {
     | '/qr-sharing'
     | '/sale-customers'
     | '/sale-landings'
+    | '/sale-overview'
     | '/sale-projects'
     | '/sales-directory'
     | '/settings'
@@ -670,6 +680,7 @@ export interface FileRouteTypes {
     | '/qr-sharing'
     | '/sale-customers'
     | '/sale-landings'
+    | '/sale-overview'
     | '/sale-projects'
     | '/sales-directory'
     | '/settings'
@@ -734,6 +745,7 @@ export interface FileRouteTypes {
     | '/_app/qr-sharing'
     | '/_app/sale-customers'
     | '/_app/sale-landings'
+    | '/_app/sale-overview'
     | '/_app/sale-projects'
     | '/_app/sales-directory'
     | '/_app/settings'
@@ -920,6 +932,13 @@ declare module '@tanstack/react-router' {
       path: '/sale-projects'
       fullPath: '/sale-projects'
       preLoaderRoute: typeof AppSaleProjectsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sale-overview': {
+      id: '/_app/sale-overview'
+      path: '/sale-overview'
+      fullPath: '/sale-overview'
+      preLoaderRoute: typeof AppSaleOverviewRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/sale-landings': {
@@ -1295,6 +1314,7 @@ interface AppRouteChildren {
   AppQrSharingRoute: typeof AppQrSharingRoute
   AppSaleCustomersRoute: typeof AppSaleCustomersRoute
   AppSaleLandingsRoute: typeof AppSaleLandingsRoute
+  AppSaleOverviewRoute: typeof AppSaleOverviewRoute
   AppSaleProjectsRoute: typeof AppSaleProjectsRoute
   AppSalesDirectoryRoute: typeof AppSalesDirectoryRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -1334,6 +1354,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppQrSharingRoute: AppQrSharingRoute,
   AppSaleCustomersRoute: AppSaleCustomersRoute,
   AppSaleLandingsRoute: AppSaleLandingsRoute,
+  AppSaleOverviewRoute: AppSaleOverviewRoute,
   AppSaleProjectsRoute: AppSaleProjectsRoute,
   AppSalesDirectoryRoute: AppSalesDirectoryRoute,
   AppSettingsRoute: AppSettingsRoute,
