@@ -234,16 +234,24 @@ export const createContractFromProduct = createServerFn({ method: "POST" })
 
     let projectId = data.projectId ?? null;
     let salePrice = data.salePrice;
+    let dealId: string | null = data.dealId ?? null;
+    let leadId: string | null = data.leadId ?? null;
     if (data.productId) {
       const { data: product, error } = await supabase
         .from("products")
-        .select("id,project_id,price,currency,listing_status,tenant_id")
+        .select("id,project_id,price,currency,listing_status,tenant_id,deal_id")
         .eq("id", data.productId)
         .single();
       if (error) throw new Error(error.message);
       if (product.tenant_id !== data.tenantId) throw new Error("Sản phẩm không thuộc workspace này");
       projectId = projectId ?? product.project_id;
       if (!salePrice) salePrice = Number(product.price ?? 0);
+      if (!dealId && product.deal_id) dealId = product.deal_id;
+    }
+
+    if (dealId && !leadId) {
+      const { data: deal } = await supabase.from("pipeline_deals").select("lead_id").eq("id", dealId).maybeSingle();
+      leadId = deal?.lead_id ?? null;
     }
 
     const netPrice = round(Math.max(0, salePrice - data.discountAmount));
@@ -256,8 +264,8 @@ export const createContractFromProduct = createServerFn({ method: "POST" })
         project_id: projectId,
         product_id: data.productId ?? null,
         customer_id: data.customerId ?? null,
-        lead_id: data.leadId ?? null,
-        deal_id: data.dealId ?? null,
+        lead_id: leadId,
+        deal_id: dealId,
         owner_user_id: data.ownerUserId ?? userId,
         code,
         sale_price: salePrice,

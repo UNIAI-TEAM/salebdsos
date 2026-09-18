@@ -195,7 +195,9 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       const collected = collectedByContract.get(row.id) ?? 0;
       contractValueTotal += value;
       collectedTotal += collected;
-      const leadId = row.lead_id ?? (row.deal_id ? dealById.get(row.deal_id)?.lead_id ?? null : null);
+      const productDealId = row.product_id ? products.find((p) => p.id === row.product_id)?.deal_id ?? null : null;
+      const linkedDealId = row.deal_id ?? productDealId;
+      const leadId = row.lead_id ?? (linkedDealId ? dealById.get(linkedDealId)?.lead_id ?? null : null);
       if (!leadId) continue;
       cartLeadIds.add(leadId);
       contractLeadIds.add(leadId);
