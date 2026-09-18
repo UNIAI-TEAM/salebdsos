@@ -10,6 +10,7 @@ import { LandingTouchTracker, trackTouch, getTouchSessionId } from "@/components
 import { Button } from "@/components/ui/button";
 import { QrCode } from "@/components/qr-code";
 import { SaleTrustMetrics } from "@/components/sale-trust-metrics";
+import { LandingChat } from "@/components/public/landing-chat";
 import {
   KindPriceTable,
   KindStatusBoard,
@@ -312,6 +313,16 @@ function PublicSalesPage() {
 
       {page.inventory && page.inventory.length > 0 ? (
         <PublicInventorySection units={page.inventory} />
+      ) : null}
+
+      {page.slug && (page.channels?.webChat.enabled || page.channels?.zalo.enabled) ? (
+        <LandingChat
+          slug={page.slug}
+          title={page.channels.webChat.enabled ? page.channels.webChat.title : "Chat với chuyên viên"}
+          greeting={page.channels.webChat.greeting}
+          zaloLink={page.channels.zalo.enabled ? page.channels.zalo.oaLink || null : null}
+          zaloName={page.channels.zalo.oaName || null}
+        />
       ) : null}
 
 

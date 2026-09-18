@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
-  Wallet, QrCode, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
+  Wallet, QrCode, MessagesSquare, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
   PanelLeftClose, PanelLeftOpen, X, BookMarked, Route as RouteIcon, ContactRound,
   LayoutGrid,
 } from "lucide-react";
@@ -40,6 +40,7 @@ const groups: Group[] = [
       { to: "/appointments", label: "Lịch hẹn", icon: CalendarClock },
       { to: "/lead-routing", label: "Phân phối lead", icon: Zap, roles: ["owner", "admin", "manager"] },
       { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon, roles: ["owner", "admin", "manager", "agent"] },
+      { to: "/inbox", label: "Hộp thoại", icon: MessagesSquare },
     ],
   },
   {
@@ -100,6 +101,7 @@ const saleMobileGroups: Group[] = [
     label: "Khách hàng",
     items: [
       { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon },
+      { to: "/inbox", label: "Hộp thoại", icon: MessagesSquare },
       { to: "/appointments", label: "Lịch hẹn", icon: CalendarClock },
     ],
   },

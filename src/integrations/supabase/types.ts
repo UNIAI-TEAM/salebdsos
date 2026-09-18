@@ -535,6 +535,107 @@ export type Database = {
           },
         ]
       }
+      call_logs: {
+        Row: {
+          agent_user_id: string | null
+          conversation_id: string | null
+          created_at: string
+          customer_id: string | null
+          direction: Database["public"]["Enums"]["conv_direction"]
+          duration_seconds: number
+          ended_at: string | null
+          external_call_id: string | null
+          id: string
+          lead_id: string | null
+          meta: Json
+          notes: string | null
+          outcome: string | null
+          phone: string | null
+          provider: string
+          recording_url: string | null
+          started_at: string
+          status: string
+          tenant_id: string
+          transcript: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_user_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          direction?: Database["public"]["Enums"]["conv_direction"]
+          duration_seconds?: number
+          ended_at?: string | null
+          external_call_id?: string | null
+          id?: string
+          lead_id?: string | null
+          meta?: Json
+          notes?: string | null
+          outcome?: string | null
+          phone?: string | null
+          provider?: string
+          recording_url?: string | null
+          started_at?: string
+          status?: string
+          tenant_id: string
+          transcript?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_user_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          direction?: Database["public"]["Enums"]["conv_direction"]
+          duration_seconds?: number
+          ended_at?: string | null
+          external_call_id?: string | null
+          id?: string
+          lead_id?: string | null
+          meta?: Json
+          notes?: string | null
+          outcome?: string | null
+          phone?: string | null
+          provider?: string
+          recording_url?: string | null
+          started_at?: string
+          status?: string
+          tenant_id?: string
+          transcript?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_logs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           audience: Json
@@ -836,6 +937,174 @@ export type Database = {
           source?: string | null
         }
         Relationships: []
+      }
+      conversation_messages: {
+        Row: {
+          attachment_url: string | null
+          body: string | null
+          channel: Database["public"]["Enums"]["conv_channel"]
+          conversation_id: string
+          created_at: string
+          delivery_status: string
+          direction: Database["public"]["Enums"]["conv_direction"]
+          error_message: string | null
+          external_id: string | null
+          id: string
+          meta: Json
+          sender_name: string | null
+          sender_user_id: string | null
+          tenant_id: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          body?: string | null
+          channel?: Database["public"]["Enums"]["conv_channel"]
+          conversation_id: string
+          created_at?: string
+          delivery_status?: string
+          direction: Database["public"]["Enums"]["conv_direction"]
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          meta?: Json
+          sender_name?: string | null
+          sender_user_id?: string | null
+          tenant_id: string
+        }
+        Update: {
+          attachment_url?: string | null
+          body?: string | null
+          channel?: Database["public"]["Enums"]["conv_channel"]
+          conversation_id?: string
+          created_at?: string
+          delivery_status?: string
+          direction?: Database["public"]["Enums"]["conv_direction"]
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          meta?: Json
+          sender_name?: string | null
+          sender_user_id?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          card_id: string | null
+          channel: Database["public"]["Enums"]["conv_channel"]
+          contact_name: string | null
+          contact_phone: string | null
+          contact_zalo_id: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          last_message_at: string
+          last_message_preview: string | null
+          lead_id: string | null
+          meta: Json
+          owner_user_id: string | null
+          project_id: string | null
+          status: string
+          tenant_id: string
+          unread_count: number
+          updated_at: string
+          visitor_key: string | null
+        }
+        Insert: {
+          card_id?: string | null
+          channel?: Database["public"]["Enums"]["conv_channel"]
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_zalo_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          last_message_at?: string
+          last_message_preview?: string | null
+          lead_id?: string | null
+          meta?: Json
+          owner_user_id?: string | null
+          project_id?: string | null
+          status?: string
+          tenant_id: string
+          unread_count?: number
+          updated_at?: string
+          visitor_key?: string | null
+        }
+        Update: {
+          card_id?: string | null
+          channel?: Database["public"]["Enums"]["conv_channel"]
+          contact_name?: string | null
+          contact_phone?: string | null
+          contact_zalo_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          last_message_at?: string
+          last_message_preview?: string | null
+          lead_id?: string | null
+          meta?: Json
+          owner_user_id?: string | null
+          project_id?: string | null
+          status?: string
+          tenant_id?: string
+          unread_count?: number
+          updated_at?: string
+          visitor_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customer_transactions: {
         Row: {
@@ -2564,6 +2833,8 @@ export type Database = {
         | "agent"
         | "viewer"
         | "platform_admin"
+      conv_channel: "web_chat" | "zalo" | "call" | "sms" | "email" | "note"
+      conv_direction: "in" | "out"
       deal_status: "open" | "won" | "lost"
       lead_status:
         | "new"
@@ -2726,6 +2997,8 @@ export const Constants = {
         "viewer",
         "platform_admin",
       ],
+      conv_channel: ["web_chat", "zalo", "call", "sms", "email", "note"],
+      conv_direction: ["in", "out"],
       deal_status: ["open", "won", "lost"],
       lead_status: [
         "new",
