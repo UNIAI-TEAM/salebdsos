@@ -658,6 +658,7 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       project,
       appointments,
       qrCode,
+      inventory,
       sale,
       saleCard,
     };
