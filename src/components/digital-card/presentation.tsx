@@ -12,6 +12,8 @@ const fieldsOf = (value: unknown) => Array.isArray(value) ? value as Field[] : [
 export function DigitalCardPresentation({ card, projects, publicUrl }: { card: DigitalCardData; projects: Project[]; publicUrl: string }) {
   const [shared, setShared] = useState(false);
   const fields = fieldsOf(card.fields);
+  const origin = publicUrl.replace(/\/c\/.*$/, "");
+
   const phone = fields.find((field) => field.type === "phone");
   const zalo = fields.find((field) => field.type === "zalo");
   const share = async () => {
