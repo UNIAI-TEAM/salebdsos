@@ -2,7 +2,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { LISTING_STATUSES, PROPERTY_KINDS } from "@/lib/property-types";
+import {
+  LISTING_STATUSES,
+  PROPERTY_KINDS,
+  type ListingStatus,
+  type PropertyKind,
+} from "@/lib/property-types";
 
 const SELECT =
   "id,tenant_id,project_id,product_type,sku,code,name,zone,floor,area,usable_area,bedrooms,bathrooms,direction,legal_status,price,currency,unit,status,listing_status,hold_expires_at,deal_id,is_public,description,image_url,attributes,created_at,updated_at";
@@ -79,9 +84,9 @@ export const listInventory = createServerFn({ method: "GET" })
       .range(from, from + pageSize - 1);
 
     if (data.projectId) q = q.eq("project_id", data.projectId);
-    if (data.kind && data.kind !== "all") q = q.eq("product_type", data.kind);
+    if (data.kind && data.kind !== "all") q = q.eq("product_type", data.kind as PropertyKind);
     if (data.listingStatus && data.listingStatus !== "all")
-      q = q.eq("listing_status", data.listingStatus);
+      q = q.eq("listing_status", data.listingStatus as ListingStatus);
     if (data.zone && data.zone !== "all") q = q.eq("zone", data.zone);
     if (data.floor != null) q = q.eq("floor", data.floor);
     if (data.bedrooms != null) q = q.eq("bedrooms", data.bedrooms);
@@ -106,7 +111,7 @@ export const listInventory = createServerFn({ method: "GET" })
       .not("product_type", "is", null)
       .limit(5000);
     if (data.projectId) sq = sq.eq("project_id", data.projectId);
-    if (data.kind && data.kind !== "all") sq = sq.eq("product_type", data.kind);
+    if (data.kind && data.kind !== "all") sq = sq.eq("product_type", data.kind as PropertyKind);
     const { data: allRows, error: sErr } = await sq;
     if (sErr) throw new Error(sErr.message);
 
@@ -159,7 +164,7 @@ export const createInventoryItem = createServerFn({ method: "POST" })
         name: displayName(rest),
         category: rest.product_type,
         hold_expires_at: rest.hold_expires_at || null,
-      })
+      } as never)
       .select(SELECT)
       .single();
     if (error) throw new Error(error.message);
@@ -180,7 +185,7 @@ export const updateInventoryItem = createServerFn({ method: "POST" })
     if (patch.hold_expires_at !== undefined) body["hold_expires_at"] = patch.hold_expires_at || null;
     const { data: row, error } = await context.supabase
       .from("products")
-      .update(body)
+      .update(body as never)
       .eq("id", id)
       .select(SELECT)
       .single();
@@ -319,7 +324,7 @@ export const bulkCreateInventory = createServerFn({ method: "POST" })
 
     const { data: inserted, error } = await context.supabase
       .from("products")
-      .insert(rows)
+      .insert(rows as never)
       .select("id");
     if (error) throw new Error(error.message);
     return { created: inserted?.length ?? 0 };
@@ -353,7 +358,7 @@ export const importInventory = createServerFn({ method: "POST" })
     }));
     const { data: inserted, error } = await context.supabase
       .from("products")
-      .insert(rows)
+      .insert(rows as never)
       .select("id");
     if (error) throw new Error(error.message);
     return { created: inserted?.length ?? 0 };
