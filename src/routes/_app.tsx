@@ -58,7 +58,7 @@ function useSaleMobileRedirect() {
     if (typeof window === "undefined") return;
     const isMobile = window.matchMedia("(max-width: 1023px)").matches;
     if (isMobile && (pathname === "/dashboard" || pathname === "/")) {
-      nav({ to: "/digital-card", replace: true });
+      nav({ to: "/digital-card", search: {}, replace: true });
     }
   }, [pathname, nav]);
 }

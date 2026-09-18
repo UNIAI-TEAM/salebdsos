@@ -117,7 +117,7 @@ function SharingCenter() {
           <div className="py-10 text-center">
             <div className="text-[13px] font-semibold">Chưa có danh thiếp</div>
             <div className="text-[12px] text-muted-foreground mt-1">Tạo danh thiếp số trước khi chia sẻ.</div>
-            <Link to="/digital-card" className="inline-flex items-center gap-1 text-[12.5px] text-primary font-semibold mt-3 hover:underline">
+            <Link to="/digital-card" search={{}} className="inline-flex items-center gap-1 text-[12.5px] text-primary font-semibold mt-3 hover:underline">
               Tạo ngay <ExternalLink className="h-3 w-3" />
             </Link>
           </div>
