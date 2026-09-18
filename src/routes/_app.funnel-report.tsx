@@ -82,7 +82,7 @@ function FunnelTable({ rows, emptyText }: { rows: FunnelRow[]; emptyText: string
   const max = Math.max(...rows.map((row) => row.submitted), 1);
   return (
     <div className="-mx-1 overflow-x-auto px-1">
-      <table className="w-full min-w-[560px] text-sm">
+      <table className="w-full min-w-[860px] text-sm">
         <thead>
           <tr className="text-left text-[11px] uppercase tracking-wide text-muted-foreground">
             <th className="py-2 pr-3 font-medium">Nhóm</th>
@@ -201,7 +201,7 @@ function FunnelReportPage() {
               icon={FileSignature}
               label="Ký hợp đồng"
               value={data.totals.contract}
-              hint="Giao dịch Thành công hoặc sản phẩm đã ký / đã bán"
+              hint="Hợp đồng hiệu lực hoặc đã hoàn tất"
               rate={`${data.totals.cartToContract}% từ giỏ hàng`}
             />
             <Stage
