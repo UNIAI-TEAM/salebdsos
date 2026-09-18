@@ -6,6 +6,7 @@ import {
   PanelLeftClose, PanelLeftOpen, X, BookMarked, Route as RouteIcon, ContactRound,
   LayoutGrid,
   Filter,
+  FileSignature,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
