@@ -49,9 +49,16 @@ function normalizeSource(value: string | null | undefined) {
   return raw;
 }
 
-function buildRows(
-  buckets: Map<string, { label: string; submitted: number; cart: number; contract: number }>,
-): FunnelRow[] {
+type Bucket = {
+  label: string;
+  submitted: number;
+  cart: number;
+  contract: number;
+  contractValue: number;
+  collected: number;
+};
+
+function buildRows(buckets: Map<string, Bucket>): FunnelRow[] {
   return [...buckets.entries()]
     .map(([key, value]) => ({
       key,
@@ -62,6 +69,9 @@ function buildRows(
       submittedToCart: rate(value.cart, value.submitted),
       cartToContract: rate(value.contract, value.cart),
       submittedToContract: rate(value.contract, value.submitted),
+      contractValue: Math.round(value.contractValue),
+      collected: Math.round(value.collected),
+      collectRate: rate(value.collected, value.contractValue),
     }))
     .sort((a, b) => b.submitted - a.submitted || b.contract - a.contract);
 }
