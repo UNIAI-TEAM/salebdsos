@@ -33,6 +33,7 @@ import { Route as AppSaleCustomersRouteImport } from './routes/_app.sale-custome
 import { Route as AppQrSharingRouteImport } from './routes/_app.qr-sharing'
 import { Route as AppPromptLibraryRouteImport } from './routes/_app.prompt-library'
 import { Route as AppProjectsRouteImport } from './routes/_app.projects'
+import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppProductsRouteImport } from './routes/_app.products'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppNfcCodesRouteImport } from './routes/_app.nfc-codes'
@@ -56,9 +57,11 @@ import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
 import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
 import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
 import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.index'
+import { Route as AppDigitalCardIndexRouteImport } from './routes/_app.digital-card.index'
 import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.index'
 import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
+import { Route as AppDigitalCardEditRouteImport } from './routes/_app.digital-card.edit'
 import { Route as AppCustomersIdRouteImport } from './routes/_app.customers.$id'
 import { Route as AppAiFollowupCustomerIdRouteImport } from './routes/_app.ai-followup.$customerId'
 import { Route as ApiPublicTCodeRouteImport } from './routes/api/public/t.$code'
@@ -188,6 +191,11 @@ const AppProjectsRoute = AppProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => AppRoute,
 } as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProductsRoute = AppProductsRouteImport.update({
   id: '/products',
   path: '/products',
@@ -303,6 +311,11 @@ const AppProjectsIndexRoute = AppProjectsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppProjectsRoute,
 } as any)
+const AppDigitalCardIndexRoute = AppDigitalCardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppDigitalCardRoute,
+} as any)
 const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
   id: '/customers/',
   path: '/customers/',
@@ -317,6 +330,11 @@ const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AppProjectsRoute,
+} as any)
+const AppDigitalCardEditRoute = AppDigitalCardEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => AppDigitalCardRoute,
 } as any)
 const AppCustomersIdRoute = AppCustomersIdRouteImport.update({
   id: '/customers/$id',
@@ -382,7 +400,7 @@ export interface FileRoutesByFullPath {
   '/card-designer': typeof AppCardDesignerRoute
   '/content-library': typeof AppContentLibraryRoute
   '/dashboard': typeof AppDashboardRoute
-  '/digital-card': typeof AppDigitalCardRoute
+  '/digital-card': typeof AppDigitalCardRouteWithChildren
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/files': typeof AppFilesRoute
   '/journey': typeof AppJourneyRoute
@@ -394,6 +412,7 @@ export interface FileRoutesByFullPath {
   '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
+  '/profile': typeof AppProfileRoute
   '/projects': typeof AppProjectsRouteWithChildren
   '/prompt-library': typeof AppPromptLibraryRoute
   '/qr-sharing': typeof AppQrSharingRoute
@@ -413,9 +432,11 @@ export interface FileRoutesByFullPath {
   '/share/$slug': typeof ShareSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/customers/$id': typeof AppCustomersIdRoute
+  '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/customers/': typeof AppCustomersIndexRoute
+  '/digital-card/': typeof AppDigitalCardIndexRoute
   '/projects/': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
@@ -442,7 +463,6 @@ export interface FileRoutesByTo {
   '/card-designer': typeof AppCardDesignerRoute
   '/content-library': typeof AppContentLibraryRoute
   '/dashboard': typeof AppDashboardRoute
-  '/digital-card': typeof AppDigitalCardRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/files': typeof AppFilesRoute
   '/journey': typeof AppJourneyRoute
@@ -454,6 +474,7 @@ export interface FileRoutesByTo {
   '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
+  '/profile': typeof AppProfileRoute
   '/prompt-library': typeof AppPromptLibraryRoute
   '/qr-sharing': typeof AppQrSharingRoute
   '/sale-customers': typeof AppSaleCustomersRoute
@@ -472,9 +493,11 @@ export interface FileRoutesByTo {
   '/share/$slug': typeof ShareSlugRoute
   '/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/customers/$id': typeof AppCustomersIdRoute
+  '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/customers': typeof AppCustomersIndexRoute
+  '/digital-card': typeof AppDigitalCardIndexRoute
   '/projects': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
@@ -503,7 +526,7 @@ export interface FileRoutesById {
   '/_app/card-designer': typeof AppCardDesignerRoute
   '/_app/content-library': typeof AppContentLibraryRoute
   '/_app/dashboard': typeof AppDashboardRoute
-  '/_app/digital-card': typeof AppDigitalCardRoute
+  '/_app/digital-card': typeof AppDigitalCardRouteWithChildren
   '/_app/dynamic-qr': typeof AppDynamicQrRoute
   '/_app/files': typeof AppFilesRoute
   '/_app/journey': typeof AppJourneyRoute
@@ -515,6 +538,7 @@ export interface FileRoutesById {
   '/_app/nfc-codes': typeof AppNfcCodesRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/products': typeof AppProductsRoute
+  '/_app/profile': typeof AppProfileRoute
   '/_app/projects': typeof AppProjectsRouteWithChildren
   '/_app/prompt-library': typeof AppPromptLibraryRoute
   '/_app/qr-sharing': typeof AppQrSharingRoute
@@ -534,9 +558,11 @@ export interface FileRoutesById {
   '/share/$slug': typeof ShareSlugRoute
   '/_app/ai-followup/$customerId': typeof AppAiFollowupCustomerIdRoute
   '/_app/customers/$id': typeof AppCustomersIdRoute
+  '/_app/digital-card/edit': typeof AppDigitalCardEditRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/_app/customers/': typeof AppCustomersIndexRoute
+  '/_app/digital-card/': typeof AppDigitalCardIndexRoute
   '/_app/projects/': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
@@ -577,6 +603,7 @@ export interface FileRouteTypes {
     | '/nfc-codes'
     | '/pipeline'
     | '/products'
+    | '/profile'
     | '/projects'
     | '/prompt-library'
     | '/qr-sharing'
@@ -596,9 +623,11 @@ export interface FileRouteTypes {
     | '/share/$slug'
     | '/ai-followup/$customerId'
     | '/customers/$id'
+    | '/digital-card/edit'
     | '/projects/$id'
     | '/api/public/project-touch'
     | '/customers/'
+    | '/digital-card/'
     | '/projects/'
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
@@ -625,7 +654,6 @@ export interface FileRouteTypes {
     | '/card-designer'
     | '/content-library'
     | '/dashboard'
-    | '/digital-card'
     | '/dynamic-qr'
     | '/files'
     | '/journey'
@@ -637,6 +665,7 @@ export interface FileRouteTypes {
     | '/nfc-codes'
     | '/pipeline'
     | '/products'
+    | '/profile'
     | '/prompt-library'
     | '/qr-sharing'
     | '/sale-customers'
@@ -655,9 +684,11 @@ export interface FileRouteTypes {
     | '/share/$slug'
     | '/ai-followup/$customerId'
     | '/customers/$id'
+    | '/digital-card/edit'
     | '/projects/$id'
     | '/api/public/project-touch'
     | '/customers'
+    | '/digital-card'
     | '/projects'
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
@@ -697,6 +728,7 @@ export interface FileRouteTypes {
     | '/_app/nfc-codes'
     | '/_app/pipeline'
     | '/_app/products'
+    | '/_app/profile'
     | '/_app/projects'
     | '/_app/prompt-library'
     | '/_app/qr-sharing'
@@ -716,9 +748,11 @@ export interface FileRouteTypes {
     | '/share/$slug'
     | '/_app/ai-followup/$customerId'
     | '/_app/customers/$id'
+    | '/_app/digital-card/edit'
     | '/_app/projects/$id'
     | '/api/public/project-touch'
     | '/_app/customers/'
+    | '/_app/digital-card/'
     | '/_app/projects/'
     | '/api/public/card-leads/$slug'
     | '/api/public/landing-manifest/$slug'
@@ -923,6 +957,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProjectsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/products': {
       id: '/_app/products'
       path: '/products'
@@ -1084,6 +1125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProjectsIndexRouteImport
       parentRoute: typeof AppProjectsRoute
     }
+    '/_app/digital-card/': {
+      id: '/_app/digital-card/'
+      path: '/'
+      fullPath: '/digital-card/'
+      preLoaderRoute: typeof AppDigitalCardIndexRouteImport
+      parentRoute: typeof AppDigitalCardRoute
+    }
     '/_app/customers/': {
       id: '/_app/customers/'
       path: '/customers'
@@ -1104,6 +1152,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/projects/$id'
       preLoaderRoute: typeof AppProjectsIdRouteImport
       parentRoute: typeof AppProjectsRoute
+    }
+    '/_app/digital-card/edit': {
+      id: '/_app/digital-card/edit'
+      path: '/edit'
+      fullPath: '/digital-card/edit'
+      preLoaderRoute: typeof AppDigitalCardEditRouteImport
+      parentRoute: typeof AppDigitalCardRoute
     }
     '/_app/customers/$id': {
       id: '/_app/customers/$id'
@@ -1183,6 +1238,20 @@ const AppAiFollowupRouteWithChildren = AppAiFollowupRoute._addFileChildren(
   AppAiFollowupRouteChildren,
 )
 
+interface AppDigitalCardRouteChildren {
+  AppDigitalCardEditRoute: typeof AppDigitalCardEditRoute
+  AppDigitalCardIndexRoute: typeof AppDigitalCardIndexRoute
+}
+
+const AppDigitalCardRouteChildren: AppDigitalCardRouteChildren = {
+  AppDigitalCardEditRoute: AppDigitalCardEditRoute,
+  AppDigitalCardIndexRoute: AppDigitalCardIndexRoute,
+}
+
+const AppDigitalCardRouteWithChildren = AppDigitalCardRoute._addFileChildren(
+  AppDigitalCardRouteChildren,
+)
+
 interface AppProjectsRouteChildren {
   AppProjectsIdRoute: typeof AppProjectsIdRoute
   AppProjectsIndexRoute: typeof AppProjectsIndexRoute
@@ -1208,7 +1277,7 @@ interface AppRouteChildren {
   AppCardDesignerRoute: typeof AppCardDesignerRoute
   AppContentLibraryRoute: typeof AppContentLibraryRoute
   AppDashboardRoute: typeof AppDashboardRoute
-  AppDigitalCardRoute: typeof AppDigitalCardRoute
+  AppDigitalCardRoute: typeof AppDigitalCardRouteWithChildren
   AppDynamicQrRoute: typeof AppDynamicQrRoute
   AppFilesRoute: typeof AppFilesRoute
   AppJourneyRoute: typeof AppJourneyRoute
@@ -1220,6 +1289,7 @@ interface AppRouteChildren {
   AppNfcCodesRoute: typeof AppNfcCodesRoute
   AppPipelineRoute: typeof AppPipelineRoute
   AppProductsRoute: typeof AppProductsRoute
+  AppProfileRoute: typeof AppProfileRoute
   AppProjectsRoute: typeof AppProjectsRouteWithChildren
   AppPromptLibraryRoute: typeof AppPromptLibraryRoute
   AppQrSharingRoute: typeof AppQrSharingRoute
@@ -1246,7 +1316,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCardDesignerRoute: AppCardDesignerRoute,
   AppContentLibraryRoute: AppContentLibraryRoute,
   AppDashboardRoute: AppDashboardRoute,
-  AppDigitalCardRoute: AppDigitalCardRoute,
+  AppDigitalCardRoute: AppDigitalCardRouteWithChildren,
   AppDynamicQrRoute: AppDynamicQrRoute,
   AppFilesRoute: AppFilesRoute,
   AppJourneyRoute: AppJourneyRoute,
@@ -1258,6 +1328,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNfcCodesRoute: AppNfcCodesRoute,
   AppPipelineRoute: AppPipelineRoute,
   AppProductsRoute: AppProductsRoute,
+  AppProfileRoute: AppProfileRoute,
   AppProjectsRoute: AppProjectsRouteWithChildren,
   AppPromptLibraryRoute: AppPromptLibraryRoute,
   AppQrSharingRoute: AppQrSharingRoute,

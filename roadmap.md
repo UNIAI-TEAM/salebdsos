@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Tách Danh thiếp, Profile và màn hình Sửa theo thiết kế đã duyệt.
+
 - [ ] Hoàn tất publish và kiểm tra landing công khai từ chế độ PWA.
 - [x] Hoàn thiện Digital Card Professional Dark Mode và kiểm tra mobile/desktop.
 - [x] Gắn timeline vào quản lý dự án.

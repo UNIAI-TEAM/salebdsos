@@ -22,8 +22,9 @@ const groups: Group[] = [
     label: "Tổng quan",
     items: [
       { to: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
-      { to: "/digital-card", label: "Danh thiếp & Profile", icon: IdCard },
-      { to: "/card-designer", label: "Thiết kế danh thiếp", icon: IdCard, badge: "New" },
+      { to: "/digital-card", label: "Danh thiếp", icon: IdCard },
+      { to: "/profile", label: "Profile", icon: UserSquare2 },
+      { to: "/digital-card/edit", label: "Sửa danh thiếp", icon: Settings },
     ],
   },
   {
@@ -81,7 +82,9 @@ const saleMobileGroups: Group[] = [
     label: "Dành cho Sale",
     items: [
       { to: "/landings", label: "Landing công khai", icon: Globe2 },
-      { to: "/digital-card", label: "Danh thiếp & Profile", icon: IdCard },
+      { to: "/digital-card", label: "Danh thiếp", icon: IdCard },
+      { to: "/profile", label: "Profile", icon: UserSquare2 },
+      { to: "/digital-card/edit", label: "Sửa danh thiếp", icon: Settings },
       { to: "/timeline", label: "Timeline", icon: Activity },
     ],
   },

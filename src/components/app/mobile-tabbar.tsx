@@ -17,6 +17,8 @@ const quickActions: Tab[] = [
   { to: "/sale-landings", label: "Landing công khai", icon: Globe2 },
   { to: "/sale-customers", label: "Khách hàng của tôi", icon: Users },
   { to: "/digital-card", label: "Danh thiếp của tôi", icon: IdCard },
+  { to: "/profile", label: "Profile của tôi", icon: Users },
+  { to: "/digital-card/edit", label: "Sửa danh thiếp", icon: IdCard },
   { to: "/airdrop", label: "Chia sẻ AirDrop", icon: Send },
   { to: "/nfc-codes", label: "NFC & QR", icon: QrCode },
 ];
