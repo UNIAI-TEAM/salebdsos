@@ -3,7 +3,7 @@ import {
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
   Wallet, QrCode, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
-  PanelLeftClose, PanelLeftOpen, X, BookMarked, Activity, Route as RouteIcon,
+  PanelLeftClose, PanelLeftOpen, X, BookMarked, Activity, Route as RouteIcon, ContactRound,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
@@ -22,6 +22,7 @@ const groups: Group[] = [
     label: "Tổng quan",
     items: [
       { to: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
+      { to: "/sale-overview", label: "Tổng quan Sale", icon: ContactRound },
       { to: "/digital-card", label: "Danh thiếp", icon: IdCard },
       { to: "/profile", label: "Profile", icon: UserSquare2 },
       { to: "/digital-card/edit", label: "Sửa danh thiếp", icon: Settings },
@@ -82,6 +83,7 @@ const saleMobileGroups: Group[] = [
     label: "Dành cho Sale",
     items: [
       { to: "/landings", label: "Landing công khai", icon: Globe2 },
+      { to: "/sale-overview", label: "Tổng quan Sale", icon: ContactRound },
       { to: "/digital-card", label: "Danh thiếp", icon: IdCard },
       { to: "/profile", label: "Profile", icon: UserSquare2 },
       { to: "/digital-card/edit", label: "Sửa danh thiếp", icon: Settings },

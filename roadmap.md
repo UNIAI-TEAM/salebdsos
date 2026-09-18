@@ -8,3 +8,4 @@
 - [x] Cho phép thêm, sửa, xóa lịch hẹn trong dự án.
 - [x] Đồng bộ lịch hẹn dự án với landing công khai.
 - [x] Kiểm tra giao diện, dữ liệu và lỗi sau thay đổi.
+- [x] Tạo trang tổng quan từng Sale với lịch, khách quét và chỉ số tự cập nhật.

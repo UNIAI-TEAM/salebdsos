@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { IdCard, Plus, Send, QrCode, X, Globe2, Activity, Building2, Users } from "lucide-react";
+import { IdCard, Plus, Send, QrCode, X, Globe2, Activity, Building2, Users, LayoutDashboard } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type Tab = { to: string; label: string; icon: any };
@@ -9,13 +9,14 @@ const tabs: Tab[] = [
   { to: "/sale-landings", label: "Landing", icon: Globe2 },
   { to: "/sale-projects", label: "Dự án", icon: Building2 },
   { to: "/sale-customers", label: "Khách", icon: Users },
-  { to: "/timeline", label: "Timeline", icon: Activity },
+  { to: "/sale-overview", label: "Tổng quan", icon: LayoutDashboard },
 ];
 
 const quickActions: Tab[] = [
   { to: "/sale-projects", label: "Dự án của tôi", icon: Building2 },
   { to: "/sale-landings", label: "Landing công khai", icon: Globe2 },
   { to: "/sale-customers", label: "Khách hàng của tôi", icon: Users },
+  { to: "/timeline", label: "Timeline", icon: Activity },
   { to: "/digital-card", label: "Danh thiếp của tôi", icon: IdCard },
   { to: "/profile", label: "Profile của tôi", icon: Users },
   { to: "/digital-card/edit", label: "Sửa danh thiếp", icon: IdCard },
