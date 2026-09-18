@@ -27,7 +27,7 @@ export const Route = createFileRoute("/api/card-portrait")({
           auth: { persistSession: false, autoRefreshToken: false },
         });
         const { data: claims, error: claimsError } = await client.auth.getClaims(token);
-        const userId = claims.claims?.sub;
+        const userId = claims?.claims?.sub;
         if (claimsError || !userId) return text("Phiên đăng nhập đã hết hạn.", 401);
 
         let input: { cardId?: string; imageUrl?: string; stream?: boolean };
@@ -37,6 +37,16 @@ export const Route = createFileRoute("/api/card-portrait")({
           return text("Dữ liệu ảnh không hợp lệ.", 400);
         }
         if (!input.cardId || !input.imageUrl) return text("Vui lòng tải ảnh đại diện trước.", 400);
+        let imageUrl: URL;
+        try {
+          imageUrl = new URL(input.imageUrl);
+          const storageHost = new URL(url).host;
+          if (imageUrl.protocol !== "https:" || imageUrl.host !== storageHost || !imageUrl.pathname.includes("/storage/v1/object/public/card-assets/")) {
+            return text("Ảnh nguồn phải được tải lên thư viện danh thiếp.", 400);
+          }
+        } catch {
+          return text("Đường dẫn ảnh nguồn không hợp lệ.", 400);
+        }
 
         const { data: card } = await client
           .from("cards")
@@ -49,7 +59,7 @@ export const Route = createFileRoute("/api/card-portrait")({
 
         let source: Response;
         try {
-          source = await fetch(input.imageUrl);
+          source = await fetch(imageUrl);
         } catch {
           return text("Không tải được ảnh nguồn.", 400);
         }
