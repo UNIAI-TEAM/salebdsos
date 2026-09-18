@@ -85,10 +85,23 @@ const groups: Group[] = [
 /** PWA trên điện thoại: chỉ giữ công cụ Sale phụ và khu quản trị theo quyền. */
 const saleMobileGroups: Group[] = [
   {
-    label: "Sale",
+    label: "Dự án & sản phẩm",
     items: [
-      { to: "/landings", label: "Landing công khai", icon: Globe2 },
+      { to: "/landings", label: "Landing dự án", icon: Globe2 },
+      { to: "/products", label: "Sản phẩm / giỏ hàng", icon: Package },
+      { to: "/files", label: "Tài liệu & Brochure", icon: FolderArchive },
+    ],
+  },
+  {
+    label: "Khách hàng",
+    items: [
       { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon },
+      { to: "/appointments", label: "Lịch hẹn", icon: CalendarClock },
+    ],
+  },
+  {
+    label: "Danh thiếp",
+    items: [
       { to: "/content-library", label: "Kho nội dung", icon: BookMarked },
       { to: "/airdrop", label: "Chia sẻ danh thiếp", icon: Send },
     ],
