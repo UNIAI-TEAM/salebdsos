@@ -19,58 +19,63 @@ type Group = { label: string; items: Item[] };
 
 const groups: Group[] = [
   {
-    label: "Tổng quan",
+    label: "Dự án & sản phẩm",
     items: [
-      { to: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
-      { to: "/sale-overview", label: "Tổng quan Sale", icon: ContactRound },
-      { to: "/digital-card", label: "Danh thiếp", icon: IdCard },
-      { to: "/profile", label: "Profile", icon: UserSquare2 },
-      { to: "/digital-card/edit", label: "Sửa danh thiếp", icon: Settings },
+      { to: "/projects", label: "Dự án", icon: Building2 },
+      { to: "/products", label: "Sản phẩm / giỏ hàng", icon: Package },
+      { to: "/files", label: "Tài liệu & Brochure", icon: FolderArchive },
+      { to: "/landings", label: "Landing dự án", icon: Globe2, roles: ["owner", "admin", "manager", "agent"] },
+      { to: "/ai-sales-page", label: "AI tạo Landing", icon: Sparkles, badge: "AI", roles: ["owner", "admin", "manager"] },
     ],
   },
   {
-    label: "Bán hàng",
+    label: "Khách hàng & bán hàng",
     items: [
       { to: "/leads", label: "Leads (CRM)", icon: Users2, badge: "24" },
       { to: "/lead-capture", label: "Tự động tạo Lead", icon: Zap, badge: "Auto" },
       { to: "/customers", label: "Khách hàng", icon: UserSquare2 },
-      { to: "/projects", label: "Dự án", icon: Building2 },
       { to: "/pipeline", label: "Pipeline", icon: GitBranch },
       { to: "/appointments", label: "Lịch hẹn", icon: CalendarClock },
-    ],
-  },
-  {
-    label: "AI & Tăng trưởng",
-    items: [
-      { to: "/ai-followup", label: "AI Follow-up", icon: Sparkles, badge: "AI" },
-      { to: "/ai-lead-score", label: "AI Lead Score", icon: Gauge, roles: ["owner", "admin", "manager"] },
-      { to: "/ai-sales-page", label: "AI Sales Page", icon: Globe2, roles: ["owner", "admin", "manager"] },
-      { to: "/landings", label: "Landing công khai", icon: Globe2, roles: ["owner", "admin", "manager", "agent"] },
-      { to: "/content-library", label: "Kho nội dung", icon: BookMarked, roles: ["owner", "admin", "manager", "agent"] },
-      { to: "/prompt-library", label: "Thư viện prompt", icon: BookMarked, roles: ["owner", "admin", "manager", "agent"] },
-      { to: "/marketing", label: "Marketing & Campaign", icon: Megaphone, roles: ["owner", "admin", "manager"] },
-      { to: "/analytics", label: "Báo cáo & Analytics", icon: BarChart3, roles: ["owner", "admin", "manager"] },
       { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon, roles: ["owner", "admin", "manager", "agent"] },
     ],
   },
   {
-    label: "Sharing",
+    label: "Danh thiếp & điểm chạm",
     items: [
-      { to: "/airdrop", label: "AirDrop chia sẻ", icon: Send, badge: "Live" },
-      { to: "/wallet", label: "Wallet Card", icon: Wallet },
+      { to: "/digital-card", label: "Danh thiếp", icon: IdCard },
+      { to: "/digital-card/edit", label: "Sửa danh thiếp", icon: Settings },
+      { to: "/profile", label: "Profile", icon: UserSquare2 },
       { to: "/nfc-codes", label: "NFC & QR Codes", icon: QrCode, badge: "New" },
       { to: "/qr-sharing", label: "QR Sharing", icon: QrCode },
       { to: "/dynamic-qr", label: "Dynamic QR", icon: Radio },
+      { to: "/airdrop", label: "AirDrop chia sẻ", icon: Send, badge: "Live" },
+      { to: "/wallet", label: "Wallet Card", icon: Wallet },
     ],
   },
   {
-    label: "Quản lý",
+    label: "AI & marketing",
     items: [
-      { to: "/members", label: "Thành viên & Vai trò", icon: ShieldCheck, roles: ["owner", "admin"] },
+      { to: "/ai-followup", label: "AI Follow-up", icon: Sparkles, badge: "AI" },
+      { to: "/ai-lead-score", label: "AI Lead Score", icon: Gauge, roles: ["owner", "admin", "manager"] },
+      { to: "/content-library", label: "Kho nội dung", icon: BookMarked, roles: ["owner", "admin", "manager", "agent"] },
+      { to: "/prompt-library", label: "Thư viện prompt", icon: BookMarked, roles: ["owner", "admin", "manager", "agent"] },
+      { to: "/marketing", label: "Marketing & Campaign", icon: Megaphone, roles: ["owner", "admin", "manager"] },
+    ],
+  },
+  {
+    label: "Báo cáo",
+    items: [
+      { to: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
+      { to: "/sale-overview", label: "Tổng quan Sale", icon: ContactRound },
+      { to: "/analytics", label: "Báo cáo & Analytics", icon: BarChart3, roles: ["owner", "admin", "manager"] },
+    ],
+  },
+  {
+    label: "Quản trị",
+    items: [
       { to: "/sales-directory", label: "Quản lý Sale", icon: IdCard, roles: ["owner", "admin", "manager"] },
+      { to: "/members", label: "Thành viên & Vai trò", icon: ShieldCheck, roles: ["owner", "admin"] },
       { to: "/team", label: "Team Management", icon: Users2, roles: ["owner", "admin", "manager"] },
-      { to: "/products", label: "Sản phẩm", icon: Package },
-      { to: "/files", label: "Tài liệu & Brochure", icon: FolderArchive },
       { to: "/settings", label: "Cài đặt", icon: Settings, roles: ["owner", "admin"] },
       { to: "/auth-settings", label: "Bảo mật xác thực", icon: ShieldCheck, platformOnly: true },
     ],
@@ -80,10 +85,23 @@ const groups: Group[] = [
 /** PWA trên điện thoại: chỉ giữ công cụ Sale phụ và khu quản trị theo quyền. */
 const saleMobileGroups: Group[] = [
   {
-    label: "Sale",
+    label: "Dự án & sản phẩm",
     items: [
-      { to: "/landings", label: "Landing công khai", icon: Globe2 },
+      { to: "/landings", label: "Landing dự án", icon: Globe2 },
+      { to: "/products", label: "Sản phẩm / giỏ hàng", icon: Package },
+      { to: "/files", label: "Tài liệu & Brochure", icon: FolderArchive },
+    ],
+  },
+  {
+    label: "Khách hàng",
+    items: [
       { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon },
+      { to: "/appointments", label: "Lịch hẹn", icon: CalendarClock },
+    ],
+  },
+  {
+    label: "Danh thiếp",
+    items: [
       { to: "/content-library", label: "Kho nội dung", icon: BookMarked },
       { to: "/airdrop", label: "Chia sẻ danh thiếp", icon: Send },
     ],
