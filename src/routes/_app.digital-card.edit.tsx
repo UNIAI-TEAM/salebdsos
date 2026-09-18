@@ -19,7 +19,7 @@ import {
 import { toast } from "sonner";
 import { QrCode as QrCodeBlock } from "@/components/qr-code";
 
-export const Route = createFileRoute("/_app/digital-card")({
+export const Route = createFileRoute("/_app/digital-card/edit")({
   component: DigitalCardPage,
   head: () => ({
     meta: [
