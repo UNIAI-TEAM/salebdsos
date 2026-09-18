@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const Route = createFileRoute("/_app/sale-overview")({
   validateSearch: (search: Record<string, unknown>) => ({
     sale: typeof search.sale === "string" ? search.sale : undefined,
+    project: typeof search.project === "string" ? search.project : undefined,
   }),
   head: () => ({
     meta: [
@@ -55,17 +56,17 @@ function Empty({ text }: { text: string }) {
 function SaleOverviewPage() {
   const { currentTenant, user } = useAuth();
   const tenantId = currentTenant?.id;
-  const { sale } = Route.useSearch();
+  const { sale, project } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const fetchOverview = useServerFn(getSaleOverview);
   const ownerId = sale || user?.id;
 
   const query = useQuery({
-    queryKey: ["sale-overview", tenantId, ownerId],
+    queryKey: ["sale-overview", tenantId, ownerId, project],
     enabled: Boolean(tenantId && ownerId),
     queryFn: () => {
       if (!tenantId || !ownerId) throw new Error("Chưa chọn workspace");
-      return fetchOverview({ data: { tenantId, ownerId, days: 30 } });
+      return fetchOverview({ data: { tenantId, ownerId, projectId: project, days: 30 } });
     },
     refetchInterval: 30_000,
   });
@@ -79,7 +80,7 @@ function SaleOverviewPage() {
         action={
           <div className="flex w-full items-center gap-2 sm:w-auto">
             {data?.canManage ? (
-              <Select value={data.ownerId} onValueChange={(value) => navigate({ search: { sale: value }, replace: true })}>
+              <Select value={data.ownerId} onValueChange={(value) => navigate({ search: { sale: value, project: undefined }, replace: true })}>
                 <SelectTrigger className="h-9 min-w-0 flex-1 sm:w-56"><SelectValue placeholder="Chọn Sale" /></SelectTrigger>
                 <SelectContent>{data.members.map((member) => <SelectItem key={member.userId} value={member.userId}>{member.name}</SelectItem>)}</SelectContent>
               </Select>
@@ -101,10 +102,24 @@ function SaleOverviewPage() {
             <Badge variant="secondary" className="shrink-0"><span className="mr-1 h-1.5 w-1.5 rounded-full bg-success" />Tự cập nhật</Badge>
           </section>
 
+          <section className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">Dự án đang xem</p>
+              <p className="truncate text-xs text-muted-foreground">Lọc chỉ số, lịch và hành trình khách theo dự án.</p>
+            </div>
+            <Select value={data.selectedProjectId ?? "all"} onValueChange={(value) => navigate({ search: { sale, project: value === "all" ? undefined : value }, replace: true })}>
+              <SelectTrigger className="w-full sm:w-72"><SelectValue placeholder="Chọn dự án" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả dự án</SelectItem>
+                {data.projects.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </section>
+
           <section aria-labelledby="sale-metrics-title">
             <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
               <div>
-                <h2 id="sale-metrics-title" className="text-base font-bold text-foreground">Chỉ số tổng hợp</h2>
+                <h2 id="sale-metrics-title" className="text-base font-bold text-foreground">{data.selectedProjectName ? `Chỉ số · ${data.selectedProjectName}` : "Chỉ số tổng hợp"}</h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">Số liệu thật từ khách gửi thông tin và giao dịch của Sale.</p>
               </div>
               <Badge variant="outline" className="shrink-0">Không tính trùng liên hệ</Badge>
@@ -117,6 +132,20 @@ function SaleOverviewPage() {
               <Metric icon={CheckCircle2} label="Tỷ lệ chuyển đổi" value={`${data.metrics.conversionRate}%`} hint="Hợp đồng trên khách gửi thông tin" />
             </div>
           </section>
+
+          <SectionCard title="Hiệu quả theo dự án">
+            {data.projectComparison.length === 0 ? <Empty text="Sale chưa có dự án để so sánh." /> : (
+              <>
+                <div className="hidden overflow-x-auto md:block">
+                  <table className="w-full text-left text-sm">
+                    <thead><tr className="border-b border-border text-xs text-muted-foreground"><th className="py-2 pr-3 font-medium">Dự án</th><th className="px-3 py-2 text-right font-medium">Tương tác</th><th className="px-3 py-2 text-right font-medium">Khách</th><th className="px-3 py-2 text-right font-medium">Hợp đồng</th><th className="py-2 pl-3 text-right font-medium">Chuyển đổi</th></tr></thead>
+                    <tbody>{data.projectComparison.map((item) => <tr key={item.projectId} className="border-b border-border/70 last:border-0"><td className="max-w-80 py-3 pr-3 font-medium"><span className="line-clamp-1">{item.name}</span></td><td className="px-3 py-3 text-right tabular-nums">{item.interactions}</td><td className="px-3 py-3 text-right tabular-nums">{item.customersServed}</td><td className="px-3 py-3 text-right tabular-nums">{item.contractsSigned}</td><td className="py-3 pl-3 text-right font-semibold tabular-nums">{item.conversionRate}%</td></tr>)}</tbody>
+                  </table>
+                </div>
+                <ul className="space-y-2 md:hidden">{data.projectComparison.map((item) => <li key={item.projectId} className="rounded-xl border border-border p-3"><p className="truncate text-sm font-semibold">{item.name}</p><div className="mt-3 grid grid-cols-4 gap-2 text-center"><div><p className="text-base font-bold tabular-nums">{item.interactions}</p><p className="text-[10px] text-muted-foreground">Tương tác</p></div><div><p className="text-base font-bold tabular-nums">{item.customersServed}</p><p className="text-[10px] text-muted-foreground">Khách</p></div><div><p className="text-base font-bold tabular-nums">{item.contractsSigned}</p><p className="text-[10px] text-muted-foreground">Hợp đồng</p></div><div><p className="text-base font-bold tabular-nums">{item.conversionRate}%</p><p className="text-[10px] text-muted-foreground">Chuyển đổi</p></div></div></li>)}</ul>
+              </>
+            )}
+          </SectionCard>
 
           <div className="grid gap-4 xl:grid-cols-2">
             <SectionCard title="Lịch hẹn sắp tới" action={<Link to="/appointments" className="text-xs font-medium text-primary">Xem lịch</Link>}>
