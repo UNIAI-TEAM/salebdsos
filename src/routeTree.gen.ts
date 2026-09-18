@@ -45,6 +45,7 @@ import { Route as AppLeadsRouteImport } from './routes/_app.leads'
 import { Route as AppLeadCaptureRouteImport } from './routes/_app.lead-capture'
 import { Route as AppLandingsRouteImport } from './routes/_app.landings'
 import { Route as AppJourneyRouteImport } from './routes/_app.journey'
+import { Route as AppInventoryRouteImport } from './routes/_app.inventory'
 import { Route as AppFilesRouteImport } from './routes/_app.files'
 import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
 import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
@@ -253,6 +254,11 @@ const AppJourneyRoute = AppJourneyRouteImport.update({
   path: '/journey',
   getParentRoute: () => AppRoute,
 } as any)
+const AppInventoryRoute = AppInventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppFilesRoute = AppFilesRouteImport.update({
   id: '/files',
   path: '/files',
@@ -415,6 +421,7 @@ export interface FileRoutesByFullPath {
   '/digital-card': typeof AppDigitalCardRouteWithChildren
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/files': typeof AppFilesRoute
+  '/inventory': typeof AppInventoryRoute
   '/journey': typeof AppJourneyRoute
   '/landings': typeof AppLandingsRoute
   '/lead-capture': typeof AppLeadCaptureRoute
@@ -479,6 +486,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/files': typeof AppFilesRoute
+  '/inventory': typeof AppInventoryRoute
   '/journey': typeof AppJourneyRoute
   '/landings': typeof AppLandingsRoute
   '/lead-capture': typeof AppLeadCaptureRoute
@@ -545,6 +553,7 @@ export interface FileRoutesById {
   '/_app/digital-card': typeof AppDigitalCardRouteWithChildren
   '/_app/dynamic-qr': typeof AppDynamicQrRoute
   '/_app/files': typeof AppFilesRoute
+  '/_app/inventory': typeof AppInventoryRoute
   '/_app/journey': typeof AppJourneyRoute
   '/_app/landings': typeof AppLandingsRoute
   '/_app/lead-capture': typeof AppLeadCaptureRoute
@@ -612,6 +621,7 @@ export interface FileRouteTypes {
     | '/digital-card'
     | '/dynamic-qr'
     | '/files'
+    | '/inventory'
     | '/journey'
     | '/landings'
     | '/lead-capture'
@@ -676,6 +686,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dynamic-qr'
     | '/files'
+    | '/inventory'
     | '/journey'
     | '/landings'
     | '/lead-capture'
@@ -741,6 +752,7 @@ export interface FileRouteTypes {
     | '/_app/digital-card'
     | '/_app/dynamic-qr'
     | '/_app/files'
+    | '/_app/inventory'
     | '/_app/journey'
     | '/_app/landings'
     | '/_app/lead-capture'
@@ -1066,6 +1078,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppJourneyRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/inventory': {
+      id: '/_app/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof AppInventoryRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/files': {
       id: '/_app/files'
       path: '/files'
@@ -1319,6 +1338,7 @@ interface AppRouteChildren {
   AppDigitalCardRoute: typeof AppDigitalCardRouteWithChildren
   AppDynamicQrRoute: typeof AppDynamicQrRoute
   AppFilesRoute: typeof AppFilesRoute
+  AppInventoryRoute: typeof AppInventoryRoute
   AppJourneyRoute: typeof AppJourneyRoute
   AppLandingsRoute: typeof AppLandingsRoute
   AppLeadCaptureRoute: typeof AppLeadCaptureRoute
@@ -1359,6 +1379,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDigitalCardRoute: AppDigitalCardRouteWithChildren,
   AppDynamicQrRoute: AppDynamicQrRoute,
   AppFilesRoute: AppFilesRoute,
+  AppInventoryRoute: AppInventoryRoute,
   AppJourneyRoute: AppJourneyRoute,
   AppLandingsRoute: AppLandingsRoute,
   AppLeadCaptureRoute: AppLeadCaptureRoute,
