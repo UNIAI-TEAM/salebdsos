@@ -2,6 +2,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assignLeadOwner } from "@/lib/lead-routing.server";
 
 const IP_SALT = process.env.IP_HASH_SALT || "unicom-nfc";
 const hashIp = (ip: string | null) =>
@@ -59,11 +60,17 @@ export const Route = createFileRoute("/api/public/lead-forms/$slug")({
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
           return json({ error: "Email không hợp lệ." }, 400);
 
+        const assignment = await assignLeadOwner({
+          tenantId: form.tenant_id,
+          projectId: form.project_id,
+        });
+
         const { data: lead, error: leadErr } = await supabaseAdmin
           .from("leads")
           .insert({
             tenant_id: form.tenant_id,
             project_id: form.project_id,
+            owner_user_id: assignment.ownerUserId,
             full_name: payload["full_name"],
             phone: payload["phone"],
             email: email,
@@ -73,7 +80,13 @@ export const Route = createFileRoute("/api/public/lead-forms/$slug")({
             notes: payload["notes"],
             source: "Landing Page",
             status: "new",
-            meta: { lead_form_id: form.id, lead_form_slug: params.slug },
+            meta: {
+              lead_form_id: form.id,
+              lead_form_slug: params.slug,
+              auto_assigned: assignment.autoAssigned,
+              sla_minutes: assignment.slaMinutes,
+              sla_due_at: assignment.slaDueAt,
+            },
           })
           .select("id")
           .single();
@@ -82,12 +95,14 @@ export const Route = createFileRoute("/api/public/lead-forms/$slug")({
           return json({ error: "Không gửi được, vui lòng thử lại." }, 500);
         }
 
-        // Thông báo trong app cho cả workspace (form không gắn sale phụ trách)
+        // Thông báo: gửi riêng cho Sale được phân phối, nếu không có thì cả workspace
         const { error: nErr } = await supabaseAdmin.from("notifications").insert({
           tenant_id: form.tenant_id,
-          user_id: null,
+          user_id: assignment.ownerUserId,
           type: "lead_new",
-          title: "Khách mới từ landing",
+          title: assignment.slaDueAt
+            ? `Khách mới từ landing — gọi trong ${assignment.slaMinutes} phút`
+            : "Khách mới từ landing",
           body: [payload["full_name"], payload["phone"]].filter(Boolean).join(" · ") || "Có khách để lại thông tin",
           link: `/leads?lead=${lead.id}`,
           lead_id: lead.id,

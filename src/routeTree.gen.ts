@@ -42,6 +42,7 @@ import { Route as AppNfcCodesRouteImport } from './routes/_app.nfc-codes'
 import { Route as AppMembersRouteImport } from './routes/_app.members'
 import { Route as AppMarketingRouteImport } from './routes/_app.marketing'
 import { Route as AppLeadsRouteImport } from './routes/_app.leads'
+import { Route as AppLeadRoutingRouteImport } from './routes/_app.lead-routing'
 import { Route as AppLeadCaptureRouteImport } from './routes/_app.lead-capture'
 import { Route as AppLandingsRouteImport } from './routes/_app.landings'
 import { Route as AppJourneyRouteImport } from './routes/_app.journey'
@@ -239,6 +240,11 @@ const AppLeadsRoute = AppLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLeadRoutingRoute = AppLeadRoutingRouteImport.update({
+  id: '/lead-routing',
+  path: '/lead-routing',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppLeadCaptureRoute = AppLeadCaptureRouteImport.update({
   id: '/lead-capture',
   path: '/lead-capture',
@@ -425,6 +431,7 @@ export interface FileRoutesByFullPath {
   '/journey': typeof AppJourneyRoute
   '/landings': typeof AppLandingsRoute
   '/lead-capture': typeof AppLeadCaptureRoute
+  '/lead-routing': typeof AppLeadRoutingRoute
   '/leads': typeof AppLeadsRoute
   '/marketing': typeof AppMarketingRoute
   '/members': typeof AppMembersRoute
@@ -490,6 +497,7 @@ export interface FileRoutesByTo {
   '/journey': typeof AppJourneyRoute
   '/landings': typeof AppLandingsRoute
   '/lead-capture': typeof AppLeadCaptureRoute
+  '/lead-routing': typeof AppLeadRoutingRoute
   '/leads': typeof AppLeadsRoute
   '/marketing': typeof AppMarketingRoute
   '/members': typeof AppMembersRoute
@@ -557,6 +565,7 @@ export interface FileRoutesById {
   '/_app/journey': typeof AppJourneyRoute
   '/_app/landings': typeof AppLandingsRoute
   '/_app/lead-capture': typeof AppLeadCaptureRoute
+  '/_app/lead-routing': typeof AppLeadRoutingRoute
   '/_app/leads': typeof AppLeadsRoute
   '/_app/marketing': typeof AppMarketingRoute
   '/_app/members': typeof AppMembersRoute
@@ -625,6 +634,7 @@ export interface FileRouteTypes {
     | '/journey'
     | '/landings'
     | '/lead-capture'
+    | '/lead-routing'
     | '/leads'
     | '/marketing'
     | '/members'
@@ -690,6 +700,7 @@ export interface FileRouteTypes {
     | '/journey'
     | '/landings'
     | '/lead-capture'
+    | '/lead-routing'
     | '/leads'
     | '/marketing'
     | '/members'
@@ -756,6 +767,7 @@ export interface FileRouteTypes {
     | '/_app/journey'
     | '/_app/landings'
     | '/_app/lead-capture'
+    | '/_app/lead-routing'
     | '/_app/leads'
     | '/_app/marketing'
     | '/_app/members'
@@ -1057,6 +1069,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLeadsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/lead-routing': {
+      id: '/_app/lead-routing'
+      path: '/lead-routing'
+      fullPath: '/lead-routing'
+      preLoaderRoute: typeof AppLeadRoutingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/lead-capture': {
       id: '/_app/lead-capture'
       path: '/lead-capture'
@@ -1342,6 +1361,7 @@ interface AppRouteChildren {
   AppJourneyRoute: typeof AppJourneyRoute
   AppLandingsRoute: typeof AppLandingsRoute
   AppLeadCaptureRoute: typeof AppLeadCaptureRoute
+  AppLeadRoutingRoute: typeof AppLeadRoutingRoute
   AppLeadsRoute: typeof AppLeadsRoute
   AppMarketingRoute: typeof AppMarketingRoute
   AppMembersRoute: typeof AppMembersRoute
@@ -1383,6 +1403,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppJourneyRoute: AppJourneyRoute,
   AppLandingsRoute: AppLandingsRoute,
   AppLeadCaptureRoute: AppLeadCaptureRoute,
+  AppLeadRoutingRoute: AppLeadRoutingRoute,
   AppLeadsRoute: AppLeadsRoute,
   AppMarketingRoute: AppMarketingRoute,
   AppMembersRoute: AppMembersRoute,

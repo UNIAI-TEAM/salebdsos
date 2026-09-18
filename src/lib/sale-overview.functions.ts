@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { TOUCH_LABEL } from "@/lib/journey.functions";
+import { LEAD_ROUTING_KEY, parseLeadRouting, WORKING_LEAD_STATUSES } from "@/lib/lead-routing";
 
 const MANAGER_ROLES = new Set(["owner", "admin", "manager", "platform_admin"]);
 const SALE_ROLES = new Set(["owner", "admin", "manager", "agent"]);
@@ -55,15 +56,16 @@ export const getSaleOverview = createServerFn({ method: "GET" })
     const now = new Date();
     const scheduleEnd = new Date(now.getTime() + 60 * 86400_000).toISOString();
 
-    const [profileQ, membersQ, cardsQ, dealsQ, leadsQ, appointmentsQ, ownedQrQ] = await Promise.all([
+    const [profileQ, membersQ, cardsQ, dealsQ, leadsQ, appointmentsQ, routingQ, ownedQrQ] = await Promise.all([
       supabase.from("profiles").select("user_id,full_name,email,phone,avatar_url").eq("user_id", ownerId).maybeSingle(),
       canManage
         ? supabase.from("user_roles").select("user_id,role").eq("tenant_id", data.tenantId)
         : Promise.resolve({ data: [], error: null }),
       supabase.from("cards").select("id,slug").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null),
       supabase.from("pipeline_deals").select("id,project_id,customer_id,value,currency,status,closed_at").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null),
-      supabase.from("leads").select("id,full_name,phone,email,source,status,project_id,card_id,created_at,meta").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null).order("created_at", { ascending: false }),
+      supabase.from("leads").select("id,full_name,phone,email,source,status,project_id,card_id,created_at,updated_at,meta").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null).order("created_at", { ascending: false }),
       supabase.from("appointments").select("id,project_id,customer_id,lead_id,title,location,starts_at,ends_at,status,is_published,assigned_to,created_by,customers(full_name)").eq("tenant_id", data.tenantId).or(`assigned_to.eq.${ownerId},created_by.eq.${ownerId}`).gte("starts_at", now.toISOString()).lte("starts_at", scheduleEnd).order("starts_at", { ascending: true }).limit(100),
+      supabase.from("settings").select("value").eq("tenant_id", data.tenantId).eq("key", LEAD_ROUTING_KEY).maybeSingle(),
       supabase.from("project_qr_codes").select("id,project_id,code,label,channel").eq("tenant_id", data.tenantId).eq("created_by", ownerId).eq("is_active", true),
     ]);
     const firstError = [profileQ.error, cardsQ.error, dealsQ.error, leadsQ.error, appointmentsQ.error, ownedQrQ.error].find(Boolean);
@@ -205,6 +207,47 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       projectName: item.project_id ? projectNames.get(item.project_id) ?? null : null,
     }));
 
+    const routing = parseLeadRouting(routingQ.data?.value);
+    const workingStatuses = new Set<string>(WORKING_LEAD_STATUSES);
+    const nowMs = now.getTime();
+    const slaMs = routing.slaMinutes * 60_000;
+    const coldMs = routing.coldDays * 86400_000;
+
+    const leadRef = (lead: typeof leads[number]) => ({
+      id: lead.id,
+      name: lead.full_name || lead.phone || lead.email || "Khách hàng",
+      phone: lead.phone,
+      source: lead.source,
+      projectName: lead.project_id ? projectNames.get(lead.project_id) ?? null : null,
+    });
+
+    const slaAlerts = activeLeads
+      .filter((lead) => lead.status === "new" && nowMs - new Date(lead.created_at).getTime() > slaMs)
+      .slice(0, 20)
+      .map((lead) => ({
+        ...leadRef(lead),
+        at: lead.created_at,
+        overdueMinutes: Math.round((nowMs - new Date(lead.created_at).getTime() - slaMs) / 60_000),
+      }))
+      .sort((a, b) => b.overdueMinutes - a.overdueMinutes);
+
+    const slaDueSoon = activeLeads.filter((lead) => {
+      const age = nowMs - new Date(lead.created_at).getTime();
+      return lead.status === "new" && age <= slaMs;
+    }).length;
+
+    const coldLeads = activeLeads
+      .filter((lead) => workingStatuses.has(lead.status) &&
+        nowMs - new Date(lead.updated_at ?? lead.created_at).getTime() > coldMs)
+      .slice(0, 20)
+      .map((lead) => ({
+        ...leadRef(lead),
+        status: lead.status,
+        at: lead.updated_at ?? lead.created_at,
+        idleDays: Math.floor((nowMs - new Date(lead.updated_at ?? lead.created_at).getTime()) / 86400_000),
+      }))
+      .sort((a, b) => b.idleDays - a.idleDays);
+
     const recentActivity = activeTouches.slice(0, 25).map((touch) => ({
       id: String(touch.id),
       label: TOUCH_LABEL[touch.event_type] ?? touch.event_type,
@@ -253,6 +296,14 @@ export const getSaleOverview = createServerFn({ method: "GET" })
         projectsSold: wonProjects.size,
         conversionRate: servedKeys.size ? Math.round((wonDeals.length / servedKeys.size) * 1000) / 10 : 0,
       },
+      routing: {
+        enabled: routing.enabled,
+        slaMinutes: routing.slaMinutes,
+        coldDays: routing.coldDays,
+      },
+      slaAlerts,
+      slaDueSoon,
+      coldLeads,
       appointments,
       events,
       identified,
