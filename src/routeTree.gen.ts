@@ -67,6 +67,7 @@ import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.i
 import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/zalo-webhook'
 import { Route as ApiPublicTelephonyWebhookRouteImport } from './routes/api/public/telephony-webhook'
 import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
+import { Route as ApiPublicContactRequestRouteImport } from './routes/api/public/contact-request'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
 import { Route as AppDigitalCardEditRouteImport } from './routes/_app.digital-card.edit'
 import { Route as AppCustomersIdRouteImport } from './routes/_app.customers.$id'
@@ -370,6 +371,11 @@ const ApiPublicProjectTouchRoute = ApiPublicProjectTouchRouteImport.update({
   path: '/api/public/project-touch',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicContactRequestRoute = ApiPublicContactRequestRouteImport.update({
+  id: '/api/public/contact-request',
+  path: '/api/public/contact-request',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -488,6 +494,7 @@ export interface FileRoutesByFullPath {
   '/customers/$id': typeof AppCustomersIdRoute
   '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/contact-request': typeof ApiPublicContactRequestRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
   '/api/public/zalo-webhook': typeof ApiPublicZaloWebhookRoute
@@ -557,6 +564,7 @@ export interface FileRoutesByTo {
   '/customers/$id': typeof AppCustomersIdRoute
   '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/contact-request': typeof ApiPublicContactRequestRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
   '/api/public/zalo-webhook': typeof ApiPublicZaloWebhookRoute
@@ -630,6 +638,7 @@ export interface FileRoutesById {
   '/_app/customers/$id': typeof AppCustomersIdRoute
   '/_app/digital-card/edit': typeof AppDigitalCardEditRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/contact-request': typeof ApiPublicContactRequestRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
   '/api/public/zalo-webhook': typeof ApiPublicZaloWebhookRoute
@@ -703,6 +712,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/digital-card/edit'
     | '/projects/$id'
+    | '/api/public/contact-request'
     | '/api/public/project-touch'
     | '/api/public/telephony-webhook'
     | '/api/public/zalo-webhook'
@@ -772,6 +782,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/digital-card/edit'
     | '/projects/$id'
+    | '/api/public/contact-request'
     | '/api/public/project-touch'
     | '/api/public/telephony-webhook'
     | '/api/public/zalo-webhook'
@@ -844,6 +855,7 @@ export interface FileRouteTypes {
     | '/_app/customers/$id'
     | '/_app/digital-card/edit'
     | '/_app/projects/$id'
+    | '/api/public/contact-request'
     | '/api/public/project-touch'
     | '/api/public/telephony-webhook'
     | '/api/public/zalo-webhook'
@@ -875,6 +887,7 @@ export interface RootRouteChildren {
   FSlugRoute: typeof FSlugRoute
   PSlugRoute: typeof PSlugRoute
   ShareSlugRoute: typeof ShareSlugRoute
+  ApiPublicContactRequestRoute: typeof ApiPublicContactRequestRoute
   ApiPublicProjectTouchRoute: typeof ApiPublicProjectTouchRoute
   ApiPublicTelephonyWebhookRoute: typeof ApiPublicTelephonyWebhookRoute
   ApiPublicZaloWebhookRoute: typeof ApiPublicZaloWebhookRoute
@@ -1296,6 +1309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicProjectTouchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/contact-request': {
+      id: '/api/public/contact-request'
+      path: '/api/public/contact-request'
+      fullPath: '/api/public/contact-request'
+      preLoaderRoute: typeof ApiPublicContactRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/projects/$id': {
       id: '/_app/projects/$id'
       path: '/$id'
@@ -1526,6 +1546,7 @@ const rootRouteChildren: RootRouteChildren = {
   FSlugRoute: FSlugRoute,
   PSlugRoute: PSlugRoute,
   ShareSlugRoute: ShareSlugRoute,
+  ApiPublicContactRequestRoute: ApiPublicContactRequestRoute,
   ApiPublicProjectTouchRoute: ApiPublicProjectTouchRoute,
   ApiPublicTelephonyWebhookRoute: ApiPublicTelephonyWebhookRoute,
   ApiPublicZaloWebhookRoute: ApiPublicZaloWebhookRoute,
