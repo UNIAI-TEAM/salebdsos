@@ -190,6 +190,8 @@ export const getFunnelReport = createServerFn({ method: "GET" })
 
     let contractValueTotal = 0;
     let collectedTotal = 0;
+    // Hợp đồng luôn được tính về dự án ghi trên hợp đồng (sản phẩm đã bán), không theo dự án khách quan tâm ban đầu
+    const contractByProject = new Map<string, { count: number; value: number; collected: number }>();
     for (const row of contracts) {
       const value = Number(row.net_price ?? 0);
       const collected = collectedByContract.get(row.id) ?? 0;
@@ -198,6 +200,13 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       const productDealId = row.product_id ? products.find((p) => p.id === row.product_id)?.deal_id ?? null : null;
       const linkedDealId = row.deal_id ?? productDealId;
       const leadId = row.lead_id ?? (linkedDealId ? dealById.get(linkedDealId)?.lead_id ?? null : null);
+      const leadProjectId = leadId ? leads.find((l) => l.id === leadId)?.project_id ?? null : null;
+      const projectKey = row.project_id ?? leadProjectId ?? "none";
+      const projectAgg = contractByProject.get(projectKey) ?? { count: 0, value: 0, collected: 0 };
+      projectAgg.count += 1;
+      projectAgg.value += value;
+      projectAgg.collected += collected;
+      contractByProject.set(projectKey, projectAgg);
       if (!leadId) continue;
       cartLeadIds.add(leadId);
       contractLeadIds.add(leadId);
