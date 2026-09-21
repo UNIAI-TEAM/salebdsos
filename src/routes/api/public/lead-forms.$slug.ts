@@ -109,6 +109,18 @@ export const Route = createFileRoute("/api/public/lead-forms/$slug")({
         });
         if (nErr) console.error("[lead-form] notification", nErr.message);
 
+        {
+          const { sendPushToUser } = await import("@/lib/push.server");
+          await sendPushToUser({
+            userId: assignment.ownerUserId,
+            title: assignment.slaDueAt
+              ? `Khách mới từ landing — gọi trong ${assignment.slaMinutes} phút`
+              : "Khách mới từ landing",
+            body: [payload["full_name"], payload["phone"]].filter(Boolean).join(" · ") || "Có khách để lại thông tin",
+            link: `/leads?lead=${lead.id}`,
+          });
+        }
+
         const { error: subErr } = await supabaseAdmin.from("lead_submissions").insert({
           tenant_id: form.tenant_id,
           form_id: form.id,

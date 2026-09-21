@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   Filter,
   FileSignature,
+  Smartphone,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
@@ -84,6 +85,7 @@ const groups: Group[] = [
       { to: "/sales-directory", label: "Quản lý Sale", icon: IdCard, roles: ["owner", "admin", "manager"] },
       { to: "/members", label: "Thành viên & Vai trò", icon: ShieldCheck, roles: ["owner", "admin"] },
       { to: "/team", label: "Team Management", icon: Users2, roles: ["owner", "admin", "manager"] },
+      { to: "/mobile-app", label: "App điện thoại & thông báo", icon: Smartphone },
       { to: "/settings", label: "Cài đặt", icon: Settings, roles: ["owner", "admin"] },
       { to: "/auth-settings", label: "Bảo mật xác thực", icon: ShieldCheck, platformOnly: true },
     ],
@@ -114,6 +116,13 @@ const saleMobileGroups: Group[] = [
     items: [
       { to: "/content-library", label: "Kho nội dung", icon: BookMarked },
       { to: "/airdrop", label: "Chia sẻ danh thiếp", icon: Send },
+    ],
+  },
+  {
+    label: "Báo cáo & app",
+    items: [
+      { to: "/funnel-report", label: "Báo cáo phễu", icon: Filter },
+      { to: "/mobile-app", label: "App & thông báo", icon: Smartphone },
     ],
   },
   {

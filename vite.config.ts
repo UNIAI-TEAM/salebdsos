@@ -24,6 +24,8 @@ export default defineConfig({
         manifest: false,
         outDir: "dist/client",
         workbox: {
+          // Xử lý thông báo đẩy (push + click mở app)
+          importScripts: ["/push-handler.js"],
           globDirectory: "dist/client",
           globPatterns: ["**/*.{js,css,woff2,png,svg,ico}", "offline.html"],
           // Trang chưa từng mở khi offline → hiện trang thông báo đã lưu sẵn

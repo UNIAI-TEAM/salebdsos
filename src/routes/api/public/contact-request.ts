@@ -152,6 +152,13 @@ export const Route = createFileRoute("/api/public/contact-request")({
             body: `${name ?? "Khách"}${phone ? ` · ${phone}` : ""} — liên hệ trong ${assignment.slaMinutes} phút`,
             kind: "warning",
           } as never);
+          const { sendPushToUser } = await import("@/lib/push.server");
+          await sendPushToUser({
+            userId: assignment.ownerUserId,
+            title: `Khách yêu cầu ${CHANNEL_LABEL[channel]}`,
+            body: `${name ?? "Khách"}${phone ? ` · ${phone}` : ""} — liên hệ trong ${assignment.slaMinutes} phút`,
+            link: "/inbox",
+          });
         }
 
         // Xác nhận tự động cho khách

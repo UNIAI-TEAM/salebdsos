@@ -39,6 +39,7 @@ import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppProductsRouteImport } from './routes/_app.products'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
 import { Route as AppNfcCodesRouteImport } from './routes/_app.nfc-codes'
+import { Route as AppMobileAppRouteImport } from './routes/_app.mobile-app'
 import { Route as AppMembersRouteImport } from './routes/_app.members'
 import { Route as AppMarketingRouteImport } from './routes/_app.marketing'
 import { Route as AppLeadsRouteImport } from './routes/_app.leads'
@@ -230,6 +231,11 @@ const AppPipelineRoute = AppPipelineRouteImport.update({
 const AppNfcCodesRoute = AppNfcCodesRouteImport.update({
   id: '/nfc-codes',
   path: '/nfc-codes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMobileAppRoute = AppMobileAppRouteImport.update({
+  id: '/mobile-app',
+  path: '/mobile-app',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMembersRoute = AppMembersRouteImport.update({
@@ -481,6 +487,7 @@ export interface FileRoutesByFullPath {
   '/leads': typeof AppLeadsRoute
   '/marketing': typeof AppMarketingRoute
   '/members': typeof AppMembersRoute
+  '/mobile-app': typeof AppMobileAppRoute
   '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
@@ -554,6 +561,7 @@ export interface FileRoutesByTo {
   '/leads': typeof AppLeadsRoute
   '/marketing': typeof AppMarketingRoute
   '/members': typeof AppMembersRoute
+  '/mobile-app': typeof AppMobileAppRoute
   '/nfc-codes': typeof AppNfcCodesRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
@@ -629,6 +637,7 @@ export interface FileRoutesById {
   '/_app/leads': typeof AppLeadsRoute
   '/_app/marketing': typeof AppMarketingRoute
   '/_app/members': typeof AppMembersRoute
+  '/_app/mobile-app': typeof AppMobileAppRoute
   '/_app/nfc-codes': typeof AppNfcCodesRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/products': typeof AppProductsRoute
@@ -705,6 +714,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/marketing'
     | '/members'
+    | '/mobile-app'
     | '/nfc-codes'
     | '/pipeline'
     | '/products'
@@ -778,6 +788,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/marketing'
     | '/members'
+    | '/mobile-app'
     | '/nfc-codes'
     | '/pipeline'
     | '/products'
@@ -852,6 +863,7 @@ export interface FileRouteTypes {
     | '/_app/leads'
     | '/_app/marketing'
     | '/_app/members'
+    | '/_app/mobile-app'
     | '/_app/nfc-codes'
     | '/_app/pipeline'
     | '/_app/products'
@@ -1135,6 +1147,13 @@ declare module '@tanstack/react-router' {
       path: '/nfc-codes'
       fullPath: '/nfc-codes'
       preLoaderRoute: typeof AppNfcCodesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/mobile-app': {
+      id: '/_app/mobile-app'
+      path: '/mobile-app'
+      fullPath: '/mobile-app'
+      preLoaderRoute: typeof AppMobileAppRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/members': {
@@ -1506,6 +1525,7 @@ interface AppRouteChildren {
   AppLeadsRoute: typeof AppLeadsRoute
   AppMarketingRoute: typeof AppMarketingRoute
   AppMembersRoute: typeof AppMembersRoute
+  AppMobileAppRoute: typeof AppMobileAppRoute
   AppNfcCodesRoute: typeof AppNfcCodesRoute
   AppPipelineRoute: typeof AppPipelineRoute
   AppProductsRoute: typeof AppProductsRoute
@@ -1551,6 +1571,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLeadsRoute: AppLeadsRoute,
   AppMarketingRoute: AppMarketingRoute,
   AppMembersRoute: AppMembersRoute,
+  AppMobileAppRoute: AppMobileAppRoute,
   AppNfcCodesRoute: AppNfcCodesRoute,
   AppPipelineRoute: AppPipelineRoute,
   AppProductsRoute: AppProductsRoute,

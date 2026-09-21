@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { FileSignature, Filter, PackageCheck, RefreshCw, TrendingDown, UserRoundCheck } from "lucide-react";
+import { ChevronDown, FileSignature, Filter, PackageCheck, RefreshCw, TrendingDown, UserRoundCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getFunnelReport, type FunnelRow } from "@/lib/funnel-report.functions";
 import { PageHeader, SectionCard } from "@/components/app/ui";
@@ -77,11 +77,71 @@ function Bar({ value, total }: { value: number; total: number }) {
   );
 }
 
+function FunnelCards({ rows, max }: { rows: FunnelRow[]; max: number }) {
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  return (
+    <ul className="space-y-2 md:hidden">
+      {rows.map((row) => {
+        const open = openKey === row.key;
+        return (
+          <li key={row.key} className="rounded-2xl border border-border bg-card p-3">
+            <button
+              type="button"
+              className="w-full text-left"
+              onClick={() => setOpenKey(open ? null : row.key)}
+              aria-expanded={open}
+            >
+              <div className="flex items-center gap-2">
+                <p className="min-w-0 flex-1 truncate text-sm font-semibold">{row.label}</p>
+                <Badge variant="outline" className="shrink-0 text-[10px]">{row.submittedToContract}% chốt</Badge>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition ${open ? "rotate-180" : ""}`} />
+              </div>
+              <div className="mt-2"><Bar value={row.submitted} total={max} /></div>
+              <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p className="text-base font-bold">{row.submitted}</p>
+                  <p className="text-[10px] text-muted-foreground">Gửi TT</p>
+                </div>
+                <div>
+                  <p className="text-base font-bold">{row.cart}</p>
+                  <p className="text-[10px] text-muted-foreground">Giỏ hàng</p>
+                </div>
+                <div>
+                  <p className="text-base font-bold">{row.contract}</p>
+                  <p className="text-[10px] text-muted-foreground">Hợp đồng</p>
+                </div>
+              </div>
+            </button>
+            {open ? (
+              <dl className="mt-3 space-y-1.5 border-t border-border/70 pt-3 text-xs">
+                {[
+                  ["Gửi → giỏ hàng", `${row.submittedToCart}%`],
+                  ["Gửi → hợp đồng", `${row.submittedToContract}%`],
+                  ["Giá trị hợp đồng", money(row.contractValue)],
+                  ["Đã thu", money(row.collected)],
+                  ["Tỷ lệ thu tiền", `${row.collectRate}%`],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between gap-3">
+                    <dt className="text-muted-foreground">{label}</dt>
+                    <dd className="font-medium">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function FunnelTable({ rows, emptyText }: { rows: FunnelRow[]; emptyText: string }) {
   if (rows.length === 0) return <p className="py-7 text-center text-sm text-muted-foreground">{emptyText}</p>;
   const max = Math.max(...rows.map((row) => row.submitted), 1);
   return (
-    <div className="-mx-1 overflow-x-auto px-1">
+    <>
+    <FunnelCards rows={rows} max={max} />
+    <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
       <table className="w-full min-w-[860px] text-sm">
         <thead>
           <tr className="text-left text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -116,6 +176,7 @@ function FunnelTable({ rows, emptyText }: { rows: FunnelRow[]; emptyText: string
         </tbody>
       </table>
     </div>
+    </>
   );
 }
 
