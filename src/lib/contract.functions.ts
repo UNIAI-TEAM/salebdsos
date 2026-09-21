@@ -254,6 +254,30 @@ export const createContractFromProduct = createServerFn({ method: "POST" })
       leadId = deal?.lead_id ?? null;
     }
 
+    // Không có giao dịch: nối hợp đồng về khách gốc theo số điện thoại/email để báo cáo phễu vẫn đúng
+    if (!leadId && data.customerId) {
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("phone,email")
+        .eq("id", data.customerId)
+        .maybeSingle();
+      const filters: string[] = [];
+      if (customer?.phone) filters.push(`phone.eq.${customer.phone}`);
+      if (customer?.email) filters.push(`email.eq.${customer.email}`);
+      if (filters.length) {
+        const { data: lead } = await supabase
+          .from("leads")
+          .select("id")
+          .eq("tenant_id", data.tenantId)
+          .is("deleted_at", null)
+          .or(filters.join(","))
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        leadId = lead?.id ?? null;
+      }
+    }
+
     const netPrice = round(Math.max(0, salePrice - data.discountAmount));
     const code = (data.code ?? "").trim() || `HD-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
