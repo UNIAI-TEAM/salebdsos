@@ -248,15 +248,28 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       const sourceLabel = normalizeSource(lead.source);
       const sourceBucket = ensure(sourceBuckets, sourceLabel, sourceLabel);
 
-      for (const bucket of [projectBucket, sourceBucket]) {
-        bucket.submitted += 1;
-        if (inCart) bucket.cart += 1;
-        if (inContract) bucket.contract += 1;
-        if (money) {
-          bucket.contractValue += money.value;
-          bucket.collected += money.collected;
-        }
+      projectBucket.submitted += 1;
+      if (inCart) projectBucket.cart += 1;
+
+      sourceBucket.submitted += 1;
+      if (inCart) sourceBucket.cart += 1;
+      if (inContract) sourceBucket.contract += 1;
+      if (money) {
+        sourceBucket.contractValue += money.value;
+        sourceBucket.collected += money.collected;
       }
+    }
+
+    // Hợp đồng đổ về dự án của chính hợp đồng
+    for (const [projectKey, agg] of contractByProject) {
+      const bucket = ensure(
+        projectBuckets,
+        projectKey,
+        projectKey === "none" ? "Chưa gắn dự án" : projectName.get(projectKey) ?? "Dự án đã xoá",
+      );
+      bucket.contract += agg.count;
+      bucket.contractValue += agg.value;
+      bucket.collected += agg.collected;
     }
 
     return {
