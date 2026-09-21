@@ -118,6 +118,14 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
             body: text.slice(0, 200),
             kind: "info",
           } as never);
+
+          const { sendPushToUser } = await import("@/lib/push.server");
+          await sendPushToUser({
+            userId: assignment.ownerUserId,
+            title: "Khách đang chat trên landing dự án",
+            body: text.slice(0, 160),
+            link: "/inbox",
+          });
         } else if ((name && !existing?.contact_name) || (phone && !existing?.contact_phone)) {
           await supabaseAdmin
             .from("conversations")

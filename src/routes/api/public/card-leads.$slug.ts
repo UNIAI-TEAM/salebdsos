@@ -91,6 +91,16 @@ export const Route = createFileRoute("/api/public/card-leads/$slug")({
         });
         if (nErr) console.error("[card-lead] notification", nErr.message);
 
+        {
+          const { sendPushToUser } = await import("@/lib/push.server");
+          await sendPushToUser({
+            userId: assignment.ownerUserId,
+            title: "Khách mới từ QR danh thiếp",
+            body: [fullName, phone].filter(Boolean).join(" · ") || "Có khách để lại thông tin",
+            link: `/leads?lead=${lead.id}`,
+          });
+        }
+
         await supabaseAdmin.from("interaction_events").insert({
           card_id: card.id,
           tenant_id: card.tenant_id,

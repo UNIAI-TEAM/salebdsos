@@ -134,6 +134,16 @@ export const Route = createFileRoute("/api/public/sales-pages/$slug")({
         });
         if (nErr) console.error("[sales-page] notification", nErr.message);
 
+        {
+          const { sendPushToUser } = await import("@/lib/push.server");
+          await sendPushToUser({
+            userId: assignment.ownerUserId ?? null,
+            title: "Khách mới từ landing",
+            body: `${full_name} · ${phone}${page.title ? ` · ${page.title}` : ""}`,
+            link: `/leads?lead=${lead.id}`,
+          });
+        }
+
         // Timeline: ghi nhận nguồn gốc lead
         const { error: aErr } = await supabaseAdmin.from("audit_logs").insert({
           tenant_id: page.tenant_id,
