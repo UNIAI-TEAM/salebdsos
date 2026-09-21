@@ -119,6 +119,13 @@ const saleMobileGroups: Group[] = [
     ],
   },
   {
+    label: "Báo cáo & app",
+    items: [
+      { to: "/funnel-report", label: "Báo cáo phễu", icon: Filter },
+      { to: "/mobile-app", label: "App & thông báo", icon: Smartphone },
+    ],
+  },
+  {
     label: "Quản trị",
     items: [
       { to: "/sales-directory", label: "Quản lý Sale", icon: IdCard, roles: ["owner", "admin", "manager"] },
