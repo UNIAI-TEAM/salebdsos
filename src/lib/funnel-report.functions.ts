@@ -319,6 +319,10 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       );
       const sourceLabel = normalizeSource(lead.source);
       const sourceBucket = ensure(sourceBuckets, sourceLabel, sourceLabel);
+      const mKey = monthKey(lead.created_at);
+      const monthBucket = ensure(monthBuckets, mKey, monthLabel(mKey));
+      monthBucket.submitted += 1;
+      if (inCart) monthBucket.cart += 1;
 
       projectBucket.submitted += 1;
       if (inCart) projectBucket.cart += 1;
