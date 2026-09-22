@@ -1356,6 +1356,24 @@ export type Database = {
           },
         ]
       }
+      cron_tokens: {
+        Row: {
+          created_at: string
+          name: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          name: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          token?: string
+        }
+        Relationships: []
+      }
       customer_transactions: {
         Row: {
           amount: number
@@ -1720,6 +1738,30 @@ export type Database = {
           },
         ]
       }
+      job_locks: {
+        Row: {
+          key: string
+          locked_by: string | null
+          locked_until: string
+          note: string | null
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          locked_by?: string | null
+          locked_until: string
+          note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          locked_by?: string | null
+          locked_until?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lead_forms: {
         Row: {
           created_at: string
@@ -2039,6 +2081,83 @@ export type Database = {
           },
           {
             foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nurture_messages: {
+        Row: {
+          body: string | null
+          channel: string
+          conversation_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          lead_id: string | null
+          owner_user_id: string | null
+          product_id: string | null
+          sent_at: string
+          status: string
+          step_key: string
+          tenant_id: string
+        }
+        Insert: {
+          body?: string | null
+          channel: string
+          conversation_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          owner_user_id?: string | null
+          product_id?: string | null
+          sent_at?: string
+          status?: string
+          step_key: string
+          tenant_id: string
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          conversation_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          owner_user_id?: string | null
+          product_id?: string | null
+          sent_at?: string
+          status?: string
+          step_key?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nurture_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurture_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurture_messages_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nurture_messages_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -3109,6 +3228,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acquire_job_lock: {
+        Args: { _key: string; _seconds: number }
+        Returns: boolean
+      }
       aggregate_interaction_events_daily: {
         Args: { _day?: string }
         Returns: undefined
@@ -3122,6 +3245,7 @@ export type Database = {
         Args: { _page_id: string; _tenant_id: string }
         Returns: undefined
       }
+      release_job_lock: { Args: { _key: string }; Returns: undefined }
     }
     Enums: {
       app_role:

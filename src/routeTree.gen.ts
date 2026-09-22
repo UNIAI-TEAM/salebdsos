@@ -39,6 +39,7 @@ import { Route as AppProjectsRouteImport } from './routes/_app.projects'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppProductsRouteImport } from './routes/_app.products'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
+import { Route as AppNurtureRouteImport } from './routes/_app.nurture'
 import { Route as AppNfcCodesRouteImport } from './routes/_app.nfc-codes'
 import { Route as AppMobileAppRouteImport } from './routes/_app.mobile-app'
 import { Route as AppMembersRouteImport } from './routes/_app.members'
@@ -72,6 +73,7 @@ import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.i
 import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/zalo-webhook'
 import { Route as ApiPublicTelephonyWebhookRouteImport } from './routes/api/public/telephony-webhook'
 import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
+import { Route as ApiPublicNurtureRunRouteImport } from './routes/api/public/nurture-run'
 import { Route as ApiPublicContactRequestRouteImport } from './routes/api/public/contact-request'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
 import { Route as AppDigitalCardEditRouteImport } from './routes/_app.digital-card.edit'
@@ -233,6 +235,11 @@ const AppProductsRoute = AppProductsRouteImport.update({
 const AppPipelineRoute = AppPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNurtureRoute = AppNurtureRouteImport.update({
+  id: '/nurture',
+  path: '/nurture',
   getParentRoute: () => AppRoute,
 } as any)
 const AppNfcCodesRoute = AppNfcCodesRouteImport.update({
@@ -401,6 +408,11 @@ const ApiPublicProjectTouchRoute = ApiPublicProjectTouchRouteImport.update({
   path: '/api/public/project-touch',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicNurtureRunRoute = ApiPublicNurtureRunRouteImport.update({
+  id: '/api/public/nurture-run',
+  path: '/api/public/nurture-run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicContactRequestRoute = ApiPublicContactRequestRouteImport.update({
   id: '/api/public/contact-request',
   path: '/api/public/contact-request',
@@ -502,6 +514,7 @@ export interface FileRoutesByFullPath {
   '/members': typeof AppMembersRoute
   '/mobile-app': typeof AppMobileAppRoute
   '/nfc-codes': typeof AppNfcCodesRoute
+  '/nurture': typeof AppNurtureRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
   '/profile': typeof AppProfileRoute
@@ -530,6 +543,7 @@ export interface FileRoutesByFullPath {
   '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
+  '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
   '/api/public/zalo-webhook': typeof ApiPublicZaloWebhookRoute
@@ -578,6 +592,7 @@ export interface FileRoutesByTo {
   '/members': typeof AppMembersRoute
   '/mobile-app': typeof AppMobileAppRoute
   '/nfc-codes': typeof AppNfcCodesRoute
+  '/nurture': typeof AppNurtureRoute
   '/pipeline': typeof AppPipelineRoute
   '/products': typeof AppProductsRoute
   '/profile': typeof AppProfileRoute
@@ -605,6 +620,7 @@ export interface FileRoutesByTo {
   '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
+  '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
   '/api/public/zalo-webhook': typeof ApiPublicZaloWebhookRoute
@@ -656,6 +672,7 @@ export interface FileRoutesById {
   '/_app/members': typeof AppMembersRoute
   '/_app/mobile-app': typeof AppMobileAppRoute
   '/_app/nfc-codes': typeof AppNfcCodesRoute
+  '/_app/nurture': typeof AppNurtureRoute
   '/_app/pipeline': typeof AppPipelineRoute
   '/_app/products': typeof AppProductsRoute
   '/_app/profile': typeof AppProfileRoute
@@ -684,6 +701,7 @@ export interface FileRoutesById {
   '/_app/digital-card/edit': typeof AppDigitalCardEditRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
+  '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
   '/api/public/zalo-webhook': typeof ApiPublicZaloWebhookRoute
@@ -735,6 +753,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/mobile-app'
     | '/nfc-codes'
+    | '/nurture'
     | '/pipeline'
     | '/products'
     | '/profile'
@@ -763,6 +782,7 @@ export interface FileRouteTypes {
     | '/digital-card/edit'
     | '/projects/$id'
     | '/api/public/contact-request'
+    | '/api/public/nurture-run'
     | '/api/public/project-touch'
     | '/api/public/telephony-webhook'
     | '/api/public/zalo-webhook'
@@ -811,6 +831,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/mobile-app'
     | '/nfc-codes'
+    | '/nurture'
     | '/pipeline'
     | '/products'
     | '/profile'
@@ -838,6 +859,7 @@ export interface FileRouteTypes {
     | '/digital-card/edit'
     | '/projects/$id'
     | '/api/public/contact-request'
+    | '/api/public/nurture-run'
     | '/api/public/project-touch'
     | '/api/public/telephony-webhook'
     | '/api/public/zalo-webhook'
@@ -888,6 +910,7 @@ export interface FileRouteTypes {
     | '/_app/members'
     | '/_app/mobile-app'
     | '/_app/nfc-codes'
+    | '/_app/nurture'
     | '/_app/pipeline'
     | '/_app/products'
     | '/_app/profile'
@@ -916,6 +939,7 @@ export interface FileRouteTypes {
     | '/_app/digital-card/edit'
     | '/_app/projects/$id'
     | '/api/public/contact-request'
+    | '/api/public/nurture-run'
     | '/api/public/project-touch'
     | '/api/public/telephony-webhook'
     | '/api/public/zalo-webhook'
@@ -948,6 +972,7 @@ export interface RootRouteChildren {
   PSlugRoute: typeof PSlugRoute
   ShareSlugRoute: typeof ShareSlugRoute
   ApiPublicContactRequestRoute: typeof ApiPublicContactRequestRoute
+  ApiPublicNurtureRunRoute: typeof ApiPublicNurtureRunRoute
   ApiPublicProjectTouchRoute: typeof ApiPublicProjectTouchRoute
   ApiPublicTelephonyWebhookRoute: typeof ApiPublicTelephonyWebhookRoute
   ApiPublicZaloWebhookRoute: typeof ApiPublicZaloWebhookRoute
@@ -1171,6 +1196,13 @@ declare module '@tanstack/react-router' {
       path: '/pipeline'
       fullPath: '/pipeline'
       preLoaderRoute: typeof AppPipelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/nurture': {
+      id: '/_app/nurture'
+      path: '/nurture'
+      fullPath: '/nurture'
+      preLoaderRoute: typeof AppNurtureRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/nfc-codes': {
@@ -1404,6 +1436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicProjectTouchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/nurture-run': {
+      id: '/api/public/nurture-run'
+      path: '/api/public/nurture-run'
+      fullPath: '/api/public/nurture-run'
+      preLoaderRoute: typeof ApiPublicNurtureRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/contact-request': {
       id: '/api/public/contact-request'
       path: '/api/public/contact-request'
@@ -1566,6 +1605,7 @@ interface AppRouteChildren {
   AppMembersRoute: typeof AppMembersRoute
   AppMobileAppRoute: typeof AppMobileAppRoute
   AppNfcCodesRoute: typeof AppNfcCodesRoute
+  AppNurtureRoute: typeof AppNurtureRoute
   AppPipelineRoute: typeof AppPipelineRoute
   AppProductsRoute: typeof AppProductsRoute
   AppProfileRoute: typeof AppProfileRoute
@@ -1614,6 +1654,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMembersRoute: AppMembersRoute,
   AppMobileAppRoute: AppMobileAppRoute,
   AppNfcCodesRoute: AppNfcCodesRoute,
+  AppNurtureRoute: AppNurtureRoute,
   AppPipelineRoute: AppPipelineRoute,
   AppProductsRoute: AppProductsRoute,
   AppProfileRoute: AppProfileRoute,
@@ -1652,6 +1693,7 @@ const rootRouteChildren: RootRouteChildren = {
   PSlugRoute: PSlugRoute,
   ShareSlugRoute: ShareSlugRoute,
   ApiPublicContactRequestRoute: ApiPublicContactRequestRoute,
+  ApiPublicNurtureRunRoute: ApiPublicNurtureRunRoute,
   ApiPublicProjectTouchRoute: ApiPublicProjectTouchRoute,
   ApiPublicTelephonyWebhookRoute: ApiPublicTelephonyWebhookRoute,
   ApiPublicZaloWebhookRoute: ApiPublicZaloWebhookRoute,
