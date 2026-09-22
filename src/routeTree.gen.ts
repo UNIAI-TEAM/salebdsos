@@ -72,6 +72,7 @@ import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.i
 import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/zalo-webhook'
 import { Route as ApiPublicTelephonyWebhookRouteImport } from './routes/api/public/telephony-webhook'
 import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
+import { Route as ApiPublicNurtureRunRouteImport } from './routes/api/public/nurture-run'
 import { Route as ApiPublicContactRequestRouteImport } from './routes/api/public/contact-request'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
 import { Route as AppDigitalCardEditRouteImport } from './routes/_app.digital-card.edit'
@@ -401,6 +402,11 @@ const ApiPublicProjectTouchRoute = ApiPublicProjectTouchRouteImport.update({
   path: '/api/public/project-touch',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicNurtureRunRoute = ApiPublicNurtureRunRouteImport.update({
+  id: '/api/public/nurture-run',
+  path: '/api/public/nurture-run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicContactRequestRoute = ApiPublicContactRequestRouteImport.update({
   id: '/api/public/contact-request',
   path: '/api/public/contact-request',
@@ -530,6 +536,7 @@ export interface FileRoutesByFullPath {
   '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
+  '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
   '/api/public/zalo-webhook': typeof ApiPublicZaloWebhookRoute
@@ -605,6 +612,7 @@ export interface FileRoutesByTo {
   '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
+  '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
   '/api/public/zalo-webhook': typeof ApiPublicZaloWebhookRoute
@@ -684,6 +692,7 @@ export interface FileRoutesById {
   '/_app/digital-card/edit': typeof AppDigitalCardEditRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
+  '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
   '/api/public/zalo-webhook': typeof ApiPublicZaloWebhookRoute
@@ -763,6 +772,7 @@ export interface FileRouteTypes {
     | '/digital-card/edit'
     | '/projects/$id'
     | '/api/public/contact-request'
+    | '/api/public/nurture-run'
     | '/api/public/project-touch'
     | '/api/public/telephony-webhook'
     | '/api/public/zalo-webhook'
@@ -838,6 +848,7 @@ export interface FileRouteTypes {
     | '/digital-card/edit'
     | '/projects/$id'
     | '/api/public/contact-request'
+    | '/api/public/nurture-run'
     | '/api/public/project-touch'
     | '/api/public/telephony-webhook'
     | '/api/public/zalo-webhook'
@@ -916,6 +927,7 @@ export interface FileRouteTypes {
     | '/_app/digital-card/edit'
     | '/_app/projects/$id'
     | '/api/public/contact-request'
+    | '/api/public/nurture-run'
     | '/api/public/project-touch'
     | '/api/public/telephony-webhook'
     | '/api/public/zalo-webhook'
@@ -948,6 +960,7 @@ export interface RootRouteChildren {
   PSlugRoute: typeof PSlugRoute
   ShareSlugRoute: typeof ShareSlugRoute
   ApiPublicContactRequestRoute: typeof ApiPublicContactRequestRoute
+  ApiPublicNurtureRunRoute: typeof ApiPublicNurtureRunRoute
   ApiPublicProjectTouchRoute: typeof ApiPublicProjectTouchRoute
   ApiPublicTelephonyWebhookRoute: typeof ApiPublicTelephonyWebhookRoute
   ApiPublicZaloWebhookRoute: typeof ApiPublicZaloWebhookRoute
@@ -1404,6 +1417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicProjectTouchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/nurture-run': {
+      id: '/api/public/nurture-run'
+      path: '/api/public/nurture-run'
+      fullPath: '/api/public/nurture-run'
+      preLoaderRoute: typeof ApiPublicNurtureRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/contact-request': {
       id: '/api/public/contact-request'
       path: '/api/public/contact-request'
@@ -1652,6 +1672,7 @@ const rootRouteChildren: RootRouteChildren = {
   PSlugRoute: PSlugRoute,
   ShareSlugRoute: ShareSlugRoute,
   ApiPublicContactRequestRoute: ApiPublicContactRequestRoute,
+  ApiPublicNurtureRunRoute: ApiPublicNurtureRunRoute,
   ApiPublicProjectTouchRoute: ApiPublicProjectTouchRoute,
   ApiPublicTelephonyWebhookRoute: ApiPublicTelephonyWebhookRoute,
   ApiPublicZaloWebhookRoute: ApiPublicZaloWebhookRoute,
