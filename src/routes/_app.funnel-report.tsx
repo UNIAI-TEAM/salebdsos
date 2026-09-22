@@ -8,6 +8,17 @@ import { getFunnelReport, type FunnelRow } from "@/lib/funnel-report.functions";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Bar as RBar,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_app/funnel-report")({
@@ -134,6 +145,65 @@ function FunnelCards({ rows, max }: { rows: FunnelRow[]; max: number }) {
         );
       })}
     </ul>
+  );
+}
+
+function MonthTrend({ rows }: { rows: FunnelRow[] }) {
+  if (rows.length === 0) return <p className="py-7 text-center text-sm text-muted-foreground">Chưa có số liệu theo tháng.</p>;
+  const chartData = rows.map((row) => ({
+    label: row.label,
+    submitted: row.submitted,
+    cart: row.cart,
+    contract: row.contract,
+    rate: row.submittedToContract,
+    value: row.contractValue,
+  }));
+  return (
+    <div className="space-y-3">
+      <div className="h-[280px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={false} />
+            <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} tickLine={false} axisLine={false} allowDecimals={false} />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              unit="%"
+              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <Tooltip
+              contentStyle={{
+                background: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                fontSize: 12,
+                color: "var(--foreground)",
+              }}
+              formatter={(value: number, name: string) => (name === "Tỷ lệ chốt" ? [`${value}%`, name] : [value, name])}
+            />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <RBar yAxisId="left" dataKey="submitted" name="Gửi thông tin" fill="var(--chart-3)" radius={[4, 4, 0, 0]} barSize={14} />
+            <RBar yAxisId="left" dataKey="cart" name="Giỏ hàng" fill="var(--chart-2)" radius={[4, 4, 0, 0]} barSize={14} />
+            <RBar yAxisId="left" dataKey="contract" name="Hợp đồng" fill="var(--chart-1)" radius={[4, 4, 0, 0]} barSize={14} />
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="rate"
+              name="Tỷ lệ chốt"
+              stroke="var(--chart-4)"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        Cột: số khách gửi thông tin · vào giỏ hàng · ký hợp đồng trong tháng. Đường: tỷ lệ chốt hợp đồng trên khách gửi thông tin.
+      </p>
+    </div>
   );
 }
 
@@ -292,6 +362,20 @@ function FunnelReportPage() {
               </span>
             </p>
           </div>
+
+          <SectionCard
+            title="Xu hướng chốt hợp đồng theo tháng"
+            action={<Badge variant="outline" className="shrink-0 text-[10px]">{data.byMonth.length} tháng</Badge>}
+          >
+            <MonthTrend rows={data.byMonth} />
+          </SectionCard>
+
+          <SectionCard
+            title="So sánh phễu theo từng tháng"
+            action={<Badge variant="outline" className="shrink-0 text-[10px]">Tháng gần nhất trước</Badge>}
+          >
+            <FunnelTable rows={[...data.byMonth].reverse()} emptyText="Chưa có số liệu theo tháng." />
+          </SectionCard>
 
           <SectionCard
             title="Tỷ lệ chuyển đổi theo dự án"

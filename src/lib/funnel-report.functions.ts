@@ -128,7 +128,7 @@ export const getFunnelReport = createServerFn({ method: "GET" })
 
     let contractQuery = supabase
       .from("contracts")
-      .select("id,project_id,product_id,lead_id,deal_id,owner_user_id,net_price,status")
+      .select("id,project_id,product_id,lead_id,deal_id,owner_user_id,net_price,status,signed_at,created_at")
       .eq("tenant_id", data.tenantId)
       .is("deleted_at", null)
       .in("status", ["active", "completed"]);
@@ -254,6 +254,33 @@ export const getFunnelReport = createServerFn({ method: "GET" })
 
     const projectBuckets = new Map<string, Bucket>();
     const sourceBuckets = new Map<string, Bucket>();
+    const monthBuckets = new Map<string, Bucket>();
+
+    // Khung tháng cố định để biểu đồ luôn liền mạch, kể cả tháng không có số liệu
+    const monthKey = (value: string | null | undefined) =>
+      (value ?? new Date().toISOString()).slice(0, 7);
+    const monthLabel = (key: string) => {
+      const [year, month] = key.split("-");
+      return `${month}/${year}`;
+    };
+    const startMonth = new Date(Date.now() - data.days * 86400_000);
+    const cursor = new Date(Date.UTC(startMonth.getUTCFullYear(), startMonth.getUTCMonth(), 1));
+    const nowMonth = new Date();
+    const lastMonth = Date.UTC(nowMonth.getUTCFullYear(), nowMonth.getUTCMonth(), 1);
+    while (cursor.getTime() <= lastMonth) {
+      const key = cursor.toISOString().slice(0, 7);
+      monthBuckets.set(key, {
+        label: monthLabel(key),
+        submitted: 0,
+        cart: 0,
+        contract: 0,
+        contractValue: 0,
+        collected: 0,
+        commission: 0,
+        commissionPaid: 0,
+      });
+      cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+    }
 
     const ensure = (map: Map<string, Bucket>, key: string, label: string) => {
       const existing = map.get(key);
@@ -292,6 +319,10 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       );
       const sourceLabel = normalizeSource(lead.source);
       const sourceBucket = ensure(sourceBuckets, sourceLabel, sourceLabel);
+      const mKey = monthKey(lead.created_at);
+      const monthBucket = ensure(monthBuckets, mKey, monthLabel(mKey));
+      monthBucket.submitted += 1;
+      if (inCart) monthBucket.cart += 1;
 
       projectBucket.submitted += 1;
       if (inCart) projectBucket.cart += 1;
@@ -321,8 +352,42 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       bucket.commissionPaid += agg.commissionPaid;
     }
 
+    // Hợp đồng tính theo tháng ký (hoặc tháng lập nếu chưa ghi ngày ký)
+    for (const row of contracts) {
+      const mKey = monthKey(row.signed_at ?? row.created_at);
+      const bucket = ensure(monthBuckets, mKey, monthLabel(mKey));
+      const com = commissionByContract.get(row.id) ?? { total: 0, paid: 0 };
+      bucket.contract += 1;
+      bucket.contractValue += Number(row.net_price ?? 0);
+      bucket.collected += collectedByContract.get(row.id) ?? 0;
+      bucket.commission += com.total;
+      bucket.commissionPaid += com.paid;
+    }
+
+    const byMonth = [...monthBuckets.keys()]
+      .sort()
+      .map((key) => {
+        const value = monthBuckets.get(key)!;
+        return {
+          key,
+          label: value.label,
+          submitted: value.submitted,
+          cart: value.cart,
+          contract: value.contract,
+          submittedToCart: rate(value.cart, value.submitted),
+          cartToContract: rate(value.contract, value.cart),
+          submittedToContract: rate(value.contract, value.submitted),
+          contractValue: Math.round(value.contractValue),
+          collected: Math.round(value.collected),
+          collectRate: rate(value.collected, value.contractValue),
+          commission: Math.round(value.commission),
+          commissionPaid: Math.round(value.commissionPaid),
+        } satisfies FunnelRow;
+      });
+
     return {
       days: data.days,
+      byMonth,
       canManage,
       scope: ownerFilter ? "own" : "team",
       projects: (projectsQ.data ?? []).map((row) => ({ id: row.id, name: row.name })),
