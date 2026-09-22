@@ -352,8 +352,42 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       bucket.commissionPaid += agg.commissionPaid;
     }
 
+    // Hợp đồng tính theo tháng ký (hoặc tháng lập nếu chưa ghi ngày ký)
+    for (const row of contracts) {
+      const mKey = monthKey(row.signed_at ?? row.created_at);
+      const bucket = ensure(monthBuckets, mKey, monthLabel(mKey));
+      const com = commissionByContract.get(row.id) ?? { total: 0, paid: 0 };
+      bucket.contract += 1;
+      bucket.contractValue += Number(row.net_price ?? 0);
+      bucket.collected += collectedByContract.get(row.id) ?? 0;
+      bucket.commission += com.total;
+      bucket.commissionPaid += com.paid;
+    }
+
+    const byMonth = [...monthBuckets.keys()]
+      .sort()
+      .map((key) => {
+        const value = monthBuckets.get(key)!;
+        return {
+          key,
+          label: value.label,
+          submitted: value.submitted,
+          cart: value.cart,
+          contract: value.contract,
+          submittedToCart: rate(value.cart, value.submitted),
+          cartToContract: rate(value.contract, value.cart),
+          submittedToContract: rate(value.contract, value.submitted),
+          contractValue: Math.round(value.contractValue),
+          collected: Math.round(value.collected),
+          collectRate: rate(value.collected, value.contractValue),
+          commission: Math.round(value.commission),
+          commissionPaid: Math.round(value.commissionPaid),
+        } satisfies FunnelRow;
+      });
+
     return {
       days: data.days,
+      byMonth,
       canManage,
       scope: ownerFilter ? "own" : "team",
       projects: (projectsQ.data ?? []).map((row) => ({ id: row.id, name: row.name })),
