@@ -32,6 +32,7 @@ import { Route as AppSaleProjectsRouteImport } from './routes/_app.sale-projects
 import { Route as AppSaleOverviewRouteImport } from './routes/_app.sale-overview'
 import { Route as AppSaleLandingsRouteImport } from './routes/_app.sale-landings'
 import { Route as AppSaleCustomersRouteImport } from './routes/_app.sale-customers'
+import { Route as AppRevenueReportRouteImport } from './routes/_app.revenue-report'
 import { Route as AppQrSharingRouteImport } from './routes/_app.qr-sharing'
 import { Route as AppPromptLibraryRouteImport } from './routes/_app.prompt-library'
 import { Route as AppProjectsRouteImport } from './routes/_app.projects'
@@ -196,6 +197,11 @@ const AppSaleLandingsRoute = AppSaleLandingsRouteImport.update({
 const AppSaleCustomersRoute = AppSaleCustomersRouteImport.update({
   id: '/sale-customers',
   path: '/sale-customers',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRevenueReportRoute = AppRevenueReportRouteImport.update({
+  id: '/revenue-report',
+  path: '/revenue-report',
   getParentRoute: () => AppRoute,
 } as any)
 const AppQrSharingRoute = AppQrSharingRouteImport.update({
@@ -495,6 +501,7 @@ export interface FileRoutesByFullPath {
   '/projects': typeof AppProjectsRouteWithChildren
   '/prompt-library': typeof AppPromptLibraryRoute
   '/qr-sharing': typeof AppQrSharingRoute
+  '/revenue-report': typeof AppRevenueReportRoute
   '/sale-customers': typeof AppSaleCustomersRoute
   '/sale-landings': typeof AppSaleLandingsRoute
   '/sale-overview': typeof AppSaleOverviewRoute
@@ -568,6 +575,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AppProfileRoute
   '/prompt-library': typeof AppPromptLibraryRoute
   '/qr-sharing': typeof AppQrSharingRoute
+  '/revenue-report': typeof AppRevenueReportRoute
   '/sale-customers': typeof AppSaleCustomersRoute
   '/sale-landings': typeof AppSaleLandingsRoute
   '/sale-overview': typeof AppSaleOverviewRoute
@@ -645,6 +653,7 @@ export interface FileRoutesById {
   '/_app/projects': typeof AppProjectsRouteWithChildren
   '/_app/prompt-library': typeof AppPromptLibraryRoute
   '/_app/qr-sharing': typeof AppQrSharingRoute
+  '/_app/revenue-report': typeof AppRevenueReportRoute
   '/_app/sale-customers': typeof AppSaleCustomersRoute
   '/_app/sale-landings': typeof AppSaleLandingsRoute
   '/_app/sale-overview': typeof AppSaleOverviewRoute
@@ -722,6 +731,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/prompt-library'
     | '/qr-sharing'
+    | '/revenue-report'
     | '/sale-customers'
     | '/sale-landings'
     | '/sale-overview'
@@ -795,6 +805,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/prompt-library'
     | '/qr-sharing'
+    | '/revenue-report'
     | '/sale-customers'
     | '/sale-landings'
     | '/sale-overview'
@@ -871,6 +882,7 @@ export interface FileRouteTypes {
     | '/_app/projects'
     | '/_app/prompt-library'
     | '/_app/qr-sharing'
+    | '/_app/revenue-report'
     | '/_app/sale-customers'
     | '/_app/sale-landings'
     | '/_app/sale-overview'
@@ -1098,6 +1110,13 @@ declare module '@tanstack/react-router' {
       path: '/sale-customers'
       fullPath: '/sale-customers'
       preLoaderRoute: typeof AppSaleCustomersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/revenue-report': {
+      id: '/_app/revenue-report'
+      path: '/revenue-report'
+      fullPath: '/revenue-report'
+      preLoaderRoute: typeof AppRevenueReportRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/qr-sharing': {
@@ -1533,6 +1552,7 @@ interface AppRouteChildren {
   AppProjectsRoute: typeof AppProjectsRouteWithChildren
   AppPromptLibraryRoute: typeof AppPromptLibraryRoute
   AppQrSharingRoute: typeof AppQrSharingRoute
+  AppRevenueReportRoute: typeof AppRevenueReportRoute
   AppSaleCustomersRoute: typeof AppSaleCustomersRoute
   AppSaleLandingsRoute: typeof AppSaleLandingsRoute
   AppSaleOverviewRoute: typeof AppSaleOverviewRoute
@@ -1579,6 +1599,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProjectsRoute: AppProjectsRouteWithChildren,
   AppPromptLibraryRoute: AppPromptLibraryRoute,
   AppQrSharingRoute: AppQrSharingRoute,
+  AppRevenueReportRoute: AppRevenueReportRoute,
   AppSaleCustomersRoute: AppSaleCustomersRoute,
   AppSaleLandingsRoute: AppSaleLandingsRoute,
   AppSaleOverviewRoute: AppSaleOverviewRoute,
