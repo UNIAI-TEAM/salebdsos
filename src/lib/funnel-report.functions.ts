@@ -254,6 +254,33 @@ export const getFunnelReport = createServerFn({ method: "GET" })
 
     const projectBuckets = new Map<string, Bucket>();
     const sourceBuckets = new Map<string, Bucket>();
+    const monthBuckets = new Map<string, Bucket>();
+
+    // Khung tháng cố định để biểu đồ luôn liền mạch, kể cả tháng không có số liệu
+    const monthKey = (value: string | null | undefined) =>
+      (value ?? new Date().toISOString()).slice(0, 7);
+    const monthLabel = (key: string) => {
+      const [year, month] = key.split("-");
+      return `${month}/${year}`;
+    };
+    const startMonth = new Date(Date.now() - data.days * 86400_000);
+    const cursor = new Date(Date.UTC(startMonth.getUTCFullYear(), startMonth.getUTCMonth(), 1));
+    const nowMonth = new Date();
+    const lastMonth = Date.UTC(nowMonth.getUTCFullYear(), nowMonth.getUTCMonth(), 1);
+    while (cursor.getTime() <= lastMonth) {
+      const key = cursor.toISOString().slice(0, 7);
+      monthBuckets.set(key, {
+        label: monthLabel(key),
+        submitted: 0,
+        cart: 0,
+        contract: 0,
+        contractValue: 0,
+        collected: 0,
+        commission: 0,
+        commissionPaid: 0,
+      });
+      cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+    }
 
     const ensure = (map: Map<string, Bucket>, key: string, label: string) => {
       const existing = map.get(key);
