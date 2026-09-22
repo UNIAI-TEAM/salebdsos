@@ -294,6 +294,20 @@ function FunnelReportPage() {
           </div>
 
           <SectionCard
+            title="Xu hướng chốt hợp đồng theo tháng"
+            action={<Badge variant="outline" className="shrink-0 text-[10px]">{data.byMonth.length} tháng</Badge>}
+          >
+            <MonthTrend rows={data.byMonth} />
+          </SectionCard>
+
+          <SectionCard
+            title="So sánh phễu theo từng tháng"
+            action={<Badge variant="outline" className="shrink-0 text-[10px]">Tháng gần nhất trước</Badge>}
+          >
+            <FunnelTable rows={[...data.byMonth].reverse()} emptyText="Chưa có số liệu theo tháng." />
+          </SectionCard>
+
+          <SectionCard
             title="Tỷ lệ chuyển đổi theo dự án"
             action={<Badge variant="outline" className="shrink-0 text-[10px]">{data.byProject.length} dự án</Badge>}
           >
