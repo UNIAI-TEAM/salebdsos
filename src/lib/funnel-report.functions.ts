@@ -128,7 +128,7 @@ export const getFunnelReport = createServerFn({ method: "GET" })
 
     let contractQuery = supabase
       .from("contracts")
-      .select("id,project_id,product_id,lead_id,deal_id,owner_user_id,net_price,status")
+      .select("id,project_id,product_id,lead_id,deal_id,owner_user_id,net_price,status,signed_at,created_at")
       .eq("tenant_id", data.tenantId)
       .is("deleted_at", null)
       .in("status", ["active", "completed"]);
