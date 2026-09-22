@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
+  BadgeDollarSign,
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
   Wallet, QrCode, MessagesSquare, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
@@ -76,6 +77,7 @@ const groups: Group[] = [
       { to: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
       { to: "/sale-overview", label: "Tổng quan Sale", icon: ContactRound },
       { to: "/funnel-report", label: "Báo cáo phễu", icon: Filter },
+      { to: "/revenue-report", label: "Doanh thu theo dự án", icon: BadgeDollarSign },
       { to: "/analytics", label: "Báo cáo & Analytics", icon: BarChart3, roles: ["owner", "admin", "manager"] },
     ],
   },
@@ -122,6 +124,7 @@ const saleMobileGroups: Group[] = [
     label: "Báo cáo & app",
     items: [
       { to: "/funnel-report", label: "Báo cáo phễu", icon: Filter },
+      { to: "/revenue-report", label: "Doanh thu", icon: BadgeDollarSign },
       { to: "/mobile-app", label: "App & thông báo", icon: Smartphone },
     ],
   },
