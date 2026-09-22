@@ -9,7 +9,7 @@ import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Bar,
+  Bar as RBar,
   CartesianGrid,
   ComposedChart,
   Legend,
@@ -185,9 +185,9 @@ function MonthTrend({ rows }: { rows: FunnelRow[] }) {
               formatter={(value: number, name: string) => (name === "Tỷ lệ chốt" ? [`${value}%`, name] : [value, name])}
             />
             <Legend wrapperStyle={{ fontSize: 11 }} />
-            <Bar yAxisId="left" dataKey="submitted" name="Gửi thông tin" fill="var(--chart-3)" radius={[4, 4, 0, 0]} barSize={14} />
-            <Bar yAxisId="left" dataKey="cart" name="Giỏ hàng" fill="var(--chart-2)" radius={[4, 4, 0, 0]} barSize={14} />
-            <Bar yAxisId="left" dataKey="contract" name="Hợp đồng" fill="var(--chart-1)" radius={[4, 4, 0, 0]} barSize={14} />
+            <RBar yAxisId="left" dataKey="submitted" name="Gửi thông tin" fill="var(--chart-3)" radius={[4, 4, 0, 0]} barSize={14} />
+            <RBar yAxisId="left" dataKey="cart" name="Giỏ hàng" fill="var(--chart-2)" radius={[4, 4, 0, 0]} barSize={14} />
+            <RBar yAxisId="left" dataKey="contract" name="Hợp đồng" fill="var(--chart-1)" radius={[4, 4, 0, 0]} barSize={14} />
             <Line
               yAxisId="right"
               type="monotone"
