@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BadgeDollarSign,
+  Percent,
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
   Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
   Wallet, QrCode, MessagesSquare, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
@@ -87,6 +88,7 @@ const groups: Group[] = [
       { to: "/sales-directory", label: "Quản lý Sale", icon: IdCard, roles: ["owner", "admin", "manager"] },
       { to: "/members", label: "Thành viên & Vai trò", icon: ShieldCheck, roles: ["owner", "admin"] },
       { to: "/team", label: "Team Management", icon: Users2, roles: ["owner", "admin", "manager"] },
+      { to: "/commission-rules", label: "Chính sách hoa hồng", icon: Percent, roles: ["owner", "admin", "manager"] },
       { to: "/mobile-app", label: "App điện thoại & thông báo", icon: Smartphone },
       { to: "/settings", label: "Cài đặt", icon: Settings, roles: ["owner", "admin"] },
       { to: "/auth-settings", label: "Bảo mật xác thực", icon: ShieldCheck, platformOnly: true },
@@ -125,6 +127,7 @@ const saleMobileGroups: Group[] = [
     items: [
       { to: "/funnel-report", label: "Báo cáo phễu", icon: Filter },
       { to: "/revenue-report", label: "Doanh thu", icon: BadgeDollarSign },
+      { to: "/commission-rules", label: "Hoa hồng", icon: Percent, roles: ["owner", "admin", "manager"] },
       { to: "/mobile-app", label: "App & thông báo", icon: Smartphone },
     ],
   },

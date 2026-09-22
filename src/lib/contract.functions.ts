@@ -318,15 +318,19 @@ export const createContractFromProduct = createServerFn({ method: "POST" })
       );
     }
 
-    if (data.commissionPercent > 0) {
-      await supabase.from("contract_commissions").insert({
-        tenant_id: data.tenantId,
-        contract_id: contract.id,
-        beneficiary_user_id: data.ownerUserId ?? userId,
-        role_label: "Sale chính",
-        percent: data.commissionPercent,
-        amount: round((netPrice * data.commissionPercent) / 100),
+    // Hoa hồng tự tính theo chính sách của sàn (theo sale / nhóm / dự án)
+    try {
+      const { applyCommissionPlan } = await import("@/lib/commission.server");
+      await applyCommissionPlan(supabase, {
+        tenantId: data.tenantId,
+        contractId: contract.id,
+        projectId: projectId ?? null,
+        ownerUserId: data.ownerUserId ?? userId,
+        netPrice,
+        overridePercent: data.commissionPercent > 0 ? data.commissionPercent : null,
       });
+    } catch {
+      // không chặn việc lập hợp đồng nếu chính sách hoa hồng lỗi
     }
 
     return contract;

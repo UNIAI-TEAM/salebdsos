@@ -57,6 +57,7 @@ import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppContractsRouteImport } from './routes/_app.contracts'
 import { Route as AppContentLibraryRouteImport } from './routes/_app.content-library'
+import { Route as AppCommissionRulesRouteImport } from './routes/_app.commission-rules'
 import { Route as AppCardDesignerRouteImport } from './routes/_app.card-designer'
 import { Route as AppAuthSettingsRouteImport } from './routes/_app.auth-settings'
 import { Route as AppAppointmentsRouteImport } from './routes/_app.appointments'
@@ -324,6 +325,11 @@ const AppContentLibraryRoute = AppContentLibraryRouteImport.update({
   path: '/content-library',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCommissionRulesRoute = AppCommissionRulesRouteImport.update({
+  id: '/commission-rules',
+  path: '/commission-rules',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCardDesignerRoute = AppCardDesignerRouteImport.update({
   id: '/card-designer',
   path: '/card-designer',
@@ -477,6 +483,7 @@ export interface FileRoutesByFullPath {
   '/appointments': typeof AppAppointmentsRoute
   '/auth-settings': typeof AppAuthSettingsRoute
   '/card-designer': typeof AppCardDesignerRoute
+  '/commission-rules': typeof AppCommissionRulesRoute
   '/content-library': typeof AppContentLibraryRoute
   '/contracts': typeof AppContractsRoute
   '/dashboard': typeof AppDashboardRoute
@@ -553,6 +560,7 @@ export interface FileRoutesByTo {
   '/appointments': typeof AppAppointmentsRoute
   '/auth-settings': typeof AppAuthSettingsRoute
   '/card-designer': typeof AppCardDesignerRoute
+  '/commission-rules': typeof AppCommissionRulesRoute
   '/content-library': typeof AppContentLibraryRoute
   '/contracts': typeof AppContractsRoute
   '/dashboard': typeof AppDashboardRoute
@@ -629,6 +637,7 @@ export interface FileRoutesById {
   '/_app/appointments': typeof AppAppointmentsRoute
   '/_app/auth-settings': typeof AppAuthSettingsRoute
   '/_app/card-designer': typeof AppCardDesignerRoute
+  '/_app/commission-rules': typeof AppCommissionRulesRoute
   '/_app/content-library': typeof AppContentLibraryRoute
   '/_app/contracts': typeof AppContractsRoute
   '/_app/dashboard': typeof AppDashboardRoute
@@ -707,6 +716,7 @@ export interface FileRouteTypes {
     | '/appointments'
     | '/auth-settings'
     | '/card-designer'
+    | '/commission-rules'
     | '/content-library'
     | '/contracts'
     | '/dashboard'
@@ -783,6 +793,7 @@ export interface FileRouteTypes {
     | '/appointments'
     | '/auth-settings'
     | '/card-designer'
+    | '/commission-rules'
     | '/content-library'
     | '/contracts'
     | '/dashboard'
@@ -858,6 +869,7 @@ export interface FileRouteTypes {
     | '/_app/appointments'
     | '/_app/auth-settings'
     | '/_app/card-designer'
+    | '/_app/commission-rules'
     | '/_app/content-library'
     | '/_app/contracts'
     | '/_app/dashboard'
@@ -1287,6 +1299,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppContentLibraryRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/commission-rules': {
+      id: '/_app/commission-rules'
+      path: '/commission-rules'
+      fullPath: '/commission-rules'
+      preLoaderRoute: typeof AppCommissionRulesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/card-designer': {
       id: '/_app/card-designer'
       path: '/card-designer'
@@ -1528,6 +1547,7 @@ interface AppRouteChildren {
   AppAppointmentsRoute: typeof AppAppointmentsRoute
   AppAuthSettingsRoute: typeof AppAuthSettingsRoute
   AppCardDesignerRoute: typeof AppCardDesignerRoute
+  AppCommissionRulesRoute: typeof AppCommissionRulesRoute
   AppContentLibraryRoute: typeof AppContentLibraryRoute
   AppContractsRoute: typeof AppContractsRoute
   AppDashboardRoute: typeof AppDashboardRoute
@@ -1575,6 +1595,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAppointmentsRoute: AppAppointmentsRoute,
   AppAuthSettingsRoute: AppAuthSettingsRoute,
   AppCardDesignerRoute: AppCardDesignerRoute,
+  AppCommissionRulesRoute: AppCommissionRulesRoute,
   AppContentLibraryRoute: AppContentLibraryRoute,
   AppContractsRoute: AppContractsRoute,
   AppDashboardRoute: AppDashboardRoute,

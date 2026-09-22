@@ -274,6 +274,36 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       }).sort((a, b) => a.name.localeCompare(b.name, "vi"));
     }
 
+    // Hoa hồng tính theo chính sách của sàn (theo sale / nhóm / dự án)
+    const { data: commissionRows } = await supabase
+      .from("contract_commissions")
+      .select("amount,status,contract_id")
+      .eq("tenant_id", data.tenantId)
+      .eq("beneficiary_user_id", ownerId);
+    const commission = { total: 0, pending: 0, approved: 0, paid: 0 };
+    for (const row of commissionRows ?? []) {
+      const amount = Number(row.amount ?? 0);
+      commission.total += amount;
+      if (row.status === "paid") commission.paid += amount;
+      else if (row.status === "approved") commission.approved += amount;
+      else commission.pending += amount;
+    }
+    const { loadCommissionRules } = await import("@/lib/commission.server");
+    const commissionRules = await loadCommissionRules(supabase, data.tenantId);
+    const { resolveCommissionPercent } = await import("@/lib/commission-rules");
+    const { data: ownerTeam } = await supabase
+      .from("team_members")
+      .select("team_id")
+      .eq("tenant_id", data.tenantId)
+      .eq("user_id", ownerId)
+      .limit(1)
+      .maybeSingle();
+    const commissionPolicy = resolveCommissionPercent(commissionRules, {
+      projectId: data.projectId ?? null,
+      teamId: ownerTeam?.team_id ?? null,
+      userId: ownerId,
+    });
+
     return {
       canManage,
       ownerId,
@@ -295,6 +325,16 @@ export const getSaleOverview = createServerFn({ method: "GET" })
         contractsSigned: wonDeals.length,
         projectsSold: wonProjects.size,
         conversionRate: servedKeys.size ? Math.round((wonDeals.length / servedKeys.size) * 1000) / 10 : 0,
+        commissionTotal: Math.round(commission.total),
+        commissionPaid: Math.round(commission.paid),
+        commissionApproved: Math.round(commission.approved),
+        commissionPending: Math.round(commission.pending),
+      },
+      commissionPolicy: {
+        enabled: commissionRules.enabled,
+        percent: commissionPolicy.percent,
+        source: commissionPolicy.source,
+        salePercent: commissionRules.splits.sale,
       },
       routing: {
         enabled: routing.enabled,
