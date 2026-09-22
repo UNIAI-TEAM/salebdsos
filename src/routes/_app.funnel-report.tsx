@@ -120,6 +120,8 @@ function FunnelCards({ rows, max }: { rows: FunnelRow[]; max: number }) {
                   ["Giá trị hợp đồng", money(row.contractValue)],
                   ["Đã thu", money(row.collected)],
                   ["Tỷ lệ thu tiền", `${row.collectRate}%`],
+                  ["Hoa hồng", money(row.commission)],
+                  ["Hoa hồng đã trả", money(row.commissionPaid)],
                 ].map(([label, value]) => (
                   <div key={label} className="flex items-center justify-between gap-3">
                     <dt className="text-muted-foreground">{label}</dt>
@@ -153,7 +155,8 @@ function FunnelTable({ rows, emptyText }: { rows: FunnelRow[]; emptyText: string
             <th className="py-2 pr-3 text-right font-medium">Gửi → hợp đồng</th>
             <th className="py-2 pr-3 text-right font-medium">Giá trị HĐ</th>
             <th className="py-2 pr-3 text-right font-medium">Đã thu</th>
-            <th className="py-2 text-right font-medium">Tỷ lệ thu</th>
+            <th className="py-2 pr-3 text-right font-medium">Tỷ lệ thu</th>
+            <th className="py-2 text-right font-medium">Hoa hồng</th>
           </tr>
         </thead>
         <tbody>
@@ -170,7 +173,13 @@ function FunnelTable({ rows, emptyText }: { rows: FunnelRow[]; emptyText: string
               <td className="py-3 pr-3 text-right font-medium">{row.submittedToContract}%</td>
               <td className="py-3 pr-3 text-right">{money(row.contractValue)}</td>
               <td className="py-3 pr-3 text-right">{money(row.collected)}</td>
-              <td className="py-3 text-right text-muted-foreground">{row.collectRate}%</td>
+              <td className="py-3 pr-3 text-right text-muted-foreground">{row.collectRate}%</td>
+              <td className="py-3 text-right">
+                {money(row.commission)}
+                {row.commissionPaid > 0 ? (
+                  <span className="ml-1 text-[11px] text-muted-foreground">· trả {money(row.commissionPaid)}</span>
+                ) : null}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -272,6 +281,16 @@ function FunnelReportPage() {
               hint={`Giỏ hàng: ${data.inventory.held} sản phẩm đang giữ · ${data.inventory.contracted} đã ký/bán`}
               rate="%"
             />
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-4 text-sm shadow-soft">
+            <p className="text-xs font-medium text-muted-foreground">Hoa hồng tự tính theo chính sách</p>
+            <p className="mt-1 text-lg font-bold">
+              {money(data.totals.commission)}
+              <span className="ml-2 text-xs font-medium text-muted-foreground">
+                đã trả {money(data.totals.commissionPaid)} · còn lại {money(data.totals.commissionUnpaid)}
+              </span>
+            </p>
           </div>
 
           <SectionCard

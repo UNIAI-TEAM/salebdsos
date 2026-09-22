@@ -148,7 +148,24 @@ function SaleOverviewPage() {
               <Metric icon={Building2} label="Dự án đã bán" value={String(data.metrics.projectsSold)} hint="Dự án có giao dịch thành công" />
               <Metric icon={CheckCircle2} label="Tỷ lệ chuyển đổi" value={`${data.metrics.conversionRate}%`} hint="Hợp đồng trên khách gửi thông tin" />
             </div>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-border bg-card p-4 text-sm shadow-soft">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Hoa hồng tự tính</p>
+                <p className="mt-0.5 text-lg font-bold">
+                  {new Intl.NumberFormat("vi-VN").format(data.metrics.commissionTotal)} đ
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Đã trả {new Intl.NumberFormat("vi-VN").format(data.metrics.commissionPaid)} đ · Đã duyệt{" "}
+                {new Intl.NumberFormat("vi-VN").format(data.metrics.commissionApproved)} đ · Chờ duyệt{" "}
+                {new Intl.NumberFormat("vi-VN").format(data.metrics.commissionPending)} đ
+              </p>
+              <Badge variant="outline" className="shrink-0 text-[11px]">
+                {data.commissionPolicy.percent}% quỹ hoa hồng · {data.commissionPolicy.source}
+              </Badge>
+            </div>
           </section>
+
 
           <SectionCard title="Hiệu quả theo dự án">
             {data.projectComparison.length === 0 ? <Empty text="Sale chưa có dự án để so sánh." /> : (

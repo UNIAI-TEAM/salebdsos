@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BadgeCheck, CircleDollarSign, FileSignature, Plus, RefreshCw, Wallet } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { recalcContractCommissions } from "@/lib/commission.functions";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +98,7 @@ function ContractsPage() {
   const fnPayIns = useServerFn(markInstallmentPaid);
   const fnSetCom = useServerFn(setCommissions);
   const fnComStatus = useServerFn(setCommissionStatus);
+  const fnRecalcCom = useServerFn(recalcContractCommissions);
 
   const key = ["contracts", tenantId, status, projectId];
   const query = useQuery({
@@ -552,13 +554,30 @@ function ContractsPage() {
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold">Hoa hồng</p>
                   {data?.canManage ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setComDraft([...comRows, { beneficiary_user_id: "", role_label: "Sale hỗ trợ", percent: "", amount: "0" }])}
-                    >
-                      Thêm dòng
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={run.isPending}
+                        onClick={() =>
+                          run.mutate(async () => {
+                            const result: any = await fnRecalcCom({ data: { contractId: selected.id } });
+                            setComDraft(null);
+                            if (result?.skipped) toast.info("Chính sách hoa hồng đang tắt");
+                            else toast.success(`Đã tính lại theo chính sách (${result?.plan?.percent ?? 0}%)`);
+                          })
+                        }
+                      >
+                        Tính lại theo chính sách
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setComDraft([...comRows, { beneficiary_user_id: "", role_label: "Sale hỗ trợ", percent: "", amount: "0" }])}
+                      >
+                        Thêm dòng
+                      </Button>
+                    </div>
                   ) : null}
                 </div>
 

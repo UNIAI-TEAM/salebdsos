@@ -27,6 +27,8 @@ export type FunnelRow = {
   contractValue: number;
   collected: number;
   collectRate: number;
+  commission: number;
+  commissionPaid: number;
 };
 
 function rate(numerator: number, denominator: number) {
@@ -56,6 +58,8 @@ type Bucket = {
   contract: number;
   contractValue: number;
   collected: number;
+  commission: number;
+  commissionPaid: number;
 };
 
 function buildRows(buckets: Map<string, Bucket>): FunnelRow[] {
@@ -72,6 +76,8 @@ function buildRows(buckets: Map<string, Bucket>): FunnelRow[] {
       contractValue: Math.round(value.contractValue),
       collected: Math.round(value.collected),
       collectRate: rate(value.collected, value.contractValue),
+      commission: Math.round(value.commission),
+      commissionPaid: Math.round(value.commissionPaid),
     }))
     .sort((a, b) => b.submitted - a.submitted || b.contract - a.contract);
 }
@@ -148,18 +154,31 @@ export const getFunnelReport = createServerFn({ method: "GET" })
     const contracts = contractsQ.data ?? [];
     const projectName = new Map((projectsQ.data ?? []).map((row) => [row.id, row.name]));
 
-    // Tiền đã thu theo từng hợp đồng
+    // Tiền đã thu và hoa hồng theo từng hợp đồng
     const collectedByContract = new Map<string, number>();
+    const commissionByContract = new Map<string, { total: number; paid: number }>();
     if (contracts.length) {
-      const { data: installments } = await supabase
-        .from("contract_installments")
-        .select("contract_id,paid_amount")
-        .in("contract_id", contracts.map((row) => row.id));
-      for (const row of installments ?? []) {
+      const contractIds = contracts.map((row) => row.id);
+      const [insQ, comQ] = await Promise.all([
+        supabase.from("contract_installments").select("contract_id,paid_amount").in("contract_id", contractIds),
+        supabase
+          .from("contract_commissions")
+          .select("contract_id,amount,status,beneficiary_user_id")
+          .in("contract_id", contractIds),
+      ]);
+      for (const row of insQ.data ?? []) {
         collectedByContract.set(
           row.contract_id,
           (collectedByContract.get(row.contract_id) ?? 0) + Number(row.paid_amount ?? 0),
         );
+      }
+      for (const row of comQ.data ?? []) {
+        // Chuyên viên chỉ tính hoa hồng của chính mình
+        if (ownerFilter && row.beneficiary_user_id && row.beneficiary_user_id !== ownerFilter) continue;
+        const bucket = commissionByContract.get(row.contract_id) ?? { total: 0, paid: 0 };
+        bucket.total += Number(row.amount ?? 0);
+        if (row.status === "paid") bucket.paid += Number(row.amount ?? 0);
+        commissionByContract.set(row.contract_id, bucket);
       }
     }
 
@@ -169,7 +188,10 @@ export const getFunnelReport = createServerFn({ method: "GET" })
     const cartProducts: typeof products = [];
     const contractProducts: typeof products = [];
     // Giá trị hợp đồng và tiền đã thu gán về lead tương ứng
-    const contractMoneyByLead = new Map<string, { value: number; collected: number }>();
+    const contractMoneyByLead = new Map<
+      string,
+      { value: number; collected: number; commission: number; commissionPaid: number }
+    >();
 
     for (const product of products) {
       const status = product.listing_status ?? "available";
@@ -190,29 +212,43 @@ export const getFunnelReport = createServerFn({ method: "GET" })
 
     let contractValueTotal = 0;
     let collectedTotal = 0;
+    let commissionTotal = 0;
+    let commissionPaidTotal = 0;
     // Hợp đồng luôn được tính về dự án ghi trên hợp đồng (sản phẩm đã bán), không theo dự án khách quan tâm ban đầu
-    const contractByProject = new Map<string, { count: number; value: number; collected: number }>();
+    const contractByProject = new Map<
+      string,
+      { count: number; value: number; collected: number; commission: number; commissionPaid: number }
+    >();
     for (const row of contracts) {
       const value = Number(row.net_price ?? 0);
       const collected = collectedByContract.get(row.id) ?? 0;
+      const com = commissionByContract.get(row.id) ?? { total: 0, paid: 0 };
       contractValueTotal += value;
       collectedTotal += collected;
+      commissionTotal += com.total;
+      commissionPaidTotal += com.paid;
       const productDealId = row.product_id ? products.find((p) => p.id === row.product_id)?.deal_id ?? null : null;
       const linkedDealId = row.deal_id ?? productDealId;
       const leadId = row.lead_id ?? (linkedDealId ? dealById.get(linkedDealId)?.lead_id ?? null : null);
       const leadProjectId = leadId ? leads.find((l) => l.id === leadId)?.project_id ?? null : null;
       const projectKey = row.project_id ?? leadProjectId ?? "none";
-      const projectAgg = contractByProject.get(projectKey) ?? { count: 0, value: 0, collected: 0 };
+      const projectAgg =
+        contractByProject.get(projectKey) ?? { count: 0, value: 0, collected: 0, commission: 0, commissionPaid: 0 };
       projectAgg.count += 1;
       projectAgg.value += value;
       projectAgg.collected += collected;
+      projectAgg.commission += com.total;
+      projectAgg.commissionPaid += com.paid;
       contractByProject.set(projectKey, projectAgg);
       if (!leadId) continue;
       cartLeadIds.add(leadId);
       contractLeadIds.add(leadId);
-      const bucket = contractMoneyByLead.get(leadId) ?? { value: 0, collected: 0 };
+      const bucket =
+        contractMoneyByLead.get(leadId) ?? { value: 0, collected: 0, commission: 0, commissionPaid: 0 };
       bucket.value += value;
       bucket.collected += collected;
+      bucket.commission += com.total;
+      bucket.commissionPaid += com.paid;
       contractMoneyByLead.set(leadId, bucket);
     }
 
@@ -222,7 +258,16 @@ export const getFunnelReport = createServerFn({ method: "GET" })
     const ensure = (map: Map<string, Bucket>, key: string, label: string) => {
       const existing = map.get(key);
       if (existing) return existing;
-      const fresh: Bucket = { label, submitted: 0, cart: 0, contract: 0, contractValue: 0, collected: 0 };
+      const fresh: Bucket = {
+        label,
+        submitted: 0,
+        cart: 0,
+        contract: 0,
+        contractValue: 0,
+        collected: 0,
+        commission: 0,
+        commissionPaid: 0,
+      };
       map.set(key, fresh);
       return fresh;
     };
@@ -257,6 +302,8 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       if (money) {
         sourceBucket.contractValue += money.value;
         sourceBucket.collected += money.collected;
+        sourceBucket.commission += money.commission;
+        sourceBucket.commissionPaid += money.commissionPaid;
       }
     }
 
@@ -270,6 +317,8 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       bucket.contract += agg.count;
       bucket.contractValue += agg.value;
       bucket.collected += agg.collected;
+      bucket.commission += agg.commission;
+      bucket.commissionPaid += agg.commissionPaid;
     }
 
     return {
@@ -288,6 +337,9 @@ export const getFunnelReport = createServerFn({ method: "GET" })
         contractValue: Math.round(contractValueTotal),
         collected: Math.round(collectedTotal),
         collectRate: rate(collectedTotal, contractValueTotal),
+        commission: Math.round(commissionTotal),
+        commissionPaid: Math.round(commissionPaidTotal),
+        commissionUnpaid: Math.round(commissionTotal - commissionPaidTotal),
       },
       inventory: {
         held: cartProducts.length,
