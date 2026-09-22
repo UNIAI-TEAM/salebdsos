@@ -13,10 +13,19 @@ export const Route = createFileRoute("/api/public/nurture-run")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env["NURTURE_CRON_SECRET"];
-        if (secret && request.headers.get("x-cron-secret") !== secret) {
-          return json({ error: "Không có quyền gọi." }, 401);
+        const provided = request.headers.get("x-cron-secret") ?? "";
+        const envSecret = process.env["NURTURE_CRON_SECRET"];
+        let allowed = Boolean(envSecret) && provided === envSecret;
+        if (!allowed && provided) {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { data } = await (supabaseAdmin as any)
+            .from("cron_tokens")
+            .select("token")
+            .eq("name", "nurture_run")
+            .maybeSingle();
+          allowed = Boolean(data?.token) && data.token === provided;
         }
+        if (!allowed) return json({ error: "Không có quyền gọi." }, 401);
 
         let origin: string | null = null;
         try {
