@@ -161,7 +161,9 @@ export const listContracts = createServerFn({ method: "GET" })
     const productById = new Map((productsQ.data ?? []).map((p: any) => [p.id, p]));
     const customerById = new Map((customersQ.data ?? []).map((c: any) => [c.id, c]));
     const memberName = new Map(members.map((m) => [m.user_id, m.name]));
-    const leadNameById = new Map((leadsQ.data ?? []).map((l: any) => [l.id, l.full_name ?? l.phone ?? null]));
+    const leadNameById = new Map<string, string | null>(
+      (leadsQ.data ?? []).map((l: any) => [l.id as string, (l.full_name ?? l.phone ?? null) as string | null]),
+    );
 
     const rows = contracts.map((c: any) => {
       const ins = installments.filter((i) => i.contract_id === c.id);
