@@ -3,8 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { NURTURE_KEY, nurtureSettingsSchema, parseNurtureSettings } from "@/lib/nurture";
 
-const MANAGER_ROLES = new Set(["owner", "admin", "manager", "platform_admin"]);
-const SALE_ROLES = new Set(["owner", "admin", "manager", "agent", "platform_admin"]);
+import { ADMIN_ROLES, SALE_ROLES } from "@/lib/permissions";
 
 async function roles(context: any, tenantId: string) {
   const { data, error } = await context.supabase
@@ -17,7 +16,7 @@ async function roles(context: any, tenantId: string) {
   if (!list.some((role: string) => SALE_ROLES.has(role))) {
     throw new Error("Bạn không có quyền xem quy trình nhắc khách của workspace này");
   }
-  return { canManage: list.some((role: string) => MANAGER_ROLES.has(role)) };
+  return { canManage: list.some((role: string) => ADMIN_ROLES.has(role)) };
 }
 
 export const getNurtureSettings = createServerFn({ method: "GET" })
@@ -73,7 +72,7 @@ export const saveNurtureSettings = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { canManage } = await roles(context, data.tenantId);
-    if (!canManage) throw new Error("Chỉ quản lý sàn được đổi quy trình nhắc khách");
+    if (!canManage) throw new Error("Chỉ quản trị viên được đổi quy trình nhắc khách");
 
     const { error } = await context.supabase
       .from("settings")
@@ -95,7 +94,7 @@ export const runNurtureNow = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { canManage } = await roles(context, data.tenantId);
-    if (!canManage) throw new Error("Chỉ quản lý sàn được chạy nhắc khách");
+    if (!canManage) throw new Error("Chỉ quản trị viên được chạy nhắc khách");
 
     const { runNurture } = await import("@/lib/nurture.server");
     const { getRequest } = await import("@tanstack/react-start/server");

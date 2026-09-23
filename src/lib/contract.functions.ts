@@ -3,8 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const SALE_ROLES = new Set(["owner", "admin", "manager", "agent", "platform_admin"]);
-const MANAGER_ROLES = new Set(["owner", "admin", "manager", "platform_admin"]);
+import { ADMIN_ROLES, SALE_ROLES, TEAM_VIEW_ROLES } from "@/lib/permissions";
 
 const CONTRACT_SELECT =
   "id,tenant_id,project_id,product_id,customer_id,lead_id,deal_id,owner_user_id,code,sale_price,discount_amount,net_price,currency,status,signed_at,completed_at,note,created_at,updated_at";
@@ -43,7 +42,12 @@ async function access(context: Ctx, tenantId: string) {
   if (error) throw new Error(error.message);
   const roles = (data ?? []).map((r: any) => r.role as string);
   if (!roles.some((r: string) => SALE_ROLES.has(r))) throw new Error("Bạn không có quyền xem hợp đồng của workspace này");
-  return { roles, canManage: roles.some((r: string) => MANAGER_ROLES.has(r)) };
+  return {
+    roles,
+    // Quản lý dự án xem được toàn sàn nhưng không sửa; chỉ quản trị viên được sửa.
+    canManage: roles.some((r: string) => TEAM_VIEW_ROLES.has(r)),
+    canWrite: roles.some((r: string) => ADMIN_ROLES.has(r)),
+  };
 }
 
 async function loadContract(context: Ctx, id: string) {
@@ -54,10 +58,10 @@ async function loadContract(context: Ctx, id: string) {
 
 async function guard(context: Ctx, id: string, manageOnly = false) {
   const contract = await loadContract(context, id);
-  const { canManage } = await access(context, contract.tenant_id);
+  const { canManage, canWrite } = await access(context, contract.tenant_id);
   if (!canManage && contract.owner_user_id !== context.userId) throw new Error("Bạn không phụ trách hợp đồng này");
-  if (manageOnly && !canManage) throw new Error("Chỉ quản lý được thực hiện việc này");
-  return { contract, canManage };
+  if (manageOnly && !canWrite) throw new Error("Chỉ quản trị viên được thực hiện việc này");
+  return { contract, canManage, canWrite };
 }
 
 function round(n: number) {
@@ -249,7 +253,8 @@ export const createContractFromProduct = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CreateInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await access(context as Ctx, data.tenantId);
+    const { canWrite: mayCreate } = await access(context as Ctx, data.tenantId);
+    if (!mayCreate) throw new Error("Chỉ quản trị viên được lập hợp đồng");
 
     let projectId = data.projectId ?? null;
     let salePrice = data.salePrice;
@@ -417,8 +422,7 @@ export const updateContract = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { contract, canManage } = await guard(context as Ctx, data.id);
-    if (data.ownerUserId !== undefined && !canManage) throw new Error("Chỉ quản lý được đổi người phụ trách");
+    const { contract } = await guard(context as Ctx, data.id, true);
 
     const patch: Record<string, any> = {};
     if (data.code !== undefined) patch.code = data.code;
@@ -515,7 +519,7 @@ export const setInstallments = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { contract } = await guard(context as Ctx, data.contractId);
+    const { contract } = await guard(context as Ctx, data.contractId, true);
     const { supabase } = context;
     const { data: existing } = await supabase
       .from("contract_installments")
@@ -568,7 +572,7 @@ export const markInstallmentPaid = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
-    await guard(context as Ctx, row.contract_id);
+    await guard(context as Ctx, row.contract_id, true);
 
     const { error: upErr } = await supabase
       .from("contract_installments")

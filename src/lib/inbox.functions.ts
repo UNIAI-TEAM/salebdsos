@@ -4,7 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { CHANNELS_KEY, channelSettingsSchema, parseChannelSettings } from "@/lib/channels";
 
-const MANAGER_ROLES = new Set(["owner", "admin", "manager", "platform_admin"]);
+import { ADMIN_ROLES as MANAGER_ROLES } from "@/lib/permissions";
 
 async function roles(
   supabase: { from: (t: "user_roles") => any },
