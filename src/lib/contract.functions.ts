@@ -93,7 +93,7 @@ export const listContracts = createServerFn({ method: "GET" })
     const ownerFilter = canManage ? data.ownerId ?? null : userId;
     if (ownerFilter) q = q.eq("owner_user_id", ownerFilter);
 
-    const [contractsQ, projectsQ, productsQ, customersQ, rolesQ] = await Promise.all([
+    const [contractsQ, projectsQ, productsQ, customersQ, rolesQ, leadsQ] = await Promise.all([
       q,
       supabase.from("projects").select("id,name").eq("tenant_id", data.tenantId).is("deleted_at", null).order("name"),
       supabase
