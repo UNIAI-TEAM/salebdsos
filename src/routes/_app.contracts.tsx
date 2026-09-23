@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -150,7 +150,8 @@ function ContractsPage() {
         data: {
           tenantId: tenantId as string,
           productId: form.productId || null,
-          customerId: form.customerId || null,
+          customerId: form.customerId.startsWith("c:") ? form.customerId.slice(2) : null,
+          leadId: form.customerId.startsWith("l:") ? form.customerId.slice(2) : null,
           code: form.code || null,
           salePrice: Number(form.salePrice || 0),
           discountAmount: Number(form.discountAmount || 0),
@@ -331,10 +332,21 @@ function ContractsPage() {
                 <SelectTrigger><SelectValue placeholder="Chọn khách hàng" /></SelectTrigger>
                 <SelectContent>
                   {(data?.customers ?? []).map((customer: any) => (
-                    <SelectItem key={customer.id} value={customer.id}>
+                    <SelectItem key={`c-${customer.id}`} value={`c:${customer.id}`}>
                       {customer.full_name}{customer.phone ? ` · ${customer.phone}` : ""}
                     </SelectItem>
                   ))}
+                  {(data?.leads ?? []).length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Khách mới từ landing / danh thiếp</SelectLabel>
+                      {(data?.leads ?? []).map((lead: any) => (
+                        <SelectItem key={`l-${lead.id}`} value={`l:${lead.id}`}>
+                          {lead.full_name}{lead.phone ? ` · ${lead.phone}` : ""}
+                          {lead.source ? ` · ${lead.source}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
                 </SelectContent>
               </Select>
             </div>

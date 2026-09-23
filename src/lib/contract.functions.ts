@@ -93,7 +93,7 @@ export const listContracts = createServerFn({ method: "GET" })
     const ownerFilter = canManage ? data.ownerId ?? null : userId;
     if (ownerFilter) q = q.eq("owner_user_id", ownerFilter);
 
-    const [contractsQ, projectsQ, productsQ, customersQ, rolesQ] = await Promise.all([
+    const [contractsQ, projectsQ, productsQ, customersQ, rolesQ, leadsQ] = await Promise.all([
       q,
       supabase.from("projects").select("id,name").eq("tenant_id", data.tenantId).is("deleted_at", null).order("name"),
       supabase
@@ -109,6 +109,13 @@ export const listContracts = createServerFn({ method: "GET" })
         .order("full_name")
         .limit(500),
       supabase.from("user_roles").select("user_id,role").eq("tenant_id", data.tenantId),
+      supabase
+        .from("leads")
+        .select("id,full_name,phone,email,source,status,project_id")
+        .eq("tenant_id", data.tenantId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(300),
     ]);
     if (contractsQ.error) throw new Error(contractsQ.error.message);
 
@@ -154,6 +161,9 @@ export const listContracts = createServerFn({ method: "GET" })
     const productById = new Map((productsQ.data ?? []).map((p: any) => [p.id, p]));
     const customerById = new Map((customersQ.data ?? []).map((c: any) => [c.id, c]));
     const memberName = new Map(members.map((m) => [m.user_id, m.name]));
+    const leadNameById = new Map<string, string | null>(
+      (leadsQ.data ?? []).map((l: any) => [l.id as string, (l.full_name ?? l.phone ?? null) as string | null]),
+    );
 
     const rows = contracts.map((c: any) => {
       const ins = installments.filter((i) => i.contract_id === c.id);
@@ -169,7 +179,10 @@ export const listContracts = createServerFn({ method: "GET" })
         project_name: c.project_id ? projectName.get(c.project_id) ?? "Dự án đã xoá" : null,
         product_label: product ? product.name || product.code || "Sản phẩm" : null,
         product_code: product?.code ?? null,
-        customer_name: c.customer_id ? customerById.get(c.customer_id)?.full_name ?? null : null,
+        customer_name:
+          (c.customer_id ? (customerById.get(c.customer_id) as any)?.full_name : null) ||
+          (c.lead_id ? leadNameById.get(c.lead_id) : null) ||
+          null,
         owner_name: c.owner_user_id ? memberName.get(c.owner_user_id) ?? null : null,
         installments: ins,
         commissions: com.map((x) => ({
@@ -194,6 +207,12 @@ export const listContracts = createServerFn({ method: "GET" })
       contracts: rows,
       projects: projectsQ.data ?? [],
       customers: customersQ.data ?? [],
+      leads: (leadsQ.data ?? []).map((l: any) => ({
+        id: l.id,
+        full_name: l.full_name ?? "Khách chưa rõ tên",
+        phone: l.phone ?? null,
+        source: l.source ?? null,
+      })),
       members,
       products: (productsQ.data ?? []).map((p: any) => ({ ...p, price: Number(p.price ?? 0) })),
       totals: {
@@ -278,6 +297,49 @@ export const createContractFromProduct = createServerFn({ method: "POST" })
       }
     }
 
+    // Chọn khách từ landing (lead) mà chưa có hồ sơ khách hàng: tự tạo/nối hồ sơ
+    let customerId: string | null = data.customerId ?? null;
+    if (!customerId && leadId) {
+      const { data: lead } = await supabase
+        .from("leads")
+        .select("full_name,phone,email,owner_user_id,notes")
+        .eq("id", leadId)
+        .maybeSingle();
+      if (lead) {
+        const filters: string[] = [];
+        if (lead.phone) filters.push(`phone.eq.${lead.phone}`);
+        if (lead.email) filters.push(`email.eq.${lead.email}`);
+        if (filters.length) {
+          const { data: existing } = await supabase
+            .from("customers")
+            .select("id")
+            .eq("tenant_id", data.tenantId)
+            .is("deleted_at", null)
+            .or(filters.join(","))
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          customerId = existing?.id ?? null;
+        }
+        if (!customerId) {
+          const { data: created } = await supabase
+            .from("customers")
+            .insert({
+              tenant_id: data.tenantId,
+              owner_user_id: lead.owner_user_id ?? userId,
+              full_name: lead.full_name ?? lead.phone ?? "Khách hàng mới",
+              phone: lead.phone ?? null,
+              email: lead.email ?? null,
+              notes: lead.notes ?? null,
+              meta: { from_lead_id: leadId },
+            })
+            .select("id")
+            .maybeSingle();
+          customerId = created?.id ?? null;
+        }
+      }
+    }
+
     const netPrice = round(Math.max(0, salePrice - data.discountAmount));
     const code = (data.code ?? "").trim() || `HD-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
@@ -287,7 +349,7 @@ export const createContractFromProduct = createServerFn({ method: "POST" })
         tenant_id: data.tenantId,
         project_id: projectId,
         product_id: data.productId ?? null,
-        customer_id: data.customerId ?? null,
+        customer_id: customerId,
         lead_id: leadId,
         deal_id: dealId,
         owner_user_id: data.ownerUserId ?? userId,
