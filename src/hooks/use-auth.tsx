@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { listMyTenants } from "@/lib/auth.functions";
 import type { Database } from "@/integrations/supabase/types";
-import { permissionsFor } from "@/lib/permissions";
+import { capabilitiesFor, permissionsFor, type Capability } from "@/lib/permissions";
 
 export type Role = Database["public"]["Enums"]["app_role"];
 
@@ -36,6 +36,10 @@ type AuthCtx = {
   canEdit: boolean;
   /** Quyền quản lý thành viên & vai trò */
   canManageMembers: boolean;
+  /** Danh sách quyền chi tiết của vai trò hiện tại */
+  capabilities: Set<Capability>;
+  /** Kiểm tra một quyền chi tiết */
+  can: (cap: Capability) => boolean;
 };
 
 const Ctx = createContext<AuthCtx | null>(null);
@@ -129,6 +133,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const arr = Array.isArray(r) ? r : [r];
         return arr.includes(currentRole);
       },
+      capabilities: capabilitiesFor(currentRole ? [currentRole] : []),
+      can: (cap) => capabilitiesFor(currentRole ? [currentRole] : []).has(cap),
       canView: permissionsFor(currentRole).view,
       canEdit: permissionsFor(currentRole).edit,
       canManageMembers: permissionsFor(currentRole).manageMembers,
