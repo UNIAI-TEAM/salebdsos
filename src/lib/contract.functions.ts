@@ -109,6 +109,13 @@ export const listContracts = createServerFn({ method: "GET" })
         .order("full_name")
         .limit(500),
       supabase.from("user_roles").select("user_id,role").eq("tenant_id", data.tenantId),
+      supabase
+        .from("leads")
+        .select("id,full_name,phone,email,source,status,project_id")
+        .eq("tenant_id", data.tenantId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(300),
     ]);
     if (contractsQ.error) throw new Error(contractsQ.error.message);
 
