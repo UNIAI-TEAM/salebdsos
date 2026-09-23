@@ -294,6 +294,49 @@ export const createContractFromProduct = createServerFn({ method: "POST" })
       }
     }
 
+    // Chọn khách từ landing (lead) mà chưa có hồ sơ khách hàng: tự tạo/nối hồ sơ
+    let customerId: string | null = data.customerId ?? null;
+    if (!customerId && leadId) {
+      const { data: lead } = await supabase
+        .from("leads")
+        .select("full_name,phone,email,owner_user_id,notes")
+        .eq("id", leadId)
+        .maybeSingle();
+      if (lead) {
+        const filters: string[] = [];
+        if (lead.phone) filters.push(`phone.eq.${lead.phone}`);
+        if (lead.email) filters.push(`email.eq.${lead.email}`);
+        if (filters.length) {
+          const { data: existing } = await supabase
+            .from("customers")
+            .select("id")
+            .eq("tenant_id", data.tenantId)
+            .is("deleted_at", null)
+            .or(filters.join(","))
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          customerId = existing?.id ?? null;
+        }
+        if (!customerId) {
+          const { data: created } = await supabase
+            .from("customers")
+            .insert({
+              tenant_id: data.tenantId,
+              owner_user_id: lead.owner_user_id ?? userId,
+              full_name: lead.full_name ?? lead.phone ?? "Khách hàng mới",
+              phone: lead.phone ?? null,
+              email: lead.email ?? null,
+              notes: lead.notes ?? null,
+              meta: { from_lead_id: leadId },
+            })
+            .select("id")
+            .maybeSingle();
+          customerId = created?.id ?? null;
+        }
+      }
+    }
+
     const netPrice = round(Math.max(0, salePrice - data.discountAmount));
     const code = (data.code ?? "").trim() || `HD-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
