@@ -150,7 +150,8 @@ function ContractsPage() {
         data: {
           tenantId: tenantId as string,
           productId: form.productId || null,
-          customerId: form.customerId || null,
+          customerId: form.customerId.startsWith("c:") ? form.customerId.slice(2) : null,
+          leadId: form.customerId.startsWith("l:") ? form.customerId.slice(2) : null,
           code: form.code || null,
           salePrice: Number(form.salePrice || 0),
           discountAmount: Number(form.discountAmount || 0),
