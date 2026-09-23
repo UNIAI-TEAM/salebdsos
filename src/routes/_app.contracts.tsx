@@ -332,10 +332,21 @@ function ContractsPage() {
                 <SelectTrigger><SelectValue placeholder="Chọn khách hàng" /></SelectTrigger>
                 <SelectContent>
                   {(data?.customers ?? []).map((customer: any) => (
-                    <SelectItem key={customer.id} value={customer.id}>
+                    <SelectItem key={`c-${customer.id}`} value={`c:${customer.id}`}>
                       {customer.full_name}{customer.phone ? ` · ${customer.phone}` : ""}
                     </SelectItem>
                   ))}
+                  {(data?.leads ?? []).length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Khách mới từ landing / danh thiếp</SelectLabel>
+                      {(data?.leads ?? []).map((lead: any) => (
+                        <SelectItem key={`l-${lead.id}`} value={`l:${lead.id}`}>
+                          {lead.full_name}{lead.phone ? ` · ${lead.phone}` : ""}
+                          {lead.source ? ` · ${lead.source}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
                 </SelectContent>
               </Select>
             </div>
