@@ -201,6 +201,12 @@ export const listContracts = createServerFn({ method: "GET" })
       contracts: rows,
       projects: projectsQ.data ?? [],
       customers: customersQ.data ?? [],
+      leads: (leadsQ.data ?? []).map((l: any) => ({
+        id: l.id,
+        full_name: l.full_name ?? "Khách chưa rõ tên",
+        phone: l.phone ?? null,
+        source: l.source ?? null,
+      })),
       members,
       products: (productsQ.data ?? []).map((p: any) => ({ ...p, price: Number(p.price ?? 0) })),
       totals: {
