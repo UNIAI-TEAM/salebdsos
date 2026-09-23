@@ -180,8 +180,9 @@ export const listContracts = createServerFn({ method: "GET" })
         product_label: product ? product.name || product.code || "Sản phẩm" : null,
         product_code: product?.code ?? null,
         customer_name:
-          (c.customer_id ? customerById.get(c.customer_id)?.full_name ?? null : null) ??
-          (c.lead_id ? leadNameById.get(c.lead_id) ?? null : null),
+          (c.customer_id ? (customerById.get(c.customer_id) as any)?.full_name : null) ||
+          (c.lead_id ? leadNameById.get(c.lead_id) : null) ||
+          null,
         owner_name: c.owner_user_id ? memberName.get(c.owner_user_id) ?? null : null,
         installments: ins,
         commissions: com.map((x) => ({
