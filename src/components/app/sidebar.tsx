@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
+import { capabilityForPath, ROLE_LABELS, type Capability } from "@/lib/permissions";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
 import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
 import {
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-type Item = { to: string; label: string; icon: any; badge?: string; roles?: Role[]; platformOnly?: boolean };
+type Item = { to: string; label: string; icon: any; badge?: string; roles?: Role[]; platformOnly?: boolean; cap?: Capability };
 type Group = { label: string; items: Item[] };
 
 const groups: Group[] = [
@@ -145,14 +146,7 @@ const saleMobileGroups: Group[] = [
   },
 ];
 
-const roleLabel: Record<Role, string> = {
-  platform_admin: "Platform Admin",
-  owner: "Agency Owner",
-  admin: "Agency Admin",
-  manager: "Sales Manager",
-  agent: "Sales Agent",
-  viewer: "Viewer",
-};
+const roleLabel: Record<Role, string> = ROLE_LABELS;
 
 function initials(s: string) {
   return s.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
@@ -178,13 +172,16 @@ function SidebarBody({
   onClose?: () => void;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { tenants, currentTenant, currentRole, switchTenant, signOut, user, isPlatformAdmin } = useAuth();
+  const { tenants, currentTenant, currentRole, switchTenant, signOut, user, isPlatformAdmin, can: allow } = useAuth();
   const [wsOpen, setWsOpen] = useState(false);
 
   const can = (item: Item) => {
     if (item.platformOnly) return isPlatformAdmin;
-    if (!item.roles) return true;
     if (isPlatformAdmin) return true;
+    // Quyền chi tiết theo vai trò (ưu tiên), sau đó là danh sách vai trò cũ.
+    const cap = item.cap ?? capabilityForPath(item.to);
+    if (cap && !allow(cap)) return false;
+    if (!item.roles) return true;
     return currentRole !== null && currentRole !== "viewer" && (item.roles as string[]).includes(currentRole);
   };
 
