@@ -3,8 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { COMMISSION_RULES_KEY, commissionRulesSchema } from "@/lib/commission-rules";
 
-const MANAGER_ROLES = new Set(["owner", "admin", "manager", "platform_admin"]);
-const SALE_ROLES = new Set(["owner", "admin", "manager", "agent", "platform_admin"]);
+import { ADMIN_ROLES, SALE_ROLES } from "@/lib/permissions";
 
 async function roles(context: any, tenantId: string) {
   const { data, error } = await context.supabase
@@ -17,7 +16,7 @@ async function roles(context: any, tenantId: string) {
   if (!list.some((role: string) => SALE_ROLES.has(role))) {
     throw new Error("Bạn không có quyền xem chính sách hoa hồng của workspace này");
   }
-  return { canManage: list.some((role: string) => MANAGER_ROLES.has(role)) };
+  return { canManage: list.some((role: string) => ADMIN_ROLES.has(role)) };
 }
 
 export const getCommissionRules = createServerFn({ method: "GET" })
@@ -74,7 +73,7 @@ export const saveCommissionRules = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { canManage } = await roles(context, data.tenantId);
-    if (!canManage) throw new Error("Chỉ quản lý mới được sửa chính sách hoa hồng");
+    if (!canManage) throw new Error("Chỉ quản trị viên mới được sửa chính sách hoa hồng");
     const { error } = await context.supabase
       .from("settings")
       .upsert(
@@ -104,7 +103,7 @@ export const recalcContractCommissions = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     const { canManage } = await roles(context, contract.tenant_id);
-    if (!canManage) throw new Error("Chỉ quản lý mới được tính lại hoa hồng");
+    if (!canManage) throw new Error("Chỉ quản trị viên mới được tính lại hoa hồng");
 
     const { applyCommissionPlan } = await import("@/lib/commission.server");
     const result = await applyCommissionPlan(supabase, {
@@ -123,7 +122,7 @@ export const recalcTenantCommissions = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { canManage } = await roles(context, data.tenantId);
-    if (!canManage) throw new Error("Chỉ quản lý mới được tính lại hoa hồng");
+    if (!canManage) throw new Error("Chỉ quản trị viên mới được tính lại hoa hồng");
     const { supabase } = context;
     const { data: contracts, error } = await supabase
       .from("contracts")

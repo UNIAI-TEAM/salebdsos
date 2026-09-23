@@ -86,7 +86,7 @@ function PipelinePage() {
   const [activeDealId, setActiveDealId] = useState<string | null>(null);
   const [stageMgr, setStageMgr] = useState(false);
 
-  const canEdit = hasRole(["owner", "admin", "manager", "agent"]);
+  const canEdit = hasRole(["owner", "admin", "agent"]);
 
   const reload = useCallback(async () => {
     if (!tenantId) return;
