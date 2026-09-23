@@ -346,7 +346,7 @@ export const createContractFromProduct = createServerFn({ method: "POST" })
         tenant_id: data.tenantId,
         project_id: projectId,
         product_id: data.productId ?? null,
-        customer_id: data.customerId ?? null,
+        customer_id: customerId,
         lead_id: leadId,
         deal_id: dealId,
         owner_user_id: data.ownerUserId ?? userId,
