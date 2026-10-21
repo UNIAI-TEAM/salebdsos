@@ -9,103 +9,92 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VerifyEmailRouteImport } from './routes/verify-email'
-import { Route as ThankYouRouteImport } from './routes/thank-you'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as CustomizeRouteImport } from './routes/customize'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ShareSlugRouteImport } from './routes/share.$slug'
-import { Route as PSlugRouteImport } from './routes/p.$slug'
-import { Route as FSlugRouteImport } from './routes/f.$slug'
-import { Route as DuAnCodeRouteImport } from './routes/du-an.$code'
-import { Route as CSlugRouteImport } from './routes/c.$slug'
-import { Route as ApiCardPortraitRouteImport } from './routes/api/card-portrait'
-import { Route as AcceptInviteTokenRouteImport } from './routes/accept-invite.$token'
-import { Route as AppWalletRouteImport } from './routes/_app.wallet'
-import { Route as AppTimelineRouteImport } from './routes/_app.timeline'
-import { Route as AppTeamRouteImport } from './routes/_app.team'
-import { Route as AppSettingsRouteImport } from './routes/_app.settings'
-import { Route as AppSalesDirectoryRouteImport } from './routes/_app.sales-directory'
-import { Route as AppSaleProjectsRouteImport } from './routes/_app.sale-projects'
-import { Route as AppSaleOverviewRouteImport } from './routes/_app.sale-overview'
-import { Route as AppSaleLandingsRouteImport } from './routes/_app.sale-landings'
-import { Route as AppSaleCustomersRouteImport } from './routes/_app.sale-customers'
-import { Route as AppRevenueReportRouteImport } from './routes/_app.revenue-report'
-import { Route as AppQrSharingRouteImport } from './routes/_app.qr-sharing'
-import { Route as AppPromptLibraryRouteImport } from './routes/_app.prompt-library'
-import { Route as AppProjectsRouteImport } from './routes/_app.projects'
-import { Route as AppProfileRouteImport } from './routes/_app.profile'
-import { Route as AppProductsRouteImport } from './routes/_app.products'
-import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
-import { Route as AppNurtureRouteImport } from './routes/_app.nurture'
-import { Route as AppNfcCodesRouteImport } from './routes/_app.nfc-codes'
-import { Route as AppMobileAppRouteImport } from './routes/_app.mobile-app'
-import { Route as AppMembersRouteImport } from './routes/_app.members'
-import { Route as AppMarketingRouteImport } from './routes/_app.marketing'
-import { Route as AppLeadsRouteImport } from './routes/_app.leads'
-import { Route as AppLeadRoutingRouteImport } from './routes/_app.lead-routing'
-import { Route as AppLeadCaptureRouteImport } from './routes/_app.lead-capture'
-import { Route as AppLandingsRouteImport } from './routes/_app.landings'
-import { Route as AppJourneyRouteImport } from './routes/_app.journey'
-import { Route as AppInventoryRouteImport } from './routes/_app.inventory'
-import { Route as AppInboxRouteImport } from './routes/_app.inbox'
-import { Route as AppFunnelReportRouteImport } from './routes/_app.funnel-report'
-import { Route as AppFilesRouteImport } from './routes/_app.files'
-import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
-import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
-import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
-import { Route as AppContractsRouteImport } from './routes/_app.contracts'
-import { Route as AppContentLibraryRouteImport } from './routes/_app.content-library'
-import { Route as AppCommissionRulesRouteImport } from './routes/_app.commission-rules'
-import { Route as AppCardDesignerRouteImport } from './routes/_app.card-designer'
-import { Route as AppAuthSettingsRouteImport } from './routes/_app.auth-settings'
-import { Route as AppAppointmentsRouteImport } from './routes/_app.appointments'
-import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
-import { Route as AppAirdropRouteImport } from './routes/_app.airdrop'
-import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
-import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as CustomizeRouteImport } from './routes/customize'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as ThankYouRouteImport } from './routes/thank-you'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
-import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.index'
-import { Route as AppDigitalCardIndexRouteImport } from './routes/_app.digital-card.index'
-import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.index'
-import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/zalo-webhook'
-import { Route as ApiPublicTelephonyWebhookRouteImport } from './routes/api/public/telephony-webhook'
-import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
-import { Route as ApiPublicNurtureRunRouteImport } from './routes/api/public/nurture-run'
-import { Route as ApiPublicContactRequestRouteImport } from './routes/api/public/contact-request'
-import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
-import { Route as AppDigitalCardEditRouteImport } from './routes/_app.digital-card.edit'
-import { Route as AppCustomersIdRouteImport } from './routes/_app.customers.$id'
+import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
+import { Route as AppAiSalesPageRouteImport } from './routes/_app.ai-sales-page'
+import { Route as AppAirdropRouteImport } from './routes/_app.airdrop'
+import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
+import { Route as AppAppointmentsRouteImport } from './routes/_app.appointments'
+import { Route as AppAuthSettingsRouteImport } from './routes/_app.auth-settings'
+import { Route as AppCardDesignerRouteImport } from './routes/_app.card-designer'
+import { Route as AppCommissionRulesRouteImport } from './routes/_app.commission-rules'
+import { Route as AppContentLibraryRouteImport } from './routes/_app.content-library'
+import { Route as AppContractsRouteImport } from './routes/_app.contracts'
+import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
+import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
+import { Route as AppFilesRouteImport } from './routes/_app.files'
+import { Route as AppFunnelReportRouteImport } from './routes/_app.funnel-report'
+import { Route as AppInboxRouteImport } from './routes/_app.inbox'
+import { Route as AppInventoryRouteImport } from './routes/_app.inventory'
+import { Route as AppJourneyRouteImport } from './routes/_app.journey'
+import { Route as AppLandingsRouteImport } from './routes/_app.landings'
+import { Route as AppLeadCaptureRouteImport } from './routes/_app.lead-capture'
+import { Route as AppLeadRoutingRouteImport } from './routes/_app.lead-routing'
+import { Route as AppLeadsRouteImport } from './routes/_app.leads'
+import { Route as AppMarketingRouteImport } from './routes/_app.marketing'
+import { Route as AppMembersRouteImport } from './routes/_app.members'
+import { Route as AppMobileAppRouteImport } from './routes/_app.mobile-app'
+import { Route as AppNfcCodesRouteImport } from './routes/_app.nfc-codes'
+import { Route as AppNurtureRouteImport } from './routes/_app.nurture'
+import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
+import { Route as AppProductsRouteImport } from './routes/_app.products'
+import { Route as AppProfileRouteImport } from './routes/_app.profile'
+import { Route as AppProjectsRouteImport } from './routes/_app.projects'
+import { Route as AppPromptLibraryRouteImport } from './routes/_app.prompt-library'
+import { Route as AppQrSharingRouteImport } from './routes/_app.qr-sharing'
+import { Route as AppRevenueReportRouteImport } from './routes/_app.revenue-report'
+import { Route as AppSaleCustomersRouteImport } from './routes/_app.sale-customers'
+import { Route as AppSaleLandingsRouteImport } from './routes/_app.sale-landings'
+import { Route as AppSaleOverviewRouteImport } from './routes/_app.sale-overview'
+import { Route as AppSaleProjectsRouteImport } from './routes/_app.sale-projects'
+import { Route as AppSalesDirectoryRouteImport } from './routes/_app.sales-directory'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppTeamRouteImport } from './routes/_app.team'
+import { Route as AppTimelineRouteImport } from './routes/_app.timeline'
+import { Route as AppWalletRouteImport } from './routes/_app.wallet'
+import { Route as AcceptInviteTokenRouteImport } from './routes/accept-invite.$token'
+import { Route as ApiCardPortraitRouteImport } from './routes/api/card-portrait'
+import { Route as CSlugRouteImport } from './routes/c.$slug'
+import { Route as DuAnCodeRouteImport } from './routes/du-an.$code'
+import { Route as FSlugRouteImport } from './routes/f.$slug'
+import { Route as PSlugRouteImport } from './routes/p.$slug'
+import { Route as ShareSlugRouteImport } from './routes/share.$slug'
 import { Route as AppAiFollowupCustomerIdRouteImport } from './routes/_app.ai-followup.$customerId'
-import { Route as ApiPublicTCodeRouteImport } from './routes/api/public/t.$code'
-import { Route as ApiPublicSalesPagesSlugRouteImport } from './routes/api/public/sales-pages.$slug'
-import { Route as ApiPublicQCodeRouteImport } from './routes/api/public/q.$code'
-import { Route as ApiPublicPqCodeRouteImport } from './routes/api/public/pq.$code'
-import { Route as ApiPublicLeadFormsSlugRouteImport } from './routes/api/public/lead-forms.$slug'
-import { Route as ApiPublicLandingManifestSlugRouteImport } from './routes/api/public/landing-manifest.$slug'
-import { Route as ApiPublicChatSlugRouteImport } from './routes/api/public/chat.$slug'
+import { Route as AppCustomersIndexRouteImport } from './routes/_app.customers.index'
+import { Route as AppCustomersIdRouteImport } from './routes/_app.customers.$id'
+import { Route as AppDigitalCardIndexRouteImport } from './routes/_app.digital-card.index'
+import { Route as AppDigitalCardEditRouteImport } from './routes/_app.digital-card.edit'
+import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.index'
+import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
+import { Route as ApiPublicContactRequestRouteImport } from './routes/api/public/contact-request'
+import { Route as ApiPublicNurtureRunRouteImport } from './routes/api/public/nurture-run'
+import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
+import { Route as ApiPublicTelephonyWebhookRouteImport } from './routes/api/public/telephony-webhook'
+import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/zalo-webhook'
 import { Route as ApiPublicCardLeadsSlugRouteImport } from './routes/api/public/card-leads.$slug'
+import { Route as ApiPublicChatSlugRouteImport } from './routes/api/public/chat.$slug'
+import { Route as ApiPublicLandingManifestSlugRouteImport } from './routes/api/public/landing-manifest.$slug'
+import { Route as ApiPublicLeadFormsSlugRouteImport } from './routes/api/public/lead-forms.$slug'
+import { Route as ApiPublicPqCodeRouteImport } from './routes/api/public/pq.$code'
+import { Route as ApiPublicQCodeRouteImport } from './routes/api/public/q.$code'
+import { Route as ApiPublicSalesPagesSlugRouteImport } from './routes/api/public/sales-pages.$slug'
+import { Route as ApiPublicTCodeRouteImport } from './routes/api/public/t.$code'
 
-const VerifyEmailRoute = VerifyEmailRouteImport.update({
-  id: '/verify-email',
-  path: '/verify-email',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ThankYouRoute = ThankYouRouteImport.update({
-  id: '/thank-you',
-  path: '/thank-you',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CustomizeRoute = CustomizeRouteImport.update({
@@ -113,258 +102,29 @@ const CustomizeRoute = CustomizeRouteImport.update({
   path: '/customize',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ShareSlugRoute = ShareSlugRouteImport.update({
-  id: '/share/$slug',
-  path: '/share/$slug',
+const ThankYouRoute = ThankYouRouteImport.update({
+  id: '/thank-you',
+  path: '/thank-you',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PSlugRoute = PSlugRouteImport.update({
-  id: '/p/$slug',
-  path: '/p/$slug',
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FSlugRoute = FSlugRouteImport.update({
-  id: '/f/$slug',
-  path: '/f/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DuAnCodeRoute = DuAnCodeRouteImport.update({
-  id: '/du-an/$code',
-  path: '/du-an/$code',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CSlugRoute = CSlugRouteImport.update({
-  id: '/c/$slug',
-  path: '/c/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiCardPortraitRoute = ApiCardPortraitRouteImport.update({
-  id: '/api/card-portrait',
-  path: '/api/card-portrait',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AcceptInviteTokenRoute = AcceptInviteTokenRouteImport.update({
-  id: '/accept-invite/$token',
-  path: '/accept-invite/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppWalletRoute = AppWalletRouteImport.update({
-  id: '/wallet',
-  path: '/wallet',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppTimelineRoute = AppTimelineRouteImport.update({
-  id: '/timeline',
-  path: '/timeline',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppTeamRoute = AppTeamRouteImport.update({
-  id: '/team',
-  path: '/team',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSettingsRoute = AppSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSalesDirectoryRoute = AppSalesDirectoryRouteImport.update({
-  id: '/sales-directory',
-  path: '/sales-directory',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSaleProjectsRoute = AppSaleProjectsRouteImport.update({
-  id: '/sale-projects',
-  path: '/sale-projects',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSaleOverviewRoute = AppSaleOverviewRouteImport.update({
-  id: '/sale-overview',
-  path: '/sale-overview',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSaleLandingsRoute = AppSaleLandingsRouteImport.update({
-  id: '/sale-landings',
-  path: '/sale-landings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSaleCustomersRoute = AppSaleCustomersRouteImport.update({
-  id: '/sale-customers',
-  path: '/sale-customers',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppRevenueReportRoute = AppRevenueReportRouteImport.update({
-  id: '/revenue-report',
-  path: '/revenue-report',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppQrSharingRoute = AppQrSharingRouteImport.update({
-  id: '/qr-sharing',
-  path: '/qr-sharing',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPromptLibraryRoute = AppPromptLibraryRouteImport.update({
-  id: '/prompt-library',
-  path: '/prompt-library',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProjectsRoute = AppProjectsRouteImport.update({
-  id: '/projects',
-  path: '/projects',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProfileRoute = AppProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProductsRoute = AppProductsRouteImport.update({
-  id: '/products',
-  path: '/products',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPipelineRoute = AppPipelineRouteImport.update({
-  id: '/pipeline',
-  path: '/pipeline',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppNurtureRoute = AppNurtureRouteImport.update({
-  id: '/nurture',
-  path: '/nurture',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppNfcCodesRoute = AppNfcCodesRouteImport.update({
-  id: '/nfc-codes',
-  path: '/nfc-codes',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppMobileAppRoute = AppMobileAppRouteImport.update({
-  id: '/mobile-app',
-  path: '/mobile-app',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppMembersRoute = AppMembersRouteImport.update({
-  id: '/members',
-  path: '/members',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppMarketingRoute = AppMarketingRouteImport.update({
-  id: '/marketing',
-  path: '/marketing',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLeadsRoute = AppLeadsRouteImport.update({
-  id: '/leads',
-  path: '/leads',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLeadRoutingRoute = AppLeadRoutingRouteImport.update({
-  id: '/lead-routing',
-  path: '/lead-routing',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLeadCaptureRoute = AppLeadCaptureRouteImport.update({
-  id: '/lead-capture',
-  path: '/lead-capture',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLandingsRoute = AppLandingsRouteImport.update({
-  id: '/landings',
-  path: '/landings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppJourneyRoute = AppJourneyRouteImport.update({
-  id: '/journey',
-  path: '/journey',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppInventoryRoute = AppInventoryRouteImport.update({
-  id: '/inventory',
-  path: '/inventory',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppInboxRoute = AppInboxRouteImport.update({
-  id: '/inbox',
-  path: '/inbox',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppFunnelReportRoute = AppFunnelReportRouteImport.update({
-  id: '/funnel-report',
-  path: '/funnel-report',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppFilesRoute = AppFilesRouteImport.update({
-  id: '/files',
-  path: '/files',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDynamicQrRoute = AppDynamicQrRouteImport.update({
-  id: '/dynamic-qr',
-  path: '/dynamic-qr',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDigitalCardRoute = AppDigitalCardRouteImport.update({
-  id: '/digital-card',
-  path: '/digital-card',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppContractsRoute = AppContractsRouteImport.update({
-  id: '/contracts',
-  path: '/contracts',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppContentLibraryRoute = AppContentLibraryRouteImport.update({
-  id: '/content-library',
-  path: '/content-library',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCommissionRulesRoute = AppCommissionRulesRouteImport.update({
-  id: '/commission-rules',
-  path: '/commission-rules',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCardDesignerRoute = AppCardDesignerRouteImport.update({
-  id: '/card-designer',
-  path: '/card-designer',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAuthSettingsRoute = AppAuthSettingsRouteImport.update({
-  id: '/auth-settings',
-  path: '/auth-settings',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAppointmentsRoute = AppAppointmentsRouteImport.update({
-  id: '/appointments',
-  path: '/appointments',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAirdropRoute = AppAirdropRouteImport.update({
-  id: '/airdrop',
-  path: '/airdrop',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAiSalesPageRoute = AppAiSalesPageRouteImport.update({
-  id: '/ai-sales-page',
-  path: '/ai-sales-page',
+const AppAiFollowupRoute = AppAiFollowupRouteImport.update({
+  id: '/ai-followup',
+  path: '/ai-followup',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAiLeadScoreRoute = AppAiLeadScoreRouteImport.update({
@@ -372,29 +132,299 @@ const AppAiLeadScoreRoute = AppAiLeadScoreRouteImport.update({
   path: '/ai-lead-score',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAiFollowupRoute = AppAiFollowupRouteImport.update({
-  id: '/ai-followup',
-  path: '/ai-followup',
+const AppAiSalesPageRoute = AppAiSalesPageRouteImport.update({
+  id: '/ai-sales-page',
+  path: '/ai-sales-page',
   getParentRoute: () => AppRoute,
 } as any)
-const AppProjectsIndexRoute = AppProjectsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppProjectsRoute,
+const AppAirdropRoute = AppAirdropRouteImport.update({
+  id: '/airdrop',
+  path: '/airdrop',
+  getParentRoute: () => AppRoute,
 } as any)
-const AppDigitalCardIndexRoute = AppDigitalCardIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AppDigitalCardRoute,
+const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppointmentsRoute = AppAppointmentsRouteImport.update({
+  id: '/appointments',
+  path: '/appointments',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAuthSettingsRoute = AppAuthSettingsRouteImport.update({
+  id: '/auth-settings',
+  path: '/auth-settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCardDesignerRoute = AppCardDesignerRouteImport.update({
+  id: '/card-designer',
+  path: '/card-designer',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCommissionRulesRoute = AppCommissionRulesRouteImport.update({
+  id: '/commission-rules',
+  path: '/commission-rules',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContentLibraryRoute = AppContentLibraryRouteImport.update({
+  id: '/content-library',
+  path: '/content-library',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContractsRoute = AppContractsRouteImport.update({
+  id: '/contracts',
+  path: '/contracts',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDigitalCardRoute = AppDigitalCardRouteImport.update({
+  id: '/digital-card',
+  path: '/digital-card',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDynamicQrRoute = AppDynamicQrRouteImport.update({
+  id: '/dynamic-qr',
+  path: '/dynamic-qr',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFilesRoute = AppFilesRouteImport.update({
+  id: '/files',
+  path: '/files',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFunnelReportRoute = AppFunnelReportRouteImport.update({
+  id: '/funnel-report',
+  path: '/funnel-report',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInboxRoute = AppInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInventoryRoute = AppInventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppJourneyRoute = AppJourneyRouteImport.update({
+  id: '/journey',
+  path: '/journey',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLandingsRoute = AppLandingsRouteImport.update({
+  id: '/landings',
+  path: '/landings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLeadCaptureRoute = AppLeadCaptureRouteImport.update({
+  id: '/lead-capture',
+  path: '/lead-capture',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLeadRoutingRoute = AppLeadRoutingRouteImport.update({
+  id: '/lead-routing',
+  path: '/lead-routing',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLeadsRoute = AppLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMarketingRoute = AppMarketingRouteImport.update({
+  id: '/marketing',
+  path: '/marketing',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMembersRoute = AppMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMobileAppRoute = AppMobileAppRouteImport.update({
+  id: '/mobile-app',
+  path: '/mobile-app',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNfcCodesRoute = AppNfcCodesRouteImport.update({
+  id: '/nfc-codes',
+  path: '/nfc-codes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNurtureRoute = AppNurtureRouteImport.update({
+  id: '/nurture',
+  path: '/nurture',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPipelineRoute = AppPipelineRouteImport.update({
+  id: '/pipeline',
+  path: '/pipeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProductsRoute = AppProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProjectsRoute = AppProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPromptLibraryRoute = AppPromptLibraryRouteImport.update({
+  id: '/prompt-library',
+  path: '/prompt-library',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppQrSharingRoute = AppQrSharingRouteImport.update({
+  id: '/qr-sharing',
+  path: '/qr-sharing',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRevenueReportRoute = AppRevenueReportRouteImport.update({
+  id: '/revenue-report',
+  path: '/revenue-report',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSaleCustomersRoute = AppSaleCustomersRouteImport.update({
+  id: '/sale-customers',
+  path: '/sale-customers',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSaleLandingsRoute = AppSaleLandingsRouteImport.update({
+  id: '/sale-landings',
+  path: '/sale-landings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSaleOverviewRoute = AppSaleOverviewRouteImport.update({
+  id: '/sale-overview',
+  path: '/sale-overview',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSaleProjectsRoute = AppSaleProjectsRouteImport.update({
+  id: '/sale-projects',
+  path: '/sale-projects',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSalesDirectoryRoute = AppSalesDirectoryRouteImport.update({
+  id: '/sales-directory',
+  path: '/sales-directory',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTeamRoute = AppTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTimelineRoute = AppTimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWalletRoute = AppWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AppRoute,
+} as any)
+const AcceptInviteTokenRoute = AcceptInviteTokenRouteImport.update({
+  id: '/accept-invite/$token',
+  path: '/accept-invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCardPortraitRoute = ApiCardPortraitRouteImport.update({
+  id: '/api/card-portrait',
+  path: '/api/card-portrait',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CSlugRoute = CSlugRouteImport.update({
+  id: '/c/$slug',
+  path: '/c/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DuAnCodeRoute = DuAnCodeRouteImport.update({
+  id: '/du-an/$code',
+  path: '/du-an/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FSlugRoute = FSlugRouteImport.update({
+  id: '/f/$slug',
+  path: '/f/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareSlugRoute = ShareSlugRouteImport.update({
+  id: '/share/$slug',
+  path: '/share/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppAiFollowupCustomerIdRoute = AppAiFollowupCustomerIdRouteImport.update({
+  id: '/$customerId',
+  path: '/$customerId',
+  getParentRoute: () => AppAiFollowupRoute,
 } as any)
 const AppCustomersIndexRoute = AppCustomersIndexRouteImport.update({
   id: '/customers/',
   path: '/customers/',
   getParentRoute: () => AppRoute,
 } as any)
-const ApiPublicZaloWebhookRoute = ApiPublicZaloWebhookRouteImport.update({
-  id: '/api/public/zalo-webhook',
-  path: '/api/public/zalo-webhook',
+const AppCustomersIdRoute = AppCustomersIdRouteImport.update({
+  id: '/customers/$id',
+  path: '/customers/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDigitalCardIndexRoute = AppDigitalCardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppDigitalCardRoute,
+} as any)
+const AppDigitalCardEditRoute = AppDigitalCardEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => AppDigitalCardRoute,
+} as any)
+const AppProjectsIndexRoute = AppProjectsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppProjectsRoute,
+} as any)
+const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppProjectsRoute,
+} as any)
+const ApiPublicContactRequestRoute = ApiPublicContactRequestRouteImport.update({
+  id: '/api/public/contact-request',
+  path: '/api/public/contact-request',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicNurtureRunRoute = ApiPublicNurtureRunRouteImport.update({
+  id: '/api/public/nurture-run',
+  path: '/api/public/nurture-run',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicProjectTouchRoute = ApiPublicProjectTouchRouteImport.update({
+  id: '/api/public/project-touch',
+  path: '/api/public/project-touch',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTelephonyWebhookRoute =
@@ -403,64 +433,19 @@ const ApiPublicTelephonyWebhookRoute =
     path: '/api/public/telephony-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicProjectTouchRoute = ApiPublicProjectTouchRouteImport.update({
-  id: '/api/public/project-touch',
-  path: '/api/public/project-touch',
+const ApiPublicZaloWebhookRoute = ApiPublicZaloWebhookRouteImport.update({
+  id: '/api/public/zalo-webhook',
+  path: '/api/public/zalo-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicNurtureRunRoute = ApiPublicNurtureRunRouteImport.update({
-  id: '/api/public/nurture-run',
-  path: '/api/public/nurture-run',
+const ApiPublicCardLeadsSlugRoute = ApiPublicCardLeadsSlugRouteImport.update({
+  id: '/api/public/card-leads/$slug',
+  path: '/api/public/card-leads/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicContactRequestRoute = ApiPublicContactRequestRouteImport.update({
-  id: '/api/public/contact-request',
-  path: '/api/public/contact-request',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppProjectsRoute,
-} as any)
-const AppDigitalCardEditRoute = AppDigitalCardEditRouteImport.update({
-  id: '/edit',
-  path: '/edit',
-  getParentRoute: () => AppDigitalCardRoute,
-} as any)
-const AppCustomersIdRoute = AppCustomersIdRouteImport.update({
-  id: '/customers/$id',
-  path: '/customers/$id',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAiFollowupCustomerIdRoute = AppAiFollowupCustomerIdRouteImport.update({
-  id: '/$customerId',
-  path: '/$customerId',
-  getParentRoute: () => AppAiFollowupRoute,
-} as any)
-const ApiPublicTCodeRoute = ApiPublicTCodeRouteImport.update({
-  id: '/api/public/t/$code',
-  path: '/api/public/t/$code',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicSalesPagesSlugRoute = ApiPublicSalesPagesSlugRouteImport.update({
-  id: '/api/public/sales-pages/$slug',
-  path: '/api/public/sales-pages/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicQCodeRoute = ApiPublicQCodeRouteImport.update({
-  id: '/api/public/q/$code',
-  path: '/api/public/q/$code',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicPqCodeRoute = ApiPublicPqCodeRouteImport.update({
-  id: '/api/public/pq/$code',
-  path: '/api/public/pq/$code',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicLeadFormsSlugRoute = ApiPublicLeadFormsSlugRouteImport.update({
-  id: '/api/public/lead-forms/$slug',
-  path: '/api/public/lead-forms/$slug',
+const ApiPublicChatSlugRoute = ApiPublicChatSlugRouteImport.update({
+  id: '/api/public/chat/$slug',
+  path: '/api/public/chat/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicLandingManifestSlugRoute =
@@ -469,14 +454,29 @@ const ApiPublicLandingManifestSlugRoute =
     path: '/api/public/landing-manifest/$slug',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicChatSlugRoute = ApiPublicChatSlugRouteImport.update({
-  id: '/api/public/chat/$slug',
-  path: '/api/public/chat/$slug',
+const ApiPublicLeadFormsSlugRoute = ApiPublicLeadFormsSlugRouteImport.update({
+  id: '/api/public/lead-forms/$slug',
+  path: '/api/public/lead-forms/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicCardLeadsSlugRoute = ApiPublicCardLeadsSlugRouteImport.update({
-  id: '/api/public/card-leads/$slug',
-  path: '/api/public/card-leads/$slug',
+const ApiPublicPqCodeRoute = ApiPublicPqCodeRouteImport.update({
+  id: '/api/public/pq/$code',
+  path: '/api/public/pq/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicQCodeRoute = ApiPublicQCodeRouteImport.update({
+  id: '/api/public/q/$code',
+  path: '/api/public/q/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSalesPagesSlugRoute = ApiPublicSalesPagesSlugRouteImport.update({
+  id: '/api/public/sales-pages/$slug',
+  path: '/api/public/sales-pages/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTCodeRoute = ApiPublicTCodeRouteImport.update({
+  id: '/api/public/t/$code',
+  path: '/api/public/t/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -988,39 +988,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/verify-email': {
-      id: '/verify-email'
-      path: '/verify-email'
-      fullPath: '/verify-email'
-      preLoaderRoute: typeof VerifyEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/thank-you': {
-      id: '/thank-you'
-      path: '/thank-you'
-      fullPath: '/thank-you'
-      preLoaderRoute: typeof ThankYouRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/customize': {
-      id: '/customize'
-      path: '/customize'
-      fullPath: '/customize'
-      preLoaderRoute: typeof CustomizeRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -1030,354 +1002,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/customize': {
+      id: '/customize'
+      path: '/customize'
+      fullPath: '/customize'
+      preLoaderRoute: typeof CustomizeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/share/$slug': {
-      id: '/share/$slug'
-      path: '/share/$slug'
-      fullPath: '/share/$slug'
-      preLoaderRoute: typeof ShareSlugRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/p/$slug': {
-      id: '/p/$slug'
-      path: '/p/$slug'
-      fullPath: '/p/$slug'
-      preLoaderRoute: typeof PSlugRouteImport
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/f/$slug': {
-      id: '/f/$slug'
-      path: '/f/$slug'
-      fullPath: '/f/$slug'
-      preLoaderRoute: typeof FSlugRouteImport
+    '/thank-you': {
+      id: '/thank-you'
+      path: '/thank-you'
+      fullPath: '/thank-you'
+      preLoaderRoute: typeof ThankYouRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/du-an/$code': {
-      id: '/du-an/$code'
-      path: '/du-an/$code'
-      fullPath: '/du-an/$code'
-      preLoaderRoute: typeof DuAnCodeRouteImport
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/c/$slug': {
-      id: '/c/$slug'
-      path: '/c/$slug'
-      fullPath: '/c/$slug'
-      preLoaderRoute: typeof CSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/card-portrait': {
-      id: '/api/card-portrait'
-      path: '/api/card-portrait'
-      fullPath: '/api/card-portrait'
-      preLoaderRoute: typeof ApiCardPortraitRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/accept-invite/$token': {
-      id: '/accept-invite/$token'
-      path: '/accept-invite/$token'
-      fullPath: '/accept-invite/$token'
-      preLoaderRoute: typeof AcceptInviteTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app/wallet': {
-      id: '/_app/wallet'
-      path: '/wallet'
-      fullPath: '/wallet'
-      preLoaderRoute: typeof AppWalletRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/timeline': {
-      id: '/_app/timeline'
-      path: '/timeline'
-      fullPath: '/timeline'
-      preLoaderRoute: typeof AppTimelineRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/team': {
-      id: '/_app/team'
-      path: '/team'
-      fullPath: '/team'
-      preLoaderRoute: typeof AppTeamRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/settings': {
-      id: '/_app/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AppSettingsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/sales-directory': {
-      id: '/_app/sales-directory'
-      path: '/sales-directory'
-      fullPath: '/sales-directory'
-      preLoaderRoute: typeof AppSalesDirectoryRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/sale-projects': {
-      id: '/_app/sale-projects'
-      path: '/sale-projects'
-      fullPath: '/sale-projects'
-      preLoaderRoute: typeof AppSaleProjectsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/sale-overview': {
-      id: '/_app/sale-overview'
-      path: '/sale-overview'
-      fullPath: '/sale-overview'
-      preLoaderRoute: typeof AppSaleOverviewRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/sale-landings': {
-      id: '/_app/sale-landings'
-      path: '/sale-landings'
-      fullPath: '/sale-landings'
-      preLoaderRoute: typeof AppSaleLandingsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/sale-customers': {
-      id: '/_app/sale-customers'
-      path: '/sale-customers'
-      fullPath: '/sale-customers'
-      preLoaderRoute: typeof AppSaleCustomersRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/revenue-report': {
-      id: '/_app/revenue-report'
-      path: '/revenue-report'
-      fullPath: '/revenue-report'
-      preLoaderRoute: typeof AppRevenueReportRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/qr-sharing': {
-      id: '/_app/qr-sharing'
-      path: '/qr-sharing'
-      fullPath: '/qr-sharing'
-      preLoaderRoute: typeof AppQrSharingRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/prompt-library': {
-      id: '/_app/prompt-library'
-      path: '/prompt-library'
-      fullPath: '/prompt-library'
-      preLoaderRoute: typeof AppPromptLibraryRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/projects': {
-      id: '/_app/projects'
-      path: '/projects'
-      fullPath: '/projects'
-      preLoaderRoute: typeof AppProjectsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/profile': {
-      id: '/_app/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AppProfileRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/products': {
-      id: '/_app/products'
-      path: '/products'
-      fullPath: '/products'
-      preLoaderRoute: typeof AppProductsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/pipeline': {
-      id: '/_app/pipeline'
-      path: '/pipeline'
-      fullPath: '/pipeline'
-      preLoaderRoute: typeof AppPipelineRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/nurture': {
-      id: '/_app/nurture'
-      path: '/nurture'
-      fullPath: '/nurture'
-      preLoaderRoute: typeof AppNurtureRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/nfc-codes': {
-      id: '/_app/nfc-codes'
-      path: '/nfc-codes'
-      fullPath: '/nfc-codes'
-      preLoaderRoute: typeof AppNfcCodesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/mobile-app': {
-      id: '/_app/mobile-app'
-      path: '/mobile-app'
-      fullPath: '/mobile-app'
-      preLoaderRoute: typeof AppMobileAppRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/members': {
-      id: '/_app/members'
-      path: '/members'
-      fullPath: '/members'
-      preLoaderRoute: typeof AppMembersRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/marketing': {
-      id: '/_app/marketing'
-      path: '/marketing'
-      fullPath: '/marketing'
-      preLoaderRoute: typeof AppMarketingRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/leads': {
-      id: '/_app/leads'
-      path: '/leads'
-      fullPath: '/leads'
-      preLoaderRoute: typeof AppLeadsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/lead-routing': {
-      id: '/_app/lead-routing'
-      path: '/lead-routing'
-      fullPath: '/lead-routing'
-      preLoaderRoute: typeof AppLeadRoutingRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/lead-capture': {
-      id: '/_app/lead-capture'
-      path: '/lead-capture'
-      fullPath: '/lead-capture'
-      preLoaderRoute: typeof AppLeadCaptureRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/landings': {
-      id: '/_app/landings'
-      path: '/landings'
-      fullPath: '/landings'
-      preLoaderRoute: typeof AppLandingsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/journey': {
-      id: '/_app/journey'
-      path: '/journey'
-      fullPath: '/journey'
-      preLoaderRoute: typeof AppJourneyRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/inventory': {
-      id: '/_app/inventory'
-      path: '/inventory'
-      fullPath: '/inventory'
-      preLoaderRoute: typeof AppInventoryRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/inbox': {
-      id: '/_app/inbox'
-      path: '/inbox'
-      fullPath: '/inbox'
-      preLoaderRoute: typeof AppInboxRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/funnel-report': {
-      id: '/_app/funnel-report'
-      path: '/funnel-report'
-      fullPath: '/funnel-report'
-      preLoaderRoute: typeof AppFunnelReportRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/files': {
-      id: '/_app/files'
-      path: '/files'
-      fullPath: '/files'
-      preLoaderRoute: typeof AppFilesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/dynamic-qr': {
-      id: '/_app/dynamic-qr'
-      path: '/dynamic-qr'
-      fullPath: '/dynamic-qr'
-      preLoaderRoute: typeof AppDynamicQrRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/digital-card': {
-      id: '/_app/digital-card'
-      path: '/digital-card'
-      fullPath: '/digital-card'
-      preLoaderRoute: typeof AppDigitalCardRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/dashboard': {
-      id: '/_app/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/contracts': {
-      id: '/_app/contracts'
-      path: '/contracts'
-      fullPath: '/contracts'
-      preLoaderRoute: typeof AppContractsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/content-library': {
-      id: '/_app/content-library'
-      path: '/content-library'
-      fullPath: '/content-library'
-      preLoaderRoute: typeof AppContentLibraryRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/commission-rules': {
-      id: '/_app/commission-rules'
-      path: '/commission-rules'
-      fullPath: '/commission-rules'
-      preLoaderRoute: typeof AppCommissionRulesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/card-designer': {
-      id: '/_app/card-designer'
-      path: '/card-designer'
-      fullPath: '/card-designer'
-      preLoaderRoute: typeof AppCardDesignerRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/auth-settings': {
-      id: '/_app/auth-settings'
-      path: '/auth-settings'
-      fullPath: '/auth-settings'
-      preLoaderRoute: typeof AppAuthSettingsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/appointments': {
-      id: '/_app/appointments'
-      path: '/appointments'
-      fullPath: '/appointments'
-      preLoaderRoute: typeof AppAppointmentsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/analytics': {
-      id: '/_app/analytics'
-      path: '/analytics'
-      fullPath: '/analytics'
-      preLoaderRoute: typeof AppAnalyticsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/airdrop': {
-      id: '/_app/airdrop'
-      path: '/airdrop'
-      fullPath: '/airdrop'
-      preLoaderRoute: typeof AppAirdropRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/ai-sales-page': {
-      id: '/_app/ai-sales-page'
-      path: '/ai-sales-page'
-      fullPath: '/ai-sales-page'
-      preLoaderRoute: typeof AppAiSalesPageRouteImport
+    '/_app/ai-followup': {
+      id: '/_app/ai-followup'
+      path: '/ai-followup'
+      fullPath: '/ai-followup'
+      preLoaderRoute: typeof AppAiFollowupRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/ai-lead-score': {
@@ -1387,26 +1051,355 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiLeadScoreRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/ai-followup': {
-      id: '/_app/ai-followup'
-      path: '/ai-followup'
-      fullPath: '/ai-followup'
-      preLoaderRoute: typeof AppAiFollowupRouteImport
+    '/_app/ai-sales-page': {
+      id: '/_app/ai-sales-page'
+      path: '/ai-sales-page'
+      fullPath: '/ai-sales-page'
+      preLoaderRoute: typeof AppAiSalesPageRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/projects/': {
-      id: '/_app/projects/'
-      path: '/'
-      fullPath: '/projects/'
-      preLoaderRoute: typeof AppProjectsIndexRouteImport
-      parentRoute: typeof AppProjectsRoute
+    '/_app/airdrop': {
+      id: '/_app/airdrop'
+      path: '/airdrop'
+      fullPath: '/airdrop'
+      preLoaderRoute: typeof AppAirdropRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/_app/digital-card/': {
-      id: '/_app/digital-card/'
-      path: '/'
-      fullPath: '/digital-card/'
-      preLoaderRoute: typeof AppDigitalCardIndexRouteImport
-      parentRoute: typeof AppDigitalCardRoute
+    '/_app/analytics': {
+      id: '/_app/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AppAnalyticsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/appointments': {
+      id: '/_app/appointments'
+      path: '/appointments'
+      fullPath: '/appointments'
+      preLoaderRoute: typeof AppAppointmentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/auth-settings': {
+      id: '/_app/auth-settings'
+      path: '/auth-settings'
+      fullPath: '/auth-settings'
+      preLoaderRoute: typeof AppAuthSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/card-designer': {
+      id: '/_app/card-designer'
+      path: '/card-designer'
+      fullPath: '/card-designer'
+      preLoaderRoute: typeof AppCardDesignerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/commission-rules': {
+      id: '/_app/commission-rules'
+      path: '/commission-rules'
+      fullPath: '/commission-rules'
+      preLoaderRoute: typeof AppCommissionRulesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/content-library': {
+      id: '/_app/content-library'
+      path: '/content-library'
+      fullPath: '/content-library'
+      preLoaderRoute: typeof AppContentLibraryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contracts': {
+      id: '/_app/contracts'
+      path: '/contracts'
+      fullPath: '/contracts'
+      preLoaderRoute: typeof AppContractsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/digital-card': {
+      id: '/_app/digital-card'
+      path: '/digital-card'
+      fullPath: '/digital-card'
+      preLoaderRoute: typeof AppDigitalCardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dynamic-qr': {
+      id: '/_app/dynamic-qr'
+      path: '/dynamic-qr'
+      fullPath: '/dynamic-qr'
+      preLoaderRoute: typeof AppDynamicQrRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/files': {
+      id: '/_app/files'
+      path: '/files'
+      fullPath: '/files'
+      preLoaderRoute: typeof AppFilesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/funnel-report': {
+      id: '/_app/funnel-report'
+      path: '/funnel-report'
+      fullPath: '/funnel-report'
+      preLoaderRoute: typeof AppFunnelReportRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/inbox': {
+      id: '/_app/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof AppInboxRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/inventory': {
+      id: '/_app/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof AppInventoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/journey': {
+      id: '/_app/journey'
+      path: '/journey'
+      fullPath: '/journey'
+      preLoaderRoute: typeof AppJourneyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/landings': {
+      id: '/_app/landings'
+      path: '/landings'
+      fullPath: '/landings'
+      preLoaderRoute: typeof AppLandingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/lead-capture': {
+      id: '/_app/lead-capture'
+      path: '/lead-capture'
+      fullPath: '/lead-capture'
+      preLoaderRoute: typeof AppLeadCaptureRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/lead-routing': {
+      id: '/_app/lead-routing'
+      path: '/lead-routing'
+      fullPath: '/lead-routing'
+      preLoaderRoute: typeof AppLeadRoutingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/leads': {
+      id: '/_app/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof AppLeadsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/marketing': {
+      id: '/_app/marketing'
+      path: '/marketing'
+      fullPath: '/marketing'
+      preLoaderRoute: typeof AppMarketingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/members': {
+      id: '/_app/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof AppMembersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/mobile-app': {
+      id: '/_app/mobile-app'
+      path: '/mobile-app'
+      fullPath: '/mobile-app'
+      preLoaderRoute: typeof AppMobileAppRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/nfc-codes': {
+      id: '/_app/nfc-codes'
+      path: '/nfc-codes'
+      fullPath: '/nfc-codes'
+      preLoaderRoute: typeof AppNfcCodesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/nurture': {
+      id: '/_app/nurture'
+      path: '/nurture'
+      fullPath: '/nurture'
+      preLoaderRoute: typeof AppNurtureRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pipeline': {
+      id: '/_app/pipeline'
+      path: '/pipeline'
+      fullPath: '/pipeline'
+      preLoaderRoute: typeof AppPipelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/products': {
+      id: '/_app/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof AppProductsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/projects': {
+      id: '/_app/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof AppProjectsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/prompt-library': {
+      id: '/_app/prompt-library'
+      path: '/prompt-library'
+      fullPath: '/prompt-library'
+      preLoaderRoute: typeof AppPromptLibraryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/qr-sharing': {
+      id: '/_app/qr-sharing'
+      path: '/qr-sharing'
+      fullPath: '/qr-sharing'
+      preLoaderRoute: typeof AppQrSharingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/revenue-report': {
+      id: '/_app/revenue-report'
+      path: '/revenue-report'
+      fullPath: '/revenue-report'
+      preLoaderRoute: typeof AppRevenueReportRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sale-customers': {
+      id: '/_app/sale-customers'
+      path: '/sale-customers'
+      fullPath: '/sale-customers'
+      preLoaderRoute: typeof AppSaleCustomersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sale-landings': {
+      id: '/_app/sale-landings'
+      path: '/sale-landings'
+      fullPath: '/sale-landings'
+      preLoaderRoute: typeof AppSaleLandingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sale-overview': {
+      id: '/_app/sale-overview'
+      path: '/sale-overview'
+      fullPath: '/sale-overview'
+      preLoaderRoute: typeof AppSaleOverviewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sale-projects': {
+      id: '/_app/sale-projects'
+      path: '/sale-projects'
+      fullPath: '/sale-projects'
+      preLoaderRoute: typeof AppSaleProjectsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/sales-directory': {
+      id: '/_app/sales-directory'
+      path: '/sales-directory'
+      fullPath: '/sales-directory'
+      preLoaderRoute: typeof AppSalesDirectoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/team': {
+      id: '/_app/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof AppTeamRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/timeline': {
+      id: '/_app/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof AppTimelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/wallet': {
+      id: '/_app/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof AppWalletRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/accept-invite/$token': {
+      id: '/accept-invite/$token'
+      path: '/accept-invite/$token'
+      fullPath: '/accept-invite/$token'
+      preLoaderRoute: typeof AcceptInviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/card-portrait': {
+      id: '/api/card-portrait'
+      path: '/api/card-portrait'
+      fullPath: '/api/card-portrait'
+      preLoaderRoute: typeof ApiCardPortraitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/c/$slug': {
+      id: '/c/$slug'
+      path: '/c/$slug'
+      fullPath: '/c/$slug'
+      preLoaderRoute: typeof CSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/du-an/$code': {
+      id: '/du-an/$code'
+      path: '/du-an/$code'
+      fullPath: '/du-an/$code'
+      preLoaderRoute: typeof DuAnCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/f/$slug': {
+      id: '/f/$slug'
+      path: '/f/$slug'
+      fullPath: '/f/$slug'
+      preLoaderRoute: typeof FSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share/$slug': {
+      id: '/share/$slug'
+      path: '/share/$slug'
+      fullPath: '/share/$slug'
+      preLoaderRoute: typeof ShareSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/ai-followup/$customerId': {
+      id: '/_app/ai-followup/$customerId'
+      path: '/$customerId'
+      fullPath: '/ai-followup/$customerId'
+      preLoaderRoute: typeof AppAiFollowupCustomerIdRouteImport
+      parentRoute: typeof AppAiFollowupRoute
     }
     '/_app/customers/': {
       id: '/_app/customers/'
@@ -1415,25 +1408,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCustomersIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/api/public/zalo-webhook': {
-      id: '/api/public/zalo-webhook'
-      path: '/api/public/zalo-webhook'
-      fullPath: '/api/public/zalo-webhook'
-      preLoaderRoute: typeof ApiPublicZaloWebhookRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_app/customers/$id': {
+      id: '/_app/customers/$id'
+      path: '/customers/$id'
+      fullPath: '/customers/$id'
+      preLoaderRoute: typeof AppCustomersIdRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/api/public/telephony-webhook': {
-      id: '/api/public/telephony-webhook'
-      path: '/api/public/telephony-webhook'
-      fullPath: '/api/public/telephony-webhook'
-      preLoaderRoute: typeof ApiPublicTelephonyWebhookRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_app/digital-card/': {
+      id: '/_app/digital-card/'
+      path: '/'
+      fullPath: '/digital-card/'
+      preLoaderRoute: typeof AppDigitalCardIndexRouteImport
+      parentRoute: typeof AppDigitalCardRoute
     }
-    '/api/public/project-touch': {
-      id: '/api/public/project-touch'
-      path: '/api/public/project-touch'
-      fullPath: '/api/public/project-touch'
-      preLoaderRoute: typeof ApiPublicProjectTouchRouteImport
+    '/_app/digital-card/edit': {
+      id: '/_app/digital-card/edit'
+      path: '/edit'
+      fullPath: '/digital-card/edit'
+      preLoaderRoute: typeof AppDigitalCardEditRouteImport
+      parentRoute: typeof AppDigitalCardRoute
+    }
+    '/_app/projects/': {
+      id: '/_app/projects/'
+      path: '/'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof AppProjectsIndexRouteImport
+      parentRoute: typeof AppProjectsRoute
+    }
+    '/_app/projects/$id': {
+      id: '/_app/projects/$id'
+      path: '/$id'
+      fullPath: '/projects/$id'
+      preLoaderRoute: typeof AppProjectsIdRouteImport
+      parentRoute: typeof AppProjectsRoute
+    }
+    '/api/public/contact-request': {
+      id: '/api/public/contact-request'
+      path: '/api/public/contact-request'
+      fullPath: '/api/public/contact-request'
+      preLoaderRoute: typeof ApiPublicContactRequestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/nurture-run': {
@@ -1443,81 +1457,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicNurtureRunRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/contact-request': {
-      id: '/api/public/contact-request'
-      path: '/api/public/contact-request'
-      fullPath: '/api/public/contact-request'
-      preLoaderRoute: typeof ApiPublicContactRequestRouteImport
+    '/api/public/project-touch': {
+      id: '/api/public/project-touch'
+      path: '/api/public/project-touch'
+      fullPath: '/api/public/project-touch'
+      preLoaderRoute: typeof ApiPublicProjectTouchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/projects/$id': {
-      id: '/_app/projects/$id'
-      path: '/$id'
-      fullPath: '/projects/$id'
-      preLoaderRoute: typeof AppProjectsIdRouteImport
-      parentRoute: typeof AppProjectsRoute
-    }
-    '/_app/digital-card/edit': {
-      id: '/_app/digital-card/edit'
-      path: '/edit'
-      fullPath: '/digital-card/edit'
-      preLoaderRoute: typeof AppDigitalCardEditRouteImport
-      parentRoute: typeof AppDigitalCardRoute
-    }
-    '/_app/customers/$id': {
-      id: '/_app/customers/$id'
-      path: '/customers/$id'
-      fullPath: '/customers/$id'
-      preLoaderRoute: typeof AppCustomersIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/ai-followup/$customerId': {
-      id: '/_app/ai-followup/$customerId'
-      path: '/$customerId'
-      fullPath: '/ai-followup/$customerId'
-      preLoaderRoute: typeof AppAiFollowupCustomerIdRouteImport
-      parentRoute: typeof AppAiFollowupRoute
-    }
-    '/api/public/t/$code': {
-      id: '/api/public/t/$code'
-      path: '/api/public/t/$code'
-      fullPath: '/api/public/t/$code'
-      preLoaderRoute: typeof ApiPublicTCodeRouteImport
+    '/api/public/telephony-webhook': {
+      id: '/api/public/telephony-webhook'
+      path: '/api/public/telephony-webhook'
+      fullPath: '/api/public/telephony-webhook'
+      preLoaderRoute: typeof ApiPublicTelephonyWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/sales-pages/$slug': {
-      id: '/api/public/sales-pages/$slug'
-      path: '/api/public/sales-pages/$slug'
-      fullPath: '/api/public/sales-pages/$slug'
-      preLoaderRoute: typeof ApiPublicSalesPagesSlugRouteImport
+    '/api/public/zalo-webhook': {
+      id: '/api/public/zalo-webhook'
+      path: '/api/public/zalo-webhook'
+      fullPath: '/api/public/zalo-webhook'
+      preLoaderRoute: typeof ApiPublicZaloWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/q/$code': {
-      id: '/api/public/q/$code'
-      path: '/api/public/q/$code'
-      fullPath: '/api/public/q/$code'
-      preLoaderRoute: typeof ApiPublicQCodeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/pq/$code': {
-      id: '/api/public/pq/$code'
-      path: '/api/public/pq/$code'
-      fullPath: '/api/public/pq/$code'
-      preLoaderRoute: typeof ApiPublicPqCodeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/lead-forms/$slug': {
-      id: '/api/public/lead-forms/$slug'
-      path: '/api/public/lead-forms/$slug'
-      fullPath: '/api/public/lead-forms/$slug'
-      preLoaderRoute: typeof ApiPublicLeadFormsSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/landing-manifest/$slug': {
-      id: '/api/public/landing-manifest/$slug'
-      path: '/api/public/landing-manifest/$slug'
-      fullPath: '/api/public/landing-manifest/$slug'
-      preLoaderRoute: typeof ApiPublicLandingManifestSlugRouteImport
+    '/api/public/card-leads/$slug': {
+      id: '/api/public/card-leads/$slug'
+      path: '/api/public/card-leads/$slug'
+      fullPath: '/api/public/card-leads/$slug'
+      preLoaderRoute: typeof ApiPublicCardLeadsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/chat/$slug': {
@@ -1527,11 +1492,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicChatSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/card-leads/$slug': {
-      id: '/api/public/card-leads/$slug'
-      path: '/api/public/card-leads/$slug'
-      fullPath: '/api/public/card-leads/$slug'
-      preLoaderRoute: typeof ApiPublicCardLeadsSlugRouteImport
+    '/api/public/landing-manifest/$slug': {
+      id: '/api/public/landing-manifest/$slug'
+      path: '/api/public/landing-manifest/$slug'
+      fullPath: '/api/public/landing-manifest/$slug'
+      preLoaderRoute: typeof ApiPublicLandingManifestSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/lead-forms/$slug': {
+      id: '/api/public/lead-forms/$slug'
+      path: '/api/public/lead-forms/$slug'
+      fullPath: '/api/public/lead-forms/$slug'
+      preLoaderRoute: typeof ApiPublicLeadFormsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/pq/$code': {
+      id: '/api/public/pq/$code'
+      path: '/api/public/pq/$code'
+      fullPath: '/api/public/pq/$code'
+      preLoaderRoute: typeof ApiPublicPqCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/q/$code': {
+      id: '/api/public/q/$code'
+      path: '/api/public/q/$code'
+      fullPath: '/api/public/q/$code'
+      preLoaderRoute: typeof ApiPublicQCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sales-pages/$slug': {
+      id: '/api/public/sales-pages/$slug'
+      path: '/api/public/sales-pages/$slug'
+      fullPath: '/api/public/sales-pages/$slug'
+      preLoaderRoute: typeof ApiPublicSalesPagesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/t/$code': {
+      id: '/api/public/t/$code'
+      path: '/api/public/t/$code'
+      fullPath: '/api/public/t/$code'
+      preLoaderRoute: typeof ApiPublicTCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

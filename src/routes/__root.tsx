@@ -46,7 +46,8 @@ function isStaleChunkError(error: Error): boolean {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error: rawError, reset }: import("@tanstack/react-router").ErrorComponentProps) {
+  const error = rawError as Error;
   console.error(error);
   const router = useRouter();
   const stale = isStaleChunkError(error);
