@@ -129,6 +129,7 @@ const saleMobileGroups: Group[] = [
     label: "Báo cáo & app",
     items: [
       { to: "/funnel-report", label: "Báo cáo phễu", icon: Filter },
+      { to: "/contracts", label: "Hợp đồng", icon: FileSignature },
       { to: "/revenue-report", label: "Doanh thu", icon: BadgeDollarSign },
       { to: "/commission-rules", label: "Hoa hồng", icon: Percent, roles: ["owner", "admin", "manager"] },
       { to: "/nurture", label: "Nhắc khách", icon: BellRing, roles: ["owner", "admin", "manager"] },

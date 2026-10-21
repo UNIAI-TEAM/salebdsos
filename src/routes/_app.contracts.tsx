@@ -57,6 +57,14 @@ export const Route = createFileRoute("/_app/contracts")({
 const money = (value: number, currency = "VND") =>
   `${new Intl.NumberFormat("vi-VN").format(Math.round(value || 0))} ${currency}`;
 
+/** Số gọn cho điện thoại: 2,9 tỷ · 870 tr. */
+const shortMoney = (value: number) => {
+  const v = Math.round(value || 0);
+  if (Math.abs(v) >= 1e9) return `${(v / 1e9).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} tỷ`;
+  if (Math.abs(v) >= 1e6) return `${(v / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} tr`;
+  return new Intl.NumberFormat("vi-VN").format(v);
+};
+
 const STATUS_TONE: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
   active: "bg-primary/10 text-primary",
@@ -69,8 +77,8 @@ type CommissionDraft = { beneficiary_user_id: string; role_label: string; percen
 
 function Kpi({ icon: Icon, label, value }: { icon: typeof Wallet; label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-border bg-card p-4 shadow-soft">
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+    <div className="min-w-0 rounded-2xl border border-border bg-card p-3 shadow-soft sm:p-4">
+      <div className="mb-2 flex h-8 w-8 sm:mb-3 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
         <Icon className="h-5 w-5" />
       </div>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
@@ -239,11 +247,11 @@ function ContractsPage() {
       </div>
 
       {data ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           <Kpi icon={FileSignature} label="Số hợp đồng" value={String(data.totals.count)} />
-          <Kpi icon={Wallet} label="Giá trị hợp đồng" value={money(data.totals.value)} />
-          <Kpi icon={BadgeCheck} label="Đã thu" value={money(data.totals.collected)} />
-          <Kpi icon={CircleDollarSign} label="Hoa hồng chưa trả" value={money(data.totals.commissionUnpaid)} />
+          <Kpi icon={Wallet} label="Giá trị hợp đồng" value={shortMoney(data.totals.value)} />
+          <Kpi icon={BadgeCheck} label="Đã thu" value={shortMoney(data.totals.collected)} />
+          <Kpi icon={CircleDollarSign} label="Hoa hồng chưa trả" value={shortMoney(data.totals.commissionUnpaid)} />
         </div>
       ) : null}
 
@@ -257,7 +265,38 @@ function ContractsPage() {
             Chưa có hợp đồng nào. Bấm “Lập hợp đồng” và chọn sản phẩm trong giỏ hàng.
           </p>
         ) : (
-          <div className="-mx-1 overflow-x-auto px-1">
+          <>
+          <ul className="space-y-2 md:hidden">
+            {(data?.contracts ?? []).map((row: any) => (
+              <li key={row.id}>
+                <button
+                  type="button"
+                  onClick={() => { setOpenId(row.id); setInsDraft(null); setComDraft(null); }}
+                  className="w-full rounded-2xl border border-border bg-card p-3 text-left active:scale-[0.99] transition"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">{row.code}</p>
+                      <p className="truncate text-[12px] text-muted-foreground">
+                        {row.product_label ?? "—"} · {row.customer_name ?? "—"}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_TONE[row.status]}`}>
+                      {CONTRACT_STATUS_LABEL[row.status as keyof typeof CONTRACT_STATUS_LABEL]}
+                    </span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-[12px]">
+                    <div><p className="text-muted-foreground">Giá trị</p><p className="font-semibold">{shortMoney(row.net_price)}</p></div>
+                    <div><p className="text-muted-foreground">Đã thu</p><p className="font-semibold">{shortMoney(row.collected)}</p></div>
+                  </div>
+                  <div className="mt-2 h-1.5 rounded-full bg-muted">
+                    <div className="h-1.5 rounded-full bg-primary" style={{ width: `${Math.min(100, row.net_price ? Math.round((row.collected / row.net_price) * 100) : 0)}%` }} />
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
             <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="text-left text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -296,6 +335,7 @@ function ContractsPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </SectionCard>
 
