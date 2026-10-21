@@ -100,6 +100,36 @@ export const Route = createFileRoute("/api/public/zalo-webhook")({
           externalId: payload.message?.msg_id ?? null,
         });
 
+        // Khách nhắn kèm số điện thoại / gửi form thông tin trên Zalo → tự tạo khách & chia Sale.
+        try {
+          const { extractVnPhone, parseIntegrationSettings, INTEGRATIONS_KEY } = await import("@/lib/integrations");
+          const { data: integ } = await supabaseAdmin
+            .from("settings").select("value").eq("tenant_id", tenantId).eq("key", INTEGRATIONS_KEY).maybeSingle();
+          const cfg = parseIntegrationSettings(integ?.value);
+          const info = (payload as any).info ?? null; // sự kiện user_submit_info
+          const phone = info?.phone ? String(info.phone) : extractVnPhone(text);
+          if (cfg.zalo.leadFromChat && phone) {
+            const { ingestInboundLead } = await import("@/lib/inbound-leads.server");
+            const code = text.match(/\b([A-Z]{1,3}-?\d{1,2}[.\-]\d{1,3})\b/i)?.[1] ?? null;
+            const r = await ingestInboundLead({
+              tenantId,
+              source: "zalo_oa",
+              sourceLabel: "Zalo OA",
+              name: info?.name ? String(info.name) : null,
+              phone,
+              note: text.slice(0, 300),
+              productCode: code,
+              zaloUserId,
+            });
+            if (r.ok) {
+              await supabaseAdmin.from("conversations").update({ lead_id: r.leadId, owner_user_id: r.ownerUserId } as never)
+                .eq("id", conversationId).is("lead_id", null);
+            }
+          }
+        } catch (e) {
+          console.error("zalo lead ingest failed", e);
+        }
+
         return json({ ok: true });
       },
     },
