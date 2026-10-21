@@ -18,3 +18,8 @@
 - [x] Tối ưu PWA: thanh dưới 4 mục, nút QR giữa và menu bên chỉ còn Sale/Quản trị.
 
 - [x] Phễu: tự chuyển khách vào giỏ khi đổi trạng thái; tự cập nhật KPI khi chốt hợp đồng
+
+- [x] Giai đoạn 1: Đối soát ngân hàng tự động + Sự kiện mở bán & check-in QR
+- [ ] Giai đoạn 2: Phân khúc động + chiến dịch gửi hàng loạt
+- [ ] Giai đoạn 3: Tự động hoá bình luận Facebook/Messenger, trả lời nhanh, thẻ hội thoại
+- [ ] Giai đoạn 4: Tuổi nợ + trợ lý AI điều hành
