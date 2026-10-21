@@ -23,6 +23,7 @@ import { Route as AppAirdropRouteImport } from './routes/_app.airdrop'
 import { Route as AppAnalyticsRouteImport } from './routes/_app.analytics'
 import { Route as AppAppointmentsRouteImport } from './routes/_app.appointments'
 import { Route as AppAuthSettingsRouteImport } from './routes/_app.auth-settings'
+import { Route as AppBankReconciliationRouteImport } from './routes/_app.bank-reconciliation'
 import { Route as AppCardDesignerRouteImport } from './routes/_app.card-designer'
 import { Route as AppCommissionRulesRouteImport } from './routes/_app.commission-rules'
 import { Route as AppContentLibraryRouteImport } from './routes/_app.content-library'
@@ -30,6 +31,7 @@ import { Route as AppContractsRouteImport } from './routes/_app.contracts'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
 import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
+import { Route as AppEventsRouteImport } from './routes/_app.events'
 import { Route as AppFilesRouteImport } from './routes/_app.files'
 import { Route as AppFunnelReportRouteImport } from './routes/_app.funnel-report'
 import { Route as AppInboxRouteImport } from './routes/_app.inbox'
@@ -75,6 +77,7 @@ import { Route as AppDigitalCardIndexRouteImport } from './routes/_app.digital-c
 import { Route as AppDigitalCardEditRouteImport } from './routes/_app.digital-card.edit'
 import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.index'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
+import { Route as ApiPublicBankWebhookRouteImport } from './routes/api/public/bank-webhook'
 import { Route as ApiPublicContactRequestRouteImport } from './routes/api/public/contact-request'
 import { Route as ApiPublicNurtureRunRouteImport } from './routes/api/public/nurture-run'
 import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
@@ -160,6 +163,11 @@ const AppAuthSettingsRoute = AppAuthSettingsRouteImport.update({
   path: '/auth-settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppBankReconciliationRoute = AppBankReconciliationRouteImport.update({
+  id: '/bank-reconciliation',
+  path: '/bank-reconciliation',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCardDesignerRoute = AppCardDesignerRouteImport.update({
   id: '/card-designer',
   path: '/card-designer',
@@ -193,6 +201,11 @@ const AppDigitalCardRoute = AppDigitalCardRouteImport.update({
 const AppDynamicQrRoute = AppDynamicQrRouteImport.update({
   id: '/dynamic-qr',
   path: '/dynamic-qr',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEventsRoute = AppEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFilesRoute = AppFilesRouteImport.update({
@@ -420,6 +433,11 @@ const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppProjectsRoute,
 } as any)
+const ApiPublicBankWebhookRoute = ApiPublicBankWebhookRouteImport.update({
+  id: '/api/public/bank-webhook',
+  path: '/api/public/bank-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicContactRequestRoute = ApiPublicContactRequestRouteImport.update({
   id: '/api/public/contact-request',
   path: '/api/public/contact-request',
@@ -514,6 +532,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AppAnalyticsRoute
   '/appointments': typeof AppAppointmentsRoute
   '/auth-settings': typeof AppAuthSettingsRoute
+  '/bank-reconciliation': typeof AppBankReconciliationRoute
   '/card-designer': typeof AppCardDesignerRoute
   '/commission-rules': typeof AppCommissionRulesRoute
   '/content-library': typeof AppContentLibraryRoute
@@ -521,6 +540,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/digital-card': typeof AppDigitalCardRouteWithChildren
   '/dynamic-qr': typeof AppDynamicQrRoute
+  '/events': typeof AppEventsRoute
   '/files': typeof AppFilesRoute
   '/funnel-report': typeof AppFunnelReportRoute
   '/inbox': typeof AppInboxRoute
@@ -563,6 +583,7 @@ export interface FileRoutesByFullPath {
   '/customers/$id': typeof AppCustomersIdRoute
   '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/bank-webhook': typeof ApiPublicBankWebhookRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
   '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
@@ -596,12 +617,14 @@ export interface FileRoutesByTo {
   '/analytics': typeof AppAnalyticsRoute
   '/appointments': typeof AppAppointmentsRoute
   '/auth-settings': typeof AppAuthSettingsRoute
+  '/bank-reconciliation': typeof AppBankReconciliationRoute
   '/card-designer': typeof AppCardDesignerRoute
   '/commission-rules': typeof AppCommissionRulesRoute
   '/content-library': typeof AppContentLibraryRoute
   '/contracts': typeof AppContractsRoute
   '/dashboard': typeof AppDashboardRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
+  '/events': typeof AppEventsRoute
   '/files': typeof AppFilesRoute
   '/funnel-report': typeof AppFunnelReportRoute
   '/inbox': typeof AppInboxRoute
@@ -643,6 +666,7 @@ export interface FileRoutesByTo {
   '/customers/$id': typeof AppCustomersIdRoute
   '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/bank-webhook': typeof ApiPublicBankWebhookRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
   '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
@@ -678,6 +702,7 @@ export interface FileRoutesById {
   '/_app/analytics': typeof AppAnalyticsRoute
   '/_app/appointments': typeof AppAppointmentsRoute
   '/_app/auth-settings': typeof AppAuthSettingsRoute
+  '/_app/bank-reconciliation': typeof AppBankReconciliationRoute
   '/_app/card-designer': typeof AppCardDesignerRoute
   '/_app/commission-rules': typeof AppCommissionRulesRoute
   '/_app/content-library': typeof AppContentLibraryRoute
@@ -685,6 +710,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/digital-card': typeof AppDigitalCardRouteWithChildren
   '/_app/dynamic-qr': typeof AppDynamicQrRoute
+  '/_app/events': typeof AppEventsRoute
   '/_app/files': typeof AppFilesRoute
   '/_app/funnel-report': typeof AppFunnelReportRoute
   '/_app/inbox': typeof AppInboxRoute
@@ -727,6 +753,7 @@ export interface FileRoutesById {
   '/_app/customers/$id': typeof AppCustomersIdRoute
   '/_app/digital-card/edit': typeof AppDigitalCardEditRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/bank-webhook': typeof ApiPublicBankWebhookRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
   '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
@@ -762,6 +789,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/appointments'
     | '/auth-settings'
+    | '/bank-reconciliation'
     | '/card-designer'
     | '/commission-rules'
     | '/content-library'
@@ -769,6 +797,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/digital-card'
     | '/dynamic-qr'
+    | '/events'
     | '/files'
     | '/funnel-report'
     | '/inbox'
@@ -811,6 +840,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/digital-card/edit'
     | '/projects/$id'
+    | '/api/public/bank-webhook'
     | '/api/public/contact-request'
     | '/api/public/nurture-run'
     | '/api/public/project-touch'
@@ -844,12 +874,14 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/appointments'
     | '/auth-settings'
+    | '/bank-reconciliation'
     | '/card-designer'
     | '/commission-rules'
     | '/content-library'
     | '/contracts'
     | '/dashboard'
     | '/dynamic-qr'
+    | '/events'
     | '/files'
     | '/funnel-report'
     | '/inbox'
@@ -891,6 +923,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/digital-card/edit'
     | '/projects/$id'
+    | '/api/public/bank-webhook'
     | '/api/public/contact-request'
     | '/api/public/nurture-run'
     | '/api/public/project-touch'
@@ -925,6 +958,7 @@ export interface FileRouteTypes {
     | '/_app/analytics'
     | '/_app/appointments'
     | '/_app/auth-settings'
+    | '/_app/bank-reconciliation'
     | '/_app/card-designer'
     | '/_app/commission-rules'
     | '/_app/content-library'
@@ -932,6 +966,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/digital-card'
     | '/_app/dynamic-qr'
+    | '/_app/events'
     | '/_app/files'
     | '/_app/funnel-report'
     | '/_app/inbox'
@@ -974,6 +1009,7 @@ export interface FileRouteTypes {
     | '/_app/customers/$id'
     | '/_app/digital-card/edit'
     | '/_app/projects/$id'
+    | '/api/public/bank-webhook'
     | '/api/public/contact-request'
     | '/api/public/nurture-run'
     | '/api/public/project-touch'
@@ -1009,6 +1045,7 @@ export interface RootRouteChildren {
   FSlugRoute: typeof FSlugRoute
   PSlugRoute: typeof PSlugRoute
   ShareSlugRoute: typeof ShareSlugRoute
+  ApiPublicBankWebhookRoute: typeof ApiPublicBankWebhookRoute
   ApiPublicContactRequestRoute: typeof ApiPublicContactRequestRoute
   ApiPublicNurtureRunRoute: typeof ApiPublicNurtureRunRoute
   ApiPublicProjectTouchRoute: typeof ApiPublicProjectTouchRoute
@@ -1126,6 +1163,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/bank-reconciliation': {
+      id: '/_app/bank-reconciliation'
+      path: '/bank-reconciliation'
+      fullPath: '/bank-reconciliation'
+      preLoaderRoute: typeof AppBankReconciliationRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/card-designer': {
       id: '/_app/card-designer'
       path: '/card-designer'
@@ -1173,6 +1217,13 @@ declare module '@tanstack/react-router' {
       path: '/dynamic-qr'
       fullPath: '/dynamic-qr'
       preLoaderRoute: typeof AppDynamicQrRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/events': {
+      id: '/_app/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof AppEventsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/files': {
@@ -1490,6 +1541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProjectsIdRouteImport
       parentRoute: typeof AppProjectsRoute
     }
+    '/api/public/bank-webhook': {
+      id: '/api/public/bank-webhook'
+      path: '/api/public/bank-webhook'
+      fullPath: '/api/public/bank-webhook'
+      preLoaderRoute: typeof ApiPublicBankWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/contact-request': {
       id: '/api/public/contact-request'
       path: '/api/public/contact-request'
@@ -1646,6 +1704,7 @@ interface AppRouteChildren {
   AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppAppointmentsRoute: typeof AppAppointmentsRoute
   AppAuthSettingsRoute: typeof AppAuthSettingsRoute
+  AppBankReconciliationRoute: typeof AppBankReconciliationRoute
   AppCardDesignerRoute: typeof AppCardDesignerRoute
   AppCommissionRulesRoute: typeof AppCommissionRulesRoute
   AppContentLibraryRoute: typeof AppContentLibraryRoute
@@ -1653,6 +1712,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppDigitalCardRoute: typeof AppDigitalCardRouteWithChildren
   AppDynamicQrRoute: typeof AppDynamicQrRoute
+  AppEventsRoute: typeof AppEventsRoute
   AppFilesRoute: typeof AppFilesRoute
   AppFunnelReportRoute: typeof AppFunnelReportRoute
   AppInboxRoute: typeof AppInboxRoute
@@ -1696,6 +1756,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAnalyticsRoute: AppAnalyticsRoute,
   AppAppointmentsRoute: AppAppointmentsRoute,
   AppAuthSettingsRoute: AppAuthSettingsRoute,
+  AppBankReconciliationRoute: AppBankReconciliationRoute,
   AppCardDesignerRoute: AppCardDesignerRoute,
   AppCommissionRulesRoute: AppCommissionRulesRoute,
   AppContentLibraryRoute: AppContentLibraryRoute,
@@ -1703,6 +1764,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppDigitalCardRoute: AppDigitalCardRouteWithChildren,
   AppDynamicQrRoute: AppDynamicQrRoute,
+  AppEventsRoute: AppEventsRoute,
   AppFilesRoute: AppFilesRoute,
   AppFunnelReportRoute: AppFunnelReportRoute,
   AppInboxRoute: AppInboxRoute,
@@ -1755,6 +1817,7 @@ const rootRouteChildren: RootRouteChildren = {
   FSlugRoute: FSlugRoute,
   PSlugRoute: PSlugRoute,
   ShareSlugRoute: ShareSlugRoute,
+  ApiPublicBankWebhookRoute: ApiPublicBankWebhookRoute,
   ApiPublicContactRequestRoute: ApiPublicContactRequestRoute,
   ApiPublicNurtureRunRoute: ApiPublicNurtureRunRoute,
   ApiPublicProjectTouchRoute: ApiPublicProjectTouchRoute,

@@ -10,6 +10,8 @@ import {
   LayoutGrid,
   Filter,
   FileSignature,
+  Landmark,
+  CalendarDays,
   Plug,
   Smartphone,
 } from "lucide-react";
@@ -46,6 +48,8 @@ const groups: Group[] = [
       { to: "/customers", label: "Khách hàng", icon: UserSquare2 },
       { to: "/pipeline", label: "Pipeline", icon: GitBranch },
       { to: "/contracts", label: "Hợp đồng & hoa hồng", icon: FileSignature },
+      { to: "/bank-reconciliation", label: "Đối soát ngân hàng", icon: Landmark },
+      { to: "/events", label: "Sự kiện & check-in", icon: CalendarDays },
       { to: "/appointments", label: "Lịch hẹn", icon: CalendarClock },
       { to: "/lead-routing", label: "Phân phối lead", icon: Zap, roles: ["owner", "admin", "manager"] },
       { to: "/nurture", label: "Nhắc khách tự động", icon: BellRing, roles: ["owner", "admin", "manager"] },
@@ -132,6 +136,8 @@ const saleMobileGroups: Group[] = [
     items: [
       { to: "/funnel-report", label: "Báo cáo phễu", icon: Filter },
       { to: "/contracts", label: "Hợp đồng", icon: FileSignature },
+      { to: "/events", label: "Sự kiện & check-in", icon: CalendarDays },
+      { to: "/bank-reconciliation", label: "Đối soát", icon: Landmark },
       { to: "/revenue-report", label: "Doanh thu", icon: BadgeDollarSign },
       { to: "/commission-rules", label: "Hoa hồng", icon: Percent, roles: ["owner", "admin", "manager"] },
       { to: "/nurture", label: "Nhắc khách", icon: BellRing, roles: ["owner", "admin", "manager"] },
