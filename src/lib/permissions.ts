@@ -131,6 +131,7 @@ export const ROUTE_CAPABILITY: Record<string, Capability> = {
   "/analytics": "reports.team",
   "/dashboard": "reports.team",
   "/revenue-report": "reports.team",
+  "/bank-reconciliation": "contracts.view.all",
 };
 
 export function capabilityForPath(pathname: string): Capability | null {
