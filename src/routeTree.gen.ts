@@ -75,6 +75,7 @@ import { Route as AppDigitalCardIndexRouteImport } from './routes/_app.digital-c
 import { Route as AppDigitalCardEditRouteImport } from './routes/_app.digital-card.edit'
 import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.index'
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
+import { Route as ApiPublicBankWebhookRouteImport } from './routes/api/public/bank-webhook'
 import { Route as ApiPublicContactRequestRouteImport } from './routes/api/public/contact-request'
 import { Route as ApiPublicNurtureRunRouteImport } from './routes/api/public/nurture-run'
 import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
@@ -420,6 +421,11 @@ const AppProjectsIdRoute = AppProjectsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppProjectsRoute,
 } as any)
+const ApiPublicBankWebhookRoute = ApiPublicBankWebhookRouteImport.update({
+  id: '/api/public/bank-webhook',
+  path: '/api/public/bank-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicContactRequestRoute = ApiPublicContactRequestRouteImport.update({
   id: '/api/public/contact-request',
   path: '/api/public/contact-request',
@@ -563,6 +569,7 @@ export interface FileRoutesByFullPath {
   '/customers/$id': typeof AppCustomersIdRoute
   '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/bank-webhook': typeof ApiPublicBankWebhookRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
   '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
@@ -643,6 +650,7 @@ export interface FileRoutesByTo {
   '/customers/$id': typeof AppCustomersIdRoute
   '/digital-card/edit': typeof AppDigitalCardEditRoute
   '/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/bank-webhook': typeof ApiPublicBankWebhookRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
   '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
@@ -727,6 +735,7 @@ export interface FileRoutesById {
   '/_app/customers/$id': typeof AppCustomersIdRoute
   '/_app/digital-card/edit': typeof AppDigitalCardEditRoute
   '/_app/projects/$id': typeof AppProjectsIdRoute
+  '/api/public/bank-webhook': typeof ApiPublicBankWebhookRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
   '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
@@ -811,6 +820,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/digital-card/edit'
     | '/projects/$id'
+    | '/api/public/bank-webhook'
     | '/api/public/contact-request'
     | '/api/public/nurture-run'
     | '/api/public/project-touch'
@@ -891,6 +901,7 @@ export interface FileRouteTypes {
     | '/customers/$id'
     | '/digital-card/edit'
     | '/projects/$id'
+    | '/api/public/bank-webhook'
     | '/api/public/contact-request'
     | '/api/public/nurture-run'
     | '/api/public/project-touch'
@@ -974,6 +985,7 @@ export interface FileRouteTypes {
     | '/_app/customers/$id'
     | '/_app/digital-card/edit'
     | '/_app/projects/$id'
+    | '/api/public/bank-webhook'
     | '/api/public/contact-request'
     | '/api/public/nurture-run'
     | '/api/public/project-touch'
@@ -1009,6 +1021,7 @@ export interface RootRouteChildren {
   FSlugRoute: typeof FSlugRoute
   PSlugRoute: typeof PSlugRoute
   ShareSlugRoute: typeof ShareSlugRoute
+  ApiPublicBankWebhookRoute: typeof ApiPublicBankWebhookRoute
   ApiPublicContactRequestRoute: typeof ApiPublicContactRequestRoute
   ApiPublicNurtureRunRoute: typeof ApiPublicNurtureRunRoute
   ApiPublicProjectTouchRoute: typeof ApiPublicProjectTouchRoute
@@ -1490,6 +1503,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProjectsIdRouteImport
       parentRoute: typeof AppProjectsRoute
     }
+    '/api/public/bank-webhook': {
+      id: '/api/public/bank-webhook'
+      path: '/api/public/bank-webhook'
+      fullPath: '/api/public/bank-webhook'
+      preLoaderRoute: typeof ApiPublicBankWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/contact-request': {
       id: '/api/public/contact-request'
       path: '/api/public/contact-request'
@@ -1755,6 +1775,7 @@ const rootRouteChildren: RootRouteChildren = {
   FSlugRoute: FSlugRoute,
   PSlugRoute: PSlugRoute,
   ShareSlugRoute: ShareSlugRoute,
+  ApiPublicBankWebhookRoute: ApiPublicBankWebhookRoute,
   ApiPublicContactRequestRoute: ApiPublicContactRequestRoute,
   ApiPublicNurtureRunRoute: ApiPublicNurtureRunRoute,
   ApiPublicProjectTouchRoute: ApiPublicProjectTouchRoute,
