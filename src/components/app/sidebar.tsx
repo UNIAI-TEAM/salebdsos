@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   Filter,
   FileSignature,
+  Plug,
   Smartphone,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -92,6 +93,7 @@ const groups: Group[] = [
       { to: "/members", label: "Thành viên & Vai trò", icon: ShieldCheck, roles: ["owner", "admin"] },
       { to: "/team", label: "Team Management", icon: Users2, roles: ["owner", "admin", "manager"] },
       { to: "/commission-rules", label: "Chính sách hoa hồng", icon: Percent, roles: ["owner", "admin", "manager"] },
+      { to: "/integrations", label: "Tích hợp kênh khách hàng", icon: Plug },
       { to: "/mobile-app", label: "App điện thoại & thông báo", icon: Smartphone },
       { to: "/settings", label: "Cài đặt", icon: Settings, roles: ["owner", "admin"] },
       { to: "/auth-settings", label: "Bảo mật xác thực", icon: ShieldCheck, platformOnly: true },

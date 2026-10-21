@@ -115,6 +115,7 @@ export const SALE_ROLES = new Set(["owner", "admin", "manager", "agent", "platfo
 /** Quyền cần có để vào từng trang trong app. Trang không khai báo = mọi thành viên. */
 export const ROUTE_CAPABILITY: Record<string, Capability> = {
   "/settings": "system.settings",
+  "/integrations": "system.settings",
   "/auth-settings": "system.settings",
   "/members": "system.members",
   "/team": "system.members",
