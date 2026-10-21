@@ -478,6 +478,87 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_transactions: {
+        Row: {
+          account_number: string | null
+          allocation: Json
+          amount: number
+          bank_name: string | null
+          content: string | null
+          created_at: string
+          external_id: string
+          id: string
+          matched_at: string | null
+          matched_by: string | null
+          matched_contract_id: string | null
+          note: string | null
+          provider: string
+          raw: Json
+          reference_code: string | null
+          status: string
+          tenant_id: string
+          transferred_at: string
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          allocation?: Json
+          amount?: number
+          bank_name?: string | null
+          content?: string | null
+          created_at?: string
+          external_id: string
+          id?: string
+          matched_at?: string | null
+          matched_by?: string | null
+          matched_contract_id?: string | null
+          note?: string | null
+          provider?: string
+          raw?: Json
+          reference_code?: string | null
+          status?: string
+          tenant_id: string
+          transferred_at?: string
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          allocation?: Json
+          amount?: number
+          bank_name?: string | null
+          content?: string | null
+          created_at?: string
+          external_id?: string
+          id?: string
+          matched_at?: string | null
+          matched_by?: string | null
+          matched_contract_id?: string | null
+          note?: string | null
+          provider?: string
+          raw?: Json
+          reference_code?: string | null
+          status?: string
+          tenant_id?: string
+          transferred_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_matched_contract_id_fkey"
+            columns: ["matched_contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brochures: {
         Row: {
           created_at: string
@@ -1556,6 +1637,79 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dynamic_qr_codes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_tickets: {
+        Row: {
+          checked_in_at: string | null
+          checked_in_by: string | null
+          code: string
+          created_at: string
+          event_id: string
+          guest_email: string | null
+          guest_name: string
+          guest_phone: string | null
+          id: string
+          invited_by: string | null
+          lead_id: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          code: string
+          created_at?: string
+          event_id: string
+          guest_email?: string | null
+          guest_name: string
+          guest_phone?: string | null
+          id?: string
+          invited_by?: string | null
+          lead_id?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          code?: string
+          created_at?: string
+          event_id?: string
+          guest_email?: string | null
+          guest_name?: string
+          guest_phone?: string | null
+          id?: string
+          invited_by?: string | null
+          lead_id?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_tickets_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "sales_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_tickets_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_tickets_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -2803,6 +2957,75 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      sales_events: {
+        Row: {
+          capacity: number | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          ends_at: string | null
+          id: string
+          kind: string
+          location: string | null
+          project_id: string | null
+          starts_at: string
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          kind?: string
+          location?: string | null
+          project_id?: string | null
+          starts_at: string
+          status?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          kind?: string
+          location?: string | null
+          project_id?: string | null
+          starts_at?: string
+          status?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sales_page_views: {
         Row: {
