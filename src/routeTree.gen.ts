@@ -29,6 +29,7 @@ import { Route as AppCommissionRulesRouteImport } from './routes/_app.commission
 import { Route as AppContentLibraryRouteImport } from './routes/_app.content-library'
 import { Route as AppContractsRouteImport } from './routes/_app.contracts'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppDebtAgingRouteImport } from './routes/_app.debt-aging'
 import { Route as AppDigitalCardRouteImport } from './routes/_app.digital-card'
 import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
 import { Route as AppEventsRouteImport } from './routes/_app.events'
@@ -191,6 +192,11 @@ const AppContractsRoute = AppContractsRouteImport.update({
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDebtAgingRoute = AppDebtAgingRouteImport.update({
+  id: '/debt-aging',
+  path: '/debt-aging',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDigitalCardRoute = AppDigitalCardRouteImport.update({
@@ -538,6 +544,7 @@ export interface FileRoutesByFullPath {
   '/content-library': typeof AppContentLibraryRoute
   '/contracts': typeof AppContractsRoute
   '/dashboard': typeof AppDashboardRoute
+  '/debt-aging': typeof AppDebtAgingRoute
   '/digital-card': typeof AppDigitalCardRouteWithChildren
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/events': typeof AppEventsRoute
@@ -623,6 +630,7 @@ export interface FileRoutesByTo {
   '/content-library': typeof AppContentLibraryRoute
   '/contracts': typeof AppContractsRoute
   '/dashboard': typeof AppDashboardRoute
+  '/debt-aging': typeof AppDebtAgingRoute
   '/dynamic-qr': typeof AppDynamicQrRoute
   '/events': typeof AppEventsRoute
   '/files': typeof AppFilesRoute
@@ -708,6 +716,7 @@ export interface FileRoutesById {
   '/_app/content-library': typeof AppContentLibraryRoute
   '/_app/contracts': typeof AppContractsRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/debt-aging': typeof AppDebtAgingRoute
   '/_app/digital-card': typeof AppDigitalCardRouteWithChildren
   '/_app/dynamic-qr': typeof AppDynamicQrRoute
   '/_app/events': typeof AppEventsRoute
@@ -795,6 +804,7 @@ export interface FileRouteTypes {
     | '/content-library'
     | '/contracts'
     | '/dashboard'
+    | '/debt-aging'
     | '/digital-card'
     | '/dynamic-qr'
     | '/events'
@@ -880,6 +890,7 @@ export interface FileRouteTypes {
     | '/content-library'
     | '/contracts'
     | '/dashboard'
+    | '/debt-aging'
     | '/dynamic-qr'
     | '/events'
     | '/files'
@@ -964,6 +975,7 @@ export interface FileRouteTypes {
     | '/_app/content-library'
     | '/_app/contracts'
     | '/_app/dashboard'
+    | '/_app/debt-aging'
     | '/_app/digital-card'
     | '/_app/dynamic-qr'
     | '/_app/events'
@@ -1203,6 +1215,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/debt-aging': {
+      id: '/_app/debt-aging'
+      path: '/debt-aging'
+      fullPath: '/debt-aging'
+      preLoaderRoute: typeof AppDebtAgingRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/digital-card': {
@@ -1710,6 +1729,7 @@ interface AppRouteChildren {
   AppContentLibraryRoute: typeof AppContentLibraryRoute
   AppContractsRoute: typeof AppContractsRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppDebtAgingRoute: typeof AppDebtAgingRoute
   AppDigitalCardRoute: typeof AppDigitalCardRouteWithChildren
   AppDynamicQrRoute: typeof AppDynamicQrRoute
   AppEventsRoute: typeof AppEventsRoute
@@ -1762,6 +1782,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppContentLibraryRoute: AppContentLibraryRoute,
   AppContractsRoute: AppContractsRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppDebtAgingRoute: AppDebtAgingRoute,
   AppDigitalCardRoute: AppDigitalCardRouteWithChildren,
   AppDynamicQrRoute: AppDynamicQrRoute,
   AppEventsRoute: AppEventsRoute,
