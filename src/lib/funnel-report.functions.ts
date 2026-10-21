@@ -305,8 +305,11 @@ export const getFunnelReport = createServerFn({ method: "GET" })
 
     for (const lead of leads) {
       submitted += 1;
-      const inCart = cartLeadIds.has(lead.id);
       const inContract = contractLeadIds.has(lead.id);
+      // Khách tự vào giỏ khi trạng thái chuyển sang báo giá / đặt cọc / chốt, hoặc đã có hợp đồng.
+      const inCart =
+        cartLeadIds.has(lead.id) || inContract ||
+        ["quoted", "proposal", "deposit", "won"].includes(String((lead as any).status ?? ""));
       const money = contractMoneyByLead.get(lead.id);
       if (inCart) cart += 1;
       if (inContract) contract += 1;
