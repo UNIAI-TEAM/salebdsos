@@ -33,6 +33,7 @@ import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
 import { Route as AppFilesRouteImport } from './routes/_app.files'
 import { Route as AppFunnelReportRouteImport } from './routes/_app.funnel-report'
 import { Route as AppInboxRouteImport } from './routes/_app.inbox'
+import { Route as AppIntegrationsRouteImport } from './routes/_app.integrations'
 import { Route as AppInventoryRouteImport } from './routes/_app.inventory'
 import { Route as AppJourneyRouteImport } from './routes/_app.journey'
 import { Route as AppLandingsRouteImport } from './routes/_app.landings'
@@ -81,6 +82,8 @@ import { Route as ApiPublicTelephonyWebhookRouteImport } from './routes/api/publ
 import { Route as ApiPublicZaloWebhookRouteImport } from './routes/api/public/zalo-webhook'
 import { Route as ApiPublicCardLeadsSlugRouteImport } from './routes/api/public/card-leads.$slug'
 import { Route as ApiPublicChatSlugRouteImport } from './routes/api/public/chat.$slug'
+import { Route as ApiPublicIntegrationsFacebookRouteImport } from './routes/api/public/integrations/facebook'
+import { Route as ApiPublicIntegrationsPortalRouteImport } from './routes/api/public/integrations/portal'
 import { Route as ApiPublicLandingManifestSlugRouteImport } from './routes/api/public/landing-manifest.$slug'
 import { Route as ApiPublicLeadFormsSlugRouteImport } from './routes/api/public/lead-forms.$slug'
 import { Route as ApiPublicPqCodeRouteImport } from './routes/api/public/pq.$code'
@@ -205,6 +208,11 @@ const AppFunnelReportRoute = AppFunnelReportRouteImport.update({
 const AppInboxRoute = AppInboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIntegrationsRoute = AppIntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
   getParentRoute: () => AppRoute,
 } as any)
 const AppInventoryRoute = AppInventoryRouteImport.update({
@@ -448,6 +456,18 @@ const ApiPublicChatSlugRoute = ApiPublicChatSlugRouteImport.update({
   path: '/api/public/chat/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicIntegrationsFacebookRoute =
+  ApiPublicIntegrationsFacebookRouteImport.update({
+    id: '/api/public/integrations/facebook',
+    path: '/api/public/integrations/facebook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicIntegrationsPortalRoute =
+  ApiPublicIntegrationsPortalRouteImport.update({
+    id: '/api/public/integrations/portal',
+    path: '/api/public/integrations/portal',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicLandingManifestSlugRoute =
   ApiPublicLandingManifestSlugRouteImport.update({
     id: '/api/public/landing-manifest/$slug',
@@ -504,6 +524,7 @@ export interface FileRoutesByFullPath {
   '/files': typeof AppFilesRoute
   '/funnel-report': typeof AppFunnelReportRoute
   '/inbox': typeof AppInboxRoute
+  '/integrations': typeof AppIntegrationsRoute
   '/inventory': typeof AppInventoryRoute
   '/journey': typeof AppJourneyRoute
   '/landings': typeof AppLandingsRoute
@@ -552,6 +573,8 @@ export interface FileRoutesByFullPath {
   '/projects/': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/chat/$slug': typeof ApiPublicChatSlugRoute
+  '/api/public/integrations/facebook': typeof ApiPublicIntegrationsFacebookRoute
+  '/api/public/integrations/portal': typeof ApiPublicIntegrationsPortalRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/pq/$code': typeof ApiPublicPqCodeRoute
@@ -582,6 +605,7 @@ export interface FileRoutesByTo {
   '/files': typeof AppFilesRoute
   '/funnel-report': typeof AppFunnelReportRoute
   '/inbox': typeof AppInboxRoute
+  '/integrations': typeof AppIntegrationsRoute
   '/inventory': typeof AppInventoryRoute
   '/journey': typeof AppJourneyRoute
   '/landings': typeof AppLandingsRoute
@@ -629,6 +653,8 @@ export interface FileRoutesByTo {
   '/projects': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/chat/$slug': typeof ApiPublicChatSlugRoute
+  '/api/public/integrations/facebook': typeof ApiPublicIntegrationsFacebookRoute
+  '/api/public/integrations/portal': typeof ApiPublicIntegrationsPortalRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/pq/$code': typeof ApiPublicPqCodeRoute
@@ -662,6 +688,7 @@ export interface FileRoutesById {
   '/_app/files': typeof AppFilesRoute
   '/_app/funnel-report': typeof AppFunnelReportRoute
   '/_app/inbox': typeof AppInboxRoute
+  '/_app/integrations': typeof AppIntegrationsRoute
   '/_app/inventory': typeof AppInventoryRoute
   '/_app/journey': typeof AppJourneyRoute
   '/_app/landings': typeof AppLandingsRoute
@@ -710,6 +737,8 @@ export interface FileRoutesById {
   '/_app/projects/': typeof AppProjectsIndexRoute
   '/api/public/card-leads/$slug': typeof ApiPublicCardLeadsSlugRoute
   '/api/public/chat/$slug': typeof ApiPublicChatSlugRoute
+  '/api/public/integrations/facebook': typeof ApiPublicIntegrationsFacebookRoute
+  '/api/public/integrations/portal': typeof ApiPublicIntegrationsPortalRoute
   '/api/public/landing-manifest/$slug': typeof ApiPublicLandingManifestSlugRoute
   '/api/public/lead-forms/$slug': typeof ApiPublicLeadFormsSlugRoute
   '/api/public/pq/$code': typeof ApiPublicPqCodeRoute
@@ -743,6 +772,7 @@ export interface FileRouteTypes {
     | '/files'
     | '/funnel-report'
     | '/inbox'
+    | '/integrations'
     | '/inventory'
     | '/journey'
     | '/landings'
@@ -791,6 +821,8 @@ export interface FileRouteTypes {
     | '/projects/'
     | '/api/public/card-leads/$slug'
     | '/api/public/chat/$slug'
+    | '/api/public/integrations/facebook'
+    | '/api/public/integrations/portal'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
     | '/api/public/pq/$code'
@@ -821,6 +853,7 @@ export interface FileRouteTypes {
     | '/files'
     | '/funnel-report'
     | '/inbox'
+    | '/integrations'
     | '/inventory'
     | '/journey'
     | '/landings'
@@ -868,6 +901,8 @@ export interface FileRouteTypes {
     | '/projects'
     | '/api/public/card-leads/$slug'
     | '/api/public/chat/$slug'
+    | '/api/public/integrations/facebook'
+    | '/api/public/integrations/portal'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
     | '/api/public/pq/$code'
@@ -900,6 +935,7 @@ export interface FileRouteTypes {
     | '/_app/files'
     | '/_app/funnel-report'
     | '/_app/inbox'
+    | '/_app/integrations'
     | '/_app/inventory'
     | '/_app/journey'
     | '/_app/landings'
@@ -948,6 +984,8 @@ export interface FileRouteTypes {
     | '/_app/projects/'
     | '/api/public/card-leads/$slug'
     | '/api/public/chat/$slug'
+    | '/api/public/integrations/facebook'
+    | '/api/public/integrations/portal'
     | '/api/public/landing-manifest/$slug'
     | '/api/public/lead-forms/$slug'
     | '/api/public/pq/$code'
@@ -978,6 +1016,8 @@ export interface RootRouteChildren {
   ApiPublicZaloWebhookRoute: typeof ApiPublicZaloWebhookRoute
   ApiPublicCardLeadsSlugRoute: typeof ApiPublicCardLeadsSlugRoute
   ApiPublicChatSlugRoute: typeof ApiPublicChatSlugRoute
+  ApiPublicIntegrationsFacebookRoute: typeof ApiPublicIntegrationsFacebookRoute
+  ApiPublicIntegrationsPortalRoute: typeof ApiPublicIntegrationsPortalRoute
   ApiPublicLandingManifestSlugRoute: typeof ApiPublicLandingManifestSlugRoute
   ApiPublicLeadFormsSlugRoute: typeof ApiPublicLeadFormsSlugRoute
   ApiPublicPqCodeRoute: typeof ApiPublicPqCodeRoute
@@ -1154,6 +1194,13 @@ declare module '@tanstack/react-router' {
       path: '/inbox'
       fullPath: '/inbox'
       preLoaderRoute: typeof AppInboxRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/integrations': {
+      id: '/_app/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof AppIntegrationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/inventory': {
@@ -1492,6 +1539,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicChatSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/integrations/facebook': {
+      id: '/api/public/integrations/facebook'
+      path: '/api/public/integrations/facebook'
+      fullPath: '/api/public/integrations/facebook'
+      preLoaderRoute: typeof ApiPublicIntegrationsFacebookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/integrations/portal': {
+      id: '/api/public/integrations/portal'
+      path: '/api/public/integrations/portal'
+      fullPath: '/api/public/integrations/portal'
+      preLoaderRoute: typeof ApiPublicIntegrationsPortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/landing-manifest/$slug': {
       id: '/api/public/landing-manifest/$slug'
       path: '/api/public/landing-manifest/$slug'
@@ -1595,6 +1656,7 @@ interface AppRouteChildren {
   AppFilesRoute: typeof AppFilesRoute
   AppFunnelReportRoute: typeof AppFunnelReportRoute
   AppInboxRoute: typeof AppInboxRoute
+  AppIntegrationsRoute: typeof AppIntegrationsRoute
   AppInventoryRoute: typeof AppInventoryRoute
   AppJourneyRoute: typeof AppJourneyRoute
   AppLandingsRoute: typeof AppLandingsRoute
@@ -1644,6 +1706,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppFilesRoute: AppFilesRoute,
   AppFunnelReportRoute: AppFunnelReportRoute,
   AppInboxRoute: AppInboxRoute,
+  AppIntegrationsRoute: AppIntegrationsRoute,
   AppInventoryRoute: AppInventoryRoute,
   AppJourneyRoute: AppJourneyRoute,
   AppLandingsRoute: AppLandingsRoute,
@@ -1699,6 +1762,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicZaloWebhookRoute: ApiPublicZaloWebhookRoute,
   ApiPublicCardLeadsSlugRoute: ApiPublicCardLeadsSlugRoute,
   ApiPublicChatSlugRoute: ApiPublicChatSlugRoute,
+  ApiPublicIntegrationsFacebookRoute: ApiPublicIntegrationsFacebookRoute,
+  ApiPublicIntegrationsPortalRoute: ApiPublicIntegrationsPortalRoute,
   ApiPublicLandingManifestSlugRoute: ApiPublicLandingManifestSlugRoute,
   ApiPublicLeadFormsSlugRoute: ApiPublicLeadFormsSlugRoute,
   ApiPublicPqCodeRoute: ApiPublicPqCodeRoute,
