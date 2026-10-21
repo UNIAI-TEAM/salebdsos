@@ -48,10 +48,15 @@ export const Route = createFileRoute("/api/public/zalo-webhook")({
           return json({ error: "Dữ liệu không hợp lệ." }, 400);
         }
 
-        if (payload.event_name !== "user_send_text") return json({ ok: true, ignored: payload.event_name });
+        if (payload.event_name !== "user_send_text" && payload.event_name !== "user_submit_info")
+          return json({ ok: true, ignored: payload.event_name });
 
         const zaloUserId = payload.sender?.id;
-        const text = payload.message?.text?.slice(0, 2000);
+        const info = (payload as any).info as { name?: string; phone?: string; address?: string } | undefined;
+        const text = (
+          payload.message?.text ??
+          (info ? `Khách gửi thông tin: ${info.name ?? ""} ${info.phone ?? ""} ${info.address ?? ""}`.trim() : "")
+        ).slice(0, 2000);
         if (!zaloUserId || !text) return json({ ok: true, ignored: "empty" });
 
         // Tìm workspace theo OA id đã cấu hình
