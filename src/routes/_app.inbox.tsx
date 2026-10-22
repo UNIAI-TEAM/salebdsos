@@ -28,7 +28,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   getChannelSettings,
   getConversation,
+  getInboxKit,
   listConversations,
+  setConversationTags,
   saveCallResult,
   saveChannelSettings,
   sendMessage,
@@ -43,6 +45,14 @@ import {
   formatDuration,
   type ChannelSettings,
 } from "@/lib/channels";
+import { expandShortcut } from "@/lib/social";
+
+const TAG_TONE: Record<string, string> = {
+  blue: "border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
+  amber: "border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+  emerald: "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+  rose: "border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+};
 
 export const Route = createFileRoute("/_app/inbox")({
   head: () => ({
@@ -93,6 +103,9 @@ function InboxPage() {
   const persistChannels = useServerFn(saveChannelSettings);
 
   const [channel, setChannel] = useState<string>("all");
+  const [tagFilter, setTagFilter] = useState<string>("");
+  const fetchKit = useServerFn(getInboxKit);
+  const saveTags = useServerFn(setConversationTags);
   const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -104,12 +117,12 @@ function InboxPage() {
   const [callForm, setCallForm] = useState({ outcome: "connected", minutes: "1", recordingUrl: "", notes: "" });
 
   const listQuery = useQuery({
-    queryKey: ["inbox", tenantId, channel, search],
+    queryKey: ["inbox", tenantId, channel, search, tagFilter],
     enabled: Boolean(tenantId),
     refetchInterval: 20000,
     queryFn: () => {
       if (!tenantId) throw new Error("Chưa chọn workspace");
-      return fetchList({ data: { tenantId, channel, search: search || undefined } });
+      return fetchList({ data: { tenantId, channel, search: search || undefined, tag: tagFilter || undefined } });
     },
   });
 
@@ -131,6 +144,29 @@ function InboxPage() {
       return fetchChannels({ data: { tenantId } });
     },
   });
+
+  const kitQuery = useQuery({
+    queryKey: ["inbox-kit", tenantId],
+    enabled: Boolean(tenantId),
+    queryFn: () => fetchKit({ data: { tenantId: tenantId! } }),
+  });
+  const kit = kitQuery.data;
+  const tagMeta = (key: string) => kit?.tags.find((t) => t.key === key);
+  const tagsMutation = useMutation({
+    mutationFn: (tags: string[]) => saveTags({ data: { tenantId: tenantId!, conversationId: activeId!, tags } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inbox-thread", tenantId, activeId] });
+      qc.invalidateQueries({ queryKey: ["inbox", tenantId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const slashMatch = draft.match(/(?:^|\s)\/([a-z0-9_]*)$/i);
+  const slashOptions = slashMatch && kit ? kit.quickReplies.filter((q) => q.shortcut.startsWith(slashMatch[1].toLowerCase())) : [];
+  const applyQuick = (shortcut: string) => {
+    const base = draft.replace(/\/[a-z0-9_]*$/i, "/" + shortcut);
+    const out = expandShortcut(base, kit?.quickReplies ?? []);
+    if (out !== null) setDraft(out.replace(/\{project\}/g, threadQuery.data?.conversation.projectId ? "dự án" : "dự án"));
+  };
 
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ["inbox", tenantId] });
@@ -266,6 +302,16 @@ function InboxPage() {
                 </button>
               ))}
             </div>
+            {kit?.tags.length ? (
+              <div className="flex flex-wrap gap-1.5">
+                {kit.tags.map((t) => (
+                  <button key={t.key} type="button" onClick={() => setTagFilter(tagFilter === t.key ? "" : t.key)}
+                    className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${tagFilter === t.key ? TAG_TONE[t.tone] : "border-border text-muted-foreground"}`}>
+                    # {t.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           <ul className="mt-3 space-y-2">
@@ -288,6 +334,13 @@ function InboxPage() {
                       {item.unread ? <Badge variant="destructive" className="shrink-0 text-[10px]">{item.unread}</Badge> : null}
                     </div>
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.preview ?? "—"}</p>
+                    {item.tags?.length ? (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {item.tags.map((k) => tagMeta(k) ? (
+                          <span key={k} className={`rounded-full border px-1.5 text-[10px] ${TAG_TONE[tagMeta(k)!.tone]}`}>{tagMeta(k)!.label}</span>
+                        ) : null)}
+                      </div>
+                    ) : null}
                     <p className="mt-1 text-[11px] text-muted-foreground">
                       {CHANNEL_LABEL[item.channel] ?? item.channel}
                       {item.projectName ? ` · ${item.projectName}` : ""} · {timeLabel(item.lastAt)}
@@ -327,6 +380,20 @@ function InboxPage() {
                   </a>
                 ) : null}
               </div>
+              {kit?.tags.length ? (
+                <div className="mb-3 flex flex-wrap gap-1.5" aria-label="Thẻ hội thoại">
+                  {kit.tags.map((t) => {
+                    const on = thread.conversation.tags.includes(t.key);
+                    return (
+                      <button key={t.key} type="button" disabled={tagsMutation.isPending}
+                        onClick={() => tagsMutation.mutate(on ? thread.conversation.tags.filter((x) => x !== t.key) : [...thread.conversation.tags, t.key])}
+                        className={`rounded-full border px-3 py-1 text-xs font-medium transition ${on ? TAG_TONE[t.tone] : "border-dashed border-border text-muted-foreground hover:bg-muted"}`}>
+                        {on ? "✓ " : "+ "}{t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
 
               <div className="max-h-[52vh] space-y-2 overflow-y-auto rounded-xl border border-border p-3">
                 {timeline.length === 0 ? (
@@ -384,9 +451,26 @@ function InboxPage() {
                     placeholder="Tiêu đề email"
                   />
                 ) : null}
+                {slashOptions.length > 0 ? (
+                  <div className="rounded-lg border border-border bg-popover p-1 shadow-soft">
+                    {slashOptions.slice(0, 6).map((q) => (
+                      <button key={q.shortcut} type="button" onClick={() => applyQuick(q.shortcut)}
+                        className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted">
+                        <span className="font-mono text-primary">/{q.shortcut}</span>
+                        <span className="line-clamp-1 text-muted-foreground">{q.text}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
                 <div className="flex gap-2">
                   <Textarea
                     value={draft}
+                    onKeyDown={(event) => {
+                      if ((event.key === "Tab" || event.key === "Enter") && slashOptions.length > 0) {
+                        event.preventDefault();
+                        applyQuick(slashOptions[0].shortcut);
+                      }
+                    }}
                     onChange={(event) => setDraft(event.target.value)}
                     rows={2}
                     placeholder={
