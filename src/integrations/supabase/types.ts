@@ -717,6 +717,50 @@ export type Database = {
           },
         ]
       }
+      campaign_recipients: {
+        Row: {
+          campaign_id: string
+          channel: string
+          created_at: string
+          error: string | null
+          id: string
+          lead_id: string
+          sent_at: string | null
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          campaign_id: string
+          channel: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          lead_id: string
+          sent_at?: string | null
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          campaign_id?: string
+          channel?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          lead_id?: string
+          sent_at?: string | null
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           audience: Json
