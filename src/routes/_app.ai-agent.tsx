@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Bot, Loader2, Send } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { askAgent } from "@/lib/ai-agent.functions";
@@ -72,7 +73,7 @@ function AgentPage() {
         {msgs.map((m, i) => (
           <div key={i} className={m.role === "user" ? "flex justify-end" : ""}>
             <div className={m.role === "user" ? "max-w-[85%] rounded-2xl bg-primary px-4 py-2 text-sm text-primary-foreground" : "prose prose-sm max-w-none dark:prose-invert [&_table]:text-xs"}>
-              {m.role === "user" ? m.content : <ReactMarkdown>{m.content}</ReactMarkdown>}
+              {m.role === "user" ? m.content : <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>}
             </div>
           </div>
         ))}
