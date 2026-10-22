@@ -119,7 +119,7 @@ export const Route = createFileRoute("/api/public/sales-pages/$slug")({
             .update({ lead_id: lead.id })
             .eq("session_id", session_id)
             .eq("tenant_id", page.tenant_id)
-            .eq("project_id", page.project_id)
+            .eq("project_id", page.project_id ?? "00000000-0000-0000-0000-000000000000")
             .is("lead_id", null);
           if (jErr) console.error("[sales-page] journey link", jErr.message);
         }
