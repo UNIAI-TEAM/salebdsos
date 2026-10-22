@@ -116,3 +116,43 @@ export const rotatePortalKey = createServerFn({ method: "POST" })
     });
     return { key };
   });
+
+/* ---------------- Khoá Facebook theo sàn (chỉ ghi, không đọc lại) ---------------- */
+
+export const getFacebookCredentialStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context, data.tenantId);
+    const { credentialStatus } = await import("@/lib/credentials.server");
+    const s = await credentialStatus(data.tenantId);
+    return { appSecretAt: s.fb_app_secret, pageTokenAt: s.fb_page_token };
+  });
+
+export const saveFacebookCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      tenantId: z.string().uuid(),
+      appSecret: z.string().trim().regex(/^[a-f0-9]{32}$/i, "App Secret gồm 32 ký tự 0-9, a-f").optional(),
+      pageToken: z.string().trim().min(40, "Page Access Token quá ngắn").max(1000).regex(/^[A-Za-z0-9_-]+$/, "Token không hợp lệ").optional(),
+      clear: z.boolean().optional(),
+    }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context, data.tenantId);
+    const { saveCredential } = await import("@/lib/credentials.server");
+    if (data.clear) {
+      await saveCredential(data.tenantId, "fb_app_secret", null, context.userId);
+      await saveCredential(data.tenantId, "fb_page_token", null, context.userId);
+      return { ok: true, pageName: null as string | null };
+    }
+    let pageName: string | null = null;
+    if (data.pageToken) {
+      const res = await fetch(`https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${encodeURIComponent(data.pageToken)}`);
+      if (!res.ok) throw new Error(`Facebook từ chối token [${res.status}] — kiểm tra lại Page Access Token`);
+      pageName = ((await res.json()) as { name?: string }).name ?? null;
+      await saveCredential(data.tenantId, "fb_page_token", data.pageToken, context.userId);
+    }
+    if (data.appSecret) await saveCredential(data.tenantId, "fb_app_secret", data.appSecret, context.userId);
+    return { ok: true, pageName };
+  });
