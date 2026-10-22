@@ -1,3 +1,4 @@
+import { REMINDER_LABEL, type ReminderKind } from "@/lib/debt-aging";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -599,6 +600,26 @@ function ContractsPage() {
                 >
                   Lưu đợt thanh toán
                 </Button>
+              </div>
+
+              {/* Lịch sử nhắc thanh toán */}
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">Lịch sử nhắc thanh toán</p>
+                {(selected.reminders ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Chưa có lần nhắc nào. Hệ thống tự nhắc trước hạn 3 ngày, đúng hạn và khi quá hạn 1, 15, 30 ngày.</p>
+                ) : (
+                  <ul className="divide-y divide-border rounded-xl border border-border">
+                    {(selected.reminders as any[]).map((r) => (
+                      <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+                        <span>
+                          <span className="font-medium">{REMINDER_LABEL[r.kind as ReminderKind] ?? r.kind}</span>
+                          <span className="text-muted-foreground"> · {selected.installments.find((i: any) => i.id === r.installment_id)?.name ?? "Đợt"} · {new Intl.NumberFormat("vi-VN").format(Number(r.amount))} đ</span>
+                        </span>
+                        <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString("vi-VN")}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               {/* Hoa hồng */}

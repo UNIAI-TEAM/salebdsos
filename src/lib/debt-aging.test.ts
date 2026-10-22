@@ -20,3 +20,13 @@ describe("tuổi nợ", () => {
     expect(agingBucket("2026-09-21", today)).toBe("d30_plus");
   });
 });
+
+import { reminderKind } from "./debt-aging";
+describe("reminderKind", () => {
+  it("còn 4 ngày chưa nhắc", () => expect(reminderKind("2026-10-26", "2026-10-22")).toBe(null));
+  it("còn 3 ngày nhắc sắp đến hạn", () => expect(reminderKind("2026-10-25", "2026-10-22")).toBe("due_3"));
+  it("đúng hạn", () => expect(reminderKind("2026-10-22", "2026-10-22")).toBe("due_0"));
+  it("quá 10 ngày", () => expect(reminderKind("2026-10-12", "2026-10-22")).toBe("overdue_1"));
+  it("quá 16 ngày", () => expect(reminderKind("2026-10-06", "2026-10-22")).toBe("overdue_15"));
+  it("quá 40 ngày", () => expect(reminderKind("2026-09-12", "2026-10-22")).toBe("overdue_30"));
+});

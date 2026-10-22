@@ -2,6 +2,7 @@
 // Bảo vệ bằng khoá NURTURE_CRON_SECRET (header x-cron-secret) khi khoá đã được thiết lập.
 import { createFileRoute } from "@tanstack/react-router";
 import { runNurture } from "@/lib/nurture.server";
+import { runPaymentReminders } from "@/lib/payment-reminder.server";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -36,7 +37,8 @@ export const Route = createFileRoute("/api/public/nurture-run")({
 
         try {
           const result = await runNurture({ origin });
-          return json(result);
+          const payments = await runPaymentReminders().catch((e) => ({ ok: false, error: String(e) }));
+          return json({ ...result, payments });
         } catch (error) {
           console.error("nurture-run failed", error);
           return json({ ok: false, error: (error as Error).message }, 500);

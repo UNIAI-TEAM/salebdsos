@@ -128,6 +128,7 @@ export const listContracts = createServerFn({ method: "GET" })
 
     let installments: any[] = [];
     let commissions: any[] = [];
+    let reminders: any[] = [];
     if (ids.length) {
       const [insQ, comQ] = await Promise.all([
         supabase
@@ -144,6 +145,12 @@ export const listContracts = createServerFn({ method: "GET" })
       ]);
       installments = insQ.data ?? [];
       commissions = comQ.data ?? [];
+      const remQ = await (supabase as any)
+        .from("payment_reminders")
+        .select("id,contract_id,installment_id,kind,days_overdue,amount,created_at")
+        .in("contract_id", ids)
+        .order("created_at", { ascending: false });
+      reminders = remQ.data ?? [];
     }
 
     const memberIds = Array.from(new Set((rolesQ.data ?? []).map((r: any) => r.user_id)));
@@ -189,6 +196,7 @@ export const listContracts = createServerFn({ method: "GET" })
           null,
         owner_name: c.owner_user_id ? memberName.get(c.owner_user_id) ?? null : null,
         installments: ins,
+        reminders: reminders.filter((r) => r.contract_id === c.id),
         commissions: com.map((x) => ({
           ...x,
           amount: Number(x.amount ?? 0),
