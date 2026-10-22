@@ -31,7 +31,12 @@ export const registerPushDevice = createServerFn({ method: "POST" })
     z
       .object({
         tenantId: z.string().uuid().optional(),
-        endpoint: z.string().url(),
+        endpoint: z.string().url().refine((u) => {
+          try {
+            const h = new URL(u);
+            return h.protocol === "https:" && /(^|\.)(fcm\.googleapis\.com|android\.googleapis\.com|push\.services\.mozilla\.com|notify\.windows\.com|push\.apple\.com)$/.test(h.hostname);
+          } catch { return false; }
+        }, "Địa chỉ nhận thông báo không hợp lệ"),
         p256dh: z.string().min(10),
         auth: z.string().min(5),
         label: z.string().max(80).optional(),
