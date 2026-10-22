@@ -2319,6 +2319,42 @@ export type Database = {
           },
         ]
       }
+      payment_reminders: {
+        Row: {
+          amount: number
+          contract_id: string
+          created_at: string
+          days_overdue: number
+          id: string
+          installment_id: string
+          kind: string
+          notified_user_id: string | null
+          tenant_id: string
+        }
+        Insert: {
+          amount?: number
+          contract_id: string
+          created_at?: string
+          days_overdue?: number
+          id?: string
+          installment_id: string
+          kind: string
+          notified_user_id?: string | null
+          tenant_id: string
+        }
+        Update: {
+          amount?: number
+          contract_id?: string
+          created_at?: string
+          days_overdue?: number
+          id?: string
+          installment_id?: string
+          kind?: string
+          notified_user_id?: string | null
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       pipeline_deals: {
         Row: {
           closed_at: string | null
