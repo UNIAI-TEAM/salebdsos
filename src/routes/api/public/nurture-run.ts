@@ -38,7 +38,9 @@ export const Route = createFileRoute("/api/public/nurture-run")({
         try {
           const result = await runNurture({ origin });
           const payments = await runPaymentReminders().catch((e) => ({ ok: false, error: String(e) }));
-          return json({ ...result, payments });
+          const { runDueCampaigns } = await import("@/lib/campaign-send.server");
+          const campaigns = await runDueCampaigns(origin).catch((e) => ({ ok: false, error: String(e) }));
+          return json({ ...result, payments, campaigns });
         } catch (error) {
           console.error("nurture-run failed", error);
           return json({ ok: false, error: (error as Error).message }, 500);
