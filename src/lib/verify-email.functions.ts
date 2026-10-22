@@ -112,10 +112,20 @@ export const resendVerificationEmail = createServerFn({ method: "POST" })
         }
       }
 
+      // Chỉ cho phép quay về chính trang của app (chặn link lừa đảo)
+      let safeRedirect: string | undefined;
+      if (data.redirectTo) {
+        try {
+          const { getRequestHeader } = await import("@tanstack/react-start/server");
+          const host = (getRequestHeader("x-forwarded-host") ?? getRequestHeader("host") ?? "").split(",")[0].trim();
+          const u = new URL(data.redirectTo);
+          if (host && u.host === host && (u.protocol === "https:" || u.hostname === "localhost")) safeRedirect = u.toString();
+        } catch {}
+      }
       const { error } = await supabaseAdmin.auth.resend({
         type: "signup",
         email,
-        options: data.redirectTo ? { emailRedirectTo: data.redirectTo } : undefined,
+        options: safeRedirect ? { emailRedirectTo: safeRedirect } : undefined,
       });
       if (error) return { ok: false as const, message: error.message };
 
