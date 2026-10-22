@@ -68,7 +68,7 @@ export async function handleFbComment(c: FbComment) {
       name: c.authorName, phone, email: null, productCode: null, budget: null,
       note: c.message.slice(0, 500), projectId, externalId: c.commentId,
       meta: { fb_page_id: c.pageId, fb_post_id: c.postId },
-    } as never).catch((e) => { errors.push(String(e)); return null; });
+    }).catch((e) => { errors.push(String(e)); return null; });
     if (r && (r as any).ok) patch.lead_id = (r as any).leadId;
   }
   // 3. Trả lời bình luận xoay vòng mẫu
