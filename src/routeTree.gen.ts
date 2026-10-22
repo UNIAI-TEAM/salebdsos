@@ -61,6 +61,7 @@ import { Route as AppSaleOverviewRouteImport } from './routes/_app.sale-overview
 import { Route as AppSaleProjectsRouteImport } from './routes/_app.sale-projects'
 import { Route as AppSalesDirectoryRouteImport } from './routes/_app.sales-directory'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppSocialAutomationRouteImport } from './routes/_app.social-automation'
 import { Route as AppTeamRouteImport } from './routes/_app.team'
 import { Route as AppTimelineRouteImport } from './routes/_app.timeline'
 import { Route as AppWalletRouteImport } from './routes/_app.wallet'
@@ -354,6 +355,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSocialAutomationRoute = AppSocialAutomationRouteImport.update({
+  id: '/social-automation',
+  path: '/social-automation',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTeamRoute = AppTeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -576,6 +582,7 @@ export interface FileRoutesByFullPath {
   '/sale-projects': typeof AppSaleProjectsRoute
   '/sales-directory': typeof AppSalesDirectoryRoute
   '/settings': typeof AppSettingsRoute
+  '/social-automation': typeof AppSocialAutomationRoute
   '/team': typeof AppTeamRoute
   '/timeline': typeof AppTimelineRoute
   '/wallet': typeof AppWalletRoute
@@ -660,6 +667,7 @@ export interface FileRoutesByTo {
   '/sale-projects': typeof AppSaleProjectsRoute
   '/sales-directory': typeof AppSalesDirectoryRoute
   '/settings': typeof AppSettingsRoute
+  '/social-automation': typeof AppSocialAutomationRoute
   '/team': typeof AppTeamRoute
   '/timeline': typeof AppTimelineRoute
   '/wallet': typeof AppWalletRoute
@@ -748,6 +756,7 @@ export interface FileRoutesById {
   '/_app/sale-projects': typeof AppSaleProjectsRoute
   '/_app/sales-directory': typeof AppSalesDirectoryRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/social-automation': typeof AppSocialAutomationRoute
   '/_app/team': typeof AppTeamRoute
   '/_app/timeline': typeof AppTimelineRoute
   '/_app/wallet': typeof AppWalletRoute
@@ -836,6 +845,7 @@ export interface FileRouteTypes {
     | '/sale-projects'
     | '/sales-directory'
     | '/settings'
+    | '/social-automation'
     | '/team'
     | '/timeline'
     | '/wallet'
@@ -920,6 +930,7 @@ export interface FileRouteTypes {
     | '/sale-projects'
     | '/sales-directory'
     | '/settings'
+    | '/social-automation'
     | '/team'
     | '/timeline'
     | '/wallet'
@@ -1007,6 +1018,7 @@ export interface FileRouteTypes {
     | '/_app/sale-projects'
     | '/_app/sales-directory'
     | '/_app/settings'
+    | '/_app/social-automation'
     | '/_app/team'
     | '/_app/timeline'
     | '/_app/wallet'
@@ -1441,6 +1453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/social-automation': {
+      id: '/_app/social-automation'
+      path: '/social-automation'
+      fullPath: '/social-automation'
+      preLoaderRoute: typeof AppSocialAutomationRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/team': {
       id: '/_app/team'
       path: '/team'
@@ -1761,6 +1780,7 @@ interface AppRouteChildren {
   AppSaleProjectsRoute: typeof AppSaleProjectsRoute
   AppSalesDirectoryRoute: typeof AppSalesDirectoryRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppSocialAutomationRoute: typeof AppSocialAutomationRoute
   AppTeamRoute: typeof AppTeamRoute
   AppTimelineRoute: typeof AppTimelineRoute
   AppWalletRoute: typeof AppWalletRoute
@@ -1814,6 +1834,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSaleProjectsRoute: AppSaleProjectsRoute,
   AppSalesDirectoryRoute: AppSalesDirectoryRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppSocialAutomationRoute: AppSocialAutomationRoute,
   AppTeamRoute: AppTeamRoute,
   AppTimelineRoute: AppTimelineRoute,
   AppWalletRoute: AppWalletRoute,
