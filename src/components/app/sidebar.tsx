@@ -4,7 +4,7 @@ import {
   BellRing,
   Percent,
   LayoutDashboard, IdCard, Users2, UserSquare2, Building2, GitBranch, CalendarClock,
-  Sparkles, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
+  Sparkles, Bot, Gauge, BarChart3, Megaphone, ShieldCheck, Package, FolderArchive,
   Wallet, QrCode, MessagesSquare, Globe2, Radio, Settings, ChevronDown, Crown, Send, Zap, LogOut, Check,
   PanelLeftClose, PanelLeftOpen, X, BookMarked, Route as RouteIcon, ContactRound,
   LayoutGrid,
@@ -86,6 +86,7 @@ const groups: Group[] = [
   {
     label: "Báo cáo",
     items: [
+      { to: "/ai-agent", label: "Trợ lý AI điều hành", icon: Bot, badge: "AI" },
       { to: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
       { to: "/sale-overview", label: "Tổng quan Sale", icon: ContactRound },
       { to: "/funnel-report", label: "Báo cáo phễu", icon: Filter },
@@ -143,6 +144,7 @@ const saleMobileGroups: Group[] = [
       { to: "/bank-reconciliation", label: "Đối soát", icon: Landmark },
       { to: "/debt-aging", label: "Tuổi nợ", icon: Hourglass },
       { to: "/revenue-report", label: "Doanh thu", icon: BadgeDollarSign },
+      { to: "/ai-agent", label: "Trợ lý AI", icon: Bot },
       { to: "/commission-rules", label: "Hoa hồng", icon: Percent, roles: ["owner", "admin", "manager"] },
       { to: "/nurture", label: "Nhắc khách", icon: BellRing, roles: ["owner", "admin", "manager"] },
       { to: "/mobile-app", label: "App & thông báo", icon: Smartphone },
