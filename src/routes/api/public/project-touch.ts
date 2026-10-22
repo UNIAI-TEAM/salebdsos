@@ -146,10 +146,11 @@ export const Route = createFileRoute("/api/public/project-touch")({
         if (!tenantId) {
           const { data: proj } = await supabaseAdmin
             .from("projects")
-            .select("tenant_id")
+            .select("tenant_id,slug")
             .eq("id", projectId)
             .maybeSingle();
-          tenantId = proj?.tenant_id ?? null;
+          // Chỉ nhận điểm chạm trực tiếp cho dự án đã có landing công khai
+          tenantId = proj?.slug ? proj.tenant_id : null;
         }
         if (!tenantId) return json({ error: "no_project" }, 404);
 

@@ -13,7 +13,9 @@ export function getZipPhase(diff: any): ZipPhase {
 }
 
 export function csvEscape(v: unknown): string {
-  const s = v === null || v === undefined ? "" : String(v);
+  let s = v === null || v === undefined ? "" : String(v);
+  // Chặn chèn công thức khi mở bằng Excel/Sheets
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 

@@ -29,6 +29,13 @@
       "when": 1792627854564,
       "tag": "0003_campaign_recipients",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792628047525,
+      "tag": "0004_drop_direct_tenant_insert",
+      "breakpoints": true
     }
   ]
 }
