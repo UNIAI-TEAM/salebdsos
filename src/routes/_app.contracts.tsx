@@ -32,6 +32,7 @@ import {
   createContractFromProduct,
   listContracts,
   markInstallmentPaid,
+  updateInstallmentDueDate,
   setCommissionStatus,
   setCommissions,
   setInstallments,
@@ -105,6 +106,7 @@ function ContractsPage() {
   const fnCancel = useServerFn(cancelContract);
   const fnSetIns = useServerFn(setInstallments);
   const fnPayIns = useServerFn(markInstallmentPaid);
+  const fnDueIns = useServerFn(updateInstallmentDueDate);
   const fnSetCom = useServerFn(setCommissions);
   const fnComStatus = useServerFn(setCommissionStatus);
   const fnRecalcCom = useServerFn(recalcContractCommissions);
@@ -547,11 +549,26 @@ function ContractsPage() {
                           value={row.amount}
                           onChange={(e) => setInsDraft(insRows.map((r, i) => (i === index ? { ...r, amount: e.target.value } : r)))}
                         />
-                        <Input
-                          type="date"
-                          value={row.due_date}
-                          onChange={(e) => setInsDraft(insRows.map((r, i) => (i === index ? { ...r, due_date: e.target.value } : r)))}
-                        />
+                        <div className="space-y-1">
+                          <Input
+                            type="date"
+                            aria-label={`Ngày đến hạn ${row.name}`}
+                            value={row.due_date}
+                            className={!row.due_date ? "border-destructive/60" : undefined}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setInsDraft(insRows.map((r, i) => (i === index ? { ...r, due_date: v } : r)));
+                              if (stored && !insDraft && (v || stored.due_date)) {
+                                run.mutate(async () => {
+                                  await fnDueIns({ data: { id: stored.id, dueDate: v || null } });
+                                  setInsDraft(null);
+                                  toast.success(v ? `Đã cập nhật hạn ${row.name}` : `Đã xoá hạn ${row.name}`);
+                                });
+                              }
+                            }}
+                          />
+                          {!row.due_date ? <p className="text-[11px] text-destructive">Chưa có ngày hạn</p> : null}
+                        </div>
                         <div className="flex items-center gap-2">
                           {stored ? (
                             <Button

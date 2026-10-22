@@ -534,7 +534,7 @@ export const setInstallments = createServerFn({ method: "POST" })
       .select("id,name,paid_amount,paid_at,status")
       .eq("contract_id", data.contractId);
     const paidByName = new Map(
-      (existing ?? []).filter((r: any) => r.status === "paid").map((r: any) => [r.name, r]),
+      (existing ?? []).filter((r: any) => r.status === "paid" || Number(r.paid_amount ?? 0) > 0).map((r: any) => [r.name, r]),
     );
 
     await supabase.from("contract_installments").delete().eq("contract_id", data.contractId);
@@ -552,13 +552,28 @@ export const setInstallments = createServerFn({ method: "POST" })
             due_date: row.due_date || null,
             paid_amount: prior ? Number(prior.paid_amount ?? 0) : 0,
             paid_at: prior?.paid_at ?? null,
-            status: prior ? "paid" : "pending",
+            status: prior?.status === "paid" ? "paid" : "pending",
           };
         }),
       );
       if (error) throw new Error(error.message);
     }
     return { ok: true, count: data.rows.length };
+  });
+
+export const updateInstallmentDueDate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: row, error } = await supabase.from("contract_installments").select("id,contract_id").eq("id", data.id).single();
+    if (error) throw new Error(error.message);
+    await guard(context as Ctx, row.contract_id, true);
+    const { error: upErr } = await supabase.from("contract_installments").update({ due_date: data.dueDate }).eq("id", data.id);
+    if (upErr) throw new Error(upErr.message);
+    return { ok: true };
   });
 
 export const markInstallmentPaid = createServerFn({ method: "POST" })
