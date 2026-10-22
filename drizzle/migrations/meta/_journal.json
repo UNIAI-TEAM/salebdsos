@@ -36,6 +36,13 @@
       "when": 1792628047525,
       "tag": "0004_drop_direct_tenant_insert",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792628234095,
+      "tag": "0005_social_comment_logs",
+      "breakpoints": true
     }
   ]
 }

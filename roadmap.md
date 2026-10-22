@@ -21,5 +21,5 @@
 
 - [x] Giai đoạn 1: Đối soát ngân hàng tự động + Sự kiện mở bán & check-in QR
 - [x] Giai đoạn 2: Phân khúc động + chiến dịch gửi hàng loạt
-- [ ] Giai đoạn 3: Tự động hoá bình luận Facebook/Messenger, trả lời nhanh, thẻ hội thoại
+- [x] Giai đoạn 3: Tự động hoá bình luận Facebook/Messenger, trả lời nhanh, thẻ hội thoại
 - [ ] Giai đoạn 4: Tuổi nợ + trợ lý AI điều hành

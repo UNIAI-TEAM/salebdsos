@@ -63,6 +63,35 @@ export const Route = createFileRoute("/api/public/integrations/facebook")({
           (e?.changes ?? []).filter((c: any) => c?.field === "leadgen").map((c: any) => ({ ...c.value, page_id: c.value?.page_id ?? e.id })),
         );
         let processed = 0;
+
+        // Bình luận Fanpage (field "feed", item "comment")
+        const comments: any[] = (payload?.entry ?? []).flatMap((e: any) =>
+          (e?.changes ?? [])
+            .filter((c: any) => c?.field === "feed" && c?.value?.item === "comment" && c?.value?.verb === "add")
+            .map((c: any) => ({ ...c.value, page_id: String(e.id ?? "") })),
+        );
+        if (comments.length) {
+          const { handleFbComment } = await import("@/lib/social.server");
+          let origin: string | null = null;
+          try { origin = new URL(request.url).origin; } catch { origin = null; }
+          for (const cm of comments.slice(0, 20)) {
+            const pageId = String(cm.page_id ?? "");
+            const commentId = String(cm.comment_id ?? "");
+            if (!/^\d+$/.test(pageId) || !/^[\d_]+$/.test(commentId)) continue;
+            const { data: rows } = await supabaseAdmin.from("settings").select("tenant_id")
+              .eq("key", "integrations").eq("value->facebook->>pageId", pageId).limit(1);
+            if (!rows?.[0]) continue;
+            await handleFbComment({
+              tenantId: rows[0].tenant_id as string, pageId,
+              postId: cm.post_id ? String(cm.post_id).slice(0, 80) : null, commentId,
+              authorId: cm.from?.id ? String(cm.from.id) : null,
+              authorName: cm.from?.name ? String(cm.from.name).slice(0, 120) : null,
+              message: String(cm.message ?? "").slice(0, 2000), origin,
+            }).catch((e) => console.error("fb comment", e));
+            processed += 1;
+          }
+        }
+
         for (const ch of changes.slice(0, 20)) {
           const pageId = String(ch.page_id ?? "");
           const leadgenId = String(ch.leadgen_id ?? "");

@@ -57,6 +57,7 @@ const groups: Group[] = [
       { to: "/nurture", label: "Nhắc khách tự động", icon: BellRing, roles: ["owner", "admin", "manager"] },
       { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon, roles: ["owner", "admin", "manager", "agent"] },
       { to: "/inbox", label: "Hộp thoại", icon: MessagesSquare },
+      { to: "/social-automation", label: "Tự động hoá Fanpage", icon: MessagesSquare, roles: ["owner", "admin", "manager"] },
     ],
   },
   {

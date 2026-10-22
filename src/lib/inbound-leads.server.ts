@@ -20,7 +20,7 @@ export async function loadIntegrationSettings(tenantId: string) {
 
 export type InboundLead = {
   tenantId: string;
-  source: "zalo_oa" | "facebook_lead_ads" | `portal:${string}`;
+  source: "zalo_oa" | "facebook_lead_ads" | "facebook_comment" | `portal:${string}`;
   sourceLabel: string;
   name?: string | null;
   phone?: string | null;

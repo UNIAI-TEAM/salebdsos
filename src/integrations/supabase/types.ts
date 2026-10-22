@@ -3310,6 +3310,60 @@ export type Database = {
           },
         ]
       }
+      social_comment_logs: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          comment_id: string
+          created_at: string
+          errors: Json
+          hidden: boolean
+          id: string
+          lead_id: string | null
+          message: string | null
+          messaged: boolean
+          page_id: string
+          phone: string | null
+          post_id: string | null
+          replied: boolean
+          tenant_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          comment_id: string
+          created_at?: string
+          errors?: Json
+          hidden?: boolean
+          id?: string
+          lead_id?: string | null
+          message?: string | null
+          messaged?: boolean
+          page_id: string
+          phone?: string | null
+          post_id?: string | null
+          replied?: boolean
+          tenant_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          comment_id?: string
+          created_at?: string
+          errors?: Json
+          hidden?: boolean
+          id?: string
+          lead_id?: string | null
+          message?: string | null
+          messaged?: boolean
+          page_id?: string
+          phone?: string | null
+          post_id?: string | null
+          replied?: boolean
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       team_members: {
         Row: {
           created_at: string
