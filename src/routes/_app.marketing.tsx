@@ -399,7 +399,7 @@ function MarketingPage() {
                   <Input value={editing.subject} onChange={(e) => setEditing({ ...editing, subject: e.target.value })} />
                 </Field>
               )}
-              <Field label="Nội dung">
+              <Field label="Nội dung (dùng {name}, {project} để cá nhân hoá)">
                 <textarea
                   className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm min-h-[100px]"
                   value={editing.content}
