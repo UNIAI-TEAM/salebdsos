@@ -17,9 +17,27 @@ Nhiệm vụ:
 
 Giữ câu trả lời súc tích (2-5 câu), dùng bullet khi liệt kê.`;
 
+// Giới hạn tần suất theo IP để chặn lạm dụng chi phí AI
+const hits = new Map<string, number[]>();
+function limited(ip: string) {
+  const now = Date.now();
+  const arr = (hits.get(ip) ?? []).filter((t) => now - t < 10 * 60_000);
+  arr.push(now);
+  hits.set(ip, arr);
+  if (hits.size > 5000) hits.clear();
+  return arr.length > 20;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+  const ip = (req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip") ?? "unknown").split(",")[0].trim();
+  if (limited(ip)) {
+    return new Response(JSON.stringify({ error: "Bạn gửi quá nhanh, vui lòng thử lại sau ít phút." }), {
+      status: 429,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
