@@ -165,7 +165,7 @@ function InboxPage() {
   const applyQuick = (shortcut: string) => {
     const base = draft.replace(/\/[a-z0-9_]*$/i, "/" + shortcut);
     const out = expandShortcut(base, kit?.quickReplies ?? []);
-    if (out !== null) setDraft(out.replace(/\{project\}/g, threadQuery.data?.conversation.projectId ? "dự án" : "dự án"));
+    if (out !== null) setDraft(out.replace(/\{project\}/g, "dự án"));
   };
 
   const refresh = () => {

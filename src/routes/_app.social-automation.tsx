@@ -7,7 +7,7 @@ import { EyeOff, MessageCircle, Plus, ShieldCheck, Trash2, UserPlus } from "luci
 import { useAuth } from "@/hooks/use-auth";
 import { getSocialAutomation, saveSocialAutomation } from "@/lib/social.functions";
 import type { SocialSettings } from "@/lib/social";
-import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
+import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,16 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
         {hint && <div className="text-xs text-muted-foreground mt-0.5">{hint}</div>}
       </div>
       {children}
+    </div>
+  );
+}
+
+function Stat({ label, value, icon: Icon }: { label: string; value: string; icon: typeof EyeOff }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
+      <Icon className="h-4 w-4 text-primary" />
+      <div className="mt-2 text-2xl font-semibold">{value}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );
 }
@@ -86,10 +96,10 @@ function SocialPage() {
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Bình luận đã xử lý" value={String(d.totals.comments)} icon={MessageCircle} />
-        <KpiCard label="Đã ẩn bảo vệ lead" value={String(d.totals.hidden)} icon={EyeOff} />
-        <KpiCard label="Thành khách" value={String(d.totals.leads)} icon={UserPlus} />
-        <KpiCard label="Đã nhắn Messenger" value={String(d.totals.messaged)} icon={ShieldCheck} />
+        <Stat label="Bình luận đã xử lý" value={String(d.totals.comments)} icon={MessageCircle} />
+        <Stat label="Đã ẩn bảo vệ lead" value={String(d.totals.hidden)} icon={EyeOff} />
+        <Stat label="Thành khách" value={String(d.totals.leads)} icon={UserPlus} />
+        <Stat label="Đã nhắn Messenger" value={String(d.totals.messaged)} icon={ShieldCheck} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">

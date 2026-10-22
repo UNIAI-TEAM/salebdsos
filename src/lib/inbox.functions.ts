@@ -69,7 +69,7 @@ export const saveChannelSettings = createServerFn({ method: "POST" })
 
 export const listConversations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { tenantId: string; channel?: string; search?: string; mine?: boolean }) =>
+  .inputValidator((d: { tenantId: string; channel?: string; search?: string; mine?: boolean; tag?: string }) =>
     z
       .object({
         tenantId: z.string().uuid(),
