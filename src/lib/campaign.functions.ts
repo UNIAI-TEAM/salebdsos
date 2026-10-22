@@ -170,7 +170,7 @@ export const previewSegment = createServerFn({ method: "POST" })
     const [{ data: leads }, { data: projects }] = await Promise.all([
       sb.from("leads").select("id,full_name,phone,email,status,source,project_id,created_at,updated_at,meta")
         .eq("tenant_id", data.tenantId).is("deleted_at", null).limit(5000),
-      sb.from("projects").select("id,name").eq("tenant_id", data.tenantId).is("deleted_at", null).order("name"),
+      sb.from("projects").select("id,name").eq("tenant_id", data.tenantId).order("name"),
     ]);
     const all = (leads ?? []) as any[];
     const matched = all.filter((l) => matchLead(l, data.segment));

@@ -22,8 +22,10 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import {
   listCampaigns, createCampaign, updateCampaign, deleteCampaign,
-  updateCampaignStatus, campaignStats,
+  updateCampaignStatus, campaignStats, sendCampaignNow,
 } from "@/lib/campaign.functions";
+import { EMPTY_SEGMENT, type Segment } from "@/lib/segments";
+import { SegmentBuilder } from "@/components/app/segment-builder";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/marketing")({ component: MarketingPage });
@@ -37,8 +39,8 @@ type CampaignRow = {
   channel: Channel;
   status: Status;
   template: { subject?: string | null; content?: string | null } | null;
-  audience: { note?: string | null } | null;
-  stats: { sent?: number; opened?: number; clicked?: number } | null;
+  audience: { note?: string | null; segment?: Segment | null } | null;
+  stats: { audience?: number; failed?: number; pending?: number; sent?: number; opened?: number; clicked?: number } | null;
   scheduled_at: string | null;
   created_at: string;
 };
@@ -51,12 +53,13 @@ type FormState = {
   subject: string;
   content: string;
   audience_note: string;
+  segment: Segment;
   scheduled_at: string; // datetime-local value
 };
 
 const EMPTY: FormState = {
   name: "", channel: "email", status: "draft",
-  subject: "", content: "", audience_note: "", scheduled_at: "",
+  subject: "", content: "", audience_note: "", segment: EMPTY_SEGMENT, scheduled_at: "",
 };
 
 const CHANNEL_META: Record<Channel, { label: string; icon: any }> = {
@@ -101,6 +104,16 @@ function MarketingPage() {
   const fnUpdate = useServerFn(updateCampaign);
   const fnDelete = useServerFn(deleteCampaign);
   const fnSetStatus = useServerFn(updateCampaignStatus);
+  const fnSend = useServerFn(sendCampaignNow);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const sendMut = useMutation({
+    mutationFn: (id: string) => fnSend({ data: { id } }),
+    onSuccess: (r) => {
+      toast.success(r.remaining > 0 ? `Đã gửi ${r.sent}, còn ${r.remaining} sẽ gửi tiếp tự động` : `Đã gửi ${r.sent} khách`);
+      setSendingId(null); invalidate();
+    },
+    onError: (e: Error) => { toast.error(e.message); setSendingId(null); },
+  });
 
   const list = useQuery({
     queryKey: ["campaigns", tenantId, search, channelFilter, statusFilter, page, pageSize],
@@ -132,6 +145,7 @@ function MarketingPage() {
     subject: v.subject || null,
     content: v.content || null,
     audience_note: v.audience_note || null,
+    segment: v.segment,
     scheduled_at: v.scheduled_at ? new Date(v.scheduled_at).toISOString() : null,
   });
 
@@ -305,10 +319,17 @@ function MarketingPage() {
                           subject: r.template?.subject ?? "",
                           content: r.template?.content ?? "",
                           audience_note: r.audience?.note ?? "",
+                          segment: { ...EMPTY_SEGMENT, ...(r.audience?.segment ?? {}) },
                           scheduled_at: toLocalInput(r.scheduled_at),
                         })}>
                           <Pencil className="h-4 w-4" />
                         </Button>
+                        {r.status !== "completed" && (
+                          <Button size="icon" variant="ghost" title="Gửi ngay theo phân khúc"
+                            onClick={() => setSendingId(r.id)}>
+                            <Send className="h-4 w-4 text-primary" />
+                          </Button>
+                        )}
                         <Button size="icon" variant="ghost" onClick={() => setDeletingId(r.id)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -385,11 +406,17 @@ function MarketingPage() {
                   onChange={(e) => setEditing({ ...editing, content: e.target.value })}
                 />
               </Field>
-              <Field label="Đối tượng (ghi chú)">
+              {tenantId && (
+                <Field label="Phân khúc khách nhận tin">
+                  <SegmentBuilder tenantId={tenantId} channel={editing.channel}
+                    value={editing.segment} onChange={(segment) => setEditing({ ...editing, segment })} />
+                </Field>
+              )}
+              <Field label="Ghi chú đối tượng">
                 <Input
                   value={editing.audience_note}
                   onChange={(e) => setEditing({ ...editing, audience_note: e.target.value })}
-                  placeholder="VD: Leads Vinhomes OP2 — tương tác 30 ngày"
+                  placeholder="Tuỳ chọn"
                 />
               </Field>
               <Field label="Lịch gửi">
@@ -409,6 +436,23 @@ function MarketingPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!sendingId} onOpenChange={(o) => !o && setSendingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Gửi chiến dịch ngay?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tin sẽ gửi tới mọi khách trong phân khúc liên hệ được (mỗi khách 1 lần, bỏ qua khách đã huỷ nhận tin). Không thể thu hồi.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction disabled={sendMut.isPending} onClick={(e) => { e.preventDefault(); sendingId && sendMut.mutate(sendingId); }}>
+              {sendMut.isPending ? "Đang gửi..." : "Gửi ngay"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deletingId} onOpenChange={(o) => !o && setDeletingId(null)}>
         <AlertDialogContent>
