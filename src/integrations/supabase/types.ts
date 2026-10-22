@@ -3434,6 +3434,33 @@ export type Database = {
           },
         ]
       }
+      tenant_credentials: {
+        Row: {
+          ciphertext: string
+          iv: string
+          key: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ciphertext: string
+          iv: string
+          key: string
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ciphertext?: string
+          iv?: string
+          key?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       tenants: {
         Row: {
           created_at: string
