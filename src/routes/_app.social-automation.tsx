@@ -90,7 +90,7 @@ function SocialPage() {
 
       {!d.connected && (
         <div className="rounded-xl border border-amber-300/60 bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-          Fanpage chưa kết nối. Vào <b>Quản trị → Tích hợp kênh khách hàng</b>, nhập Page ID, rồi thêm khoá Facebook (App Secret + Page Access Token có quyền
+          Fanpage chưa kết nối. Vào <b>Quản trị → Tích hợp kênh khách hàng</b>, nhập Page ID, rồi nhập App Secret + Page Access Token vào ô bảo mật ngay tại đó (token cần quyền
           pages_manage_engagement, pages_messaging). Trong Facebook App, đăng ký webhook trường <b>feed</b> cho Fanpage.
         </div>
       )}

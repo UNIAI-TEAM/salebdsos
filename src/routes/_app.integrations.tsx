@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getIntegrations, rotatePortalKey, saveIntegrations } from "@/lib/integrations.functions";
 import { PORTALS } from "@/lib/integrations";
+import { FacebookCredentials } from "@/components/app/facebook-credentials";
 
 export const Route = createFileRoute("/_app/integrations")({
   head: () => ({
@@ -152,7 +153,7 @@ function IntegrationsPage() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2"><Facebook className="h-5 w-5 shrink-0 text-primary" /><span className="text-sm">Nhận khách từ form quảng cáo</span></div>
             <div className="flex items-center gap-2">
-              <Badge variant={d.env.facebook ? "secondary" : "outline"}>{d.env.facebook ? "Đã có khoá ứng dụng" : "Chưa kết nối ứng dụng"}</Badge>
+              <Badge variant={d.env.facebook ? "secondary" : "outline"}>{d.env.facebook ? "Đã có khoá ứng dụng" : "Chưa có khoá"}</Badge>
               <Switch checked={form.facebookEnabled} onCheckedChange={(v) => setForm({ ...form, facebookEnabled: v })} />
             </div>
           </div>
@@ -160,6 +161,7 @@ function IntegrationsPage() {
             <Label className="text-xs text-muted-foreground">ID Fanpage</Label>
             <Input value={form.facebookPageId} inputMode="numeric" placeholder="VD: 1029384756" onChange={(e) => setForm({ ...form, facebookPageId: e.target.value.replace(/\D/g, "") })} className="max-w-md" />
           </div>
+          {tenantId && <FacebookCredentials tenantId={tenantId} />}
           <CopyRow label="Callback URL" value={`${origin}/api/public/integrations/facebook`} />
           {d.config.facebook.verifyToken ? (
             <CopyRow label="Verify token" value={d.config.facebook.verifyToken} />
