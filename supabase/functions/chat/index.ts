@@ -23,7 +23,17 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const raw = await req.json();
+    const messages = (Array.isArray(raw?.messages) ? raw.messages : [])
+      .filter((m: any) => (m?.role === "user" || m?.role === "assistant") && typeof m?.content === "string")
+      .slice(-20)
+      .map((m: any) => ({ role: m.role, content: String(m.content).slice(0, 2000) }));
+    if (!messages.length) {
+      return new Response(JSON.stringify({ error: "Invalid messages" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
