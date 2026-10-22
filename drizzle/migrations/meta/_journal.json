@@ -43,6 +43,13 @@
       "when": 1792628234095,
       "tag": "0005_social_comment_logs",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792628584351,
+      "tag": "0006_tenant_credentials",
+      "breakpoints": true
     }
   ]
 }

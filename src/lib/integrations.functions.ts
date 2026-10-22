@@ -45,6 +45,8 @@ export const getIntegrations = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context, data.tenantId);
     const cfg = await load(context, data.tenantId);
+    const { facebookCreds } = await import("@/lib/credentials.server");
+    const fb = await facebookCreds(data.tenantId);
     const [{ data: projects }, { data: recent }] = await Promise.all([
       context.supabase.from("projects").select("id,name").eq("tenant_id", data.tenantId).is("deleted_at", null).order("name"),
       context.supabase
@@ -60,7 +62,7 @@ export const getIntegrations = createServerFn({ method: "GET" })
       projects: projects ?? [],
       recent: recent ?? [],
       env: {
-        facebook: Boolean(process.env["FB_APP_SECRET"] && process.env["FB_PAGE_ACCESS_TOKEN"]),
+        facebook: Boolean(fb.appSecret && fb.pageToken),
         zalo: Boolean(process.env["ZALO_OA_SECRET"] && process.env["ZALO_APP_ID"]),
       },
     };
@@ -115,4 +117,44 @@ export const rotatePortalKey = createServerFn({ method: "POST" })
       portal: { enabled: true, keyHash: sha256(key), keyHint: key.slice(-4), createdAt: new Date().toISOString() },
     });
     return { key };
+  });
+
+/* ---------------- Khoá Facebook theo sàn (chỉ ghi, không đọc lại) ---------------- */
+
+export const getFacebookCredentialStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context, data.tenantId);
+    const { credentialStatus } = await import("@/lib/credentials.server");
+    const s = await credentialStatus(data.tenantId);
+    return { appSecretAt: s.fb_app_secret, pageTokenAt: s.fb_page_token };
+  });
+
+export const saveFacebookCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      tenantId: z.string().uuid(),
+      appSecret: z.string().trim().regex(/^[a-f0-9]{32}$/i, "App Secret gồm 32 ký tự 0-9, a-f").optional(),
+      pageToken: z.string().trim().min(40, "Page Access Token quá ngắn").max(1000).regex(/^[A-Za-z0-9_-]+$/, "Token không hợp lệ").optional(),
+      clear: z.boolean().optional(),
+    }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context, data.tenantId);
+    const { saveCredential } = await import("@/lib/credentials.server");
+    if (data.clear) {
+      await saveCredential(data.tenantId, "fb_app_secret", null, context.userId);
+      await saveCredential(data.tenantId, "fb_page_token", null, context.userId);
+      return { ok: true, pageName: null as string | null };
+    }
+    let pageName: string | null = null;
+    if (data.pageToken) {
+      const res = await fetch(`https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${encodeURIComponent(data.pageToken)}`);
+      if (!res.ok) throw new Error(`Facebook từ chối token [${res.status}] — kiểm tra lại Page Access Token`);
+      pageName = ((await res.json()) as { name?: string }).name ?? null;
+      await saveCredential(data.tenantId, "fb_page_token", data.pageToken, context.userId);
+    }
+    if (data.appSecret) await saveCredential(data.tenantId, "fb_app_secret", data.appSecret, context.userId);
+    return { ok: true, pageName };
   });

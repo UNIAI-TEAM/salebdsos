@@ -27,7 +27,8 @@ export type FbComment = {
 };
 
 export async function handleFbComment(c: FbComment) {
-  const token = process.env["FB_PAGE_ACCESS_TOKEN"];
+  const { facebookCreds } = await import("@/lib/credentials.server");
+  const token = (await facebookCreds(c.tenantId)).pageToken;
   if (!token) return { skipped: "no_token" };
   if (c.authorId && c.authorId === c.pageId) return { skipped: "own_comment" };
 
