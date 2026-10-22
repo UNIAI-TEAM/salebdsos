@@ -45,6 +45,8 @@ export const getIntegrations = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context, data.tenantId);
     const cfg = await load(context, data.tenantId);
+    const { facebookCreds } = await import("@/lib/credentials.server");
+    const fb = await facebookCreds(data.tenantId);
     const [{ data: projects }, { data: recent }] = await Promise.all([
       context.supabase.from("projects").select("id,name").eq("tenant_id", data.tenantId).is("deleted_at", null).order("name"),
       context.supabase
@@ -60,7 +62,7 @@ export const getIntegrations = createServerFn({ method: "GET" })
       projects: projects ?? [],
       recent: recent ?? [],
       env: {
-        facebook: Boolean(process.env["FB_APP_SECRET"] && process.env["FB_PAGE_ACCESS_TOKEN"]),
+        facebook: Boolean(fb.appSecret && fb.pageToken),
         zalo: Boolean(process.env["ZALO_OA_SECRET"] && process.env["ZALO_APP_ID"]),
       },
     };

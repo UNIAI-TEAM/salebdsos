@@ -38,8 +38,23 @@ export const Route = createFileRoute("/api/public/integrations/facebook")({
       },
       POST: async ({ request }) => {
         const raw = await request.text();
-        const secret = process.env["FB_APP_SECRET"];
-        const pageToken = process.env["FB_PAGE_ACCESS_TOKEN"];
+        let payload: any;
+        try {
+          payload = JSON.parse(raw);
+        } catch {
+          return json({ error: "bad json" }, 400);
+        }
+        // Xác định sàn theo Page ID, rồi kiểm chữ ký bằng App Secret của sàn đó
+        const pageIds = [...new Set((payload?.entry ?? []).map((e: any) => String(e?.id ?? "")).filter((x: string) => /^\d+$/.test(x)))] as string[];
+        if (pageIds.length !== 1) return json({ ok: true, skipped: "unknown_page" });
+        const { supabaseAdmin: sbA } = await import("@/integrations/supabase/client.server");
+        const { data: owner } = await sbA.from("settings").select("tenant_id")
+          .eq("key", "integrations").eq("value->facebook->>pageId", pageIds[0]).limit(1);
+        if (!owner?.[0]) return json({ ok: true, skipped: "unknown_page" });
+        const { facebookCreds } = await import("@/lib/credentials.server");
+        const creds = await facebookCreds(owner[0].tenant_id as string);
+        const secret = creds.appSecret;
+        const pageToken = creds.pageToken;
         if (!secret || !pageToken) return json({ ok: true, skipped: "facebook_not_connected" });
 
         const sig = request.headers.get("x-hub-signature-256") ?? "";
@@ -47,13 +62,6 @@ export const Route = createFileRoute("/api/public/integrations/facebook")({
         const a = Buffer.from(sig);
         const b = Buffer.from(expected);
         if (a.length !== b.length || !timingSafeEqual(a, b)) return json({ error: "invalid signature" }, 401);
-
-        let payload: any;
-        try {
-          payload = JSON.parse(raw);
-        } catch {
-          return json({ error: "bad json" }, 400);
-        }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { ingestInboundLead } = await import("@/lib/inbound-leads.server");

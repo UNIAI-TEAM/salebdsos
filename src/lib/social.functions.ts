@@ -25,10 +25,12 @@ export const getSocialAutomation = createServerFn({ method: "GET" })
       sb.from("projects").select("id,name").eq("tenant_id", data.tenantId).order("name"),
     ]);
     const logs = (logsQ.data ?? []) as any[];
+    const { facebookCreds } = await import("@/lib/credentials.server");
+    const fb = await facebookCreds(data.tenantId);
     return {
       settings: parseSocialSettings(settingsQ.data?.value),
       pageId: (integQ.data?.value as any)?.facebook?.pageId ?? null,
-      connected: Boolean(process.env["FB_APP_SECRET"] && process.env["FB_PAGE_ACCESS_TOKEN"]),
+      connected: Boolean(fb.appSecret && fb.pageToken),
       canEdit: roles.some((r) => ADMIN_ROLES.has(r)),
       projects: (projectsQ.data ?? []) as { id: string; name: string }[],
       logs,
