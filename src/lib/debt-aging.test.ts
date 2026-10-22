@@ -23,7 +23,9 @@ describe("tuổi nợ", () => {
 
 import { reminderKind } from "./debt-aging";
 describe("reminderKind", () => {
-  it("còn 4 ngày chưa nhắc", () => expect(reminderKind("2026-10-26", "2026-10-22")).toBe(null));
+  it("còn 8 ngày chưa nhắc", () => expect(reminderKind("2026-10-30", "2026-10-22")).toBe(null));
+  it("còn 7 ngày nhắc trước 7 ngày", () => expect(reminderKind("2026-10-29", "2026-10-22")).toBe("due_7"));
+  it("còn 4 ngày vẫn ở mốc 7 ngày", () => expect(reminderKind("2026-10-26", "2026-10-22")).toBe("due_7"));
   it("còn 3 ngày nhắc sắp đến hạn", () => expect(reminderKind("2026-10-25", "2026-10-22")).toBe("due_3"));
   it("đúng hạn", () => expect(reminderKind("2026-10-22", "2026-10-22")).toBe("due_0"));
   it("quá 10 ngày", () => expect(reminderKind("2026-10-12", "2026-10-22")).toBe("overdue_1"));

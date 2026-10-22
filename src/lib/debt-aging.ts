@@ -25,10 +25,11 @@ export function agingBucket(dueDate: string | null, today: string | Date): Aging
   return "d30_plus";
 }
 
-/** Mốc nhắc thanh toán: trước hạn 3 ngày, đúng hạn, quá hạn 1/15/30 ngày. */
-export const REMINDER_KINDS = ["due_3", "due_0", "overdue_1", "overdue_15", "overdue_30"] as const;
+/** Mốc nhắc thanh toán: trước hạn 7 ngày, 3 ngày, đúng hạn, quá hạn 1/15/30 ngày. */
+export const REMINDER_KINDS = ["due_7", "due_3", "due_0", "overdue_1", "overdue_15", "overdue_30"] as const;
 export type ReminderKind = (typeof REMINDER_KINDS)[number];
 export const REMINDER_LABEL: Record<ReminderKind, string> = {
+  due_7: "Sắp đến hạn (còn 7 ngày)",
   due_3: "Sắp đến hạn (còn 3 ngày)",
   due_0: "Đến hạn hôm nay",
   overdue_1: "Quá hạn 1 ngày",
@@ -44,5 +45,6 @@ export function reminderKind(dueDate: string | null, today: string | Date): Remi
   if (d >= 1) return "overdue_1";
   if (d === 0) return "due_0";
   if (d >= -3) return "due_3";
+  if (d >= -7) return "due_7";
   return null;
 }

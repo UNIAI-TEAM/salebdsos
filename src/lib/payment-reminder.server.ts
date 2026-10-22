@@ -8,10 +8,10 @@ const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n)) 
 
 export async function runPaymentReminders() {
   const today = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
-  const horizon = new Date(Date.now() + 7 * 3600_000 + 3 * 86_400_000).toISOString().slice(0, 10);
+  const horizon = new Date(Date.now() + 7 * 3600_000 + 7 * 86_400_000).toISOString().slice(0, 10);
   const { data: ins } = await admin
     .from("contract_installments")
-    .select("id,tenant_id,contract_id,name,amount,paid_amount,due_date,contracts!inner(id,code,owner_user_id,status,deleted_at)")
+    .select("id,tenant_id,contract_id,name,amount,paid_amount,due_date,contracts!inner(id,code,owner_user_id,status,deleted_at,customer_id)")
     .lte("due_date", horizon)
     .neq("status", "paid")
     .limit(1000);
@@ -37,6 +37,21 @@ export async function runPaymentReminders() {
       tenant_id: i.tenant_id, user_id: c.owner_user_id, type: "payment_reminder", title, body, link: "/contracts",
     });
     await sendPushToUser({ userId: c.owner_user_id, title, body, link: "/contracts", tag: `pay-${i.id}` });
+    // Nhắc thẳng khách qua SMS/email nếu kênh đã bật
+    if (c.customer_id) {
+      try {
+        const { data: cus } = await admin.from("customers").select("full_name,phone,email").eq("id", c.customer_id).maybeSingle();
+        if (cus) {
+          const { loadChannelSettings, sendSmsMessage, sendEmailMessage } = await import("@/lib/channels.server");
+          const st = await loadChannelSettings(i.tenant_id);
+          const text = `Kinh gui ${cus.full_name ?? "Quy khach"}: ${i.name} HD ${c.code} con ${fmt(outstanding)}, han ${i.due_date.split("-").reverse().join("/")}. Noi dung CK: ${c.code.replace(/-/g, "")}`;
+          if (st.sms.enabled && cus.phone) await sendSmsMessage({ settings: st, phone: cus.phone, text });
+          else if (st.email.enabled && cus.email) await sendEmailMessage({ settings: st, to: cus.email, subject: `Nhắc thanh toán hợp đồng ${c.code}`, text });
+        }
+      } catch (e) {
+        console.error("customer reminder", e);
+      }
+    }
   }
   return { ok: true, sent };
 }
