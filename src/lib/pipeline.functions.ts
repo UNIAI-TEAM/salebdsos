@@ -29,9 +29,7 @@ function clean<T extends Record<string, any>>(o: T) {
 
 async function seedDefaultStages(supabase: any, tenantId: string): Promise<void> {
   // Chỉ thành viên của workspace mới được tạo giai đoạn mặc định
-  const { data: claims } = await supabase.auth.getClaims?.() ?? { data: null };
-  const uid = claims?.claims?.sub;
-  const { data: member } = await supabase.from("user_roles").select("role").eq("tenant_id", tenantId).eq("user_id", uid ?? "").limit(1);
+  const { data: member } = await supabase.from("user_roles").select("role").eq("tenant_id", tenantId).limit(1);
   if (!member?.length) throw new Error("Bạn không thuộc workspace này");
   const { count } = await supabase
     .from("pipeline_stages")
