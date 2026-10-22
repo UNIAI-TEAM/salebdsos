@@ -38,18 +38,11 @@ export const checkEmailVerification = createServerFn({ method: "GET" })
         const u = list.users.find((x) => (x.email ?? "").toLowerCase() === email);
         if (u) {
           const confirmedAt = u.email_confirmed_at ?? (u as any).confirmed_at ?? null;
-          const meta = (u.user_metadata ?? {}) as Record<string, any>;
           return {
             ...base,
             status: confirmedAt ? "verified" : "pending",
             confirmedAt,
-            user: {
-              email: u.email ?? email,
-              username: meta.username ?? meta.user_name ?? null,
-              fullName: meta.full_name ?? meta.name ?? null,
-              createdAt: u.created_at ?? null,
-              lastSignInAt: u.last_sign_in_at ?? null,
-            },
+            user: null,
           };
         }
         if (list.users.length < perPage) break;

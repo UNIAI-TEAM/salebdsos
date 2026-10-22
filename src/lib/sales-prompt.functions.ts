@@ -49,7 +49,8 @@ export const listSalesPrompts = createServerFn({ method: "GET" })
     if (data.category && data.category !== "all") q = q.eq("category", data.category);
     if (data.industry && data.industry !== "all") q = q.eq("industry", data.industry);
     if (data.stageId) q = q.eq("stage_id", data.stageId);
-    if (data.search) q = q.or(`name.ilike.%${data.search}%,prompt.ilike.%${data.search}%`);
+    const safe = (data.search ?? "").replace(/[,()*%\\:."']/g, " ").trim();
+    if (safe) q = q.or(`name.ilike.%${safe}%,prompt.ilike.%${safe}%`);
     const { data: items, error } = await q;
     if (error) throw new Error(error.message);
     return { items: items ?? [] };

@@ -95,8 +95,9 @@ export const listConversations = createServerFn({ method: "GET" })
 
     if (!canSeeAll || data.mine) query = query.eq("owner_user_id", userId);
     if (data.channel && data.channel !== "all") query = query.eq("channel", data.channel as never);
-    if (data.search) {
-      const term = `%${data.search}%`;
+    const safeSearch = (data.search ?? "").replace(/[,()*%\\:."']/g, " ").trim();
+    if (safeSearch) {
+      const term = `%${safeSearch}%`;
       query = query.or(`contact_name.ilike.${term},contact_phone.ilike.${term}`);
     }
 
@@ -199,15 +200,17 @@ export const sendMessage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await roles(supabase as never, data.tenantId, userId);
+    const roleListSend = await roles(supabase as never, data.tenantId, userId);
 
     const { data: conv } = await supabase
       .from("conversations")
-      .select("id, channel, contact_zalo_id, contact_phone, contact_name, lead_id")
+      .select("id, channel, contact_zalo_id, contact_phone, contact_name, lead_id, owner_user_id")
       .eq("tenant_id", data.tenantId)
       .eq("id", data.conversationId)
       .maybeSingle();
     if (!conv) throw new Error("Không tìm thấy hội thoại");
+    if (!roleListSend.some((r) => MANAGER_ROLES.has(r)) && (conv as any).owner_user_id && (conv as any).owner_user_id !== userId)
+      throw new Error("Bạn chỉ được nhắn khách mình phụ trách");
 
     const channel = data.channel ?? (conv.channel as string);
     const { data: profile } = await supabase
@@ -307,7 +310,19 @@ export const startCall = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await roles(supabase as never, data.tenantId, userId);
+    const roleListCall = await roles(supabase as never, data.tenantId, userId);
+    const digits = data.phone.replace(/\D/g, "").slice(-9);
+    if (digits.length < 8) throw new Error("Số điện thoại không hợp lệ");
+    const sbAny = supabase as any;
+    const [{ data: leadHit }, { data: convHit }, { data: custHit }] = await Promise.all([
+      sbAny.from("leads").select("id,owner_user_id").eq("tenant_id", data.tenantId).ilike("phone", `%${digits}`).limit(5),
+      sbAny.from("conversations").select("id,owner_user_id").eq("tenant_id", data.tenantId).ilike("contact_phone", `%${digits}`).limit(5),
+      sbAny.from("customers").select("id").eq("tenant_id", data.tenantId).ilike("phone", `%${digits}`).limit(5),
+    ]);
+    const hits = [...(leadHit ?? []), ...(convHit ?? []), ...(custHit ?? [])] as any[];
+    if (!hits.length) throw new Error("Chỉ gọi được số của khách trong workspace");
+    if (!roleListCall.some((r) => MANAGER_ROLES.has(r)) && !hits.some((h) => !h.owner_user_id || h.owner_user_id === userId))
+      throw new Error("Bạn chỉ được gọi khách mình phụ trách");
 
     const { loadChannelSettings, startProviderCall, appendMessage } = await import("@/lib/channels.server");
     const settings = await loadChannelSettings(data.tenantId);
