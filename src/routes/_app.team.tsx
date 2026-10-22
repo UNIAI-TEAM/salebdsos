@@ -1,3 +1,4 @@
+import { csvEscape } from "@/lib/audit-csv";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -196,7 +197,7 @@ function TeamPage() {
                       [m.fullName ?? "", m.email ?? "", m.role,
                       m.perf?.leadsTotal ?? 0, m.perf?.dealsWon ?? 0,
                       m.perf?.revenue ?? 0, ((m.perf?.conversionRate ?? 0) * 100).toFixed(1) + "%",
-                      m.perf?.nfcQrInteractions ?? 0].join(","),
+                      m.perf?.nfcQrInteractions ?? 0].map(csvEscape).join(","),
                     ),
                   ).join("\n");
                   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
