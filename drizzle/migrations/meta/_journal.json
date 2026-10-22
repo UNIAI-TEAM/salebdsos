@@ -15,6 +15,13 @@
       "when": 1792627507792,
       "tag": "0001_payment_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792627724807,
+      "tag": "0002_tighten_job_locks_auth_settings",
+      "breakpoints": true
     }
   ]
 }
