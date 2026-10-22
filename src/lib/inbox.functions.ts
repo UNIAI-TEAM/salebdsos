@@ -76,6 +76,7 @@ export const listConversations = createServerFn({ method: "GET" })
         channel: z.string().max(20).optional(),
         search: z.string().max(120).optional(),
         mine: z.boolean().optional(),
+        tag: z.string().max(40).optional(),
       })
       .parse(d),
   )
@@ -87,13 +88,14 @@ export const listConversations = createServerFn({ method: "GET" })
     let query = supabase
       .from("conversations")
       .select(
-        "id, channel, contact_name, contact_phone, status, unread_count, last_message_at, last_message_preview, owner_user_id, lead_id, project_id",
+        "id, channel, contact_name, contact_phone, status, unread_count, last_message_at, last_message_preview, owner_user_id, lead_id, project_id, meta",
       )
       .eq("tenant_id", data.tenantId)
       .order("last_message_at", { ascending: false })
       .limit(100);
 
     if (!canSeeAll || data.mine) query = query.eq("owner_user_id", userId);
+    if (data.tag) query = query.contains("meta", { tags: [data.tag] } as never);
     if (data.channel && data.channel !== "all") query = query.eq("channel", data.channel as never);
     const safeSearch = (data.search ?? "").replace(/[,()*%\\:."']/g, " ").trim();
     if (safeSearch) {
@@ -119,6 +121,7 @@ export const listConversations = createServerFn({ method: "GET" })
       preview: row.last_message_preview,
       projectName: row.project_id ? projectNames.get(row.project_id) ?? null : null,
       leadId: row.lead_id,
+      tags: (((row as any).meta ?? {}).tags ?? []) as string[],
     }));
 
     return {
@@ -177,6 +180,7 @@ export const getConversation = createServerFn({ method: "GET" })
         leadId: conv.lead_id,
         projectId: conv.project_id,
         ownerUserId: conv.owner_user_id,
+        tags: (((conv.meta ?? {}) as any).tags ?? []) as string[],
       },
       messages: messagesQ.data ?? [],
       calls: callsQ.data ?? [],
@@ -473,4 +477,39 @@ export const openConversationForLead = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     return { ok: true, conversationId: conv.id };
+  });
+
+/* ------------------------- Trả lời nhanh & thẻ hội thoại ------------------------- */
+
+export const getInboxKit = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { tenantId: string }) => z.object({ tenantId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await roles(supabase as never, data.tenantId, userId);
+    const { SOCIAL_KEY, parseSocialSettings, DEFAULT_TAGS } = await import("@/lib/social");
+    const { data: row } = await supabase.from("settings").select("value")
+      .eq("tenant_id", data.tenantId).eq("key", SOCIAL_KEY).maybeSingle();
+    return { quickReplies: parseSocialSettings(row?.value).quickReplies, tags: DEFAULT_TAGS.map((t) => ({ ...t })) };
+  });
+
+export const setConversationTags = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ tenantId: z.string().uuid(), conversationId: z.string().uuid(), tags: z.array(z.string().max(40)).max(10) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const list = await roles(supabase as never, data.tenantId, userId);
+    const { data: conv } = await supabase.from("conversations").select("id,meta,owner_user_id")
+      .eq("tenant_id", data.tenantId).eq("id", data.conversationId).maybeSingle();
+    if (!conv) throw new Error("Không tìm thấy hội thoại");
+    if (!list.some((r) => MANAGER_ROLES.has(r)) && conv.owner_user_id !== userId)
+      throw new Error("Chỉ gắn thẻ hội thoại bạn phụ trách");
+    const { DEFAULT_TAGS } = await import("@/lib/social");
+    const allowed = new Set<string>(DEFAULT_TAGS.map((t) => t.key));
+    const tags = [...new Set(data.tags.filter((t) => allowed.has(t)))];
+    const meta = { ...((conv.meta ?? {}) as Record<string, unknown>), tags };
+    const { error } = await supabase.from("conversations").update({ meta } as never).eq("id", conv.id);
+    if (error) throw new Error(error.message);
+    return { tags };
   });
