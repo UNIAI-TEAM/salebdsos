@@ -45,12 +45,12 @@ function formatTime(value: string) {
 function Metric({ icon: Icon, label, value, hint }: { icon: typeof Activity; label: string; value: string; hint: string }) {
   return (
     <div className="min-w-0 rounded-xl border border-border bg-card p-4 transition-colors duration-150 hover:border-primary/30 sm:p-5">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <p className="min-w-0 truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <p className="min-w-0 text-[11px] font-medium uppercase leading-snug tracking-wide text-muted-foreground sm:text-xs">{label}</p>
         <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Icon className="h-4 w-4" /></div>
       </div>
       <p className="text-2xl font-semibold leading-none tracking-tight text-foreground tabular-nums">{value}</p>
-      <p className="mt-2 truncate text-xs text-muted-foreground">{hint}</p>
+      <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{hint}</p>
     </div>
   );
 }
@@ -228,7 +228,7 @@ function SaleOverviewPage() {
               </div>
               <Badge variant="outline" className="shrink-0">Không tính trùng liên hệ</Badge>
             </div>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 [&>*:last-child]:col-span-2 lg:[&>*:last-child]:col-span-1">
               <Metric icon={ScanLine} label="Lượt tương tác" value={String(data.metrics.interactions)} hint="QR và Digital Card · 30 ngày" />
               <Metric icon={UserRoundCheck} label="Khách đã gửi thông tin" value={String(data.metrics.customersServed)} hint="Theo số điện thoại hoặc email" />
               <Metric icon={FileSignature} label="Hợp đồng đã ký" value={String(data.metrics.contractsSigned)} hint="Giao dịch thành công · toàn thời gian" />
