@@ -45,7 +45,7 @@ export const getCustomer360 = createServerFn({ method: "GET" })
       leadIds.length || tail ? sb.from("event_tickets").select("id,code,status,checked_in_at,created_at").eq("tenant_id", t)
         .or([leadIds.length && `lead_id.in.(${leadIds.join(",")})`, tail && `guest_phone.ilike.%${tail}`].filter(Boolean).join(",")) : { data: [] },
       sb.from("files").select("id,name,created_at").eq("tenant_id", t).is("deleted_at", null)
-        .or(`and(related_type.eq.customer,related_id.eq.${c.id})${ctrIds.length ? `,and(related_type.eq.contract,related_id.in.(${ctrIds.join(",")}))` : ""}`),
+        .or(`and(related_type.eq.customer,related_id.eq.${c.id})${ctrIds.length ? `,and(related_type.eq.contract,related_id.in.(${ctrIds.join(",")}))` : ""}${leadIds.length ? `,and(related_type.eq.lead,related_id.in.(${leadIds.join(",")}))` : ""}`).limit(100),
       leadIds.length ? sb.from("nurture_messages").select("id,channel,status,body,sent_at,created_at").in("lead_id", leadIds).limit(100) : { data: [] },
     ]);
 

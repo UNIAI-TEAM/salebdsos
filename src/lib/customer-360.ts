@@ -53,7 +53,7 @@ export function buildTimeline(s: Src): C360Event[] {
     if (t.checked_in_at) out.push({ id: "tc" + t.id, kind: "event", at: t.checked_in_at, title: `Check-in sự kiện · vé ${t.code}` });
   }
   for (const f of s.files ?? [])
-    out.push({ id: "f" + f.id, kind: "file", at: f.created_at, title: `Tài liệu: ${f.name}` });
+    out.push({ id: "f" + f.id, kind: "file", at: f.created_at, title: `Tài liệu: ${f.name}`, link: f.id });
   for (const n of s.nurture ?? [])
     out.push({ id: "n" + n.id, kind: "nurture", at: n.sent_at ?? n.created_at, title: `Nhắc tự động · ${CH[n.channel] ?? n.channel} · ${n.status}`, detail: n.body });
   for (const a of s.appointments ?? [])
