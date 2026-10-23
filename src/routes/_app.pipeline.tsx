@@ -317,6 +317,26 @@ function PipelinePage() {
         </DragOverlay>
       </DndContext>
 
+      <Dialog open={!!lostAsk} onOpenChange={(o) => !o && setLostAsk(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Lý do thất bại</DialogTitle></DialogHeader>
+          <div className="flex flex-wrap gap-1.5">
+            {["Giá cao", "Chọn dự án khác", "Không đủ tài chính", "Không liên lạc được", "Chưa có nhu cầu"].map((r) => (
+              <button key={r} type="button" onClick={() => setLostAsk((s) => s && { ...s, reason: r })}
+                className={`rounded-full border px-3 py-1.5 text-xs ${lostAsk?.reason === r ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>{r}</button>
+            ))}
+          </div>
+          <Textarea placeholder="Ghi chú thêm (không bắt buộc)" value={lostAsk?.reason ?? ""}
+            onChange={(e) => setLostAsk((s) => s && { ...s, reason: e.target.value })} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLostAsk(null)}>Huỷ</Button>
+            <Button onClick={async () => { const a = lostAsk!; setLostAsk(null); await applyMove(a.dealId, a.stageId, a.reason); }}>
+              Xác nhận
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {stageMgr && tenantId && (
         <StageManagerDialog
           open
