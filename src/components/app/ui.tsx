@@ -19,8 +19,8 @@ export function KpiCard({
   const up = delta >= 0;
   return (
     <div className="group min-w-0 rounded-xl border border-border bg-card p-4 transition-colors duration-150 hover:border-primary/30 sm:p-5">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <span className="min-w-0 truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <span className="min-w-0 text-[11px] font-medium uppercase leading-snug tracking-wide text-muted-foreground sm:text-xs">{label}</span>
         <div className={["grid h-8 w-8 shrink-0 place-items-center rounded-lg", TONES[tone]].join(" ")}>
           <Icon className="h-4 w-4" />
         </div>
@@ -55,7 +55,7 @@ export function SectionCard({
 
 export function PageHeader({ title, sub, action }: { title: string; sub?: string; action?: React.ReactNode }) {
   return (
-    <header className="mb-6 flex flex-col gap-4 border-b border-border pb-6 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+    <header className="mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 border-b border-border pb-6 sm:mb-8 sm:flex sm:items-end sm:justify-between">
       <div className="min-w-0">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">{title}</h1>
         {sub && <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">{sub}</p>}
