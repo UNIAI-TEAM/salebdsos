@@ -54,7 +54,7 @@ export const runHandover = createServerFn({ method: "POST" })
     const sb: any = context.supabase;
     const t = data.tenantId;
     const { members, scope } = await ctx(sb, t, context.userId);
-    if (!canHandover(scope, data.fromUserId, data.toUserIds, data.toUserIds.length ? members : []))
+    if (!canHandover(scope, data.fromUserId, data.toUserIds, members))
       throw new Error("Bạn không có quyền bàn giao giữa các Sale này");
 
     const { data: leads } = await sb.from("leads").select("id")
@@ -66,11 +66,7 @@ export const runHandover = createServerFn({ method: "POST" })
     const leadIds = (leads ?? []).map((l: any) => l.id);
     const plan = planHandover(leadIds, data.toUserIds, load);
 
-    const { data: h, error: hErr } = await sb.from("handovers").insert({
-      tenant_id: t, from_user_id: data.fromUserId, to_user_ids: data.toUserIds,
-      reason: data.reason || null, created_by: context.userId,
-    }).select("id").single();
-    if (hErr) throw new Error(hErr.message);
+    const h = { id: crypto.randomUUID() };
 
     // Leads + the conversations / open deals tied to them follow the same new owner.
     const byTarget: Record<string, string[]> = {};
@@ -96,7 +92,11 @@ export const runHandover = createServerFn({ method: "POST" })
       leads: leadIds.length, customers: cu.count ?? 0, deals: deals + (dl.count ?? 0),
       conversations: convs + (cv.count ?? 0), appointments: ap.count ?? 0,
     };
-    await sb.from("handovers").update({ counts }).eq("id", h.id);
+    const { error: hErr } = await sb.from("handovers").insert({
+      id: h.id, tenant_id: t, from_user_id: data.fromUserId, to_user_ids: data.toUserIds,
+      reason: data.reason || null, created_by: context.userId, counts,
+    });
+    if (hErr) throw new Error(hErr.message);
     if (leadIds.length) {
       const rows = Object.entries(plan).map(([lid, to]) => ({
         tenant_id: t, actor_user_id: context.userId, action: "lead.handover", entity: "lead", entity_id: lid,
