@@ -43,17 +43,24 @@ function formatTime(value: string) {
 
 function Metric({ icon: Icon, label, value, hint }: { icon: typeof Activity; label: string; value: string; hint: string }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-border bg-card p-4 shadow-soft">
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></div>
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
-      <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>
+    <div className="min-w-0 rounded-xl border border-border bg-card p-4 transition-colors duration-150 hover:border-primary/30 sm:p-5">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Icon className="h-4 w-4" /></div>
+      </div>
+      <p className="text-2xl font-semibold leading-none tracking-tight text-foreground tabular-nums">{value}</p>
+      <p className="mt-2 truncate text-xs text-muted-foreground">{hint}</p>
     </div>
   );
 }
 
 function Empty({ text }: { text: string }) {
-  return <p className="py-7 text-center text-sm text-muted-foreground">{text}</p>;
+  return (
+    <div className="flex flex-col items-center gap-2 py-8 text-center">
+      <div className="grid h-10 w-10 place-items-center rounded-full bg-muted text-muted-foreground"><CheckCircle2 className="h-5 w-5" /></div>
+      <p className="text-sm text-muted-foreground">{text}</p>
+    </div>
+  );
 }
 
 function SaleOverviewPage() {
