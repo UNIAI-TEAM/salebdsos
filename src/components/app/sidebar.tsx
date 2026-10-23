@@ -56,8 +56,10 @@ const groups: Group[] = [
     label: "Danh thiếp & điểm chạm",
     items: [
       { to: "/digital-card", label: "Danh thiếp", icon: IdCard },
+      { to: "/card-designer", label: "Sửa danh thiếp", icon: ContactRound },
       { to: "/profile", label: "Profile", icon: UserSquare2 },
       { to: "/landings", label: "Landing dự án", icon: Globe2, roles: ["owner", "admin", "manager", "agent"] },
+      { to: "/qr-sharing", label: "QR Sharing", icon: Send },
       { to: "/nfc-codes", label: "NFC & QR", icon: QrCode },
       { to: "/dynamic-qr", label: "QR động", icon: Radio },
       { to: "/airdrop", label: "AirDrop", icon: Send },
