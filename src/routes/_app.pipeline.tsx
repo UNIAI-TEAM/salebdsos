@@ -283,7 +283,7 @@ function PipelinePage() {
       <DndContext sensors={sensors} collisionDetection={closestCorners}
         onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div className="overflow-x-auto -mx-4 lg:-mx-8 px-4 lg:px-8 pb-4 scrollbar-thin">
-          <div className="grid grid-flow-col auto-cols-[280px] gap-4">
+          <div className="grid grid-flow-col auto-cols-[82vw] sm:auto-cols-[280px] gap-3 sm:gap-4 snap-x snap-mandatory md:snap-none">
             {stages.map((s) => {
               const list = dealsByStage.get(s.id) ?? [];
               const sum = list.reduce((a, b) => a + (b.value ?? 0), 0);
@@ -300,7 +300,13 @@ function PipelinePage() {
                       project={d.project_id ? projectById.get(d.project_id) : null}
                       owner={d.owner_user_id ? ownerById.get(d.owner_user_id) : null}
                       onClick={() => setEditing(d)}
-                      onAiPrompt={() => void openAiForDeal(d)} />
+                      onAiPrompt={() => void openAiForDeal(d)}
+                      stages={canEdit ? stages : undefined}
+                      onMoveTo={(sid) => {
+                        const t = stages.find((x) => x.id === sid);
+                        if (t && statusForStage(t) === "lost") setLostAsk({ dealId: d.id, stageId: sid, reason: "" });
+                        else void applyMove(d.id, sid);
+                      }} />
                   ))}
                 </Column>
               );
@@ -393,7 +399,7 @@ function Column({
   const { setNodeRef, isOver } = useDroppable({ id: `stage:${stage.id}` });
   return (
     <div ref={setNodeRef}
-      className={["rounded-2xl border flex flex-col transition",
+      className={["rounded-2xl border flex flex-col transition snap-start",
         isOver ? "bg-primary/5 border-primary" : "bg-muted/40 border-border"].join(" ")}>
       <div className="px-4 pt-3.5 pb-3 border-b border-border bg-card rounded-t-2xl">
         <div className="flex items-center justify-between mb-1.5">
@@ -424,10 +430,11 @@ function Column({
 }
 
 function DealCard({
-  deal, lead, project, owner, onClick, onAiPrompt,
+  deal, lead, project, owner, onClick, onAiPrompt, stages, onMoveTo,
 }: {
   deal: Deal; lead?: Lead | null; project?: Project | null; owner?: Owner | null;
   onClick: () => void; onAiPrompt?: () => void;
+  stages?: Stage[]; onMoveTo?: (stageId: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: deal.id });
   const style: React.CSSProperties = {
@@ -454,6 +461,16 @@ function DealCard({
           )}
         </button>
       </div>
+      {stages && onMoveTo && (
+        <div className="md:hidden mb-2">
+          <Select value={deal.stage_id} onValueChange={(v) => v !== deal.stage_id && onMoveTo(v)}>
+            <SelectTrigger className="h-9 rounded-lg text-[12px]" aria-label="Chuyển giai đoạn"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       {deal.next_action && (
         <div className="text-[10.5px] bg-amber-50 text-amber-700 rounded-md px-2 py-1 mb-2 truncate">
           → {deal.next_action}
