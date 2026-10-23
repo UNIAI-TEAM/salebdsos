@@ -2,9 +2,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import {
-  DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
+  DndContext, DragOverlay, PointerSensor, TouchSensor, KeyboardSensor, useSensor, useSensors,
   closestCorners, useDraggable, useDroppable, type DragEndEvent, type DragStartEvent,
 } from "@dnd-kit/core";
+import { statusForStage } from "@/lib/pipeline-stage";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,24 +127,35 @@ function PipelinePage() {
 
   const totals = useMemo(() => {
     const sum = (arr: Deal[]) => arr.reduce((a, b) => a + (b.value ?? 0), 0);
-    const open = filteredDeals.filter((d) => {
+    const st = (d: Deal) => {
       const s = stages.find((x) => x.id === d.stage_id);
-      return s && s.position < 5;
-    });
-    const won = filteredDeals.filter((d) => {
-      const s = stages.find((x) => x.id === d.stage_id);
-      return s?.position === 5;
-    });
-    const winRate = filteredDeals.length
-      ? Math.round((won.length / filteredDeals.length) * 1000) / 10
-      : 0;
+      return s ? statusForStage(s) : "open";
+    };
+    const open = filteredDeals.filter((d) => st(d) === "open");
+    const won = filteredDeals.filter((d) => st(d) === "won");
+    const closed = filteredDeals.filter((d) => st(d) !== "open").length;
+    const winRate = closed ? Math.round((won.length / closed) * 1000) / 10 : 0;
     return {
       pipeline: sum(open), expected: sum(won), openCount: open.length,
       wonValue: sum(won), winRate,
     };
   }, [filteredDeals, stages]);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
+    useSensor(KeyboardSensor),
+  );
+  const [lostAsk, setLostAsk] = useState<{ dealId: string; stageId: string; reason: string } | null>(null);
+  const applyMove = async (dealId: string, targetStageId: string, lost_reason?: string) => {
+    const prevDeals = deals;
+    setDeals((prev) => prev.map((d) => (d.id === dealId ? { ...d, stage_id: targetStageId, last_activity_at: new Date().toISOString() } : d)));
+    try {
+      const r = await fnMove({ data: { id: dealId, stage_id: targetStageId, lost_reason: lost_reason || null } });
+      const name = stages.find((s) => s.id === targetStageId)?.name;
+      toast.success(r.status === "won" ? `Đã chốt thành công 🎉` : r.status === "lost" ? "Đã chuyển sang thất bại" : `Đã chuyển sang "${name}"`);
+    } catch (err: any) { toast.error("Lỗi cập nhật: " + (err?.message ?? "")); setDeals(prevDeals); }
+  };
   const onDragStart = (e: DragStartEvent) => setActiveDealId(String(e.active.id));
   const onDragEnd = async (e: DragEndEvent) => {
     setActiveDealId(null);
@@ -154,9 +166,12 @@ function PipelinePage() {
     if (!targetStageId) return;
     const deal = deals.find((d) => d.id === dealId);
     if (!deal || deal.stage_id === targetStageId) return;
-    setDeals((prev) => prev.map((d) => (d.id === dealId ? { ...d, stage_id: targetStageId, last_activity_at: new Date().toISOString() } : d)));
-    try { await fnMove({ data: { id: dealId, stage_id: targetStageId } }); }
-    catch (err: any) { toast.error("Lỗi cập nhật: " + (err?.message ?? "")); void reload(); }
+    const target = stages.find((s) => s.id === targetStageId);
+    if (target && statusForStage(target) === "lost") {
+      setLostAsk({ dealId, stageId: targetStageId, reason: "" });
+      return;
+    }
+    await applyMove(dealId, targetStageId);
   };
 
   // Tự chọn prompt AI phù hợp với giai đoạn của deal rồi mở trang AI Sales Page
@@ -200,7 +215,7 @@ function PipelinePage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Sales Pipeline"
-        sub="Kéo thả deal giữa các giai đoạn — đồng bộ realtime với team."
+        sub="Kéo thả cơ hội giữa các giai đoạn — trên điện thoại giữ biểu tượng ⋮⋮ rồi kéo."
         action={
           <div className="flex gap-2 flex-wrap">
             <Select value={filterOwner} onValueChange={setFilterOwner}>
@@ -301,6 +316,26 @@ function PipelinePage() {
           )}
         </DragOverlay>
       </DndContext>
+
+      <Dialog open={!!lostAsk} onOpenChange={(o) => !o && setLostAsk(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Lý do thất bại</DialogTitle></DialogHeader>
+          <div className="flex flex-wrap gap-1.5">
+            {["Giá cao", "Chọn dự án khác", "Không đủ tài chính", "Không liên lạc được", "Chưa có nhu cầu"].map((r) => (
+              <button key={r} type="button" onClick={() => setLostAsk((s) => s && { ...s, reason: r })}
+                className={`rounded-full border px-3 py-1.5 text-xs ${lostAsk?.reason === r ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>{r}</button>
+            ))}
+          </div>
+          <Textarea placeholder="Ghi chú thêm (không bắt buộc)" value={lostAsk?.reason ?? ""}
+            onChange={(e) => setLostAsk((s) => s && { ...s, reason: e.target.value })} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLostAsk(null)}>Huỷ</Button>
+            <Button onClick={async () => { const a = lostAsk!; setLostAsk(null); await applyMove(a.dealId, a.stageId, a.reason); }}>
+              Xác nhận
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {stageMgr && tenantId && (
         <StageManagerDialog
@@ -404,9 +439,9 @@ function DealCard({
       className="rounded-xl bg-card border border-border p-3 hover:border-primary/40 hover:shadow-soft transition group">
       <div className="flex items-start gap-2 mb-2">
         <button {...attributes} {...listeners}
-          className="cursor-grab active:cursor-grabbing text-muted-foreground opacity-0 group-hover:opacity-100 mt-0.5"
-          aria-label="drag">
-          <GripVertical className="h-3.5 w-3.5" />
+          className="cursor-grab active:cursor-grabbing touch-none text-muted-foreground -m-1.5 p-1.5 md:opacity-0 md:group-hover:opacity-100"
+          aria-label="Kéo để đổi giai đoạn">
+          <GripVertical className="h-4 w-4" />
         </button>
         <button onClick={onClick} className="flex-1 min-w-0 text-left">
           <div className="text-[12.5px] font-semibold truncate">{deal.title}</div>
