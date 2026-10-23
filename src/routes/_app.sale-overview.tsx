@@ -228,7 +228,7 @@ function SaleOverviewPage() {
               </div>
               <Badge variant="outline" className="shrink-0">Không tính trùng liên hệ</Badge>
             </div>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 [&>*:last-child]:col-span-2 lg:[&>*:last-child]:col-span-1">
               <Metric icon={ScanLine} label="Lượt tương tác" value={String(data.metrics.interactions)} hint="QR và Digital Card · 30 ngày" />
               <Metric icon={UserRoundCheck} label="Khách đã gửi thông tin" value={String(data.metrics.customersServed)} hint="Theo số điện thoại hoặc email" />
               <Metric icon={FileSignature} label="Hợp đồng đã ký" value={String(data.metrics.contractsSigned)} hint="Giao dịch thành công · toàn thời gian" />
