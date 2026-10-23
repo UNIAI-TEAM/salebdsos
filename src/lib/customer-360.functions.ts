@@ -56,7 +56,7 @@ export const getCustomer360 = createServerFn({ method: "GET" })
       transactions: txQ.data ?? [],
     };
     return {
-      summary: { ...summarize(src), leads: leads.length, sources: [...new Set(leads.map((l: any) => l.source).filter(Boolean))] },
+      summary: { ...summarize(src), leads: leads.length, sources: [...new Set<string>(leads.map((l: any) => String(l.source ?? "")).filter(Boolean))] },
       timeline: buildTimeline(src).slice(0, 300),
     };
   });

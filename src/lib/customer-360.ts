@@ -64,10 +64,10 @@ export function buildTimeline(s: Src): C360Event[] {
 }
 
 export function summarize(s: Src) {
-  const contractValue = (s.contracts ?? []).filter((c) => c.status !== "cancelled").reduce((t, c) => t + Number(c.net_price ?? 0), 0);
-  const paid = (s.installments ?? []).reduce((t, i) => t + Number(i.paid_amount ?? 0), 0);
+  const contractValue: number = (s.contracts ?? []).filter((c) => c.status !== "cancelled").reduce((t, c) => t + Number(c.net_price ?? 0), 0);
+  const paid: number = (s.installments ?? []).reduce((t, i) => t + Number(i.paid_amount ?? 0), 0);
   const msgs = s.messages ?? [];
-  const lastIn = msgs.filter((m) => m.direction === "in").map((m) => m.created_at).sort().pop() ?? null;
+  const lastIn: string | null = msgs.filter((m) => m.direction === "in").map((m) => m.created_at).sort().pop() ?? null;
   return {
     contractValue, paid, outstanding: Math.max(0, contractValue - paid),
     messages: msgs.length, calls: (s.calls ?? []).length,
