@@ -110,22 +110,22 @@ const groups: Group[] = [
 ];
 
 /** PWA trên điện thoại: chỉ giữ công cụ Sale phụ và khu quản trị theo quyền. */
+const saleQuickItems: Group["items"] = [
+  { to: "/inventory", label: "Giỏ hàng", icon: LayoutGrid },
+  { to: "/inbox", label: "Hộp thoại", icon: MessagesSquare },
+  { to: "/appointments", label: "Lịch hẹn", icon: CalendarClock },
+  { to: "/journey", label: "Khách hàng", icon: RouteIcon },
+  { to: "/contracts", label: "Hợp đồng", icon: FileSignature },
+  { to: "/ai-agent", label: "Trợ lý AI", icon: Bot },
+];
+
 const saleMobileGroups: Group[] = [
   {
-    label: "Dự án & sản phẩm",
+    label: "Dự án & tài liệu",
     items: [
       { to: "/landings", label: "Landing dự án", icon: Globe2 },
-      { to: "/inventory", label: "Giỏ hàng (căn / lô)", icon: LayoutGrid },
       { to: "/products", label: "Sản phẩm khác", icon: Package },
       { to: "/files", label: "Tài liệu & Brochure", icon: FolderArchive },
-    ],
-  },
-  {
-    label: "Khách hàng",
-    items: [
-      { to: "/journey", label: "Hành trình khách hàng", icon: RouteIcon },
-      { to: "/inbox", label: "Hộp thoại", icon: MessagesSquare },
-      { to: "/appointments", label: "Lịch hẹn", icon: CalendarClock },
     ],
   },
   {
@@ -136,15 +136,18 @@ const saleMobileGroups: Group[] = [
     ],
   },
   {
-    label: "Báo cáo & app",
+    label: "Báo cáo",
     items: [
       { to: "/funnel-report", label: "Báo cáo phễu", icon: Filter },
-      { to: "/contracts", label: "Hợp đồng", icon: FileSignature },
+      { to: "/revenue-report", label: "Doanh thu", icon: BadgeDollarSign },
+      { to: "/debt-aging", label: "Tuổi nợ", icon: Hourglass },
+    ],
+  },
+  {
+    label: "Tài chính & sự kiện",
+    items: [
       { to: "/events", label: "Sự kiện & check-in", icon: CalendarDays },
       { to: "/bank-reconciliation", label: "Đối soát", icon: Landmark },
-      { to: "/debt-aging", label: "Tuổi nợ", icon: Hourglass },
-      { to: "/revenue-report", label: "Doanh thu", icon: BadgeDollarSign },
-      { to: "/ai-agent", label: "Trợ lý AI", icon: Bot },
       { to: "/commission-rules", label: "Hoa hồng", icon: Percent, roles: ["owner", "admin", "manager"] },
       { to: "/nurture", label: "Nhắc khách", icon: BellRing, roles: ["owner", "admin", "manager"] },
       { to: "/mobile-app", label: "App & thông báo", icon: Smartphone },
@@ -319,6 +322,33 @@ function SidebarBody({
       </DropdownMenu>
 
       <nav className="flex-1 overflow-y-auto scrollbar-thin px-2 pb-3">
+        {isMobile && (
+          <div className="mb-4 px-1">
+            <div className="px-2 pt-2 pb-2 text-[10.5px] uppercase tracking-wider font-semibold text-sidebar-foreground/45">Thường dùng</div>
+            <div className="grid grid-cols-3 gap-2">
+              {saleQuickItems.filter(can).map((it) => {
+                const active = pathname.startsWith(it.to);
+                return (
+                  <Link
+                    key={it.to}
+                    to={it.to}
+                    onClick={onNavigate}
+                    aria-current={active ? "page" : undefined}
+                    className={[
+                      "flex flex-col items-center justify-center gap-1.5 rounded-xl min-h-[72px] px-1 py-2.5 text-[12px] font-medium text-center leading-tight transition active:scale-95",
+                      active
+                        ? "bg-sidebar-accent text-sidebar-foreground ring-1 ring-primary/50"
+                        : "bg-sidebar-accent/40 text-sidebar-foreground/85 active:bg-sidebar-accent/70",
+                    ].join(" ")}
+                  >
+                    <it.icon className={["h-5 w-5", active ? "text-primary" : "text-sidebar-foreground/70"].join(" ")} />
+                    <span>{it.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {(isMobile ? saleMobileGroups : groups).map((g) => {
           const items = g.items.filter(can);
           if (items.length === 0) return null;
