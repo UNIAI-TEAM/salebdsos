@@ -315,20 +315,20 @@ function ContractsPage() {
               <tbody>
                 {(data?.contracts ?? []).map((row: any) => (
                   <tr key={row.id} className="border-t border-border transition-colors hover:bg-muted/40">
-                    <td className="py-3 pr-3">
+                    <td className="px-3 py-3 tabular-nums">
                       <p className="font-medium">{row.code}</p>
                       <p className="text-[11px] text-muted-foreground">{row.project_name ?? "Chưa gắn dự án"}</p>
                     </td>
-                    <td className="py-3 pr-3 text-muted-foreground">{row.product_label ?? "—"}</td>
-                    <td className="py-3 pr-3 text-muted-foreground">{row.customer_name ?? "—"}</td>
-                    <td className="py-3 pr-3 text-right font-semibold">{money(row.net_price, row.currency)}</td>
-                    <td className="py-3 pr-3 text-right">{money(row.collected, row.currency)}</td>
-                    <td className="py-3 pr-3">
+                    <td className="px-3 py-3 tabular-nums text-muted-foreground">{row.product_label ?? "—"}</td>
+                    <td className="px-3 py-3 tabular-nums text-muted-foreground">{row.customer_name ?? "—"}</td>
+                    <td className="px-3 py-3 tabular-nums text-right font-semibold">{money(row.net_price, row.currency)}</td>
+                    <td className="px-3 py-3 tabular-nums text-right">{money(row.collected, row.currency)}</td>
+                    <td className="px-3 py-3 tabular-nums">
                       <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_TONE[row.status]}`}>
                         {CONTRACT_STATUS_LABEL[row.status as keyof typeof CONTRACT_STATUS_LABEL]}
                       </span>
                     </td>
-                    <td className="py-3 text-right">
+                    <td className="px-3 py-3 text-right">
                       <Button variant="outline" size="sm" onClick={() => { setOpenId(row.id); setInsDraft(null); setComDraft(null); }}>
                         Chi tiết
                       </Button>

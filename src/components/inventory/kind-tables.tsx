@@ -132,7 +132,7 @@ export function KindPriceTable({
                 </td>
               ))}
               {showStatus ? (
-                <td className="py-2 text-right">
+                <td className="px-3 py-2.5 text-right">
                   <span
                     className={`inline-block rounded-full border px-2 py-0.5 text-[11px] ${
                       LISTING_STATUS_TONE[asStatus(u.listing_status)]
