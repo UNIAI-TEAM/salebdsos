@@ -13,8 +13,8 @@ describe("customer 360", () => {
   });
   it("outstanding = contract value minus paid, excludes cancelled", () => {
     const s = summarize({
-      contracts: [{ net_price: 3000, status: "active" }, { net_price: 999, status: "cancelled" }],
-      installments: [{ paid_amount: 1800 }],
+      contracts: [{ id: "a", net_price: 3000, status: "active" }, { id: "b", net_price: 999, status: "cancelled" }],
+      installments: [{ contract_id: "a", paid_amount: 1800 }, { contract_id: "b", paid_amount: 500 }],
     });
     expect(s.outstanding).toBe(1200);
   });

@@ -65,7 +65,8 @@ export function buildTimeline(s: Src): C360Event[] {
 
 export function summarize(s: Src) {
   const contractValue: number = (s.contracts ?? []).filter((c) => c.status !== "cancelled").reduce((t, c) => t + Number(c.net_price ?? 0), 0);
-  const paid: number = (s.installments ?? []).reduce((t, i) => t + Number(i.paid_amount ?? 0), 0);
+  const live = new Set((s.contracts ?? []).filter((c) => c.status !== "cancelled").map((c) => c.id));
+  const paid: number = (s.installments ?? []).filter((i) => !i.contract_id || live.has(i.contract_id)).reduce((t, i) => t + Number(i.paid_amount ?? 0), 0);
   const msgs = s.messages ?? [];
   const lastIn: string | null = msgs.filter((m) => m.direction === "in").map((m) => m.created_at).sort().pop() ?? null;
   return {

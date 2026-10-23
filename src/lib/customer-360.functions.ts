@@ -40,7 +40,7 @@ export const getCustomer360 = createServerFn({ method: "GET" })
 
     const [msgQ, instQ, payQ, tixQ, fileQ, nurQ] = await Promise.all([
       convIds.length ? sb.from("conversation_messages").select("id,channel,direction,body,created_at").in("conversation_id", convIds).order("created_at", { ascending: false }).limit(200) : { data: [] },
-      ctrIds.length ? sb.from("contract_installments").select("id,name,paid_amount,paid_at").in("contract_id", ctrIds) : { data: [] },
+      ctrIds.length ? sb.from("contract_installments").select("id,contract_id,name,paid_amount,paid_at").in("contract_id", ctrIds) : { data: [] },
       ctrIds.length ? sb.from("bank_transactions").select("id,bank_name,amount,content,transferred_at,created_at").eq("tenant_id", t).in("matched_contract_id", ctrIds) : { data: [] },
       leadIds.length || tail ? sb.from("event_tickets").select("id,code,status,checked_in_at,created_at").eq("tenant_id", t)
         .or([leadIds.length && `lead_id.in.(${leadIds.join(",")})`, tail && `guest_phone.ilike.%${tail}`].filter(Boolean).join(",")) : { data: [] },
