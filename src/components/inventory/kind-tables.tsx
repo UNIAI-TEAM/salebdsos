@@ -108,23 +108,23 @@ export function KindPriceTable({
   return (
     <div className={`overflow-x-auto ${className ?? ""}`}>
       <table className="w-full min-w-[640px] text-[13px]">
-        <thead className="text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+        <thead className="bg-muted/40 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
           <tr>
             {cols.map((c) => (
-              <th key={c.key} className={`py-2 pr-3 font-medium ${c.align === "right" ? "text-right" : ""}`}>
+              <th key={c.key} className={`px-3 py-2.5 font-medium ${c.align === "right" ? "text-right" : ""}`}>
                 {c.label}
               </th>
             ))}
-            {showStatus ? <th className="py-2 text-right font-medium">Trạng thái</th> : null}
+            {showStatus ? <th className="px-3 py-2.5 text-right font-medium">Trạng thái</th> : null}
           </tr>
         </thead>
         <tbody>
           {rows.map((u) => (
-            <tr key={u.id} className="border-t border-border">
+            <tr key={u.id} className="border-t border-border transition-colors hover:bg-muted/40">
               {cols.map((c) => (
                 <td
                   key={c.key}
-                  className={`py-2 pr-3 ${c.align === "right" ? "text-right" : ""} ${
+                  className={`px-3 py-2.5 tabular-nums ${c.align === "right" ? "text-right" : ""} ${
                     c.key === "code" ? "font-semibold" : c.key === "price" ? "font-semibold text-primary" : "text-muted-foreground"
                   }`}
                 >

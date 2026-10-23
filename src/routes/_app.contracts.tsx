@@ -302,19 +302,19 @@ function ContractsPage() {
           <div className="-mx-1 hidden overflow-x-auto px-1 md:block">
             <table className="w-full min-w-[720px] text-sm">
               <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-                  <th className="py-2 pr-3 font-medium">Hợp đồng</th>
-                  <th className="py-2 pr-3 font-medium">Sản phẩm</th>
-                  <th className="py-2 pr-3 font-medium">Khách hàng</th>
-                  <th className="py-2 pr-3 text-right font-medium">Giá trị</th>
-                  <th className="py-2 pr-3 text-right font-medium">Đã thu</th>
-                  <th className="py-2 pr-3 font-medium">Trạng thái</th>
-                  <th className="py-2 font-medium" />
+                <tr className="bg-muted/40 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <th className="px-3 py-2.5 font-medium">Hợp đồng</th>
+                  <th className="px-3 py-2.5 font-medium">Sản phẩm</th>
+                  <th className="px-3 py-2.5 font-medium">Khách hàng</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Giá trị</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Đã thu</th>
+                  <th className="px-3 py-2.5 font-medium">Trạng thái</th>
+                  <th className="px-3 py-2.5 font-medium" />
                 </tr>
               </thead>
               <tbody>
                 {(data?.contracts ?? []).map((row: any) => (
-                  <tr key={row.id} className="border-t border-border/70">
+                  <tr key={row.id} className="border-t border-border transition-colors hover:bg-muted/40">
                     <td className="py-3 pr-3">
                       <p className="font-medium">{row.code}</p>
                       <p className="text-[11px] text-muted-foreground">{row.project_name ?? "Chưa gắn dự án"}</p>
