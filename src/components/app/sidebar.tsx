@@ -99,6 +99,7 @@ const groups: Group[] = [
     items: [
       { to: "/sales-directory", label: "Quản lý Sale", icon: IdCard, roles: ["owner", "admin", "manager"] },
       { to: "/members", label: "Thành viên & vai trò", icon: ShieldCheck, roles: ["owner", "admin"] },
+      { to: "/departments", label: "Phòng ban", icon: Users2 },
       { to: "/team", label: "Nhóm", icon: Users2, roles: ["owner", "admin", "manager"] },
       { to: "/products", label: "Sản phẩm khác", icon: Package },
       { to: "/integrations", label: "Tích hợp kênh", icon: Plug },

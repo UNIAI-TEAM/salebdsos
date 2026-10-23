@@ -26,5 +26,5 @@
 
 - [x] Bước 1a: Hồ sơ khách hàng 360° (gộp gửi thông tin, tin nhắn, gọi, hợp đồng, thu tiền, ngân hàng, sự kiện, tài liệu, nhắc tự động)
 - [x] Bước 1b: Phễu cơ hội kéo thả (điện thoại, tự thắng/thua, lý do thất bại, nhật ký)
-- [ ] Bước 1c: Quản lý phòng ban + phân quyền theo phòng
+- [x] Bước 1c: Quản lý phòng ban + phân quyền theo phòng
 - [ ] Bước 1d: Bàn giao khách khi Sale nghỉ
