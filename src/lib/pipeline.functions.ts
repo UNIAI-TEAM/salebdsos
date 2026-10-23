@@ -2,6 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { statusForStage } from "./pipeline-stage";
 
 const DEAL_SELECT =
   "id,tenant_id,stage_id,lead_id,project_id,owner_user_id,title,value,currency,status,expected_close_date,closed_at,next_action,next_action_at,last_activity_at,meta,created_at,updated_at";
@@ -123,14 +124,37 @@ export const upsertDeal = createServerFn({ method: "POST" })
 export const moveDeal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ id: z.string().uuid(), stage_id: z.string().uuid() }).parse(d))
+    z.object({
+      id: z.string().uuid(),
+      stage_id: z.string().uuid(),
+      lost_reason: z.string().trim().max(500).optional().nullable(),
+    }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    const sb: any = context.supabase;
+    const [{ data: deal }, { data: stage }] = await Promise.all([
+      sb.from("pipeline_deals").select("id,tenant_id,stage_id,status,meta").eq("id", data.id).maybeSingle(),
+      sb.from("pipeline_stages").select("id,tenant_id,name,position,win_probability").eq("id", data.stage_id).maybeSingle(),
+    ]);
+    if (!deal || !stage || stage.tenant_id !== deal.tenant_id) throw new Error("Không tìm thấy deal hoặc giai đoạn");
+    const status = statusForStage(stage);
+    const now = new Date().toISOString();
+    const meta = { ...(deal.meta ?? {}) };
+    if (status === "lost" && data.lost_reason) meta.lost_reason = data.lost_reason;
+    if (status !== "lost") delete meta.lost_reason;
+    const { error } = await sb
       .from("pipeline_deals")
-      .update({ stage_id: data.stage_id, last_activity_at: new Date().toISOString() })
+      .update({
+        stage_id: data.stage_id, status, meta, last_activity_at: now,
+        closed_at: status === "open" ? null : now,
+      })
       .eq("id", data.id);
     if (error) throw error;
-    return { ok: true };
+    await sb.from("audit_logs").insert({
+      tenant_id: deal.tenant_id, actor_user_id: context.userId, action: "deal.stage_moved",
+      entity: "pipeline_deal", entity_id: deal.id,
+      diff: { from: deal.stage_id, to: stage.id, stage: stage.name, status, lost_reason: data.lost_reason ?? null },
+    });
+    return { ok: true, status };
   });
 
 export const deleteDeal = createServerFn({ method: "POST" })
