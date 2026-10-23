@@ -23,6 +23,7 @@ import {
 } from "@/lib/customer-detail.functions";
 import { toast } from "sonner";
 import { QuickContact } from "@/components/app/quick-contact";
+import { Customer360 } from "@/components/app/customer-360";
 
 
 export const Route = createFileRoute("/_app/customers/$id")({
@@ -244,13 +245,18 @@ function CustomerDetailPage() {
         />
       </div>
 
-      <Tabs defaultValue="transactions">
-        <TabsList>
+      <Tabs defaultValue="c360">
+        <TabsList className="max-w-full overflow-x-auto justify-start">
+          <TabsTrigger value="c360">Hồ sơ 360°</TabsTrigger>
           <TabsTrigger value="transactions">Giao dịch</TabsTrigger>
           <TabsTrigger value="appointments">Lịch gặp</TabsTrigger>
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="timeline">Nhật ký</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="c360" className="mt-4">
+          {tenantId && <Customer360 tenantId={tenantId} id={id} />}
+        </TabsContent>
 
         <TabsContent value="transactions" className="mt-4">
           <div className="rounded-xl border border-border bg-card overflow-x-auto">
