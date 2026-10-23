@@ -4,9 +4,10 @@ import { startCall } from "@/lib/inbox.functions";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, AlarmClock, Building2, CalendarClock, CheckCircle2, FileSignature, PhoneCall, QrCode, RefreshCw, ScanLine, Snowflake, UserRoundCheck } from "lucide-react";
+import { Activity, AlarmClock, Building2, CalendarClock, CheckCircle2, FileSignature, PhoneCall, QrCode, RefreshCw, ScanLine, Snowflake, UserRoundCheck, Wallet } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getSaleOverview } from "@/lib/sale-overview.functions";
+import { getDebtAging } from "@/lib/debt-aging.functions";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -95,6 +96,16 @@ function SaleOverviewPage() {
     refetchInterval: 30_000,
   });
   const data = query.data;
+  const fetchDebt = useServerFn(getDebtAging);
+  const debtQuery = useQuery({
+    queryKey: ["sale-overview-debt", tenantId, project],
+    enabled: Boolean(tenantId),
+    queryFn: () => fetchDebt({ data: { tenantId: tenantId as string, projectId: project } }),
+    refetchInterval: 60_000,
+  });
+  const overdue = (debtQuery.data?.items ?? []).filter((it) => it.daysOverdue > 0);
+  const overdueTotal = overdue.reduce((s, it) => s + it.outstanding, 0);
+  const vnd = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n));
 
   return (
     <div className="space-y-5 pb-24 lg:pb-6">
@@ -138,6 +149,75 @@ function SaleOverviewPage() {
                 {data.projects.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
               </SelectContent>
             </Select>
+          </section>
+
+          <section aria-label="Việc cần xử lý ngay" className="grid gap-4 xl:grid-cols-2">
+            <SectionCard
+              title={`Lead nóng cần gọi · ${data.slaAlerts.length}`}
+              className={data.slaAlerts.length ? "border-destructive/40" : ""}
+              action={
+                <Badge variant={data.slaAlerts.length ? "destructive" : "outline"} className="shrink-0 text-[10px]">
+                  Hạn gọi {data.routing.slaMinutes} phút
+                </Badge>
+              }
+            >
+              {data.slaAlerts.length === 0 ? (
+                <Empty text={data.slaDueSoon > 0 ? `${data.slaDueSoon} khách mới còn trong hạn gọi.` : "Không có khách nào trễ hạn gọi."} />
+              ) : (
+                <ul className="space-y-2">
+                  {data.slaAlerts.slice(0, 6).map((lead) => (
+                    <li key={lead.id} className="flex min-w-0 items-center gap-3 rounded-lg border border-border p-3">
+                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive"><AlarmClock className="h-4 w-4" /></div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">{lead.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{[lead.phone, lead.projectName].filter(Boolean).join(" · ")}</p>
+                        <p className="text-[11px] font-medium text-destructive">Trễ {lead.overdueMinutes} phút · nhận {formatTime(lead.at)}</p>
+                      </div>
+                      {lead.phone ? (
+                        <Button size="sm" onClick={() => callLead(lead.phone as string)} disabled={callMutation.isPending} aria-label={`Gọi ${lead.name} qua tổng đài`}>
+                          <PhoneCall className="h-4 w-4" /> Gọi
+                        </Button>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {!data.routing.enabled ? (
+                <p className="mt-3 text-[11px] text-muted-foreground">Phân phối khách tự động đang tắt — quản lý có thể bật trong mục Phân phối lead.</p>
+              ) : null}
+            </SectionCard>
+            <SectionCard
+              title={`Nợ quá hạn · ${overdue.length}`}
+              className={overdue.length ? "border-warning/50" : ""}
+              action={<Link to="/debt-aging" className="text-xs font-medium text-primary">Xem tuổi nợ</Link>}
+            >
+              {debtQuery.isLoading ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">Đang tải…</p>
+              ) : overdue.length === 0 ? (
+                <Empty text="Không có đợt thanh toán nào quá hạn." />
+              ) : (
+                <>
+                  <p className="mb-3 text-xs text-muted-foreground">
+                    Tổng còn phải thu <span className="font-semibold text-foreground tabular-nums">{vnd(overdueTotal)} đ</span>
+                  </p>
+                  <ul className="space-y-2">
+                    {overdue.slice(0, 6).map((it) => (
+                      <li key={it.installmentId} className="flex min-w-0 items-center gap-3 rounded-lg border border-border p-3">
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-warning/10 text-warning"><Wallet className="h-4 w-4" /></div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold">{it.customerName} · {it.contractCode}</p>
+                          <p className="truncate text-xs text-muted-foreground">{[it.name, it.projectName].join(" · ")}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-sm font-semibold tabular-nums">{vnd(it.outstanding)}</p>
+                          <p className="text-[11px] font-medium text-destructive">Quá {it.daysOverdue} ngày</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </SectionCard>
           </section>
 
           <section aria-labelledby="sale-metrics-title">
@@ -188,66 +268,25 @@ function SaleOverviewPage() {
             )}
           </SectionCard>
 
-          <div className="grid gap-4 xl:grid-cols-2">
-            <SectionCard
-              title={`Cần gọi ngay · ${data.slaAlerts.length}`}
-              action={
-                <Badge variant={data.slaAlerts.length ? "destructive" : "outline"} className="shrink-0 text-[10px]">
-                  Hạn gọi {data.routing.slaMinutes} phút
-                </Badge>
-              }
-            >
-              {data.slaAlerts.length === 0 ? (
-                <Empty text={data.slaDueSoon > 0 ? `${data.slaDueSoon} khách mới còn trong hạn gọi.` : "Không có khách nào trễ hạn gọi."} />
-              ) : (
-                <ul className="space-y-2">
-                  {data.slaAlerts.map((lead) => (
-                    <li key={lead.id} className="flex min-w-0 gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-3">
-                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-destructive/10 text-destructive"><AlarmClock className="h-4 w-4" /></div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{lead.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{[lead.phone, lead.projectName, lead.source].filter(Boolean).join(" · ")}</p>
-                        <p className="text-[11px] font-medium text-destructive">Trễ {lead.overdueMinutes} phút · nhận lúc {formatTime(lead.at)}</p>
-                      </div>
-                      {lead.phone ? (
-                        <button
-                          type="button"
-                          onClick={() => callLead(lead.phone as string)}
-                          disabled={callMutation.isPending}
-                          className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground disabled:opacity-60"
-                          aria-label={`Gọi ${lead.name} qua tổng đài`}
-                        >
-                          <PhoneCall className="h-4 w-4" />
-                        </button>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {!data.routing.enabled ? (
-                <p className="mt-3 text-[11px] text-muted-foreground">Phân phối khách tự động đang tắt — quản lý có thể bật trong mục Phân phối lead.</p>
-              ) : null}
-            </SectionCard>
-            <SectionCard
-              title={`Lead nguội · ${data.coldLeads.length}`}
-              action={<Badge variant="outline" className="shrink-0 text-[10px]">Không cập nhật {data.routing.coldDays} ngày</Badge>}
-            >
-              {data.coldLeads.length === 0 ? <Empty text="Tất cả khách đang chăm sóc đều được cập nhật." /> : (
-                <ul className="space-y-2">
-                  {data.coldLeads.map((lead) => (
-                    <li key={lead.id} className="flex min-w-0 gap-3 rounded-xl border border-border p-3">
-                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-warning/10 text-warning"><Snowflake className="h-4 w-4" /></div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{lead.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{[STATUS_LABEL[lead.status] ?? lead.status, lead.projectName].filter(Boolean).join(" · ")}</p>
-                        <p className="text-[11px] text-muted-foreground">Im lặng {lead.idleDays} ngày · cập nhật {formatTime(lead.at)}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </SectionCard>
-          </div>
+          <SectionCard
+            title={`Lead nguội · ${data.coldLeads.length}`}
+            action={<Badge variant="outline" className="shrink-0 text-[10px]">Không cập nhật {data.routing.coldDays} ngày</Badge>}
+          >
+            {data.coldLeads.length === 0 ? <Empty text="Tất cả khách đang chăm sóc đều được cập nhật." /> : (
+              <ul className="grid gap-2 md:grid-cols-2">
+                {data.coldLeads.map((lead) => (
+                  <li key={lead.id} className="flex min-w-0 gap-3 rounded-lg border border-border p-3">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-warning/10 text-warning"><Snowflake className="h-4 w-4" /></div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">{lead.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{[STATUS_LABEL[lead.status] ?? lead.status, lead.projectName].filter(Boolean).join(" · ")}</p>
+                      <p className="text-[11px] text-muted-foreground">Im lặng {lead.idleDays} ngày · cập nhật {formatTime(lead.at)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SectionCard>
 
           <div className="grid gap-4 xl:grid-cols-2">
             <SectionCard title="Lịch hẹn sắp tới" action={<Link to="/appointments" className="text-xs font-medium text-primary">Xem lịch</Link>}>

@@ -476,34 +476,34 @@ function InventoryPage() {
       ) : (
         <SectionCard title="Danh sách sản phẩm">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs text-muted-foreground">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead className="bg-muted/40 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  <th className="py-2">Mã</th>
-                  <th className="py-2">Loại hình</th>
-                  <th className="py-2">Khu / tầng</th>
-                  <th className="py-2">Diện tích</th>
-                  <th className="py-2">Giá</th>
-                  <th className="py-2">Trạng thái</th>
-                  <th className="py-2 text-right">Thao tác</th>
+                  <th className="px-3 py-2.5 font-medium">Mã</th>
+                  <th className="px-3 py-2.5 font-medium">Loại hình</th>
+                  <th className="px-3 py-2.5 font-medium">Khu / tầng</th>
+                  <th className="px-3 py-2.5 font-medium">Diện tích</th>
+                  <th className="px-3 py-2.5 font-medium">Giá</th>
+                  <th className="px-3 py-2.5 font-medium">Trạng thái</th>
+                  <th className="px-3 py-2.5 font-medium text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} className="border-t">
-                    <td className="py-2 font-medium">{r.code || r.name}</td>
-                    <td className="py-2 text-muted-foreground">{kindLabel(r.product_type)}</td>
-                    <td className="py-2 text-muted-foreground">
+                  <tr key={r.id} className="border-t border-border transition-colors hover:bg-muted/40">
+                    <td className="px-3 py-2.5 tabular-nums font-medium">{r.code || r.name}</td>
+                    <td className="px-3 py-2.5 tabular-nums text-muted-foreground">{kindLabel(r.product_type)}</td>
+                    <td className="px-3 py-2.5 tabular-nums text-muted-foreground">
                       {[r.zone, r.floor != null ? `T${r.floor}` : null].filter(Boolean).join(" · ") || "—"}
                     </td>
-                    <td className="py-2">{r.area ? `${r.area} m²` : "—"}</td>
-                    <td className="py-2">{money(r.price, r.currency)}</td>
-                    <td className="py-2">
+                    <td className="px-3 py-2.5 tabular-nums">{r.area ? `${r.area} m²` : "—"}</td>
+                    <td className="px-3 py-2.5 tabular-nums">{money(r.price, r.currency)}</td>
+                    <td className="px-3 py-2.5 tabular-nums">
                       <span className={`rounded-full border px-2 py-0.5 text-xs ${LISTING_STATUS_TONE[r.listing_status]}`}>
                         {LISTING_STATUS_LABEL[r.listing_status]}
                       </span>
                     </td>
-                    <td className="py-2">
+                    <td className="px-3 py-2.5 tabular-nums">
                       <div className="flex justify-end gap-1">
                         <Button size="sm" variant="outline" onClick={() => { setStatusTarget(r); setStatusNext(r.listing_status); }}>
                           Đổi trạng thái
