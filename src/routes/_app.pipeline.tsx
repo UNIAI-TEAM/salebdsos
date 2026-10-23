@@ -399,7 +399,7 @@ function Column({
   const { setNodeRef, isOver } = useDroppable({ id: `stage:${stage.id}` });
   return (
     <div ref={setNodeRef}
-      className={["rounded-2xl border flex flex-col transition",
+      className={["rounded-2xl border flex flex-col transition snap-start",
         isOver ? "bg-primary/5 border-primary" : "bg-muted/40 border-border"].join(" ")}>
       <div className="px-4 pt-3.5 pb-3 border-b border-border bg-card rounded-t-2xl">
         <div className="flex items-center justify-between mb-1.5">
