@@ -215,7 +215,7 @@ function PipelinePage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Sales Pipeline"
-        sub="Kéo thả deal giữa các giai đoạn — đồng bộ realtime với team."
+        sub="Kéo thả cơ hội giữa các giai đoạn — trên điện thoại giữ biểu tượng ⋮⋮ rồi kéo."
         action={
           <div className="flex gap-2 flex-wrap">
             <Select value={filterOwner} onValueChange={setFilterOwner}>
@@ -439,9 +439,9 @@ function DealCard({
       className="rounded-xl bg-card border border-border p-3 hover:border-primary/40 hover:shadow-soft transition group">
       <div className="flex items-start gap-2 mb-2">
         <button {...attributes} {...listeners}
-          className="cursor-grab active:cursor-grabbing text-muted-foreground opacity-0 group-hover:opacity-100 mt-0.5"
-          aria-label="drag">
-          <GripVertical className="h-3.5 w-3.5" />
+          className="cursor-grab active:cursor-grabbing touch-none text-muted-foreground -m-1.5 p-1.5 md:opacity-0 md:group-hover:opacity-100"
+          aria-label="Kéo để đổi giai đoạn">
+          <GripVertical className="h-4 w-4" />
         </button>
         <button onClick={onClick} className="flex-1 min-w-0 text-left">
           <div className="text-[12.5px] font-semibold truncate">{deal.title}</div>
