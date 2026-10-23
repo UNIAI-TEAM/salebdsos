@@ -37,6 +37,7 @@ import { Route as AppDynamicQrRouteImport } from './routes/_app.dynamic-qr'
 import { Route as AppEventsRouteImport } from './routes/_app.events'
 import { Route as AppFilesRouteImport } from './routes/_app.files'
 import { Route as AppFunnelReportRouteImport } from './routes/_app.funnel-report'
+import { Route as AppHandoverRouteImport } from './routes/_app.handover'
 import { Route as AppInboxRouteImport } from './routes/_app.inbox'
 import { Route as AppIntegrationsRouteImport } from './routes/_app.integrations'
 import { Route as AppInventoryRouteImport } from './routes/_app.inventory'
@@ -235,6 +236,11 @@ const AppFilesRoute = AppFilesRouteImport.update({
 const AppFunnelReportRoute = AppFunnelReportRouteImport.update({
   id: '/funnel-report',
   path: '/funnel-report',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHandoverRoute = AppHandoverRouteImport.update({
+  id: '/handover',
+  path: '/handover',
   getParentRoute: () => AppRoute,
 } as any)
 const AppInboxRoute = AppInboxRouteImport.update({
@@ -570,6 +576,7 @@ export interface FileRoutesByFullPath {
   '/events': typeof AppEventsRoute
   '/files': typeof AppFilesRoute
   '/funnel-report': typeof AppFunnelReportRoute
+  '/handover': typeof AppHandoverRoute
   '/inbox': typeof AppInboxRoute
   '/integrations': typeof AppIntegrationsRoute
   '/inventory': typeof AppInventoryRoute
@@ -658,6 +665,7 @@ export interface FileRoutesByTo {
   '/events': typeof AppEventsRoute
   '/files': typeof AppFilesRoute
   '/funnel-report': typeof AppFunnelReportRoute
+  '/handover': typeof AppHandoverRoute
   '/inbox': typeof AppInboxRoute
   '/integrations': typeof AppIntegrationsRoute
   '/inventory': typeof AppInventoryRoute
@@ -748,6 +756,7 @@ export interface FileRoutesById {
   '/_app/events': typeof AppEventsRoute
   '/_app/files': typeof AppFilesRoute
   '/_app/funnel-report': typeof AppFunnelReportRoute
+  '/_app/handover': typeof AppHandoverRoute
   '/_app/inbox': typeof AppInboxRoute
   '/_app/integrations': typeof AppIntegrationsRoute
   '/_app/inventory': typeof AppInventoryRoute
@@ -839,6 +848,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/files'
     | '/funnel-report'
+    | '/handover'
     | '/inbox'
     | '/integrations'
     | '/inventory'
@@ -927,6 +937,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/files'
     | '/funnel-report'
+    | '/handover'
     | '/inbox'
     | '/integrations'
     | '/inventory'
@@ -1016,6 +1027,7 @@ export interface FileRouteTypes {
     | '/_app/events'
     | '/_app/files'
     | '/_app/funnel-report'
+    | '/_app/handover'
     | '/_app/inbox'
     | '/_app/integrations'
     | '/_app/inventory'
@@ -1307,6 +1319,13 @@ declare module '@tanstack/react-router' {
       path: '/funnel-report'
       fullPath: '/funnel-report'
       preLoaderRoute: typeof AppFunnelReportRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/handover': {
+      id: '/_app/handover'
+      path: '/handover'
+      fullPath: '/handover'
+      preLoaderRoute: typeof AppHandoverRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/inbox': {
@@ -1794,6 +1813,7 @@ interface AppRouteChildren {
   AppEventsRoute: typeof AppEventsRoute
   AppFilesRoute: typeof AppFilesRoute
   AppFunnelReportRoute: typeof AppFunnelReportRoute
+  AppHandoverRoute: typeof AppHandoverRoute
   AppInboxRoute: typeof AppInboxRoute
   AppIntegrationsRoute: typeof AppIntegrationsRoute
   AppInventoryRoute: typeof AppInventoryRoute
@@ -1850,6 +1870,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEventsRoute: AppEventsRoute,
   AppFilesRoute: AppFilesRoute,
   AppFunnelReportRoute: AppFunnelReportRoute,
+  AppHandoverRoute: AppHandoverRoute,
   AppInboxRoute: AppInboxRoute,
   AppIntegrationsRoute: AppIntegrationsRoute,
   AppInventoryRoute: AppInventoryRoute,
