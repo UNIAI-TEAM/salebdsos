@@ -175,7 +175,7 @@ function DepartmentsPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="text-xs text-muted-foreground">Xem chi tiết từng khách tại <Link to="/leads" className="text-primary">Leads</Link>.</div>
+              <div className="text-xs text-muted-foreground">Xem chi tiết từng khách tại <Link to="/leads" search={{} as any} className="text-primary">Leads</Link>.</div>
             </div>
           )}
         </div>
