@@ -57,6 +57,13 @@
       "when": 1792768696665,
       "tag": "0007_department_write_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792768890252,
+      "tag": "0008_handovers",
+      "breakpoints": true
     }
   ]
 }

@@ -1823,6 +1823,50 @@ export type Database = {
           },
         ]
       }
+      handovers: {
+        Row: {
+          counts: Json
+          created_at: string
+          created_by: string
+          from_user_id: string
+          id: string
+          reason: string | null
+          team_id: string | null
+          tenant_id: string
+          to_user_ids: string[]
+        }
+        Insert: {
+          counts?: Json
+          created_at?: string
+          created_by: string
+          from_user_id: string
+          id?: string
+          reason?: string | null
+          team_id?: string | null
+          tenant_id: string
+          to_user_ids?: string[]
+        }
+        Update: {
+          counts?: Json
+          created_at?: string
+          created_by?: string
+          from_user_id?: string
+          id?: string
+          reason?: string | null
+          team_id?: string | null
+          tenant_id?: string
+          to_user_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handovers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interaction_events: {
         Row: {
           browser: string | null
