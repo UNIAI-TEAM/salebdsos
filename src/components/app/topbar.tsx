@@ -95,3 +95,18 @@ export function AppTopbar() {
     </header>
   );
 }
+
+/** Chuyển giao diện sáng / tối; trạng thái lưu trên máy người dùng. */
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button
+      onClick={toggle}
+      className="inline-flex items-center justify-center h-9 w-9 rounded-lg hover:bg-muted active:scale-95 transition text-muted-foreground hover:text-foreground"
+      aria-label={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
+      title={theme === "dark" ? "Giao diện sáng" : "Giao diện tối"}
+    >
+      {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+    </button>
+  );
+}
