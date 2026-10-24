@@ -1,8 +1,9 @@
-import { HelpCircle, Search, ChevronDown, Menu, PanelLeft } from "lucide-react";
+import { HelpCircle, Search, ChevronDown, Menu, PanelLeft, Moon, Sun } from "lucide-react";
 import { useRouterState } from "@tanstack/react-router";
 import { NotificationBell } from "@/components/app/notification-bell";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
 import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
+import { useTheme } from "@/hooks/use-theme";
 
 const titles: Record<string, { title: string; sub: string }> = {
   "/dashboard": { title: "Tổng quan", sub: "Chào mừng bạn quay trở lại hệ thống" },
