@@ -219,9 +219,6 @@
     color: var(--color-foreground);
     font-feature-settings: "cv11", "ss01", "ss03";
   }
-  ::color-scheme {
-    /* handled per-theme below */
-  }
   html {
     color-scheme: light;
   }
@@ -232,8 +229,7 @@
 
 @layer utilities {
   .bg-grid-soft {
-    background-image: radial-gradient(var(--color-primary) calc(1px / 1), transparent 1px);
-    background-image: radial-gradient(oklch(from var(--color-primary) l c h / 0.12) 1px, transparent 1px);
+    background-image: radial-gradient(oklch(0.54 0.2 285 / 0.1) 1px, transparent 1px);
     background-size: 24px 24px;
   }
   .bg-brand-gradient {
