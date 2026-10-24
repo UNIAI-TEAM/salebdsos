@@ -166,6 +166,9 @@ function PreventZoomGestures() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  React.useEffect(() => {
+    initTheme();
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
