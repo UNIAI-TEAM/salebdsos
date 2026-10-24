@@ -293,7 +293,7 @@ function PipelinePage() {
       <DndContext sensors={sensors} collisionDetection={closestCorners}
         onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div className="overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-4 md:snap-none -mx-4 lg:-mx-8 px-4 lg:px-8 pb-4 scrollbar-thin">
-          <div className="grid min-w-0 grid-flow-col auto-cols-[minmax(0,100%)] sm:auto-cols-[280px] gap-3 sm:gap-4">
+          <div className="grid min-w-0 grid-flow-col auto-cols-[calc(100vw-2rem)] sm:auto-cols-[280px] gap-3 sm:gap-4">
             {stages.map((s) => {
               const list = dealsByStage.get(s.id) ?? [];
               const sum = list.reduce((a, b) => a + (b.value ?? 0), 0);
