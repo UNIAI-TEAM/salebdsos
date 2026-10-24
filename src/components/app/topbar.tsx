@@ -78,6 +78,7 @@ export function AppTopbar() {
 
         <div className="flex items-center gap-1.5">
           <NotificationBell />
+          <ThemeToggle />
           <button className="p-2 rounded-lg hover:bg-muted transition">
             <HelpCircle className="h-5 w-5 text-muted-foreground" />
           </button>
