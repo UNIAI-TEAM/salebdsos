@@ -27,7 +27,17 @@ import {
 } from "lucide-react";
 import { suggestPromptForDeal } from "@/lib/sales-prompt.functions";
 
-export const Route = createFileRoute("/_app/pipeline")({ component: PipelinePage });
+export const Route = createFileRoute("/_app/pipeline")({
+  head: () => ({ meta: [
+    { title: "Phễu cơ hội | SaleBDS OS" },
+    { name: "description", content: "Theo dõi cơ hội bán bất động sản theo giai đoạn trong SaleBDS OS." },
+    { property: "og:title", content: "Phễu cơ hội | SaleBDS OS" },
+    { property: "og:description", content: "Theo dõi cơ hội bán bất động sản theo giai đoạn trong SaleBDS OS." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
+  component: PipelinePage,
+});
 
 type Stage = { id: string; name: string; position: number; win_probability: number | null };
 type Deal = {
@@ -282,8 +292,8 @@ function PipelinePage() {
 
       <DndContext sensors={sensors} collisionDetection={closestCorners}
         onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <div className="overflow-x-auto -mx-4 lg:-mx-8 px-4 lg:px-8 pb-4 scrollbar-thin">
-          <div className="grid grid-flow-col auto-cols-[82vw] sm:auto-cols-[280px] gap-3 sm:gap-4 snap-x snap-mandatory md:snap-none">
+        <div className="overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-4 md:snap-none -mx-4 lg:-mx-8 px-4 lg:px-8 pb-4 scrollbar-thin">
+          <div className="grid w-max min-w-0 grid-flow-col auto-cols-[calc(100vw-2rem)] sm:auto-cols-[280px] gap-3 sm:gap-4">
             {stages.map((s) => {
               const list = dealsByStage.get(s.id) ?? [];
               const sum = list.reduce((a, b) => a + (b.value ?? 0), 0);
@@ -399,7 +409,7 @@ function Column({
   const { setNodeRef, isOver } = useDroppable({ id: `stage:${stage.id}` });
   return (
     <div ref={setNodeRef}
-      className={["rounded-2xl border flex flex-col transition snap-start",
+      className={["min-w-0 rounded-2xl border flex flex-col transition snap-start snap-always",
         isOver ? "bg-primary/5 border-primary" : "bg-muted/40 border-border"].join(" ")}>
       <div className="px-4 pt-3.5 pb-3 border-b border-border bg-card rounded-t-2xl">
         <div className="flex items-center justify-between mb-1.5">
