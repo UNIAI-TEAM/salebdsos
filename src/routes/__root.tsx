@@ -11,6 +11,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/hooks/use-auth";
+import { initTheme } from "@/hooks/use-theme";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -124,8 +125,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi" className="dark">
+    <html lang="vi" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("salebds-theme");if(t!=="light"&&t!=="dark")t="dark";var d=t==="dark";var e=document.documentElement;e.classList.toggle("dark",d);e.style.colorScheme=d?"dark":"light";var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=d?"#0B0F1A":"#FFFFFF";}catch(e){}})();`,
+          }}
+        />
         <HeadContent />
       </head>
       <body>
@@ -161,6 +167,9 @@ function PreventZoomGestures() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  React.useEffect(() => {
+    initTheme();
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

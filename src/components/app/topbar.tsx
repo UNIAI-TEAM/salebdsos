@@ -1,8 +1,9 @@
-import { HelpCircle, Search, ChevronDown, Menu, PanelLeft } from "lucide-react";
+import { HelpCircle, Search, ChevronDown, Menu, PanelLeft, Moon, Sun } from "lucide-react";
 import { useRouterState } from "@tanstack/react-router";
 import { NotificationBell } from "@/components/app/notification-bell";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
 import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
+import { useTheme } from "@/hooks/use-theme";
 
 const titles: Record<string, { title: string; sub: string }> = {
   "/dashboard": { title: "Tổng quan", sub: "Chào mừng bạn quay trở lại hệ thống" },
@@ -77,6 +78,7 @@ export function AppTopbar() {
 
         <div className="flex items-center gap-1.5">
           <NotificationBell />
+          <ThemeToggle />
           <button className="p-2 rounded-lg hover:bg-muted transition">
             <HelpCircle className="h-5 w-5 text-muted-foreground" />
           </button>
@@ -91,5 +93,20 @@ export function AppTopbar() {
         </div>
       </div>
     </header>
+  );
+}
+
+/** Chuyển giao diện sáng / tối; trạng thái lưu trên máy người dùng. */
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button
+      onClick={toggle}
+      className="inline-flex items-center justify-center h-9 w-9 rounded-lg hover:bg-muted active:scale-95 transition text-muted-foreground hover:text-foreground"
+      aria-label={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
+      title={theme === "dark" ? "Giao diện sáng" : "Giao diện tối"}
+    >
+      {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+    </button>
   );
 }
