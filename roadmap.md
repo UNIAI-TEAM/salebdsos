@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Cấu hình và kiểm tra an toàn SePay/Casso, Zalo OA, SMS, Facebook trước khi Sale dùng thật.
+
 - [x] Tách Danh thiếp, Profile và màn hình Sửa theo thiết kế đã duyệt.
 
 - [ ] Hoàn tất publish và kiểm tra landing công khai từ chế độ PWA.
