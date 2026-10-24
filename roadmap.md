@@ -22,7 +22,7 @@
 - [x] Giai đoạn 1: Đối soát ngân hàng tự động + Sự kiện mở bán & check-in QR
 - [x] Giai đoạn 2: Phân khúc động + chiến dịch gửi hàng loạt
 - [x] Giai đoạn 3: Tự động hoá bình luận Facebook/Messenger, trả lời nhanh, thẻ hội thoại
-- [ ] Giai đoạn 4: Tuổi nợ + trợ lý AI điều hành
+- [x] Giai đoạn 4: Tuổi nợ + trợ lý AI điều hành
 
 - [x] Bước 1a: Hồ sơ khách hàng 360° (gộp gửi thông tin, tin nhắn, gọi, hợp đồng, thu tiền, ngân hàng, sự kiện, tài liệu, nhắc tự động)
 - [x] Bước 1b: Phễu cơ hội kéo thả (điện thoại, tự thắng/thua, lý do thất bại, nhật ký)
