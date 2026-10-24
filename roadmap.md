@@ -1,5 +1,11 @@
 # Roadmap
 
+- [x] Kiểm tra hiện trạng kênh, quyền cấu hình, yêu cầu không có khoá trên preview và published; kiểm thử bank/social/segments (17/17).
+- [ ] SePay/Casso: chờ chọn nhà cung cấp và tài khoản quản trị sàn; chưa có cấu hình ngân hàng/khoá webhook.
+- [ ] Zalo OA: chờ tài khoản quản trị sàn và thông tin OA/ứng dụng qua ô bảo mật; chưa có token/secret/app ID.
+- [ ] SMS: chờ chọn nhà cung cấp, brandname và khoá qua ô bảo mật; chưa có cấu hình/khoá eSMS.
+- [ ] Facebook: chờ tài khoản quản trị sàn, Page/form và App Secret/Page Token qua ô bảo mật; chưa có cấu hình/khoá.
+
 - [x] Tách Danh thiếp, Profile và màn hình Sửa theo thiết kế đã duyệt.
 
 - [ ] Hoàn tất publish và kiểm tra landing công khai từ chế độ PWA.
