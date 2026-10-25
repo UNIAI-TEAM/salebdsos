@@ -384,7 +384,6 @@ export function AppSidebar() {
   const { collapsed, toggle } = useSidebarCollapsed();
   const { open, setOpen, close } = useMobileDrawer();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const currentHub = hubForPath(pathname)?.id;
 
   // Auto-close mobile drawer whenever the route changes.
   useEffect(() => {
