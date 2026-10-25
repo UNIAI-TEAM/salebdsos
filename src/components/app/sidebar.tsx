@@ -19,6 +19,7 @@ import {
 import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
 import { capabilityForPath, ROLE_LABELS, type Capability } from "@/lib/permissions";
+import { hubForPath } from "@/lib/nav-hubs";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
 import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
 import {
@@ -106,6 +107,7 @@ function SidebarBody({
   onClose?: () => void;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const currentHub = hubForPath(pathname)?.id;
   const { tenants, currentTenant, currentRole, switchTenant, signOut, user, isPlatformAdmin, can: allow } = useAuth();
   const [wsOpen, setWsOpen] = useState(false);
 
@@ -382,6 +384,7 @@ export function AppSidebar() {
   const { collapsed, toggle } = useSidebarCollapsed();
   const { open, setOpen, close } = useMobileDrawer();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const currentHub = hubForPath(pathname)?.id;
 
   // Auto-close mobile drawer whenever the route changes.
   useEffect(() => {
