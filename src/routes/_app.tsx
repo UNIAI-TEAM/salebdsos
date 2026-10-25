@@ -4,6 +4,7 @@ import { AppSidebar } from "@/components/app/sidebar";
 import { AppTopbar } from "@/components/app/topbar";
 import { OfflineBanner } from "@/components/app/offline-banner";
 import { MobileTabBar } from "@/components/app/mobile-tabbar";
+import { HubTabs } from "@/components/app/hub-tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { SidebarCollapsedProvider } from "@/hooks/use-sidebar-collapsed";
 import { MobileDrawerProvider } from "@/hooks/use-mobile-drawer";
@@ -97,6 +98,7 @@ function AppLayoutShell() {
         <AppTopbar />
         <main className="flex-1 overflow-x-hidden">
           <div className="px-4 lg:px-8 py-6 lg:py-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-8 max-w-[1600px] mx-auto w-full">
+            <HubTabs />
             <RouteGuard>
               <Outlet />
             </RouteGuard>
