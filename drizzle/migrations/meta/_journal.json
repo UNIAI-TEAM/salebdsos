@@ -204,6 +204,27 @@
       "when": 1792987627481,
       "tag": "0028_agency_handover_optional_targets",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792987923930,
+      "tag": "0029_agency_inventory_scope_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792987957423,
+      "tag": "0030_agency_side_private_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792988053804,
+      "tag": "0031_agency_allocation_fail_closed_reader",
+      "breakpoints": true
     }
   ]
 }

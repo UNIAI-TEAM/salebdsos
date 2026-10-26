@@ -4481,6 +4481,15 @@ export type Database = {
         Args: { _page_id: string; _tenant_id: string }
         Returns: undefined
       }
+      can_read_agency_allocation: {
+        Args: {
+          p_agency: string
+          p_expires: string
+          p_status: string
+          p_tenant: string
+        }
+        Returns: boolean
+      }
       can_view_agency_inventory: {
         Args: { p_agency: string }
         Returns: boolean
