@@ -251,7 +251,9 @@ export const sendMessage = createServerFn({ method: "POST" })
     if (channel === "zalo") {
       const { loadChannelSettings } = await import("./channels.server");
       const config = await loadChannelSettings(data.tenantId);
-      const { data: ids } = await supabase.from("channel_identities").select("external_user_id").eq("tenant_id", data.tenantId).eq("conversation_id", data.conversationId).eq("channel", "zalo").eq("account_id", config.zalo.oaId).limit(2);
+      let identityQuery = supabase.from("channel_identities").select("external_user_id").eq("tenant_id", data.tenantId);
+      identityQuery = conv.lead_id ? identityQuery.eq("lead_id", conv.lead_id) : identityQuery.eq("conversation_id", data.conversationId);
+      const { data: ids } = await identityQuery.eq("channel", "zalo").eq("account_id", config.zalo.oaId).limit(2);
       if (ids && ids.length > 1) throw new Error("Khách có nhiều liên kết Zalo; cần kiểm tra hồ sơ trước khi gửi.");
       const result = await sendZaloMessage({
         tenantId: data.tenantId,
