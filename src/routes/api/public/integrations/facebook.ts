@@ -50,7 +50,7 @@ export const Route = createFileRoute("/api/public/integrations/facebook")({
         const { supabaseAdmin: sbA } = await import("@/integrations/supabase/client.server");
         const { data: owner } = await sbA.from("settings").select("tenant_id")
           .eq("key", "integrations").eq("value->facebook->>pageId", pageIds[0]).limit(1);
-        if (!owner?.[0]) return json({ ok: true, skipped: "unknown_page" });
+        if (!owner?.[0]) return json({ error: "unknown_page" }, 401);
         const { facebookCreds } = await import("@/lib/credentials.server");
         const creds = await facebookCreds(owner[0].tenant_id as string);
         const secret = creds.appSecret;
@@ -71,6 +71,8 @@ export const Route = createFileRoute("/api/public/integrations/facebook")({
           (e?.changes ?? []).filter((c: any) => c?.field === "leadgen").map((c: any) => ({ ...c.value, page_id: c.value?.page_id ?? e.id })),
         );
         let processed = 0;
+        const { handleMessengerEvents } = await import("@/lib/messenger-webhook.server");
+        processed += await handleMessengerEvents(owner[0].tenant_id as string, pageIds[0], payload);
 
         // Bình luận Fanpage (field "feed", item "comment")
         const comments: any[] = (payload?.entry ?? []).flatMap((e: any) =>
