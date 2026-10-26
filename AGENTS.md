@@ -6,3 +6,4 @@
 - Two-way inbox uses tenant/account-scoped channel_identities and atomic ingest_channel_message for deduplication; webhook signatures and encrypted tenant credentials are required, and customer linking is explicit rather than inferred from message text.
 - Channel profile changes use authenticated atomic link_channel_profile; ingestion never guesses profiles from phones or reuses legacy conversations, preventing mixed-customer history and partial links.
 - Pending inbox providers use one shared capability registry and remain send-blocked until their runtime integration is implemented and verified, preventing labels from implying working messaging.
+- Additional channel onboarding verifies Telegram/WhatsApp through project-linked gateway credentials and Viber through encrypted tenant credentials; account verification never enables messaging, avoiding false delivery claims.
