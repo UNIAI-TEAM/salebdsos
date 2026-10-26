@@ -1,6 +1,7 @@
 # Roadmap
 
-- [ ] Kết nối push khi giao lead mới/gán lại và nhắc trước SLA; kiểm tra lịch, chống trùng và đăng ký điện thoại.
+- [x] Push giao lead/gán lại bằng hàng đợi, nhắc trước SLA 5 phút, hủy nhắc sau phản hồi; thử sàn riêng, gán lại và lịch tự dừng đạt; 25 kiểm thử đạt.
+- [ ] Kích hoạt push thật: chờ xuất bản bản mới (địa chỉ công khai chưa có bộ xử lý mới) và Sale bật thông báo trên điện thoại; hiện 0 thiết bị, chưa xác minh hiển thị thông báo thật.
 
 - [x] Đối chiếu giao khách: giữ Sale cá nhân, tải toàn sàn 30 ngày, nhóm dự án/dự phòng, SLA khi vào hệ thống, QR/chat theo dõi SLA, push Zalo/Messenger, khách cũ chưa có Sale được phân phối; 29 kiểm thử đạt và mở Tổng quan → Gán lại Sale thành công.
 - [ ] Hotline nhận khách mới: chờ nhà cung cấp tổng đài và định dạng cuộc gọi đến đã xác thực; hiện webhook chỉ cập nhật kết quả cuộc gọi đã có.
