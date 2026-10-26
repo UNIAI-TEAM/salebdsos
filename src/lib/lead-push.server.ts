@@ -1,4 +1,4 @@
-import { shouldDeliverLeadPush, LEAD_PUSH_COPY } from "./lead-push";
+import { shouldDeliverLeadPush, shouldDeliverAgencyPush, LEAD_PUSH_COPY, AGENCY_PUSH_COPY, type AgencyPushTarget } from "./lead-push";
 import { pushConfigured, sendPushToUser } from "./push.server";
 
 export async function runLeadPushJobs() {
@@ -10,6 +10,29 @@ export async function runLeadPushJobs() {
     let state: "accepted" | "failed" | "skipped" | "pending" = "skipped";
     let lastError: string | null = null;
     try {
+      if (job.kind === "agency_assigned" || job.kind === "agency_sla_warning") {
+        const { data: target, error: targetError } = await db.rpc("agency_push_target", { p_job: job.id });
+        if (targetError) throw targetError;
+        if (shouldDeliverAgencyPush(target as AgencyPushTarget | null, job.user_id, job.tenant_id, job.kind, job.deadline)) {
+          const warning = job.kind === "agency_sla_warning";
+          const title = warning ? AGENCY_PUSH_COPY.warning : AGENCY_PUSH_COPY.assigned;
+          // Assignment already has an atomic in-app notification from the routing RPC.
+          if (warning) {
+            const { error: notificationError } = await db.from("notifications").upsert({
+              id: job.id, tenant_id: job.tenant_id, user_id: job.user_id,
+              type: "agency_sla_warning", title, body: AGENCY_PUSH_COPY.body, link: "/agencies",
+            }, { onConflict: "id", ignoreDuplicates: true });
+            if (notificationError) throw notificationError;
+          }
+          if (!pushConfigured()) throw new Error("Chưa cấu hình khóa gửi thông báo");
+          const result = await sendPushToUser({ userId: job.user_id, tenantId: job.tenant_id,
+            title, body: AGENCY_PUSH_COPY.body, link: "/agencies", tag: `agency-${job.id}`,
+            ttl: warning ? Math.max(1, Math.ceil((Date.parse(job.deadline ?? "") - Date.now()) / 1000)) : 3600 });
+          if (result.sent > 0) { state = "accepted"; accepted += 1; }
+          else if (result.failed > 0) throw new Error("Thiết bị chưa chấp nhận thông báo");
+          else lastError = "Chưa có thiết bị đang bật";
+        }
+      } else {
       const { data: lead, error: leadError } = await db.from("leads")
         .select("owner_user_id,status,deleted_at,meta").eq("id", job.lead_id).eq("tenant_id", job.tenant_id).maybeSingle();
       if (leadError) throw leadError;
@@ -31,6 +54,7 @@ export async function runLeadPushJobs() {
         if (result.sent > 0) { state = "accepted"; accepted += 1; }
         else if (result.failed > 0) throw new Error("Thiết bị chưa chấp nhận thông báo");
         else lastError = "Chưa có thiết bị đang bật";
+      }
       }
     } catch (e) {
       state = job.attempts >= 3 ? "failed" : "pending";
