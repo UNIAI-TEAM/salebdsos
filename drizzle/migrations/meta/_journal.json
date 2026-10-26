@@ -78,6 +78,13 @@
       "when": 1792978040590,
       "tag": "0010_safe_channel_identity_linking",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792978161138,
+      "tag": "0011_avoid_legacy_zalo_identity_collision",
+      "breakpoints": true
     }
   ]
 }
