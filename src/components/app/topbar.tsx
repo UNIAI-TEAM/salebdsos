@@ -4,8 +4,10 @@ import { NotificationBell } from "@/components/app/notification-bell";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
 import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
 import { useTheme } from "@/hooks/use-theme";
+import { agencyCopy } from "@/lib/agencies-copy";
 
 const titles: Record<string, { title: string; sub: string }> = {
+  "/agencies": { title: agencyCopy.title, sub: agencyCopy.description },
   "/dashboard": { title: "Tổng quan", sub: "Chào mừng bạn quay trở lại hệ thống" },
   "/sale-overview": { title: "Tổng quan Sale", sub: "Lịch, khách đã quét và kết quả bán hàng" },
   "/digital-card/edit": { title: "Sửa danh thiếp", sub: "Nội dung, liên hệ, dự án và thiết kế" },

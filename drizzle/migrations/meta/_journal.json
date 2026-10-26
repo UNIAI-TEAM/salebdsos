@@ -141,6 +141,13 @@
       "when": 1792985985535,
       "tag": "0019_agency_partner_profile_privacy",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792986286535,
+      "tag": "0020_agency_base_profile_projection",
+      "breakpoints": true
     }
   ]
 }

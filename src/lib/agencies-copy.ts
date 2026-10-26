@@ -7,6 +7,7 @@ export const agencyCopy = {
   pending: 'Chờ xác nhận', disconnected: 'Chưa liên kết', active: 'Đang hợp tác', paused: 'Tạm dừng',
   accept: 'Xác nhận hợp tác', pause: 'Tạm dừng', resume: 'Tiếp tục hợp tác', allocate: 'Cấp giỏ hàng', revoke: 'Thu hồi',
   project: 'Dự án', chooseProject: 'Chọn dự án', expiry: 'Hạn cấp (không bắt buộc)', noExpiry: 'Không thời hạn',
+  expiryColumn: 'Hạn cấp',
   product: 'Căn / sản phẩm', area: 'Diện tích', price: 'Giá bán', status: 'Trạng thái', noProducts: 'Chưa có căn được cấp',
   live: 'Đang cấp', revoked: 'Đã thu hồi', expired: 'Hết hạn', allocated: 'Đã cấp', available: 'Có thể cấp',
   previous: 'Trang trước', next: 'Trang sau', chooseProducts: 'Chọn căn để cấp', grant: 'Cấp quyền', remove: 'Thu hồi quyền',
