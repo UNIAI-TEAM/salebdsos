@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Gia cố giữ căn đồng thời, tự giải phóng giữ chỗ hết hạn và bảo toàn định danh/lịch sử thanh toán khi sửa đợt thu.
+- [x] Gia cố giữ căn đồng thời bằng khóa/phiên bản, giải phóng giữ chỗ hết hạn mỗi giờ (không giải phóng cọc/hợp đồng), bảo toàn ID, số đã thu, ngày thu và lịch sử khi sửa đợt. 19 kiểm thử đạt; sửa tên qua giao diện sàn thử, đọc lại tiền giữ nguyên; dữ liệu thử đã dọn. Chưa xuất bản màn hình mới.
 
 - [x] Push khách đại lý: hàng đợi riêng theo referral dùng chung lịch; giao khách/bàn giao, nhắc trước SLA 5 phút, hủy khi phản hồi, kiểm tra quyền đích trước gửi. 18 kiểm thử đạt, thử khách trong sàn riêng và xác nhận thao tác Đã liên hệ hủy nhắc; chưa xác minh thông báo trên điện thoại vì 0 thiết bị, cần xuất bản bản mới và bật thông báo.
 
