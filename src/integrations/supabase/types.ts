@@ -4529,6 +4529,30 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_push_jobs_v2: {
+        Args: never
+        Returns: {
+          attempts: number
+          created_at: string
+          deadline: string | null
+          finished_at: string | null
+          id: string
+          kind: string
+          last_error: string | null
+          lead_id: string
+          referral_id: string | null
+          run_at: string
+          state: string
+          tenant_id: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "lead_push_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       dispatch_lead_push: { Args: never; Returns: undefined }
       ingest_channel_message: {
         Args: {
