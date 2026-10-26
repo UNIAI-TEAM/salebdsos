@@ -29,6 +29,9 @@ export async function receiveChannelMessage(args: { tenantId: string; channel: "
     p_project: projectId as string, p_attachment: (args.attachment ?? null) as unknown as string,
   });
   if (error) throw new Error("Không lưu được tin nhắn");
+  const { data: health } = await sb.from("settings").select("value").eq("tenant_id", args.tenantId).eq("key", "channel_health").maybeSingle();
+  const state = (health?.value ?? {}) as Record<string, object>;
+  await sb.from("settings").upsert({ tenant_id: args.tenantId, key: "channel_health", value: { ...state, [args.channel]: { ...state[args.channel], lastWebhookAt: new Date().toISOString() } } }, { onConflict: "tenant_id,key" });
   const result = data as { duplicate?: boolean; ownerUserId?: string; leadId?: string };
   if (!result.duplicate && result.ownerUserId) {
     await sb.from("notifications").insert({ tenant_id: args.tenantId, user_id: result.ownerUserId, lead_id: result.leadId, type: "lead", title: `Tin nhắn mới · ${args.channel === "zalo" ? "Zalo OA" : "Messenger"}`, body: args.body.slice(0, 160), link: "/inbox" } as never);
@@ -57,11 +60,11 @@ export async function channelConnectionStatus(tenantId: string) {
   const { credentialStatus } = await import("./credentials.server");
   const s = await credentialStatus(tenantId);
   const { data: row } = await sb.from("settings").select("value").eq("tenant_id", tenantId).eq("key", "channel_health").maybeSingle();
-  const health = (row?.value ?? {}) as Record<string, { ok?: boolean; checkedAt?: string }>;
+  const health = (row?.value ?? {}) as Record<string, { ok?: boolean; checkedAt?: string; lastWebhookAt?: string }>;
   return [
     { channel: "web_chat", configured: config.webChat.enabled, enabled: config.webChat.enabled, verified: config.webChat.enabled, checkedAt: null },
-    { channel: "zalo", configured: Boolean(config.zalo.oaId && config.zalo.appId && s.zalo_app_secret && s.zalo_access_token), enabled: config.zalo.enabled, verified: Boolean(health.zalo?.ok), checkedAt: health.zalo?.checkedAt ?? null },
-    { channel: "messenger", configured: Boolean(config.messenger.pageId && s.fb_app_secret && s.fb_page_token), enabled: config.messenger.enabled, verified: Boolean(health.messenger?.ok), checkedAt: health.messenger?.checkedAt ?? null },
+    { channel: "zalo", configured: Boolean(config.zalo.oaId && config.zalo.appId && s.zalo_app_secret && s.zalo_access_token), enabled: config.zalo.enabled, verified: Boolean(health.zalo?.ok && health.zalo?.lastWebhookAt), checkedAt: health.zalo?.checkedAt ?? null },
+    { channel: "messenger", configured: Boolean(config.messenger.pageId && s.fb_app_secret && s.fb_page_token), enabled: config.messenger.enabled, verified: Boolean(health.messenger?.ok && health.messenger?.lastWebhookAt), checkedAt: health.messenger?.checkedAt ?? null },
     { channel: "sms", configured: Boolean(config.sms.enabled && process.env.ESMS_API_KEY && process.env.ESMS_SECRET_KEY), enabled: config.sms.enabled, verified: false, checkedAt: null },
     { channel: "email", configured: config.email.enabled, enabled: config.email.enabled, verified: false, checkedAt: null },
   ];
@@ -86,6 +89,7 @@ export async function checkChannelConnection(tenantId: string, channel: "zalo" |
     ok = response.ok && body.id === config.messenger.pageId && subscription.ok && Boolean(apps.data?.some(a => a.subscribed_fields?.includes("messages")));
   }
   const { data: previous } = await sb.from("settings").select("value").eq("tenant_id", tenantId).eq("key", "channel_health").maybeSingle();
-  await sb.from("settings").upsert({ tenant_id: tenantId, key: "channel_health", value: { ...(previous?.value as object ?? {}), [channel]: { ok, checkedAt: new Date().toISOString() } } }, { onConflict: "tenant_id,key" });
+  const previousHealth = (previous?.value ?? {}) as Record<string, object>;
+  await sb.from("settings").upsert({ tenant_id: tenantId, key: "channel_health", value: { ...previousHealth, [channel]: { ...previousHealth[channel], ok, checkedAt: new Date().toISOString() } } }, { onConflict: "tenant_id,key" });
   return { ok };
 }

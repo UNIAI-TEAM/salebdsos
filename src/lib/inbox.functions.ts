@@ -152,19 +152,26 @@ export const getConversation = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     if (!conv) throw new Error("Không tìm thấy hội thoại");
     if (!canAccessConversation(roleList, conv.owner_user_id, userId)) throw new Error("Bạn chỉ được xem khách mình phụ trách");
-    const { data: identities } = await supabase.from("channel_identities").select("channel,last_inbound_at").eq("tenant_id", data.tenantId).eq("conversation_id", conv.id);
+    let conversationIds = [conv.id];
+    if (conv.lead_id) {
+      let siblings = supabase.from("conversations").select("id").eq("tenant_id", data.tenantId).eq("lead_id", conv.lead_id);
+      if (!roleList.some(r => MANAGER_ROLES.has(r))) siblings = siblings.eq("owner_user_id", userId);
+      const { data: linked } = await siblings;
+      conversationIds = [...new Set([conv.id, ...(linked ?? []).map(c => c.id)])];
+    }
+    const { data: identities } = await supabase.from("channel_identities").select("channel,last_inbound_at").eq("tenant_id", data.tenantId).in("conversation_id", conversationIds);
 
     const [messagesQ, callsQ] = await Promise.all([
       supabase
         .from("conversation_messages")
         .select("id, channel, direction, body, attachment_url, sender_name, delivery_status, error_message, created_at")
-        .eq("conversation_id", data.conversationId)
+        .in("conversation_id", conversationIds)
         .order("created_at", { ascending: true })
         .limit(300),
       supabase
         .from("call_logs")
         .select("id, provider, direction, phone, status, outcome, duration_seconds, recording_url, transcript, notes, started_at")
-        .eq("conversation_id", data.conversationId)
+        .in("conversation_id", conversationIds)
         .order("started_at", { ascending: false })
         .limit(50),
     ]);

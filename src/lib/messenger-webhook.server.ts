@@ -21,7 +21,7 @@ export async function handleMessengerEvents(tenantId: string, pageId: string, pa
     if (!parsed.success) continue;
     const event = parsed.data;
     if (event.message?.is_echo) {
-      await sb.from("conversation_messages").update({ delivery_status: "sent" }).eq("tenant_id", tenantId).eq("channel", "messenger").eq("direction", "out").eq("external_id", event.message.mid);
+      await sb.from("conversation_messages").update({ delivery_status: "sent" }).eq("tenant_id", tenantId).eq("channel", "messenger").eq("direction", "out").eq("external_id", event.message.mid).not("delivery_status", "in", "(delivered,read)");
       continue;
     }
     if (event.recipient.id !== pageId) continue;

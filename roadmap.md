@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Chat đa kênh: đồng bộ Zalo OA/Messenger hai chiều theo hồ sơ khách, phản hồi trong Hộp thoại, trạng thái kết nối và kiểm thử an toàn.
+- [x] Chat đa kênh: Zalo OA/Messenger nhận tin có chữ ký, chống trùng, gắn hồ sơ, phản hồi đúng kênh, trạng thái kết nối; đã thử trong sàn tạm riêng và xoá dữ liệu thử.
 - [ ] Xác nhận gửi/nhận thật Zalo OA và Messenger: chờ quản trị viên cung cấp tài khoản/khoá qua ô bảo mật.
 
 - [x] Kiểm tra và sửa Trợ lý AI: phạm vi Sale, lỗi tra cứu, hội thoại dài/đổi sàn; bốn câu hỏi thực tế trả lời thành công, 17 kiểm thử đạt.
