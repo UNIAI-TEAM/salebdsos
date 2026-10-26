@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import { Bot, Loader2, Send } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { askAgent } from "@/lib/ai-agent.functions";
+import { agentHistory } from "@/lib/ai-agent-data";
 import { PageHeader } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,6 +35,11 @@ const SUGGEST = [
 
 function AgentPage() {
   const { currentTenant } = useAuth();
+  if (!currentTenant) return null;
+  return <TenantAgentPage key={currentTenant.id} tenantId={currentTenant.id} />;
+}
+
+function TenantAgentPage({ tenantId }: { tenantId: string }) {
   const ask = useServerFn(askAgent);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -44,11 +50,11 @@ function AgentPage() {
 
   async function send(text: string) {
     const q = text.trim();
-    if (!q || busy || !currentTenant) return;
+    if (!q || busy) return;
     const next = [...msgs, { role: "user" as const, content: q }];
     setMsgs(next); setInput(""); setBusy(true); setErr(null);
     try {
-      const r = await ask({ data: { tenantId: currentTenant.id, messages: next } });
+      const r = await ask({ data: { tenantId, messages: agentHistory(next) } });
       setMsgs([...next, { role: "assistant", content: r.text || "Không có câu trả lời." }]);
     } catch (e: any) {
       setErr(e?.message ?? "Lỗi"); setInput(q); setMsgs(msgs);
