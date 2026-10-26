@@ -17,12 +17,13 @@ export const getCustomer360 = createServerFn({ method: "GET" })
     const phone = normPhone(c.phone);
     const tail = phone ? phone.slice(-9) : null;
 
-    // Leads matched by customer phone/email (leads have no customer_id).
-    let leadQ = sb.from("leads").select("id,source,status,notes,created_at,phone,email,owner_user_id")
-      .eq("tenant_id", t).is("deleted_at", null).limit(50);
+    // Suffix search is only a candidate search; never attach channel placeholders or partial-phone matches.
+    let leadQ = sb.from("leads").select("id,source,status,notes,created_at,phone,email,owner_user_id,meta")
+      .eq("tenant_id", t).is("deleted_at", null).order("id").limit(501);
     const ors = [tail && `phone.ilike.%${tail}`, c.email && `email.eq.${c.email}`].filter(Boolean);
-    const { data: leadsRaw } = ors.length ? await leadQ.or(ors.join(",")) : { data: [] };
-    const leads = leadsRaw ?? [];
+    const { data: leadsRaw, error: leadError } = ors.length ? await leadQ.or(ors.join(",")) : { data: [] };
+    if (leadError || (leadsRaw?.length ?? 0) > 500) throw new Error("Chưa thể xác định đầy đủ hồ sơ liên quan; cần kiểm tra liên kết khách.");
+    const leads = (leadsRaw ?? []).filter((l: any) => l.meta?.identity_review_required !== true && ((phone && normPhone(l.phone) === phone) || (c.email && l.email?.toLowerCase() === c.email.toLowerCase())));
     const leadIds = leads.map((l: any) => l.id);
     const inLeads = (q: any, col = "lead_id") =>
       leadIds.length ? q.or(`customer_id.eq.${c.id},${col}.in.(${leadIds.join(",")})`) : q.eq("customer_id", c.id);
