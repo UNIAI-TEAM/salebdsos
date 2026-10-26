@@ -37,6 +37,17 @@ export function LandingChat({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const [entry, setEntry] = useState<string | null>(null);
+
+  // Khách quét QR sự kiện (?chat=<mã>): mở sẵn khung chat để kịch bản sự kiện bắt đầu.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("chat");
+    if (code && /^[a-z0-9-]{4,40}$/.test(code)) {
+      setEntry(code);
+      setOpen(true);
+      setText((t) => t || "Xin chào, tôi vừa quét mã QR tại sự kiện");
+    }
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -72,7 +83,7 @@ export function LandingChat({
       const response = await fetch(`/api/public/chat/${slug}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visitor: visitorKey(), text: value, name: name || null, phone: phone || null }),
+        body: JSON.stringify({ visitor: visitorKey(), text: value, name: name || null, phone: phone || null, entry }),
       });
       const data = (await response.json()) as { ok?: boolean; error?: string };
       if (!response.ok || !data.ok) throw new Error(data.error ?? "Không gửi được tin nhắn.");
@@ -87,6 +98,7 @@ export function LandingChat({
         },
       ]);
       setText("");
+      setEntry(null);
     } catch (err) {
       setError((err as Error).message);
     } finally {
