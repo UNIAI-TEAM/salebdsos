@@ -68,3 +68,4 @@
 - [x] Bước 1b: Phễu cơ hội kéo thả (điện thoại, tự thắng/thua, lý do thất bại, nhật ký)
 - [x] Bước 1c: Quản lý phòng ban + phân quyền theo phòng
 - [x] Bước 1d: Bàn giao khách khi Sale nghỉ
+- [x] Landing: thêm mục Đại lý & phân phối, Danh thiếp số, Kịch bản bán hàng; cập nhật điều hướng, FAQ và mô tả tìm kiếm
