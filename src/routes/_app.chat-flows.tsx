@@ -68,8 +68,8 @@ function ChatFlowsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Kịch bản chat tự động"
-        description="Bot trả lời khách theo cây nút bấm và từ khóa, rồi chuyển chuyên viên khi khách cần người thật."
-        actions={canEdit ? (
+        sub="Bot trả lời khách theo cây nút bấm và từ khóa, rồi chuyển chuyên viên khi khách cần người thật."
+        action={canEdit ? (
           <div className="flex gap-2">
             <Button variant="outline" onClick={add}><Plus className="h-4 w-4" />Kịch bản mới</Button>
             <Button onClick={() => save.mutate()} disabled={save.isPending}><Save className="h-4 w-4" />{save.isPending ? "Đang lưu…" : "Lưu"}</Button>
@@ -248,7 +248,7 @@ function Simulator({ flow }: { flow: ChatFlow }) {
   };
   const node = state ? flow.nodes.find((n) => n.id === state.nodeId) : null;
   return (
-    <SectionCard title="Mô phỏng chat" actions={<Button variant="ghost" size="icon" aria-label="Làm mới mô phỏng" onClick={reset}><RotateCcw className="h-4 w-4" /></Button>}>
+    <SectionCard title="Mô phỏng chat" action={<Button variant="ghost" size="icon" aria-label="Làm mới mô phỏng" onClick={reset}><RotateCcw className="h-4 w-4" /></Button>}>
       <div className="flex h-[520px] flex-col">
         <div className="flex-1 space-y-2 overflow-y-auto pr-1">
           {msgs.length === 0 && <p className="text-sm text-muted-foreground">Nhắn thử như khách để xem bot rẽ nhánh. {flow.trigger === "keyword" ? `Thử: “${flow.keywords[0] ?? ""}”` : "Gửi bất kỳ lời chào nào."}</p>}
