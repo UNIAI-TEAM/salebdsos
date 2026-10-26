@@ -81,6 +81,8 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
         const text = str(body["text"], 1000);
         const name = str(body["name"], 120);
         const phone = str(body["phone"], 40);
+        const entryRaw = str(body["entry"], 40);
+        const entry = entryRaw && /^[a-z0-9-]{4,40}$/.test(entryRaw) ? entryRaw : null;
         if (!visitor) return json({ error: "Thiếu mã phiên." }, 400);
         if (!text) return json({ error: "Vui lòng nhập nội dung." }, 400);
 
@@ -156,7 +158,7 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
           const { data: project } = page.project_id
             ? await supabaseAdmin.from("projects").select("name").eq("id", page.project_id).maybeSingle()
             : { data: null };
-          await runChatBot({ tenantId: page.tenant_id, conversationId, channel: "web_chat", text, vars: { ...(name ? { name } : {}), project: project?.name ?? "" } });
+          await runChatBot({ tenantId: page.tenant_id, conversationId, channel: "web_chat", text, vars: { ...(name ? { name } : {}), project: project?.name ?? "" }, entry });
         } catch (e) {
           console.error("chat bot failed", e);
         }

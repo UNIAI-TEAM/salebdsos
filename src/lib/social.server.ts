@@ -80,8 +80,22 @@ export async function handleFbComment(c: FbComment) {
       catch (e) { errors.push((e as Error).message); }
     }
   }
-  // 4. Nhắn riêng Messenger kèm nút xem dự án
-  if (cfg.autoMessage && cfg.messageText) {
+  // 4a. Kịch bản kích hoạt từ bình luận: gửi bước mở đầu qua tin nhắn riêng (Messenger chỉ cho 1 tin riêng/bình luận).
+  const { CHAT_FLOWS_KEY, parseChatFlows, pickCommentFlow, renderNode } = await import("@/lib/chat-flows");
+  const { data: flowRow } = await supabaseAdmin.from("settings").select("value").eq("tenant_id", c.tenantId).eq("key", CHAT_FLOWS_KEY).maybeSingle();
+  const cflow = pickCommentFlow(parseChatFlows(flowRow?.value).flows, c.postId, c.message);
+  if (cflow) {
+    const node = cflow.nodes.find((n) => n.id === cflow.startNodeId)!;
+    const text = renderNode(node, vars).slice(0, 640);
+    const message = projectUrl.startsWith("https://")
+      ? { attachment: { type: "template", payload: { template_type: "button", text,
+          buttons: [{ type: "web_url", url: projectUrl, title: cfg.buttonLabel || "Xem dự án" }] } } }
+      : { text };
+    try { await graph(`${c.pageId}/messages`, token, { recipient: { comment_id: c.commentId }, message }); patch.messaged = true; patch.flow_id = cflow.id; }
+    catch (e) { errors.push((e as Error).message); }
+  }
+  // 4b. Nhắn riêng Messenger kèm nút xem dự án
+  if (!cflow && cfg.autoMessage && cfg.messageText) {
     const text = fill(cfg.messageText, vars).slice(0, 640);
     const message = projectUrl.startsWith("https://")
       ? { attachment: { type: "template", payload: { template_type: "button", text,
@@ -91,6 +105,7 @@ export async function handleFbComment(c: FbComment) {
     catch (e) { errors.push((e as Error).message); }
   }
 
-  await supabaseAdmin.from("social_comment_logs").update({ ...patch, errors }).eq("id", log.id);
-  return { ok: true, ...patch, errors: errors.length };
+  const { flow_id, ...logPatch } = patch;
+  await supabaseAdmin.from("social_comment_logs").update({ ...logPatch, errors }).eq("id", log.id);
+  return { ok: true, ...logPatch, flowId: flow_id ?? null, errors: errors.length };
 }

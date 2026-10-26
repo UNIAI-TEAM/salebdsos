@@ -8,7 +8,7 @@ const btn = (label: string, next: string | null, keywords: string[] = []) => ({ 
 export type FlowTemplate = { key: string; name: string; description: string; build: () => ChatFlow };
 
 const flow = (name: string, nodes: ChatNode[], keywords: string[] = []): ChatFlow => ({
-  id: uid(), name, enabled: false, trigger: keywords.length ? "keyword" : "first_message", keywords, startNodeId: nodes[0].id, nodes,
+  id: uid(), name, enabled: false, trigger: keywords.length ? "keyword" : "first_message", keywords, postIds: [], entryCode: "", startNodeId: nodes[0].id, nodes,
 });
 
 const visit = (tag = "Hẹn xem nhà mẫu") => node({ id: "visit", text: "Dạ em đã giữ lịch xem nhà mẫu {project} sáng mai lúc 9h. Chuyên viên sẽ gọi xác nhận với {name} ngay ạ.", tag, handoff: true, appointment: { title: "Xem nhà mẫu {project}", location: "Nhà mẫu dự án", daysAhead: 1, hour: 9 } });

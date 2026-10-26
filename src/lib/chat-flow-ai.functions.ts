@@ -63,7 +63,7 @@ Quy tắc: bước đầu tiên có id "start"; 5-9 bước; mỗi bước khôn
     const raw = (() => { try { return JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)); } catch { return null; } })();
     if (!raw?.nodes) throw new Error("AI trả về kịch bản chưa hợp lệ, thử lại.");
     const draft: ChatFlow = {
-      id: uid(), name: String(raw.name || `Kịch bản ${p.name}`).slice(0, 80), enabled: false, trigger: "first_message", keywords: [], startNodeId: "start",
+      id: uid(), name: String(raw.name || `Kịch bản ${p.name}`).slice(0, 80), enabled: false, trigger: "first_message", keywords: [], postIds: [], entryCode: "", startNodeId: "start",
       nodes: (raw.nodes as any[]).slice(0, 40).map((n) => ({
         id: String(n.id).slice(0, 40), text: String(n.text ?? "").slice(0, 800) || "…", media: [], tag: String(n.tag ?? "").slice(0, 30), handoff: !!n.handoff,
         appointment: n.appointment ? { title: String(n.appointment.title || `Xem dự án ${p.name}`).slice(0, 120), location: String(n.appointment.location ?? "").slice(0, 160), daysAhead: Math.min(30, Math.max(0, Math.round(Number(n.appointment.daysAhead) || 1))), hour: Math.min(20, Math.max(7, Math.round(Number(n.appointment.hour) || 9))) } : null,
