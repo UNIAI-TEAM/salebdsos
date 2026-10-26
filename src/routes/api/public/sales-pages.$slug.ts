@@ -98,6 +98,7 @@ export const Route = createFileRoute("/api/public/sales-pages/$slug")({
             status: "new",
             tags: ["landing"],
             meta: {
+              shared_agency_routing: assignment.agencyRouting ?? false,
               sales_page_id: page.id,
               sales_page_slug: params.slug,
               auto_assigned: assignment.autoAssigned,

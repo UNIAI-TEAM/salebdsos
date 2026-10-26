@@ -20,6 +20,7 @@ export type LeadAssignment = {
   slaMinutes: number;
   slaDueAt: string | null;
   autoAssigned: boolean;
+  agencyRouting?: boolean;
 };
 
 /**
@@ -37,6 +38,12 @@ export async function assignLeadOwner(input: {
 
   if (input.currentOwnerId) {
     return { ownerUserId: input.currentOwnerId, slaMinutes, slaDueAt, autoAssigned: false };
+  }
+  if (input.projectId) {
+    const { count, error } = await supabaseAdmin.from('agency_lead_rules').select('id', { count: 'exact', head: true })
+      .eq('tenant_id', input.tenantId).eq('project_id', input.projectId).eq('enabled', true);
+    if (error) throw new Error('Không đọc được quy tắc đại lý');
+    if (count) return { ownerUserId: null, slaMinutes, slaDueAt, autoAssigned: false, agencyRouting: true };
   }
   if (!config.enabled) {
     return { ownerUserId: null, slaMinutes, slaDueAt, autoAssigned: false };

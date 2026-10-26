@@ -24,6 +24,16 @@ describe("lead assignment rules", () => {
 
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: vi.fn() } }));
 describe("personal channel routing", () => {
+  it('reserves shared project leads for agencies before local Sale selection', async () => {
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const settings = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({data:{value:{enabled:true,slaMinutes:30,fallbackUserIds:['00000000-0000-4000-8000-000000000001']}},error:null}) };
+    const rules = {select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),then:(resolve: (v:unknown)=>unknown)=>Promise.resolve({count:1,error:null}).then(resolve)};
+    vi.mocked(supabaseAdmin.from).mockImplementation((table)=> (table==='settings'?settings:rules) as never);
+    const { assignLeadOwner } = await import('./lead-routing.server');
+    const result = await assignLeadOwner({tenantId:'tenant',projectId:'project'});
+    expect(result.ownerUserId).toBe(null);
+    expect(result.agencyRouting).toBe(true);
+  });
   it("retains the personal Sale and starts a 15-minute SLA even when common routing is off", async () => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const query = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { value: { enabled: false, slaMinutes: 15 } }, error: null }) };

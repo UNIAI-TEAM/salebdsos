@@ -1,0 +1,1 @@
+DO $$ DECLARE definition text; BEGIN SELECT pg_get_functiondef('public.agency_routing_view(uuid,uuid)'::regprocedure) INTO definition; definition:=replace(definition,'AS canupdate','AS "canUpdate"'); definition:=replace(definition,'AS canUpdate','AS "canUpdate"'); EXECUTE definition; END $$;

@@ -29,6 +29,20 @@ export async function receiveChannelMessage(args: { tenantId: string; channel: "
     p_project: projectId as string, p_attachment: (args.attachment ?? null) as unknown as string,
   });
   if (error) throw new Error("Không lưu được tin nhắn");
+  if (assignment.agencyRouting) {
+    const received = data as { duplicate?: boolean; leadId?: string };
+    if (!received.duplicate && received.leadId) {
+      const { data: lead, error: readError } = await sb.from('leads').select('meta,owner_user_id').eq('id',received.leadId).eq('tenant_id',args.tenantId).single();
+      if (readError) throw new Error('Không đọc được khách cần phân phối');
+      if (!lead.owner_user_id) {
+        const meta = lead.meta && typeof lead.meta==='object' && !Array.isArray(lead.meta) ? lead.meta : {};
+        const { error: savedError } = await sb.from('leads').update({meta:{...meta,shared_agency_routing:true}}).eq('id',received.leadId).eq('tenant_id',args.tenantId);
+        if (savedError) throw new Error('Không lưu được quy tắc phân khách');
+        const { error: routeError } = await sb.rpc('route_agency_lead',{p_lead:received.leadId});
+        if (routeError) throw new Error('Không phân phối được khách cho đại lý');
+      }
+    }
+  }
   const { data: health } = await sb.from("settings").select("value").eq("tenant_id", args.tenantId).eq("key", "channel_health").maybeSingle();
   const state = (health?.value ?? {}) as Record<string, { ok?: boolean; checkedAt?: string; lastWebhookAt?: string }>;
   await sb.from("settings").upsert({ tenant_id: args.tenantId, key: "channel_health", value: { ...state, [args.channel]: { ...state[args.channel], lastWebhookAt: new Date().toISOString() } } }, { onConflict: "tenant_id,key" });

@@ -148,6 +148,34 @@
       "when": 1792986286535,
       "tag": "0020_agency_base_profile_projection",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792986579835,
+      "tag": "0021_agency_shared_lead_routing",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792986811129,
+      "tag": "0022_agency_referral_partner_actions",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792986878335,
+      "tag": "0023_agency_referral_action_flag",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792986944681,
+      "tag": "0024_agency_routing_no_sale_guard",
+      "breakpoints": true
     }
   ]
 }

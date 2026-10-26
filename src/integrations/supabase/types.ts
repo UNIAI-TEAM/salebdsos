@@ -190,6 +190,136 @@ export type Database = {
           },
         ]
       }
+      agency_lead_referrals: {
+        Row: {
+          agency_id: string
+          created_at: string
+          history: Json
+          id: string
+          lead_id: string
+          partner_tenant_id: string
+          project_id: string
+          responded_at: string | null
+          sale_user_id: string
+          sla_due_at: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          history?: Json
+          id?: string
+          lead_id: string
+          partner_tenant_id: string
+          project_id: string
+          responded_at?: string | null
+          sale_user_id: string
+          sla_due_at: string
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          history?: Json
+          id?: string
+          lead_id?: string
+          partner_tenant_id?: string
+          project_id?: string
+          responded_at?: string | null
+          sale_user_id?: string
+          sla_due_at?: string
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_lead_referrals_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_lead_referrals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_lead_referrals_partner_tenant_id_fkey"
+            columns: ["partner_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_lead_referrals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_lead_referrals_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_lead_rules: {
+        Row: {
+          agency_id: string
+          enabled: boolean
+          id: string
+          project_id: string
+          sla_minutes: number
+          tenant_id: string
+        }
+        Insert: {
+          agency_id: string
+          enabled?: boolean
+          id?: string
+          project_id: string
+          sla_minutes?: number
+          tenant_id: string
+        }
+        Update: {
+          agency_id?: string
+          enabled?: boolean
+          id?: string
+          project_id?: string
+          sla_minutes?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_lead_rules_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_lead_rules_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_lead_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_followups: {
         Row: {
           channel: string | null
@@ -4002,6 +4132,30 @@ export type Database = {
         Args: { p_action: string; p_data: Json; p_tenant: string }
         Returns: string
       }
+      agency_referral_action: {
+        Args: { p_action: string; p_id: string; p_sale?: string }
+        Returns: undefined
+      }
+      agency_routing_save: {
+        Args: {
+          p_agency: string
+          p_enabled: boolean
+          p_project: string
+          p_sla: number
+          p_tenant: string
+        }
+        Returns: undefined
+      }
+      agency_routing_view: {
+        Args: { p_agency: string; p_tenant: string }
+        Returns: Json
+      }
+      agency_sale_pool: {
+        Args: { p_agency: string }
+        Returns: {
+          user_id: string
+        }[]
+      }
       agency_workspace: {
         Args: { p_agency?: string; p_tenant: string }
         Returns: Json
@@ -4069,6 +4223,7 @@ export type Database = {
       }
       refresh_lead_push_schedule: { Args: never; Returns: undefined }
       release_job_lock: { Args: { _key: string }; Returns: undefined }
+      route_agency_lead: { Args: { p_lead: string }; Returns: string }
     }
     Enums: {
       app_role:

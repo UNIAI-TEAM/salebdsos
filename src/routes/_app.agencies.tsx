@@ -18,6 +18,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { changeAgency, getAgencyWorkspace, getAgencyCatalog, type AgencyCommand } from '@/lib/agencies.functions';
 import { allocationLive, type AgencyProfile } from '@/lib/agencies';
 import { agencyCopy as c } from '@/lib/agencies-copy';
+import { AgencyRouting } from '@/components/app/agency-routing';
+import { agencyRoutingCopy } from '@/lib/agency-routing';
 
 export const Route=createFileRoute('/_app/agencies')({
   head:()=>({meta:[{title:`${c.title} — SaleBDS OS`},{name:'description',content:c.description},{property:'og:title',content:`${c.title} — SaleBDS OS`},{property:'og:description',content:c.description},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),
@@ -71,7 +73,8 @@ function AgencyScreen({tenantId,tenantName}:{tenantId:string;tenantName:string})
           </div>
         </header>
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid h-auto w-full grid-cols-3 sm:w-auto"><TabsTrigger value="inventory" className="whitespace-normal text-xs sm:text-sm">{c.inventory}</TabsTrigger><TabsTrigger value="profile">{c.profile}</TabsTrigger><TabsTrigger value="access">{c.access}</TabsTrigger></TabsList>
+          <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-4 sm:w-auto"><TabsTrigger value="inventory" className="whitespace-normal text-xs sm:text-sm">{c.inventory}</TabsTrigger><TabsTrigger value="routing" className="whitespace-normal text-xs sm:text-sm">{agencyRoutingCopy.title}</TabsTrigger><TabsTrigger value="profile">{c.profile}</TabsTrigger><TabsTrigger value="access">{c.access}</TabsTrigger></TabsList>
+          <TabsContent value="routing"><AgencyRouting key={`${tenantId}:${cur.id}`} tenantId={tenantId} agencyId={cur.id}/></TabsContent>
           <TabsContent value="profile" className="pt-3"><dl className="grid gap-4 sm:grid-cols-2">{[[c.code,cur.code],[c.taxCode,cur.tax_code],[c.contactName,cur.contact_name],[c.phone,cur.phone],[c.email,cur.email],[c.address,cur.address],[c.partnerSlug,cur.partner_slug],[c.notes,cur.notes]].map(([label,value])=><div key={label}><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-1 break-words text-sm">{value||'—'}</dd></div>)}</dl></TabsContent>
           <TabsContent value="inventory" className="space-y-3 pt-3">
             <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">{c.inventory} ({detail.allocations.length})</h3>{detail.canAllocate&&cur.accepted_at&&cur.status==='active'&&<Button size="sm" disabled={busy} onClick={()=>{setProject(undefined);setPage(0);setSelected([]);setExpiry('');setAllocating(true);}}><Plus className="size-4"/>{c.allocate}</Button>}</div>
