@@ -186,7 +186,7 @@ function SaleOverviewPage() {
                 <p className="mt-3 text-[11px] text-muted-foreground">Phân phối khách tự động đang tắt — quản lý có thể bật trong mục Phân phối lead.</p>
               ) : null}
               {data.slaPending.length > 0 ? <ul className="mt-3 space-y-2">{data.slaPending.map((lead) => <li key={lead.id} className="flex min-w-0 items-center justify-between gap-2 border-t border-border pt-2 text-xs"><span className="truncate font-medium">{lead.name}</span><span className="shrink-0 text-primary tabular-nums">Còn {lead.remainingMinutes} phút</span></li>)}</ul> : null}
-              {data.canManage ? <div className="mt-3 flex gap-4"><Link to="/leads" className="text-xs font-medium text-primary">Gán lại Sale</Link><Link to="/handover" className="text-xs font-medium text-primary">Bàn giao khách</Link></div> : null}
+              {data.canManage ? <div className="mt-3 flex gap-4"><Link to="/leads" search={{ lead: undefined }} className="text-xs font-medium text-primary">Gán lại Sale</Link><Link to="/handover" className="text-xs font-medium text-primary">Bàn giao khách</Link></div> : null}
             </SectionCard>
             <SectionCard
               title={`Nợ quá hạn · ${overdue.length}`}
