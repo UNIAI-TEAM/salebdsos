@@ -185,6 +185,8 @@ function SaleOverviewPage() {
               {!data.routing.enabled ? (
                 <p className="mt-3 text-[11px] text-muted-foreground">Phân phối khách tự động đang tắt — quản lý có thể bật trong mục Phân phối lead.</p>
               ) : null}
+              {data.slaPending.length > 0 ? <ul className="mt-3 space-y-2">{data.slaPending.map((lead) => <li key={lead.id} className="flex min-w-0 items-center justify-between gap-2 border-t border-border pt-2 text-xs"><span className="truncate font-medium">{lead.name}</span><span className="shrink-0 text-primary tabular-nums">Còn {lead.remainingMinutes} phút</span></li>)}</ul> : null}
+              {data.canManage ? <div className="mt-3 flex gap-4"><Link to="/leads" className="text-xs font-medium text-primary">Gán lại Sale</Link><Link to="/handover" className="text-xs font-medium text-primary">Bàn giao khách</Link></div> : null}
             </SectionCard>
             <SectionCard
               title={`Nợ quá hạn · ${overdue.length}`}
@@ -270,13 +272,14 @@ function SaleOverviewPage() {
 
           <SectionCard
             title={`Lead nguội · ${data.coldLeads.length}`}
-            action={<Badge variant="outline" className="shrink-0 text-[10px]">Không cập nhật {data.routing.coldDays} ngày</Badge>}
+            className={data.coldLeads.length ? "border-destructive/40" : ""}
+            action={<Badge variant={data.coldLeads.length ? "destructive" : "outline"} className="shrink-0 text-[10px]">Không cập nhật {data.routing.coldDays} ngày</Badge>}
           >
             {data.coldLeads.length === 0 ? <Empty text="Tất cả khách đang chăm sóc đều được cập nhật." /> : (
               <ul className="grid gap-2 md:grid-cols-2">
                 {data.coldLeads.map((lead) => (
                   <li key={lead.id} className="flex min-w-0 gap-3 rounded-lg border border-border p-3">
-                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-warning/10 text-warning"><Snowflake className="h-4 w-4" /></div>
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive"><Snowflake className="h-4 w-4" /></div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">{lead.name}</p>
                       <p className="truncate text-xs text-muted-foreground">{[STATUS_LABEL[lead.status] ?? lead.status, lead.projectName].filter(Boolean).join(" · ")}</p>

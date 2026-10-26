@@ -237,6 +237,12 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       return lead.status === "new" && due !== null && nowMs <= due;
     }).length;
 
+    const slaPending = activeLeads.flatMap((lead) => {
+      const due = leadSlaDeadline(lead, routing.slaMinutes);
+      return lead.status === "new" && due !== null && nowMs <= due
+        ? [{ ...leadRef(lead), dueAt: new Date(due).toISOString(), remainingMinutes: Math.max(0, Math.ceil((due - nowMs) / 60_000)) }] : [];
+    }).sort((a, b) => a.dueAt.localeCompare(b.dueAt)).slice(0, 6);
+
     const coldLeads = activeLeads
       .filter((lead) => workingStatuses.has(lead.status) &&
         nowMs - new Date(lead.updated_at ?? lead.created_at).getTime() > coldMs)
@@ -344,6 +350,7 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       },
       slaAlerts,
       slaDueSoon,
+      slaPending,
       coldLeads,
       appointments,
       events,

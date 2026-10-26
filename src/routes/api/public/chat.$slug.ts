@@ -4,6 +4,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { appendMessage, loadChannelSettings } from "@/lib/channels.server";
 import { assignLeadOwner } from "@/lib/lead-routing.server";
+import { createHash } from "crypto";
+
+const pageVisitor = (pageId: string, visitor: string) => createHash("sha256").update(`${pageId}:${visitor}`).digest("hex");
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -40,7 +43,7 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
           .from("conversations")
           .select("id")
           .eq("tenant_id", page.tenant_id)
-          .eq("visitor_key", visitor)
+          .eq("visitor_key", pageVisitor(page.id, visitor))
           .maybeSingle();
         if (!conv)
           return json({ enabled: settings.webChat.enabled, config: settings.webChat, messages: [] });
@@ -85,7 +88,7 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
           .from("conversations")
           .select("id, contact_name, contact_phone, lead_id")
           .eq("tenant_id", page.tenant_id)
-          .eq("visitor_key", visitor)
+          .eq("visitor_key", pageVisitor(page.id, visitor))
           .maybeSingle();
 
         let conversationId = existing?.id ?? null;
@@ -95,14 +98,21 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
             projectId: page.project_id,
             currentOwnerId: page.owner_user_id,
           });
+          const { data: lead, error: leadError } = await supabaseAdmin.from("leads").insert({
+            tenant_id: page.tenant_id, project_id: page.project_id, owner_user_id: assignment.ownerUserId,
+            full_name: name ?? "Khách chat trên landing", phone, source: "web_chat", status: "new",
+            meta: { sales_page_id: page.id, sla_minutes: assignment.slaMinutes, sla_due_at: assignment.slaDueAt, auto_assigned: assignment.autoAssigned },
+          }).select("id").single();
+          if (leadError || !lead) return json({ error: "Không lưu được khách chat." }, 500);
           const { data: created, error } = await supabaseAdmin
             .from("conversations")
             .insert({
               tenant_id: page.tenant_id,
               project_id: page.project_id,
               owner_user_id: assignment.ownerUserId,
+              lead_id: lead.id,
               channel: "web_chat",
-              visitor_key: visitor,
+              visitor_key: pageVisitor(page.id, visitor),
               contact_name: name,
               contact_phone: phone,
               last_message_preview: text.slice(0, 160),
@@ -115,9 +125,11 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
           await supabaseAdmin.from("notifications").insert({
             tenant_id: page.tenant_id,
             user_id: assignment.ownerUserId,
+            lead_id: lead.id,
             title: "Khách đang chat trên landing dự án",
             body: text.slice(0, 200),
-            kind: "info",
+            type: "lead_new",
+            link: "/inbox",
           } as never);
 
           const { sendPushToUser } = await import("@/lib/push.server");

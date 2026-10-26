@@ -130,18 +130,21 @@ export const submitProjectQrLead = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!qr || !qr.is_active) throw new Error("Mã QR không hợp lệ.");
 
+    const { assignLeadOwner } = await import("./lead-routing.server");
+    const assignment = await assignLeadOwner({ tenantId: qr.tenant_id, projectId: qr.project_id, currentOwnerId: qr.created_by });
+
     const { data: lead, error } = await supabaseAdmin
       .from("leads")
       .insert({
         tenant_id: qr.tenant_id,
         project_id: qr.project_id,
-        owner_user_id: qr.created_by,
+        owner_user_id: assignment.ownerUserId,
         full_name: data.full_name,
         phone: data.phone,
         notes: data.note ?? null,
         source: `qr:${qr.channel}`,
         status: "new",
-        meta: { qr_code: data.code },
+        meta: { qr_code: data.code, sla_minutes: assignment.slaMinutes, sla_due_at: assignment.slaDueAt, auto_assigned: assignment.autoAssigned },
       })
       .select("id")
       .single();
@@ -158,6 +161,14 @@ export const submitProjectQrLead = createServerFn({ method: "POST" })
       meta: { code: data.code },
     });
     if (tErr) console.error("[qr-lead] touch", tErr.message);
+
+    if (assignment.ownerUserId) {
+      const title = "Khách mới từ QR dự án";
+      const body = `${data.full_name} · ${data.phone} — liên hệ trong ${assignment.slaMinutes} phút`;
+      await supabaseAdmin.from("notifications").insert({ tenant_id: qr.tenant_id, user_id: assignment.ownerUserId, lead_id: lead.id, type: "lead_new", title, body, link: "/leads" });
+      const { sendPushToUser } = await import("./push.server");
+      await sendPushToUser({ userId: assignment.ownerUserId, title, body, link: "/leads" });
+    }
 
     return { ok: true };
   });
