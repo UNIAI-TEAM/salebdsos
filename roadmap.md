@@ -1,5 +1,10 @@
 # Roadmap
 
+- [ ] Telegram gửi/nhận: chờ quản trị viên hoàn tất thẻ kết nối (đã bỏ qua); chưa đăng ký webhook hoặc gửi tin.
+- [ ] WhatsApp gửi/nhận: chờ số WhatsApp Business và hoàn tất thẻ kết nối (đã bỏ qua); chưa bật gửi/nhận.
+- [ ] Viber gửi/nhận: chờ bot doanh nghiệp được Viber duyệt; chưa có thông tin kết nối.
+- [x] Hiển thị ba kênh mới trong Hộp thoại với trạng thái chờ thiết lập rõ ràng; kiểm tra giao diện bằng tài khoản đăng nhập và 14 kiểm thử đạt.
+
 - [x] Kiểm tra ghép hồ sơ Zalo/Messenger: bỏ đoán theo điện thoại/định danh cũ, gắn hồ sơ nguyên tử, chặn người nhận mơ hồ; kiểm thử sàn tạm và xoá dữ liệu thử.
 
 - [x] Làm nổi bật Hộp thoại đa kênh trong menu Sale; ghi rõ SMS/email chỉ gửi đi và trạng thái kết nối.

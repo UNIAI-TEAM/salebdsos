@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { INBOX_COPY as t } from "@/lib/omnichannel";
+import { INBOX_COPY as t, PENDING_INBOX_CHANNELS } from "@/lib/omnichannel";
 import { getChatConnectionSetup, saveChatConnection, verifyChatConnection } from "@/lib/omnichannel.functions";
 import type { ChannelSettings } from "@/lib/channels";
 
@@ -41,5 +41,14 @@ export function ChatConnections({ tenantId, config }: { tenantId: string; config
     <div><Label>{t.webhook}</Label><Input readOnly value={typeof window === "undefined" ? "" : `${window.location.origin}/api/public/${channel === "zalo" ? "zalo-webhook" : "integrations/facebook"}`} /></div>
     {channel === "messenger" && info.data?.verifyToken && <div><Label>{t.verifyToken}</Label><Input readOnly value={info.data.verifyToken} /></div>}
     <div className="flex flex-wrap gap-2"><Button disabled={busy || !account} onClick={() => run(false)}>{t.save}</Button><Button variant="outline" disabled={busy} onClick={() => run(true)}>{t.check}</Button></div>
+    <section className="space-y-2 border-t border-border pt-3" aria-label={t.newChannels}>
+      <h3 className="text-sm font-semibold">{t.newChannels}</h3>
+      {PENDING_INBOX_CHANNELS.map(c => <div key={c.channel} className="space-y-1 border-b border-border py-2 last:border-0">
+        <p className="text-sm font-medium">{c.label} · {t.disconnected}</p>
+        <p className="text-xs text-muted-foreground">{c.reason}</p>
+        {c.channel === "whatsapp" && <p className="text-xs text-muted-foreground">{t.whatsappCosts}</p>}
+      </div>)}
+      <p className="text-xs text-muted-foreground">{t.setupRequired}</p>
+    </section>
   </div>;
 }

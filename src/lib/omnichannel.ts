@@ -5,7 +5,23 @@ export const INBOX_COPY = {
   settings: "Kết nối kênh", check: "Kiểm tra kết nối", save: "Lưu bảo mật", link: "Gắn hồ sơ khách", unlinked: "Chưa gắn hồ sơ", pending: "Chưa gửi", sent: "Đã gửi", delivered: "Đã giao", read: "Đã đọc", failed: "Gửi lỗi",
   account: "Mã tài khoản", appId: "Zalo App ID", secret: "App Secret", token: "Access Token", webhook: "Đường dẫn webhook", verifyToken: "Mã xác minh webhook", messenger: "Messenger", zalo: "Zalo OA",
   windowClosed: "Đã hết cửa sổ trả lời 24 giờ của Messenger. Chờ khách nhắn lại.", notConnected: "Kênh chưa kết nối. Tin chưa được gửi.",
+  newChannels: "Kênh chờ thiết lập", notActivated: "Chưa bật gửi/nhận",
+  telegramSetup: "Chờ chọn bot Telegram qua kết nối bảo mật và đăng ký nhận tin.",
+  whatsappSetup: "Chờ số WhatsApp Business, xác minh email/số điện thoại và Meta duyệt tài khoản.",
+  whatsappCosts: "WhatsApp Business: phản hồi hỗ trợ miễn phí trong cửa sổ dịch vụ; tin marketing có phí. Ngoài cửa sổ dịch vụ cần mẫu được duyệt.",
+  viberSetup: "Chờ bot doanh nghiệp được Viber hoặc đối tác chính thức duyệt theo điều khoản thương mại.",
+  setupRequired: "Cần hoàn tất tài khoản và kết nối trước khi Sale gửi hoặc nhận tin.",
 } as const;
+
+export const PENDING_INBOX_CHANNELS = [
+  { channel: "telegram", label: "Telegram", reason: INBOX_COPY.telegramSetup, active: false },
+  { channel: "whatsapp", label: "WhatsApp Business", reason: INBOX_COPY.whatsappSetup, active: false },
+  { channel: "viber", label: "Viber", reason: INBOX_COPY.viberSetup, active: false },
+] as const;
+
+export function canSendPendingChannel(channel: string) {
+  return !PENDING_INBOX_CHANNELS.some(c => c.channel === channel && !c.active);
+}
 
 export function replyChannel(channel: string) {
   return ["web_chat", "zalo", "messenger", "sms", "email"].includes(channel) ? channel : "note";

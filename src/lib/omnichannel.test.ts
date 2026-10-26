@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { canAccessConversation, messengerWindowOpen, replyChannel, visibleVisitorChannel, uniqueChannelIdentity } from "./omnichannel";
+import { canAccessConversation, messengerWindowOpen, replyChannel, visibleVisitorChannel, uniqueChannelIdentity, canSendPendingChannel } from "./omnichannel";
 describe("two-way inbox rules", () => {
+  it("blocks Telegram sends while connector setup was skipped", () => expect(canSendPendingChannel("telegram")).toBe(false));
+  it("blocks WhatsApp sends without a Business account", () => expect(canSendPendingChannel("whatsapp")).toBe(false));
+  it("blocks Viber sends without an approved bot", () => expect(canSendPendingChannel("viber")).toBe(false));
   it("replies through Messenger rather than web chat", () => expect(replyChannel("messenger")).toBe("messenger"));
   it("replies through Zalo", () => expect(replyChannel("zalo")).toBe("zalo"));
   it("does not send internal notes to visitors", () => expect(visibleVisitorChannel("note")).toBe(false));
