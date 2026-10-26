@@ -273,6 +273,7 @@ function InboxPage() {
 
   return (
     <div className="space-y-3 pb-24 lg:pb-6">
+      <div className="[&>header]:grid-cols-1 sm:[&>header]:flex">
       <PageHeader
         compact
         title={t.title}
@@ -289,6 +290,7 @@ function InboxPage() {
           </div>
         }
       />
+      </div>
 
       <div className="flex flex-wrap gap-1.5" aria-label={t.channelStatus}>
         {channelsQuery.data?.connections.map(c => <Badge className="max-w-full whitespace-normal rounded-md px-2 py-1 text-left leading-relaxed" key={c.channel} variant={c.configured && c.enabled && c.verified ? "default" : "outline"}>{CHANNEL_LABEL[c.channel]} · {!c.configured ? t.disconnected : !c.enabled ? t.disabled : c.verified ? t.connected : t.configured} · {c.channel === "sms" || c.channel === "email" ? t.outboundOnly : t.twoWay}</Badge>)}
