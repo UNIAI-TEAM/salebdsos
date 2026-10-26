@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Rà soát quyền hồ sơ/giỏ hàng đại lý, truy cập trực tiếp và lịch sử; sửa vượt phạm vi, kiểm thử thu hồi/hết hạn/quyền Sale.
+- [x] Rà soát quyền hồ sơ/giỏ hàng đại lý: chặn đọc cấp căn hết hạn/thu hồi trực tiếp, khóa bảng lịch sử/quyền/hồ sơ chuyển tiếp thô, ẩn lý do và danh tính đại lý khác và ID nhóm nội bộ. 16 kiểm thử đạt, kiểm tra quản trị/Sale, thu hồi quyền và tạm dừng; không đọc CRM sàn tổng, dữ liệu thử đã dọn.
 
 - [x] Phân khách đến nhóm theo dự án; bàn giao đại lý/nhóm/Sale có lý do, lịch sử và giữ hạn SLA. Đã thử nhóm A nhận khách, chuyển nhóm B và chuyển đại lý đích, SLA quá hạn giữ nguyên, đại lý cũ mất quyền xem khách; 13 kiểm thử đạt. Nhắc push SLA liên đại lý vẫn chưa kích hoạt.
 
