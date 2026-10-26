@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { useAuth, type Role } from "@/hooks/use-auth";
 import { capabilityForPath, ROLE_LABELS, type Capability } from "@/lib/permissions";
 import { hubForPath } from "@/lib/nav-hubs";
+import { INBOX_COPY } from "@/lib/omnichannel";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-collapsed";
 import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
 import {
@@ -36,8 +37,8 @@ const groups: Group[] = [
     label: "Bán hàng",
     items: [
       { to: "/sale-overview", label: "Tổng quan", icon: ContactRound },
+      { to: "/inbox", label: INBOX_COPY.title, icon: MessagesSquare, hub: "inbox" },
       { to: "/leads", label: "Khách hàng & phễu", icon: Users2, hub: "customers" },
-      { to: "/inbox", label: "Hộp thoại & lịch hẹn", icon: MessagesSquare, hub: "inbox" },
     ],
   },
   {
@@ -73,8 +74,8 @@ const groups: Group[] = [
 
 /** PWA trên điện thoại: lối tắt nhanh. */
 const saleQuickItems: Group["items"] = [
+  { to: "/inbox", label: INBOX_COPY.title, icon: MessagesSquare },
   { to: "/inventory", label: "Giỏ hàng", icon: LayoutGrid },
-  { to: "/inbox", label: "Hộp thoại", icon: MessagesSquare },
   { to: "/appointments", label: "Lịch hẹn", icon: CalendarClock },
   { to: "/customers", label: "Khách hàng", icon: UserSquare2 },
   { to: "/contracts", label: "Hợp đồng", icon: FileSignature },

@@ -1,4 +1,5 @@
 import type { Role } from "@/hooks/use-auth";
+import { INBOX_COPY } from "./omnichannel";
 
 /** Sub-pages grouped under one sidebar hub; rendered as tabs above the page. */
 export type HubTab = { to: string; label: string; roles?: Role[] };
@@ -15,7 +16,7 @@ export const HUBS: Hub[] = [
     { to: "/journey", label: "Hành trình" },
   ] },
   { id: "inbox", tabs: [
-    { to: "/inbox", label: "Hộp thoại" },
+    { to: "/inbox", label: INBOX_COPY.title },
     { to: "/appointments", label: "Lịch hẹn" },
   ] },
   { id: "projects", tabs: [

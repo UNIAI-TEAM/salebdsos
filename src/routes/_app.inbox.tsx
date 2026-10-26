@@ -61,10 +61,10 @@ const TAG_TONE: Record<string, string> = {
 export const Route = createFileRoute("/_app/inbox")({
   head: () => ({
     meta: [
-      { title: "Hộp thoại khách hàng — SaleBDS OS" },
-      { name: "description", content: "Gộp chat landing, Zalo OA và cuộc gọi có ghi âm của từng khách vào một hộp thoại." },
-      { property: "og:title", content: "Hộp thoại khách hàng — SaleBDS OS" },
-      { property: "og:description", content: "Một hộp thoại cho mọi kênh: chat trên trang dự án, Zalo OA và cuộc gọi có ghi âm." },
+      { title: `${t.title} — SaleBDS OS` },
+      { name: "description", content: "Hội thoại khách hàng qua chat web, Zalo OA và Messenger; SMS và email chỉ gửi đi, với trạng thái kết nối rõ ràng." },
+      { property: "og:title", content: `${t.title} — SaleBDS OS` },
+      { property: "og:description", content: "Hội thoại khách hàng qua chat web, Zalo OA và Messenger; SMS và email chỉ gửi đi, với trạng thái kết nối rõ ràng." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -78,16 +78,16 @@ const CHANNEL_FILTERS = [
   { value: "zalo", label: "Zalo OA" },
   { value: "messenger", label: t.messenger },
   { value: "call", label: "Gọi điện" },
-  { value: "sms", label: "SMS brandname" },
-  { value: "email", label: "Email" },
+  { value: "sms", label: t.smsOutbound },
+  { value: "email", label: t.emailOutbound },
 ] as const;
 
 const SEND_CHANNELS = [
   { value: "auto", label: "Theo kênh của khách" },
   { value: "zalo", label: "Zalo OA" },
   { value: "messenger", label: t.messenger },
-  { value: "sms", label: "SMS brandname" },
-  { value: "email", label: "Email" },
+  { value: "sms", label: t.smsOutbound },
+  { value: "email", label: t.emailOutbound },
   { value: "note", label: "Ghi chú nội bộ" },
 ] as const;
 
@@ -273,6 +273,7 @@ function InboxPage() {
 
   return (
     <div className="space-y-3 pb-24 lg:pb-6">
+      <div className="[&>header]:grid-cols-1 sm:[&>header]:flex">
       <PageHeader
         compact
         title={t.title}
@@ -289,9 +290,10 @@ function InboxPage() {
           </div>
         }
       />
+      </div>
 
-      <div className="flex flex-wrap gap-2" aria-label="Trạng thái kết nối kênh">
-        {channelsQuery.data?.connections.map(c => <Badge key={c.channel} variant={c.configured && c.enabled && c.verified ? "default" : "outline"}>{CHANNEL_LABEL[c.channel]} · {!c.configured ? t.disconnected : !c.enabled ? t.disabled : c.verified ? t.connected : t.configured}</Badge>)}
+      <div className="flex flex-wrap gap-1.5" aria-label={t.channelStatus}>
+        {channelsQuery.data?.connections.map(c => <Badge className="max-w-full whitespace-normal rounded-md px-2 py-1 text-left leading-relaxed" key={c.channel} variant={c.configured && c.enabled && c.verified ? "default" : "outline"}>{CHANNEL_LABEL[c.channel]} · {!c.configured ? t.disconnected : !c.enabled ? t.disabled : c.verified ? t.connected : t.configured} · {c.channel === "sms" || c.channel === "email" ? t.outboundOnly : t.twoWay}</Badge>)}
       </div>
       <div className="grid gap-3 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
         <SectionCard compact title="Hội thoại">
@@ -448,6 +450,7 @@ function InboxPage() {
               </div>
 
               <div className="mt-3 space-y-2">
+                {(selectedChannel === "sms" || selectedChannel === "email") && <p role="status" className="text-xs text-muted-foreground">{t.outboundOnly} · {!connection?.configured ? t.disconnected : !connection.enabled ? t.disabled : connection.verified ? t.connected : t.configured}</p>}
                 {(channelBlocked || windowBlocked) && <p role="status" className="text-xs text-warning">{channelBlocked ? t.notConnected : t.windowClosed}</p>}
                 <div className="flex flex-wrap items-center gap-1.5">
                   {SEND_CHANNELS.map((option) => (

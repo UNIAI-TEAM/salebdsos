@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Làm nổi bật Hộp thoại đa kênh trong menu Sale; ghi rõ SMS/email chỉ gửi đi và trạng thái kết nối.
+
 - [x] Chat đa kênh: Zalo OA/Messenger nhận tin có chữ ký, chống trùng, gắn hồ sơ, phản hồi đúng kênh, trạng thái kết nối; đã thử trong sàn tạm riêng và xoá dữ liệu thử.
 - [ ] Xác nhận gửi/nhận thật Zalo OA và Messenger: chờ quản trị viên cung cấp tài khoản/khoá qua ô bảo mật.
 
