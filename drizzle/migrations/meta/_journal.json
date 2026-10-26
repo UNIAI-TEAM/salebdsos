@@ -246,6 +246,13 @@
       "when": 1793031919595,
       "tag": "0034_inventory_holds_installment_safety",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793032128764,
+      "tag": "0035_contract_hold_owner_guard",
+      "breakpoints": true
     }
   ]
 }
