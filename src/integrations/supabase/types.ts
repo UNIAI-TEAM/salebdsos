@@ -14,6 +14,182 @@ export type Database = {
   }
   public: {
     Tables: {
+      agencies: {
+        Row: {
+          accepted_at: string | null
+          address: string | null
+          code: string
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          partner_tenant_id: string | null
+          phone: string | null
+          status: string
+          tax_code: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          address?: string | null
+          code: string
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          partner_tenant_id?: string | null
+          phone?: string | null
+          status?: string
+          tax_code?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          address?: string | null
+          code?: string
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          partner_tenant_id?: string | null
+          phone?: string | null
+          status?: string
+          tax_code?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agencies_partner_tenant_id_fkey"
+            columns: ["partner_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agencies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_access: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          team_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          team_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          team_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_access_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_access_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_allocations: {
+        Row: {
+          agency_id: string
+          assigned_by: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          product_id: string
+          project_id: string
+          revoked_at: string | null
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          agency_id: string
+          assigned_by: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          product_id: string
+          project_id: string
+          revoked_at?: string | null
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          agency_id?: string
+          assigned_by?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          product_id?: string
+          project_id?: string
+          revoked_at?: string | null
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_allocations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_allocations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_allocations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_allocations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_followups: {
         Row: {
           channel: string | null
@@ -3818,6 +3994,18 @@ export type Database = {
         Args: { _key: string; _seconds: number }
         Returns: boolean
       }
+      agency_catalog: {
+        Args: { p_page?: number; p_project?: string; p_tenant: string }
+        Returns: Json
+      }
+      agency_command: {
+        Args: { p_action: string; p_data: Json; p_tenant: string }
+        Returns: string
+      }
+      agency_workspace: {
+        Args: { p_agency?: string; p_tenant: string }
+        Returns: Json
+      }
       aggregate_interaction_events_daily: {
         Args: { _day?: string }
         Returns: undefined
@@ -3830,6 +4018,10 @@ export type Database = {
       bump_sales_page_view: {
         Args: { _page_id: string; _tenant_id: string }
         Returns: undefined
+      }
+      can_view_agency_inventory: {
+        Args: { p_agency: string }
+        Returns: boolean
       }
       claim_lead_push_jobs: {
         Args: never

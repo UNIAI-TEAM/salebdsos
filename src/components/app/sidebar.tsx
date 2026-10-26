@@ -66,6 +66,7 @@ const groups: Group[] = [
     items: [
       { to: "/dashboard", label: "Báo cáo", icon: BarChart3, hub: "reports" },
       { to: "/departments", label: "Tổ chức & nhân sự", icon: ShieldCheck, hub: "org" },
+      { to: "/agencies", label: "Đại lý & phân phối", icon: Building2 },
       { to: "/integrations", label: "Cài đặt & tích hợp", icon: Settings, hub: "settings" },
       { to: "/auth-settings", label: "Bảo mật xác thực", icon: ShieldCheck, platformOnly: true },
     ],
