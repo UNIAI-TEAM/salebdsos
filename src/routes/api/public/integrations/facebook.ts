@@ -38,6 +38,8 @@ export const Route = createFileRoute("/api/public/integrations/facebook")({
       },
       POST: async ({ request }) => {
         const raw = await request.text();
+        if (raw.length > 500000) return json({ error: "payload too large" }, 413);
+        if (!request.headers.get("x-hub-signature-256")) return json({ error: "missing signature" }, 401);
         let payload: any;
         try {
           payload = JSON.parse(raw);
@@ -46,16 +48,15 @@ export const Route = createFileRoute("/api/public/integrations/facebook")({
         }
         // Xác định sàn theo Page ID, rồi kiểm chữ ký bằng App Secret của sàn đó
         const pageIds = [...new Set((payload?.entry ?? []).map((e: any) => String(e?.id ?? "")).filter((x: string) => /^\d+$/.test(x)))] as string[];
-        if (pageIds.length !== 1) return json({ ok: true, skipped: "unknown_page" });
+        if (pageIds.length !== 1) return json({ error: "unknown_page" }, 401);
         const { supabaseAdmin: sbA } = await import("@/integrations/supabase/client.server");
         const { data: owner } = await sbA.from("settings").select("tenant_id")
-          .eq("key", "integrations").eq("value->facebook->>pageId", pageIds[0]).limit(1);
-        if (!owner?.[0]) return json({ error: "unknown_page" }, 401);
-        const { facebookCreds } = await import("@/lib/credentials.server");
-        const creds = await facebookCreds(owner[0].tenant_id as string);
-        const secret = creds.appSecret;
-        const pageToken = creds.pageToken;
-        if (!secret || !pageToken) return json({ ok: true, skipped: "facebook_not_connected" });
+          .eq("key", "integrations").eq("value->facebook->>pageId", pageIds[0]).limit(2);
+        if (owner?.length !== 1) return json({ error: "unknown_page" }, 401);
+        const { getCredential } = await import("@/lib/credentials.server");
+        const secret = await getCredential(owner[0].tenant_id, "fb_app_secret");
+        const pageToken = await getCredential(owner[0].tenant_id, "fb_page_token");
+        if (!secret || !pageToken) return json({ error: "facebook_not_connected" }, 401);
 
         const sig = request.headers.get("x-hub-signature-256") ?? "";
         const expected = "sha256=" + createHmac("sha256", secret).update(raw).digest("hex");

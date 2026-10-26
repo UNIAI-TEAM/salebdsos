@@ -291,7 +291,7 @@ function InboxPage() {
       />
 
       <div className="flex flex-wrap gap-2" aria-label="Trạng thái kết nối kênh">
-        {channelsQuery.data?.connections.map(c => <Badge key={c.channel} variant={c.configured && c.enabled && c.verified ? "default" : "outline"}>{CHANNEL_LABEL[c.channel]} · {!c.enabled ? t.disabled : !c.configured ? t.disconnected : c.verified ? t.connected : t.configured}</Badge>)}
+        {channelsQuery.data?.connections.map(c => <Badge key={c.channel} variant={c.configured && c.enabled && c.verified ? "default" : "outline"}>{CHANNEL_LABEL[c.channel]} · {!c.configured ? t.disconnected : !c.enabled ? t.disabled : c.verified ? t.connected : t.configured}</Badge>)}
       </div>
       <div className="grid gap-3 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
         <SectionCard compact title="Hội thoại">
