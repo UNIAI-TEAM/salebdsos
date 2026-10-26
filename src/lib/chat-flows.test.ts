@@ -34,6 +34,13 @@ describe("chat flows", () => {
     expect(stepBot([k], null, "báo giá đi", false).reason).toBe("start");
     expect(stepBot([k], null, "giang", false).reason).toBe("idle");
   });
+  it("sends step media and rejects non-https media", () => {
+    const f = flow();
+    f.nodes[0].media = [{ type: "image", url: "https://cdn.example.com/a.jpg", caption: "Phối cảnh" }];
+    expect(stepBot([f], null, "hi", true).media).toHaveLength(1);
+    f.nodes[0].media = [{ type: "video", url: "http://x.com/a.mp4", caption: "" }];
+    expect(flowSchema.safeParse(f).success).toBe(false);
+  });
   it("rejects buttons pointing to missing steps", () => {
     const f = flow();
     f.nodes[0].buttons[0].next = "missing";
