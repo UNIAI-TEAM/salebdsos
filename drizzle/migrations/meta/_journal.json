@@ -218,6 +218,13 @@
       "when": 1792987957423,
       "tag": "0030_agency_side_private_history",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792988053804,
+      "tag": "0031_agency_allocation_fail_closed_reader",
+      "breakpoints": true
     }
   ]
 }
