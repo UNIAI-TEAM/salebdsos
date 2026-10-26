@@ -20,6 +20,12 @@ export function normPhone(p?: string | null): string | null {
   return d.length >= 9 ? d : null;
 }
 
+export function matchesCustomerIdentity(customer: { phone?: string | null; email?: string | null }, lead: { phone?: string | null; email?: string | null; meta?: { identity_review_required?: boolean } | null }) {
+  if (lead.meta?.identity_review_required) return false;
+  const phone = normPhone(customer.phone);
+  return Boolean((phone && normPhone(lead.phone) === phone) || (customer.email && lead.email?.trim().toLowerCase() === customer.email.trim().toLowerCase()));
+}
+
 type Src = {
   leads?: any[]; messages?: any[]; calls?: any[]; contracts?: any[];
   installments?: any[]; payments?: any[]; tickets?: any[]; files?: any[];

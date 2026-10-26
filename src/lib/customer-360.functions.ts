@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { buildTimeline, summarize, normPhone } from "./customer-360";
+import { buildTimeline, summarize, normPhone, matchesCustomerIdentity } from "./customer-360";
 
 export const getCustomer360 = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -23,7 +23,7 @@ export const getCustomer360 = createServerFn({ method: "GET" })
     const ors = [tail && `phone.ilike.%${tail}`, c.email && `email.eq.${c.email}`].filter(Boolean);
     const { data: leadsRaw, error: leadError } = ors.length ? await leadQ.or(ors.join(",")) : { data: [] };
     if (leadError || (leadsRaw?.length ?? 0) > 500) throw new Error("Chưa thể xác định đầy đủ hồ sơ liên quan; cần kiểm tra liên kết khách.");
-    const leads = (leadsRaw ?? []).filter((l: any) => l.meta?.identity_review_required !== true && ((phone && normPhone(l.phone) === phone) || (c.email && l.email?.toLowerCase() === c.email.toLowerCase())));
+    const leads = (leadsRaw ?? []).filter((l: any) => matchesCustomerIdentity(c, l));
     const leadIds = leads.map((l: any) => l.id);
     const inLeads = (q: any, col = "lead_id") =>
       leadIds.length ? q.or(`customer_id.eq.${c.id},${col}.in.(${leadIds.join(",")})`) : q.eq("customer_id", c.id);

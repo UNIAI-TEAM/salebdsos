@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Kiểm tra ghép hồ sơ Zalo/Messenger: cách ly định danh mơ hồ, gắn hồ sơ nguyên tử, kiểm thử hồi quy.
+- [x] Kiểm tra ghép hồ sơ Zalo/Messenger: bỏ đoán theo điện thoại/định danh cũ, gắn hồ sơ nguyên tử, chặn người nhận mơ hồ; kiểm thử sàn tạm và xoá dữ liệu thử.
 
 - [x] Làm nổi bật Hộp thoại đa kênh trong menu Sale; ghi rõ SMS/email chỉ gửi đi và trạng thái kết nối.
 
