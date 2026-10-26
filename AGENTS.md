@@ -1,5 +1,6 @@
 
 - Bank reconciliation: webhook /api/public/bank-webhook auths by hashed per-tenant key in settings key "bank"; matching/allocation logic lives in src/lib/bank-recon.ts (pure, tested) so webhook and manual match share it.
+- Agencies link independent partner tenants only after partner-admin acceptance; authenticated agency RPCs return explicit inventory projections and enforce team/user grants without adding partner users to the master tenant, preserving CRM isolation. Allocation commands lock products, audit atomically and prevent duplicate active distribution; allocations grant visibility, not bookings or inventory ownership.
 - Departments reuse teams/team_members (is_lead = department head); scope rules live in src/lib/departments.ts (pure, tested) so every department-scoped server fn shares them.
 - Executive AI tools share ai-agent-data safeguards for paginated reads, query failures, owner scoping and bounded history; chat instances are keyed by tenant to prevent cross-tenant conversation context.
 - Shared page headers, KPI cards and section containers offer opt-in compact presentation; list pages use it without changing other screens or business behavior.
