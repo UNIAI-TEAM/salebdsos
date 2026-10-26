@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Phân khách đến nhóm theo dự án; bàn giao đại lý/nhóm/Sale có lý do, lịch sử và giữ hạn SLA; kiểm tra quyền và luồng thực tế.
+- [x] Phân khách đến nhóm theo dự án; bàn giao đại lý/nhóm/Sale có lý do, lịch sử và giữ hạn SLA. Đã thử nhóm A nhận khách, chuyển nhóm B và chuyển đại lý đích, SLA quá hạn giữ nguyên, đại lý cũ mất quyền xem khách; 13 kiểm thử đạt. Nhắc push SLA liên đại lý vẫn chưa kích hoạt.
 
 - [x] Hoa hồng và đối soát riêng sàn tổng → đại lý, đại lý → Sale; xác nhận hai bên, thanh toán từng phần, quyền riêng. Đã thử hai sổ qua giao diện, đọc lại bằng quyền Sale, chặn chi trùng/vượt số dư và chi đồng thời; 14 kiểm thử đạt. Không tự chuyển tiền hoặc tự ghép giao dịch ngân hàng; sổ hiện có giữ nguyên.
 
