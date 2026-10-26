@@ -18,8 +18,21 @@ export const mediaSchema = z.object({
   url: z.string().trim().url().max(1000).refine((u) => u.startsWith("https://"), "Đường dẫn phải bắt đầu bằng https://"),
   caption: z.string().trim().max(120).default(""),
 });
+export const appointmentActionSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  location: z.string().trim().max(160).default(""),
+  daysAhead: z.number().int().min(0).max(30).default(1),
+  hour: z.number().int().min(7).max(20).default(9),
+});
+export const needActionSchema = z.object({
+  needType: z.string().trim().max(60).default(""),
+  budget: z.string().trim().max(60).default(""),
+  note: z.string().trim().max(200).default(""),
+});
 export const nodeSchema = z.object({
   id,
+  appointment: appointmentActionSchema.nullable().default(null),
+  need: needActionSchema.nullable().default(null),
   media: z.array(mediaSchema).max(4).default([]),
   text: z.string().trim().min(1).max(800),
   buttons: z.array(buttonSchema).max(6).default([]),
@@ -44,6 +57,8 @@ export const flowSchema = z.object({
 });
 export const chatFlowsSchema = z.object({ flows: z.array(flowSchema).max(30).default([]) });
 
+export type AppointmentAction = z.infer<typeof appointmentActionSchema>;
+export type NeedAction = z.infer<typeof needActionSchema>;
 export type ChatMedia = z.infer<typeof mediaSchema>;
 export type ChatButton = z.infer<typeof buttonSchema>;
 export type ChatNode = z.infer<typeof nodeSchema>;
@@ -94,12 +109,14 @@ export type BotStep = {
   state: BotState;
   handoff: boolean;
   tag: string | null;
+  appointment: AppointmentAction | null;
+  need: NeedAction | null;
   reason: "start" | "next" | "handoff_node" | "handoff_request" | "no_match" | "end" | "idle";
 };
 
 /** Một lượt bot: từ trạng thái hiện tại + tin khách → tin trả lời, trạng thái mới, có chuyển Sale không. */
 export function stepBot(flows: ChatFlow[], state: BotState, text: string, isFirstMessage: boolean, vars: Record<string, string> = {}): BotStep {
-  const idle: BotStep = { reply: null, media: [], state: null, handoff: false, tag: null, reason: "idle" };
+  const idle: BotStep = { reply: null, media: [], state: null, handoff: false, tag: null, appointment: null, need: null, reason: "idle" };
   const enter = (flow: ChatFlow, nodeId: string, reason: BotStep["reason"]): BotStep => {
     const node = flow.nodes.find((n) => n.id === nodeId)!;
     const end = node.handoff || node.buttons.length === 0;
@@ -109,16 +126,18 @@ export function stepBot(flows: ChatFlow[], state: BotState, text: string, isFirs
       state: end ? null : { flowId: flow.id, nodeId },
       handoff: node.handoff,
       tag: node.tag || null,
+      appointment: node.appointment ?? null,
+      need: node.need ?? null,
       reason: node.handoff ? "handoff_node" : end ? "end" : reason,
     };
   };
   const current = state ? flows.find((f) => f.id === state.flowId && f.enabled) : null;
   const node = current?.nodes.find((n) => n.id === state!.nodeId);
   if (current && node) {
-    if (wantsHuman(text)) return { media: [], reply: "Dạ, em chuyển anh/chị sang chuyên viên tư vấn ngay ạ.", state: null, handoff: true, tag: null, reason: "handoff_request" };
+    if (wantsHuman(text)) return { media: [], reply: "Dạ, em chuyển anh/chị sang chuyên viên tư vấn ngay ạ.", state: null, handoff: true, tag: null, appointment: null, need: null, reason: "handoff_request" };
     const b = matchButton(node, text);
-    if (!b) return { media: [], reply: "Dạ, chuyên viên tư vấn sẽ phản hồi anh/chị trong ít phút nữa ạ.", state: null, handoff: true, tag: null, reason: "no_match" };
-    if (!b.next) return { reply: null, media: [], state: null, handoff: true, tag: null, reason: "handoff_node" };
+    if (!b) return { media: [], reply: "Dạ, chuyên viên tư vấn sẽ phản hồi anh/chị trong ít phút nữa ạ.", state: null, handoff: true, tag: null, appointment: null, need: null, reason: "no_match" };
+    if (!b.next) return { reply: null, media: [], state: null, handoff: true, tag: null, appointment: null, need: null, reason: "handoff_node" };
     return enter(current, b.next, "next");
   }
   const flow = pickFlow(flows, text, isFirstMessage);
@@ -131,7 +150,7 @@ export function templateFlow(): ChatFlow {
   return {
     id: uid(), name: "Tư vấn căn hộ", enabled: false, trigger: "first_message", keywords: [], startNodeId: "start",
     nodes: [
-      { id: "start", text: "Chào {name}! Em là trợ lý dự án {project}. Anh/chị quan tâm điều gì ạ?", media: [], tag: "", handoff: false, buttons: [
+      { id: "start", text: "Chào {name}! Em là trợ lý dự án {project}. Anh/chị quan tâm điều gì ạ?", media: [], tag: "", handoff: false, appointment: null, need: null, buttons: [
         { id: "b1", label: "Xem bảng giá", keywords: ["gia", "bang gia"], next: "price" },
         { id: "b2", label: "Mặt bằng căn hộ", keywords: ["mat bang", "2pn", "3pn"], next: "layout" },
         { id: "b3", label: "Hẹn xem nhà mẫu", keywords: ["hen", "xem nha"], next: "visit" },
@@ -143,8 +162,15 @@ export function templateFlow(): ChatFlow {
       { id: "layout", text: "Dự án có căn 1PN, 2PN, 3PN. Anh/chị cần loại nào để em gửi mặt bằng chi tiết?", media: [], tag: "Đang khảo sát", handoff: false, buttons: [
         { id: "b6", label: "Gặp chuyên viên", keywords: [], next: "handoff" },
       ] },
-      { id: "visit", text: "Dạ, chuyên viên sẽ gọi để chốt giờ xem nhà mẫu với anh/chị ngay ạ.", media: [], tag: "Hẹn xem nhà mẫu", handoff: true, buttons: [] },
-      { id: "handoff", text: "Dạ, chuyên viên tư vấn sẽ liên hệ anh/chị trong ít phút nữa ạ.", media: [], tag: "", handoff: true, buttons: [] },
+      { id: "visit", text: "Dạ, chuyên viên sẽ gọi để chốt giờ xem nhà mẫu với anh/chị ngay ạ.", media: [], tag: "Hẹn xem nhà mẫu", handoff: true, appointment: { title: "Xem nhà mẫu", location: "", daysAhead: 1, hour: 9 }, need: null, buttons: [] },
+      { id: "handoff", text: "Dạ, chuyên viên tư vấn sẽ liên hệ anh/chị trong ít phút nữa ạ.", media: [], tag: "", handoff: true, appointment: null, need: null, buttons: [] },
     ],
   };
+}
+
+/** Giờ hẹn theo giờ Việt Nam (UTC+7): ngày hiện tại + daysAhead, đúng giờ `hour`. */
+export function appointmentSlot(a: AppointmentAction, now = new Date()) {
+  const vn = new Date(now.getTime() + 7 * 3600_000);
+  const start = new Date(Date.UTC(vn.getUTCFullYear(), vn.getUTCMonth(), vn.getUTCDate() + a.daysAhead, a.hour - 7, 0, 0));
+  return { startsAt: start.toISOString(), endsAt: new Date(start.getTime() + 3600_000).toISOString() };
 }
