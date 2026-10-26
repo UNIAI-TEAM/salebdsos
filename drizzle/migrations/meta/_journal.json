@@ -204,6 +204,13 @@
       "when": 1792987627481,
       "tag": "0028_agency_handover_optional_targets",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792987923930,
+      "tag": "0029_agency_inventory_scope_hardening",
+      "breakpoints": true
     }
   ]
 }
