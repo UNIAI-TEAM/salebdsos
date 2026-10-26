@@ -93,11 +93,8 @@ export const linkConversationLead = createServerFn({ method: "POST" })
       context.supabase.from("leads").select("id,full_name,phone,owner_user_id,project_id").eq("tenant_id", data.tenantId).eq("id", data.leadId).is("deleted_at", null).maybeSingle(),
     ]);
     if (!conv || !lead || !canAccessConversation(roles, conv.owner_user_id, context.userId) || !canAccessConversation(roles, lead.owner_user_id, context.userId)) throw new Error("Bạn không có quyền gắn hồ sơ này.");
-    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
-    const { error } = await sb.from("conversations").update({ lead_id: lead.id, contact_name: lead.full_name, contact_phone: lead.phone, owner_user_id: lead.owner_user_id, project_id: lead.project_id }).eq("tenant_id", data.tenantId).eq("id", data.conversationId);
-    if (error) throw new Error("Không gắn được hồ sơ.");
-    await sb.from("channel_identities").update({ lead_id: lead.id }).eq("tenant_id", data.tenantId).eq("conversation_id", data.conversationId);
-    await sb.from("audit_logs").insert({ tenant_id: data.tenantId, user_id: context.userId, action: "conversation.link", entity: "conversations", entity_id: data.conversationId, diff: { previous_lead_id: conv.lead_id, lead_id: lead.id } } as never);
+    const { error } = await context.supabase.rpc("link_channel_profile", { p_tenant: data.tenantId, p_conversation: data.conversationId, p_lead: data.leadId });
+    if (error) { console.error("link_channel_profile", error.code, error.message); throw new Error("Không gắn được hồ sơ."); }
     return { ok: true };
   });
 

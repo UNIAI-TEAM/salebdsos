@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Kiểm tra ghép hồ sơ Zalo/Messenger: bỏ đoán theo điện thoại/định danh cũ, gắn hồ sơ nguyên tử, chặn người nhận mơ hồ; kiểm thử sàn tạm và xoá dữ liệu thử.
+
 - [x] Làm nổi bật Hộp thoại đa kênh trong menu Sale; ghi rõ SMS/email chỉ gửi đi và trạng thái kết nối.
 
 - [x] Chat đa kênh: Zalo OA/Messenger nhận tin có chữ ký, chống trùng, gắn hồ sơ, phản hồi đúng kênh, trạng thái kết nối; đã thử trong sàn tạm riêng và xoá dữ liệu thử.

@@ -3,7 +3,7 @@ import { supabaseAdmin as sb } from "@/integrations/supabase/client.server";
 import { getCredential, zaloCreds } from "./credentials.server";
 import { loadChannelSettings } from "./channels.server";
 import { parseIntegrationSettings } from "./integrations";
-import { INBOX_COPY, messengerWindowOpen } from "./omnichannel";
+import { INBOX_COPY, messengerWindowOpen, uniqueChannelIdentity } from "./omnichannel";
 
 export function signatureEquals(actual: string, expected: string) {
   const a = Buffer.from(actual), b = Buffer.from(expected);
@@ -45,7 +45,7 @@ export async function sendMessengerMessage(tenantId: string, conversationId: str
   let identityQuery = sb.from("channel_identities").select("account_id,external_user_id,last_inbound_at").eq("tenant_id", tenantId);
   identityQuery = conv?.lead_id ? identityQuery.eq("lead_id", conv.lead_id) : identityQuery.eq("conversation_id", conversationId);
   const { data: identities } = await identityQuery.eq("channel", "messenger").eq("account_id", config.messenger.pageId).limit(2);
-  const identity = identities?.length === 1 ? identities[0] : null;
+  const identity = uniqueChannelIdentity(identities ?? [], config.messenger.pageId);
   const token = await getCredential(tenantId, "fb_page_token");
   if (!config.messenger.enabled || !token) return { status: "failed" as const, externalId: null, error: INBOX_COPY.notConnected };
   if (!identity) return { status: "failed" as const, externalId: null, error: "Khách chưa có liên kết Messenger duy nhất." };

@@ -395,6 +395,7 @@ function InboxPage() {
             <>
               <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <Badge variant="outline">{CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}</Badge>
+                {thread.conversation.needsIdentityReview && <Badge variant="outline" className="text-warning">{t.review}</Badge>}
                 {thread.conversation.leadId && <Link to="/leads" search={{ lead: thread.conversation.leadId }} className="text-primary underline">Hồ sơ khách</Link>}
                 <Button size="sm" variant="ghost" onClick={() => setLinkOpen(true)}>{t.link}</Button>
                 {thread.conversation.phone ? (

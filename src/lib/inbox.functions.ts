@@ -191,6 +191,7 @@ export const getConversation = createServerFn({ method: "GET" })
         identities: identities ?? [],
         status: conv.status,
         leadId: conv.lead_id,
+        needsIdentityReview: (conv.meta as { identity_review_required?: boolean } | null)?.identity_review_required === true,
         projectId: conv.project_id,
         ownerUserId: conv.owner_user_id,
         tags: (((conv.meta ?? {}) as any).tags ?? []) as string[],
@@ -254,10 +255,10 @@ export const sendMessage = createServerFn({ method: "POST" })
       let identityQuery = supabase.from("channel_identities").select("external_user_id").eq("tenant_id", data.tenantId);
       identityQuery = conv.lead_id ? identityQuery.eq("lead_id", conv.lead_id) : identityQuery.eq("conversation_id", data.conversationId);
       const { data: ids } = await identityQuery.eq("channel", "zalo").eq("account_id", config.zalo.oaId).limit(2);
-      if (ids && ids.length > 1) throw new Error("Khách có nhiều liên kết Zalo; cần kiểm tra hồ sơ trước khi gửi.");
+      if (!ids || ids.length !== 1) throw new Error("Chưa xác định duy nhất tài khoản Zalo; cần kiểm tra hồ sơ trước khi gửi.");
       const result = await sendZaloMessage({
         tenantId: data.tenantId,
-        zaloUserId: ids?.[0]?.external_user_id ?? conv.contact_zalo_id,
+        zaloUserId: ids[0].external_user_id,
         text: data.body,
       });
       status = result.status;

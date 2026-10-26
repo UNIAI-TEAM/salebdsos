@@ -18,6 +18,7 @@ import {
   type NurtureStepKey,
 } from "@/lib/nurture";
 import { sendPushToUser } from "@/lib/push.server";
+import { uniqueChannelIdentity } from "./omnichannel";
 
 const admin = supabaseAdmin as any;
 const CART_STATUSES = ["locked", "reserved", "negotiating", "deposited"];
@@ -316,10 +317,12 @@ export async function runNurture(options?: {
             phone: item.phone,
           });
 
+          const { data: channelIds } = await supabaseAdmin.from("channel_identities").select("account_id,external_user_id").eq("tenant_id", tenantId).eq("lead_id", item.leadId).eq("channel", "zalo").eq("account_id", channels.zalo.oaId).limit(2);
+          const zaloIdentity = uniqueChannelIdentity(channelIds ?? [], channels.zalo.oaId);
           const { channel, result: dispatched } = await dispatch({
             tenantId,
             channelPref: step.channel,
-            zaloUserId: conversation.contact_zalo_id ?? null,
+            zaloUserId: zaloIdentity?.external_user_id ?? null,
             phone: item.phone,
             email: item.email,
             text,
