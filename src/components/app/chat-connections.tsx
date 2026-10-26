@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { INBOX_COPY as t, PENDING_INBOX_CHANNELS } from "@/lib/omnichannel";
-import { getChatConnectionSetup, saveChatConnection, verifyChatConnection, saveAdditionalConnection, verifyAdditionalConnection } from "@/lib/omnichannel.functions";
+import { getChatConnectionSetup, saveChatConnection, verifyChatConnection, saveAdditionalConnection, verifyAdditionalConnection, clearAdditionalConnection } from "@/lib/omnichannel.functions";
 import type { ChannelSettings } from "@/lib/channels";
 
 export function ChatConnections({ tenantId, config }: { tenantId: string; config: ChannelSettings }) {
@@ -14,6 +14,7 @@ export function ChatConnections({ tenantId, config }: { tenantId: string; config
   const save = useServerFn(saveChatConnection), verify = useServerFn(verifyChatConnection), setup = useServerFn(getChatConnectionSetup);
   const [channel, setChannel] = useState<"zalo" | "messenger" | "telegram" | "whatsapp" | "viber">("zalo");
   const saveAdditional = useServerFn(saveAdditionalConnection), verifyAdditional = useServerFn(verifyAdditionalConnection);
+  const clearAdditional = useServerFn(clearAdditionalConnection);
   const additional = channel !== "zalo" && channel !== "messenger";
   const [account, setAccount] = useState(config.zalo.oaId), [appId, setAppId] = useState(config.zalo.appId);
   const [secret, setSecret] = useState(""), [token, setToken] = useState(""), [busy, setBusy] = useState(false);
@@ -51,7 +52,15 @@ export function ChatConnections({ tenantId, config }: { tenantId: string; config
     {!additional && <div><Label>{t.webhook}</Label><Input readOnly value={typeof window === "undefined" ? "" : `${window.location.origin}/api/public/${channel === "zalo" ? "zalo-webhook" : "integrations/facebook"}`} /></div>}
     {additional && <div className="space-y-2 text-xs text-muted-foreground"><p>{channel === "viber" ? t.viberSecure : t.secureLinked}</p><p>{t.noWebhook}</p><p role="status">{config[channel].accountVerified ? t.accountVerified : config[channel].accountId ? t.savedOnly : t.disconnected}</p></div>}
     {channel === "messenger" && info.data?.verifyToken && <div><Label>{t.verifyToken}</Label><Input readOnly value={info.data.verifyToken} /></div>}
-    <div className="flex flex-wrap gap-2"><Button disabled={busy || !account} onClick={() => run(false)}>{t.save}</Button><Button variant="outline" disabled={busy} onClick={() => run(true)}>{additional ? t.verifyAccount : t.check}</Button></div>
+    <div className="flex flex-wrap gap-2"><Button disabled={busy || !account} onClick={() => run(false)}>{t.save}</Button><Button variant="outline" disabled={busy} onClick={() => run(true)}>{additional ? t.verifyAccount : t.check}</Button>
+      {additional && config[channel].accountId && <Button variant="ghost" disabled={busy} onClick={async () => {
+        if (!window.confirm(t.confirmClear)) return;
+        setBusy(true);
+        try { await clearAdditional({ data: { tenantId, channel } }); setAccount(""); setToken(""); await qc.invalidateQueries({ queryKey: ["channel-settings", tenantId] }); toast.success(t.cleared); }
+        catch (e) { toast.error(e instanceof Error ? e.message : t.checkFailed); }
+        finally { setBusy(false); }
+      }}>{t.clearSetup}</Button>}
+    </div>
     <section className="space-y-2 border-t border-border pt-3" aria-label={t.newChannels}>
       <h3 className="text-sm font-semibold">{t.newChannels}</h3>
       {PENDING_INBOX_CHANNELS.map(c => <div key={c.channel} className="space-y-1 border-b border-border py-2 last:border-0">

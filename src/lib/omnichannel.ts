@@ -20,6 +20,7 @@ export const INBOX_COPY = {
   saved: "Đã lưu bảo mật. Chưa bật gửi/nhận.", verifyAccount: "Kiểm tra tài khoản", missingAccount: "Vui lòng nhập mã tài khoản.",
   checkFailed: "Không kiểm tra được kết nối.", linkedMissing: "Chưa có kết nối cho dự án. Hoàn tất thẻ kết nối Telegram/WhatsApp trong Lovable trước.",
   mismatch: "Khoá kết nối không thuộc tài khoản đã nhập.", viberMissing: "Chưa lưu Viber Bot Token.",
+  clearSetup: "Xoá cấu hình kênh", confirmClear: "Xoá cấu hình và khoá đã lưu của kênh này?", cleared: "Đã xoá cấu hình kênh.",
 } as const;
 
 export const PENDING_INBOX_CHANNELS = [

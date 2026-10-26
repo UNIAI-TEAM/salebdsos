@@ -160,3 +160,22 @@ export const verifyAdditionalConnection = createServerFn({ method: "POST" })
     }
     return { ok: verified };
   });
+
+export const clearAdditionalConnection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid(), channel: onboardingChannelSchema }).parse(d))
+  .handler(async ({ data, context }) => {
+    await admin(context, data.tenantId);
+    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
+    const { data: row, error: readError } = await sb.from("settings").select("value").eq("tenant_id", data.tenantId).eq("key", CHANNELS_KEY).maybeSingle();
+    if (readError) throw new Error(copy.checkFailed);
+    const config = parseChannelSettings(row?.value);
+    config[data.channel] = { accountId: "", accountName: "", accountVerified: false, checkedAt: null };
+    if (data.channel === "viber") {
+      const { error } = await sb.from("tenant_credentials").delete().eq("tenant_id", data.tenantId).eq("key", "viber_bot_token");
+      if (error) throw new Error(copy.checkFailed);
+    }
+    const { error } = await sb.from("settings").upsert({ tenant_id: data.tenantId, key: CHANNELS_KEY, value: config, updated_by: context.userId }, { onConflict: "tenant_id,key" });
+    if (error) throw new Error(copy.checkFailed);
+    return { ok: true };
+  });
