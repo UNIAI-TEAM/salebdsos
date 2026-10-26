@@ -5,6 +5,8 @@ import { ADMIN_ROLES } from "./permissions";
 import { canAccessConversation } from "./omnichannel";
 import { CHANNELS_KEY, parseChannelSettings } from "./channels";
 import { parseIntegrationSettings } from "./integrations";
+import { onboardingInputSchema, onboardingChannelSchema } from "./channel-onboarding";
+import { INBOX_COPY as copy } from "./omnichannel";
 
 async function tenantRoles(context: any, tenantId: string) {
   const { data, error } = await context.supabase.from("user_roles").select("role").eq("tenant_id", tenantId).eq("user_id", context.userId);
@@ -110,4 +112,51 @@ export const inboxLeadChoices = createServerFn({ method: "GET" })
     const { data: rows, error } = await q;
     if (error) throw new Error("Không tải được hồ sơ khách.");
     return rows ?? [];
+  });
+
+export const saveAdditionalConnection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => onboardingInputSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await admin(context, data.tenantId);
+    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
+    const { saveCredential } = await import("./credentials.server");
+    if (data.channel === "viber" && data.token) {
+      const { inspectChannelAccount } = await import("./channel-onboarding.server");
+      await inspectChannelAccount(data.channel, data.accountId, data.token);
+    }
+    const { data: row, error: readError } = await sb.from("settings").select("value").eq("tenant_id", data.tenantId).eq("key", CHANNELS_KEY).maybeSingle();
+    if (readError) throw new Error(copy.checkFailed);
+    const config = parseChannelSettings(row?.value);
+    config[data.channel] = { accountId: data.accountId, accountName: "", accountVerified: false, checkedAt: null };
+    if (data.token) await saveCredential(data.tenantId, "viber_bot_token", data.token, context.userId);
+    const { error } = await sb.from("settings").upsert({ tenant_id: data.tenantId, key: CHANNELS_KEY, value: config, updated_by: context.userId }, { onConflict: "tenant_id,key" });
+    if (error) throw new Error(copy.checkFailed);
+    return { ok: true };
+  });
+
+export const verifyAdditionalConnection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid(), channel: onboardingChannelSchema }).parse(d))
+  .handler(async ({ data, context }) => {
+    await admin(context, data.tenantId);
+    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
+    const { getCredential } = await import("./credentials.server");
+    const { inspectChannelAccount } = await import("./channel-onboarding.server");
+    const { data: row, error: readError } = await sb.from("settings").select("value").eq("tenant_id", data.tenantId).eq("key", CHANNELS_KEY).maybeSingle();
+    if (readError) throw new Error(copy.checkFailed);
+    const config = parseChannelSettings(row?.value);
+    if (!config[data.channel].accountId) throw new Error(copy.missingAccount);
+    let verified = false;
+    try {
+      const result = await inspectChannelAccount(data.channel, config[data.channel].accountId, data.channel === "viber" ? await getCredential(data.tenantId, "viber_bot_token") : null);
+      config[data.channel].accountName = result.name;
+      verified = true;
+    } finally {
+      config[data.channel].accountVerified = verified;
+      config[data.channel].checkedAt = new Date().toISOString();
+      const { error } = await sb.from("settings").upsert({ tenant_id: data.tenantId, key: CHANNELS_KEY, value: config, updated_by: context.userId }, { onConflict: "tenant_id,key" });
+      if (error) throw new Error(copy.checkFailed);
+    }
+    return { ok: verified };
   });
