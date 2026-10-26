@@ -276,6 +276,7 @@ function InventoryPage() {
     }
     setEditing({
       id: r.id,
+      expectedUpdatedAt: r.updated_at,
       project_id: r.project_id,
       product_type: r.product_type ?? "apartment",
       code: r.code ?? "", zone: r.zone ?? "",
