@@ -116,10 +116,13 @@ export async function ingestInboundLead(input: InboundLead) {
   if (existing) {
     leadId = existing.id;
     ownerUserId = existing.owner_user_id;
+    const assignment = ownerUserId ? null : await assignLeadOwner({ tenantId: input.tenantId, projectId });
+    if (assignment) ownerUserId = assignment.ownerUserId;
     const promote = status === "quoted" && ["new", "contacted", "consulting", "qualified"].includes(existing.status);
     await supabaseAdmin
       .from("leads")
       .update({
+        ...(assignment ? { owner_user_id: assignment.ownerUserId } : {}),
         ...(promote ? { status: "quoted" } : {}),
         notes: [existing.notes, noteLine].filter(Boolean).join("\n").slice(-4000),
         meta: {
@@ -189,6 +192,10 @@ export async function ingestInboundLead(input: InboundLead) {
       .select("id")
       .single();
     conversationId = (created?.id as string | undefined) ?? null;
+  }
+  if (conversationId && ownerUserId) {
+    await supabaseAdmin.from("conversations").update({ owner_user_id: ownerUserId })
+      .eq("id", conversationId).eq("tenant_id", input.tenantId).is("owner_user_id", null);
   }
   if (conversationId) {
     await appendMessage({

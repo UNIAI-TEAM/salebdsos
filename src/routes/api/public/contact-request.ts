@@ -29,10 +29,10 @@ async function resolveSource(kind: string, slug: string): Promise<Source | null>
   if (kind === "card") {
     const { data } = await supabaseAdmin
       .from("cards")
-      .select("id, tenant_id, owner_user_id, display_name")
+      .select("id, tenant_id, owner_user_id, display_name, is_published, deleted_at")
       .eq("slug", slug)
       .maybeSingle();
-    if (!data) return null;
+    if (!data || !data.is_published || data.deleted_at) return null;
     return {
       tenantId: data.tenant_id as string,
       projectId: null,
@@ -150,7 +150,9 @@ export const Route = createFileRoute("/api/public/contact-request")({
             user_id: assignment.ownerUserId,
             title: `Khách yêu cầu ${CHANNEL_LABEL[channel]}`,
             body: `${name ?? "Khách"}${phone ? ` · ${phone}` : ""} — liên hệ trong ${assignment.slaMinutes} phút`,
-            kind: "warning",
+            type: "lead_new",
+            lead_id: lead?.id,
+            link: "/inbox",
           } as never);
           const { sendPushToUser } = await import("@/lib/push.server");
           await sendPushToUser({

@@ -35,6 +35,8 @@ export async function receiveChannelMessage(args: { tenantId: string; channel: "
   const result = data as { duplicate?: boolean; ownerUserId?: string; leadId?: string };
   if (!result.duplicate && result.ownerUserId) {
     await sb.from("notifications").insert({ tenant_id: args.tenantId, user_id: result.ownerUserId, lead_id: result.leadId, type: "lead", title: `Tin nhắn mới · ${args.channel === "zalo" ? "Zalo OA" : "Messenger"}`, body: args.body.slice(0, 160), link: "/inbox" } as never);
+    const { sendPushToUser } = await import("./push.server");
+    await sendPushToUser({ userId: result.ownerUserId, title: `Tin nhắn mới · ${args.channel === "zalo" ? "Zalo OA" : "Messenger"}`, body: args.body.slice(0, 160), link: "/inbox" });
   }
   return result;
 }

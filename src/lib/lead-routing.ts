@@ -43,3 +43,31 @@ export function slaLabel(minutes: number) {
   const hours = minutes / 60;
   return Number.isInteger(hours) ? `${hours} giờ` : `${minutes} phút`;
 }
+
+/** Stable tie-breaking preserves configured pool order. */
+export function leastLoadedOwner(pool: string[], load: ReadonlyMap<string, number>): string | null {
+  let selected: string | null = null;
+  for (const id of new Set(pool)) {
+    if (selected === null || (load.get(id) ?? 0) < (load.get(selected) ?? 0)) selected = id;
+  }
+  return selected;
+}
+
+export function routingPool(config: LeadRoutingConfig, projectId?: string | null): string[] {
+  const rule = config.projectRules.find((item) => item.projectId === projectId);
+  return [...new Set(rule?.userIds.length ? rule.userIds : config.fallbackUserIds)];
+}
+
+export function leadSlaDeadline(lead: { created_at: string; meta?: unknown }, fallbackMinutes: number): number | null {
+  const meta = lead.meta && typeof lead.meta === "object" && !Array.isArray(lead.meta)
+    ? lead.meta as Record<string, unknown> : {};
+  if (meta["sla_response_at"]) return null;
+  if (Object.prototype.hasOwnProperty.call(meta, "sla_due_at")) {
+    if (typeof meta["sla_due_at"] !== "string") return null;
+    const due = Date.parse(meta["sla_due_at"]);
+    return Number.isFinite(due) ? due : null;
+  }
+  const minutes = typeof meta["sla_minutes"] === "number" ? meta["sla_minutes"] : fallbackMinutes;
+  const created = Date.parse(lead.created_at);
+  return Number.isFinite(created) ? created + minutes * 60_000 : null;
+}

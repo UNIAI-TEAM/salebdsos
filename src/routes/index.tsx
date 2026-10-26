@@ -61,6 +61,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "SaleBDS OS — Sales Growth Platform for Real Estate" },
       { property: "og:description", content: "Một profile – đa nền tảng – đa cách chia sẻ. AI Follow-up, AI Lead Score, CRM, Analytics dành riêng cho BĐS." },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { property: "og:url", content: SITE_URL },
     ],
     links: [{ rel: "canonical", href: SITE_URL }],
