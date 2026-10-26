@@ -9,7 +9,7 @@ import { INBOX_COPY as t, PENDING_INBOX_CHANNELS } from "@/lib/omnichannel";
 import { getChatConnectionSetup, saveChatConnection, verifyChatConnection, saveAdditionalConnection, verifyAdditionalConnection, clearAdditionalConnection } from "@/lib/omnichannel.functions";
 import type { ChannelSettings } from "@/lib/channels";
 
-export function ChatConnections({ tenantId, config }: { tenantId: string; config: ChannelSettings }) {
+export function ChatConnections({ tenantId, config, onConfigChange }: { tenantId: string; config: ChannelSettings; onConfigChange: (config: ChannelSettings) => void }) {
   const qc = useQueryClient();
   const save = useServerFn(saveChatConnection), verify = useServerFn(verifyChatConnection), setup = useServerFn(getChatConnectionSetup);
   const [channel, setChannel] = useState<"zalo" | "messenger" | "telegram" | "whatsapp" | "viber">("zalo");
@@ -39,6 +39,8 @@ export function ChatConnections({ tenantId, config }: { tenantId: string; config
         setSecret(""); setToken(""); toast.success("Đã lưu bảo mật. Chưa xác minh nhận tin.");
       }
       await qc.invalidateQueries({ queryKey: ["channel-settings", tenantId] });
+      const updated = qc.getQueryData<{ config: ChannelSettings }>(["channel-settings", tenantId]);
+      if (updated) onConfigChange(updated.config);
       await qc.invalidateQueries({ queryKey: ["chat-setup", tenantId] });
     } catch (e) { toast.error(e instanceof Error ? e.message : "Không lưu được kết nối"); }
     finally { setBusy(false); }
@@ -56,7 +58,7 @@ export function ChatConnections({ tenantId, config }: { tenantId: string; config
       {additional && config[channel].accountId && <Button variant="ghost" disabled={busy} onClick={async () => {
         if (!window.confirm(t.confirmClear)) return;
         setBusy(true);
-        try { await clearAdditional({ data: { tenantId, channel } }); setAccount(""); setToken(""); await qc.invalidateQueries({ queryKey: ["channel-settings", tenantId] }); toast.success(t.cleared); }
+        try { await clearAdditional({ data: { tenantId, channel } }); setAccount(""); setToken(""); await qc.invalidateQueries({ queryKey: ["channel-settings", tenantId] }); const updated = qc.getQueryData<{ config: ChannelSettings }>(["channel-settings", tenantId]); if (updated) onConfigChange(updated.config); toast.success(t.cleared); }
         catch (e) { toast.error(e instanceof Error ? e.message : t.checkFailed); }
         finally { setBusy(false); }
       }}>{t.clearSetup}</Button>}
