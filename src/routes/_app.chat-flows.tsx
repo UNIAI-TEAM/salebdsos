@@ -3,13 +3,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Bot, Film, GripVertical, ImagePlus, Plus, RotateCcw, Save, Send, Trash2, UserRound } from "lucide-react";
+import { Bot, CalendarPlus, ClipboardList, Film, LibraryBig, Sparkles, GripVertical, ImagePlus, Plus, RotateCcw, Save, Send, Trash2, UserRound } from "lucide-react";
 import { DndContext, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getChatFlows, saveChatFlows } from "@/lib/chat-flows.functions";
+import { generateChatFlow, listFlowProjects } from "@/lib/chat-flow-ai.functions";
+import { FLOW_TEMPLATES } from "@/lib/chat-flow-templates";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { flowSchema, stepBot, templateFlow, uid, type BotState, type ChatButton, type ChatFlow, type ChatMedia, type ChatNode } from "@/lib/chat-flows";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
@@ -63,7 +66,9 @@ function ChatFlowsPage() {
   const flow = flows.find((f) => f.id === activeId) ?? null;
   const canEdit = q.data?.canEdit ?? false;
   const update = (patch: (f: ChatFlow) => ChatFlow) => setFlows((all) => all.map((f) => (f.id === activeId ? patch(f) : f)));
-  const add = () => { const f = templateFlow(); setFlows((a) => [...a, f]); setActiveId(f.id); };
+  const add = (f: ChatFlow = templateFlow()) => { setFlows((a) => [...a, f]); setActiveId(f.id); };
+  const [libOpen, setLibOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -72,7 +77,9 @@ function ChatFlowsPage() {
         sub="Bot trả lời khách theo cây nút bấm và từ khóa, rồi chuyển chuyên viên khi khách cần người thật."
         action={canEdit ? (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={add}><Plus className="h-4 w-4" />Kịch bản mới</Button>
+            <Button variant="outline" onClick={() => setLibOpen(true)}><LibraryBig className="h-4 w-4" />Thư viện mẫu</Button>
+            <Button variant="outline" onClick={() => setAiOpen(true)}><Sparkles className="h-4 w-4" />Tạo bằng AI</Button>
+            <Button variant="outline" onClick={() => add()}><Plus className="h-4 w-4" />Kịch bản mới</Button>
             <Button onClick={() => save.mutate()} disabled={save.isPending}><Save className="h-4 w-4" />{save.isPending ? "Đang lưu…" : "Lưu"}</Button>
           </div>
         ) : undefined}
@@ -97,6 +104,8 @@ function ChatFlowsPage() {
           {flow ? <Simulator flow={flow} /> : <div />}
         </div>
       )}
+      <TemplateLibrary open={libOpen} onOpenChange={setLibOpen} onPick={(f) => { add(f); setLibOpen(false); toast.success("Đã thêm mẫu — bấm Lưu để giữ lại"); }} />
+      {tenantId && <AiGenerator tenantId={tenantId} open={aiOpen} onOpenChange={setAiOpen} onDone={(f) => { add(f); setAiOpen(false); toast.success("AI đã tạo bản nháp — kiểm tra rồi bấm Lưu"); }} />}
     </div>
   );
 }
@@ -124,7 +133,7 @@ function FlowEditor({ tenantId, flow, canEdit, onChange, onDelete }: { tenantId:
   const setNode = (id: string, patch: (n: ChatNode) => ChatNode) => onChange((f) => ({ ...f, nodes: f.nodes.map((n) => (n.id === id ? patch(n) : n)) }));
   const addChild = (nodeId: string, buttonId: string) => {
     const nid = `s${uid().slice(0, 5)}`;
-    onChange((f) => ({ ...f, nodes: [...f.nodes.map((n) => (n.id === nodeId ? { ...n, buttons: n.buttons.map((b) => (b.id === buttonId ? { ...b, next: nid } : b)) } : n)), { id: nid, text: "Nội dung trả lời…", media: [], buttons: [], tag: "", handoff: false }] }));
+    onChange((f) => ({ ...f, nodes: [...f.nodes.map((n) => (n.id === nodeId ? { ...n, buttons: n.buttons.map((b) => (b.id === buttonId ? { ...b, next: nid } : b)) } : n)), { id: nid, text: "Nội dung trả lời…", media: [], buttons: [], tag: "", handoff: false, appointment: null, need: null }] }));
   };
   const removeNode = (id: string) => onChange((f) => ({ ...f, nodes: f.nodes.filter((n) => n.id !== id).map((n) => ({ ...n, buttons: n.buttons.map((b) => (b.next === id ? { ...b, next: null } : b)) })) }));
 
@@ -170,6 +179,7 @@ function FlowEditor({ tenantId, flow, canEdit, onChange, onDelete }: { tenantId:
                 <div className="space-y-1.5"><Label htmlFor={`g-${id}`}>Gắn nhãn hội thoại</Label><Input id={`g-${id}`} value={node.tag} onChange={(e) => setNode(id, (n) => ({ ...n, tag: e.target.value }))} placeholder="VD: Hẹn xem nhà mẫu" /></div>
                 <div className="flex items-center gap-2 pt-6"><Switch id={`h-${id}`} checked={node.handoff} onCheckedChange={(v) => setNode(id, (n) => ({ ...n, handoff: v }))} /><Label htmlFor={`h-${id}`}>Dừng bot, báo Sale tiếp nhận</Label></div>
               </div>
+              <NodeActions node={node} onChange={(patch) => setNode(id, (n) => ({ ...n, ...patch }))} />
               {!node.handoff && (
                 <ButtonList node={node} nodes={flow.nodes} canEdit={canEdit} onChange={(buttons) => setNode(id, (n) => ({ ...n, buttons }))} onAddChild={(bid) => addChild(id, bid)} />
               )}
@@ -301,6 +311,8 @@ function Simulator({ flow }: { flow: ChatFlow }) {
     r.media.forEach((m) => next.push({ from: "bot", text: m.caption, media: m }));
     if (r.reply) next.push({ from: "bot", text: r.reply });
     if (r.tag) next.push({ from: "system", text: `Gắn nhãn: ${r.tag}` });
+    if (r.appointment) next.push({ from: "system", text: `Tạo lịch hẹn: ${r.appointment.title.replace("{project}", "Aurora Green Bay")} · +${r.appointment.daysAhead} ngày, ${r.appointment.hour}h` });
+    if (r.need) next.push({ from: "system", text: `Cập nhật nhu cầu: ${[r.need.needType, r.need.budget, r.need.note].filter(Boolean).join(" · ")}` });
     if (r.handoff) next.push({ from: "system", text: "Chuyển chuyên viên · Sale nhận thông báo" });
     if (r.reason === "idle") next.push({ from: "system", text: "Không khớp kịch bản — tin chuyển thẳng cho Sale." });
     setMsgs(next); setState(r.state); setDone(r.handoff); setText("");
@@ -328,5 +340,104 @@ function Simulator({ flow }: { flow: ChatFlow }) {
         </form>
       </div>
     </SectionCard>
+  );
+}
+
+function NodeActions({ node, onChange }: { node: ChatNode; onChange: (p: Partial<ChatNode>) => void }) {
+  const a = node.appointment;
+  const n = node.need;
+  return (
+    <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
+      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Hành động tự động khi khách đến bước này</div>
+      <div className="flex items-center gap-2"><Switch id={`ap-${node.id}`} checked={!!a} onCheckedChange={(v) => onChange({ appointment: v ? { title: "Xem nhà mẫu {project}", location: "", daysAhead: 1, hour: 9 } : null })} /><Label htmlFor={`ap-${node.id}`} className="flex items-center gap-1.5"><CalendarPlus className="h-4 w-4" />Tự tạo lịch hẹn cho Sale</Label></div>
+      {a && (
+        <div className="grid gap-3 md:grid-cols-4">
+          <div className="space-y-1.5 md:col-span-2"><Label htmlFor={`apt-${node.id}`}>Tiêu đề</Label><Input id={`apt-${node.id}`} value={a.title} onChange={(e) => onChange({ appointment: { ...a, title: e.target.value } })} /></div>
+          <div className="space-y-1.5"><Label htmlFor={`apd-${node.id}`}>Sau (ngày)</Label><Input id={`apd-${node.id}`} type="number" min={0} max={30} value={a.daysAhead} onChange={(e) => onChange({ appointment: { ...a, daysAhead: Math.min(30, Math.max(0, Number(e.target.value) || 0)) } })} /></div>
+          <div className="space-y-1.5"><Label htmlFor={`aph-${node.id}`}>Giờ</Label><Input id={`aph-${node.id}`} type="number" min={7} max={20} value={a.hour} onChange={(e) => onChange({ appointment: { ...a, hour: Math.min(20, Math.max(7, Number(e.target.value) || 9)) } })} /></div>
+          <div className="space-y-1.5 md:col-span-4"><Label htmlFor={`apl-${node.id}`}>Địa điểm</Label><Input id={`apl-${node.id}`} value={a.location} placeholder="Nhà mẫu dự án" onChange={(e) => onChange({ appointment: { ...a, location: e.target.value } })} /></div>
+        </div>
+      )}
+      <div className="flex items-center gap-2"><Switch id={`nd-${node.id}`} checked={!!n} onCheckedChange={(v) => onChange({ need: v ? { needType: "", budget: "", note: "" } : null })} /><Label htmlFor={`nd-${node.id}`} className="flex items-center gap-1.5"><ClipboardList className="h-4 w-4" />Ghi nhu cầu vào hồ sơ khách</Label></div>
+      {n && (
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="space-y-1.5"><Label htmlFor={`nt-${node.id}`}>Nhu cầu</Label><Input id={`nt-${node.id}`} value={n.needType} placeholder="Căn hộ 2PN" onChange={(e) => onChange({ need: { ...n, needType: e.target.value } })} /></div>
+          <div className="space-y-1.5"><Label htmlFor={`nb-${node.id}`}>Tầm tài chính</Label><Input id={`nb-${node.id}`} value={n.budget} placeholder="3–5 tỷ" onChange={(e) => onChange({ need: { ...n, budget: e.target.value } })} /></div>
+          <div className="space-y-1.5"><Label htmlFor={`nn-${node.id}`}>Ghi chú</Label><Input id={`nn-${node.id}`} value={n.note} placeholder="Quan tâm vay" onChange={(e) => onChange({ need: { ...n, note: e.target.value } })} /></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TemplateLibrary({ open, onOpenChange, onPick }: { open: boolean; onOpenChange: (v: boolean) => void; onPick: (f: ChatFlow) => void }) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader><DialogTitle>Thư viện mẫu kịch bản BĐS</DialogTitle><DialogDescription>Chọn một mẫu để thêm ngay, sau đó chỉnh nội dung theo dự án.</DialogDescription></DialogHeader>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {FLOW_TEMPLATES.map((t) => {
+            const f = t.build();
+            const appts = f.nodes.filter((n) => n.appointment).length;
+            const needs = f.nodes.filter((n) => n.need).length;
+            return (
+              <button key={t.key} onClick={() => onPick(t.build())} className="space-y-2 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-muted/50">
+                <div className="font-medium">{t.name}</div>
+                <p className="text-sm text-muted-foreground">{t.description}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge variant="secondary">{f.nodes.length} bước</Badge>
+                  {appts > 0 && <Badge variant="outline">Tạo lịch hẹn</Badge>}
+                  {needs > 0 && <Badge variant="outline">Ghi nhu cầu</Badge>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AiGenerator({ tenantId, open, onOpenChange, onDone }: { tenantId: string; open: boolean; onOpenChange: (v: boolean) => void; onDone: (f: ChatFlow) => void }) {
+  const fnList = useServerFn(listFlowProjects);
+  const fnGen = useServerFn(generateChatFlow);
+  const projects = useQuery({ queryKey: ["flow-projects", tenantId], queryFn: () => fnList({ data: { tenantId } }), enabled: open });
+  const [projectId, setProjectId] = useState("");
+  const [goal, setGoal] = useState<"new" | "stock" | "deposit">("new");
+  const [tone, setTone] = useState<"warm" | "pro" | "urgent">("warm");
+  const gen = useMutation({
+    mutationFn: () => fnGen({ data: { tenantId, projectId, goal, tone } }),
+    onSuccess: (f) => onDone(f as ChatFlow),
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const sel = "h-9 w-full rounded-lg border border-input bg-background px-3 text-sm";
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Tạo kịch bản bằng AI</DialogTitle><DialogDescription>AI dùng thông tin dự án trong hệ thống để dựng cây kịch bản, kèm bước hẹn xem và ghi nhu cầu.</DialogDescription></DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-1.5"><Label htmlFor="ai-p">Dự án</Label>
+            <select id="ai-p" className={sel} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+              <option value="">{projects.isLoading ? "Đang tải…" : "Chọn dự án"}</option>
+              {(projects.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5"><Label htmlFor="ai-g">Mục tiêu</Label>
+              <select id="ai-g" className={sel} value={goal} onChange={(e) => setGoal(e.target.value as typeof goal)}>
+                <option value="new">Bán dự án mới</option><option value="stock">Xả hàng tồn</option><option value="deposit">Đặt cọc giữ chỗ</option>
+              </select>
+            </div>
+            <div className="space-y-1.5"><Label htmlFor="ai-t">Phong cách</Label>
+              <select id="ai-t" className={sel} value={tone} onChange={(e) => setTone(e.target.value as typeof tone)}>
+                <option value="warm">Nhiệt tình</option><option value="pro">Chuyên nghiệp</option><option value="urgent">Thúc chốt</option>
+              </select>
+            </div>
+          </div>
+          <Button className="w-full" disabled={!projectId || gen.isPending} onClick={() => gen.mutate()}><Sparkles className="h-4 w-4" />{gen.isPending ? "AI đang soạn…" : "Tạo kịch bản"}</Button>
+          <p className="text-xs text-muted-foreground">Bản nháp ở trạng thái Tắt. Kiểm tra nội dung trước khi bật và lưu.</p>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
