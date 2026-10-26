@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Đối chiếu và hoàn thiện giao khách cá nhân/kênh chung theo tải 30 ngày, SLA và thông báo Sale; kiểm thử các luồng liên quan.
+
 - [x] Bổ sung tab kết nối Telegram/WhatsApp/Viber, lưu/xoá cấu hình quản trị và kiểm tra tài khoản không gửi tin; thử lưu/đọc/xoá cấu hình Telegram, 19 kiểm thử đạt. Xác minh nhà cung cấp thật còn chờ tài khoản/kết nối.
 - [ ] Telegram gửi/nhận: chờ quản trị viên hoàn tất thẻ kết nối (đã bỏ qua); chưa đăng ký webhook hoặc gửi tin.
 - [ ] WhatsApp gửi/nhận: chờ số WhatsApp Business và hoàn tất thẻ kết nối (đã bỏ qua); chưa bật gửi/nhận.
