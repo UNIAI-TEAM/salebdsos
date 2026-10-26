@@ -190,6 +190,136 @@ export type Database = {
           },
         ]
       }
+      agency_commission_entries: {
+        Row: {
+          agency_id: string
+          amount: number
+          base_amount: number
+          contract_code: string
+          contract_id: string
+          created_at: string
+          currency: string
+          dispute_note: string | null
+          due_date: string | null
+          history: Json
+          id: string
+          level: string
+          payer_tenant_id: string
+          rate: number
+          receiver_tenant_id: string
+          sale_user_id: string | null
+          status: string
+        }
+        Insert: {
+          agency_id: string
+          amount: number
+          base_amount: number
+          contract_code: string
+          contract_id: string
+          created_at?: string
+          currency: string
+          dispute_note?: string | null
+          due_date?: string | null
+          history?: Json
+          id?: string
+          level: string
+          payer_tenant_id: string
+          rate: number
+          receiver_tenant_id: string
+          sale_user_id?: string | null
+          status?: string
+        }
+        Update: {
+          agency_id?: string
+          amount?: number
+          base_amount?: number
+          contract_code?: string
+          contract_id?: string
+          created_at?: string
+          currency?: string
+          dispute_note?: string | null
+          due_date?: string | null
+          history?: Json
+          id?: string
+          level?: string
+          payer_tenant_id?: string
+          rate?: number
+          receiver_tenant_id?: string
+          sale_user_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_commission_entries_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_commission_entries_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_commission_entries_payer_tenant_id_fkey"
+            columns: ["payer_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_commission_entries_receiver_tenant_id_fkey"
+            columns: ["receiver_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_commission_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          entry_id: string
+          id: string
+          paid_date: string
+          received_at: string | null
+          reference: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by: string
+          entry_id: string
+          id?: string
+          paid_date: string
+          received_at?: string | null
+          reference: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          entry_id?: string
+          id?: string
+          paid_date?: string
+          received_at?: string | null
+          reference?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_commission_payments_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "agency_commission_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_lead_referrals: {
         Row: {
           agency_id: string
@@ -4131,6 +4261,24 @@ export type Database = {
       agency_command: {
         Args: { p_action: string; p_data: Json; p_tenant: string }
         Returns: string
+      }
+      agency_commission_command: {
+        Args: {
+          p_action: string
+          p_agency: string
+          p_data: Json
+          p_tenant: string
+        }
+        Returns: string
+      }
+      agency_commission_view: {
+        Args: {
+          p_agency: string
+          p_level: string
+          p_page?: number
+          p_tenant: string
+        }
+        Returns: Json
       }
       agency_referral_action: {
         Args: { p_action: string; p_id: string; p_sale?: string }
