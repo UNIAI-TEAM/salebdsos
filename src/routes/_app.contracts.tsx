@@ -623,6 +623,20 @@ function ContractsPage() {
                 </Button>
               </div>
 
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">Lịch sử đợt thu</p>
+                <ul className="divide-y divide-border">
+                  {(selected.installmentHistory ?? []).map((entry: any) => (
+                    <li key={entry.id} className="flex flex-wrap justify-between gap-2 py-2 text-sm">
+                      <span>{entry.action === "INSERT" ? "Tạo" : entry.action === "DELETE" ? "Xóa" : "Cập nhật"} · {entry.after_row?.name ?? entry.before_row?.name}
+                        {entry.action === "UPDATE" ? ` · Đã thu: ${money(Number(entry.before_row?.paid_amount ?? 0))} → ${money(Number(entry.after_row?.paid_amount ?? 0))}` : ""}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{new Date(entry.occurred_at).toLocaleString("vi-VN")}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
               {/* Lịch sử nhắc thanh toán */}
               <div className="space-y-2">
                 <p className="text-sm font-semibold">Lịch sử nhắc thanh toán</p>
