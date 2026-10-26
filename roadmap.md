@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Kiểm tra và sửa Trợ lý AI: phạm vi Sale, lỗi tra cứu, hội thoại dài/đổi sàn; thử lại bốn câu hỏi thực tế.
+
 - [x] Kiểm tra hiện trạng kênh, quyền cấu hình, yêu cầu không có khoá trên preview và published; kiểm thử bank/social/segments (17/17).
 - [ ] SePay/Casso: chờ chọn nhà cung cấp và tài khoản quản trị sàn; chưa có cấu hình ngân hàng/khoá webhook.
 - [ ] Zalo OA: chờ tài khoản quản trị sàn và thông tin OA/ứng dụng qua ô bảo mật; chưa có token/secret/app ID.
