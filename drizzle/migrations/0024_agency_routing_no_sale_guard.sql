@@ -1,0 +1,1 @@
+DO $$ DECLARE definition text; BEGIN SELECT pg_get_functiondef('public.route_agency_lead(uuid)'::regprocedure) INTO definition; definition:=replace(definition,'due:=l.created_at+make_interval(mins=>mins);','IF sale IS NULL THEN RETURN NULL; END IF; due:=l.created_at+make_interval(mins=>mins);'); EXECUTE definition; END $$;
