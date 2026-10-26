@@ -2163,6 +2163,74 @@ export type Database = {
           },
         ]
       }
+      lead_push_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          deadline: string | null
+          finished_at: string | null
+          id: string
+          kind: string
+          last_error: string | null
+          lead_id: string
+          run_at: string
+          state: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          deadline?: string | null
+          finished_at?: string | null
+          id?: string
+          kind: string
+          last_error?: string | null
+          lead_id: string
+          run_at: string
+          state?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          deadline?: string | null
+          finished_at?: string | null
+          id?: string
+          kind?: string
+          last_error?: string | null
+          lead_id?: string
+          run_at?: string
+          state?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_push_jobs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_push_runtime: {
+        Row: {
+          callback_url: string
+          id: boolean
+        }
+        Insert: {
+          callback_url: string
+          id?: boolean
+        }
+        Update: {
+          callback_url?: string
+          id?: boolean
+        }
+        Relationships: []
+      }
       lead_submissions: {
         Row: {
           created_at: string
@@ -3763,6 +3831,30 @@ export type Database = {
         Args: { _page_id: string; _tenant_id: string }
         Returns: undefined
       }
+      claim_lead_push_jobs: {
+        Args: never
+        Returns: {
+          attempts: number
+          created_at: string
+          deadline: string | null
+          finished_at: string | null
+          id: string
+          kind: string
+          last_error: string | null
+          lead_id: string
+          run_at: string
+          state: string
+          tenant_id: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "lead_push_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      dispatch_lead_push: { Args: never; Returns: undefined }
       ingest_channel_message: {
         Args: {
           p_account: string
@@ -3783,6 +3875,7 @@ export type Database = {
         Args: { p_conversation: string; p_lead: string; p_tenant: string }
         Returns: boolean
       }
+      refresh_lead_push_schedule: { Args: never; Returns: undefined }
       release_job_lock: { Args: { _key: string }; Returns: undefined }
     }
     Enums: {
