@@ -31,6 +31,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getLeadScore, explainLeadScoreAI, bandFromScore, SCORE_LABEL, type ScoreBand } from "@/lib/lead-score.functions";
 
 export const Route = createFileRoute("/_app/leads")({
+  head: () => ({ meta: [
+    { title: "Khách tiềm năng — SaleBDS OS" },
+    { name: "description", content: "Quản lý danh sách khách tiềm năng, liên hệ và trạng thái chăm sóc trên SaleBDS OS." },
+    { property: "og:title", content: "Khách tiềm năng — SaleBDS OS" },
+    { property: "og:description", content: "Danh sách khách tiềm năng và tiến độ chăm sóc của sàn bất động sản." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   validateSearch: (search: Record<string, unknown>) => ({
     lead: typeof search.lead === "string" ? search.lead : undefined,
   }),
@@ -162,20 +170,20 @@ function LeadsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Leads (CRM)" sub="Quản lý và chăm sóc khách hàng tiềm năng." />
+    <div className="space-y-3">
+      <PageHeader compact title="Leads (CRM)" sub="Quản lý và chăm sóc khách hàng tiềm năng." />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-4">
-        <KpiCard icon={Users2} label="Tổng leads" value={String(statsQ.data?.total ?? 0)} delta={0} tone="primary" />
-        <KpiCard icon={UserPlus} label="Lead 30 ngày" value={String(statsQ.data?.last30 ?? 0)} delta={0} tone="blue" />
-        <KpiCard icon={Heart} label="Đang tư vấn" value={String(statsQ.data?.counts?.consulting ?? 0)} delta={0} tone="indigo" />
-        <KpiCard icon={Target} label="Đặt cọc" value={String(statsQ.data?.counts?.deposit ?? 0)} delta={0} tone="amber" />
-        <KpiCard icon={TrendingUp} label="Thành công" value={String(statsQ.data?.won ?? 0)} delta={0} tone="green" />
-        <KpiCard icon={DollarSign} label="Thất bại" value={String(statsQ.data?.lost ?? 0)} delta={0} tone="rose" />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        <KpiCard compact icon={Users2} label="Tổng leads" value={String(statsQ.data?.total ?? 0)} delta={0} tone="primary" />
+        <KpiCard compact icon={UserPlus} label="Lead 30 ngày" value={String(statsQ.data?.last30 ?? 0)} delta={0} tone="blue" />
+        <KpiCard compact icon={Heart} label="Đang tư vấn" value={String(statsQ.data?.counts?.consulting ?? 0)} delta={0} tone="indigo" />
+        <KpiCard compact icon={Target} label="Đặt cọc" value={String(statsQ.data?.counts?.deposit ?? 0)} delta={0} tone="amber" />
+        <KpiCard compact icon={TrendingUp} label="Thành công" value={String(statsQ.data?.won ?? 0)} delta={0} tone="green" />
+        <KpiCard compact icon={DollarSign} label="Thất bại" value={String(statsQ.data?.lost ?? 0)} delta={0} tone="rose" />
       </div>
 
-      <SectionCard className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-2 mb-4">
+      <SectionCard compact className="overflow-hidden rounded-lg">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           <div className="relative flex-1 min-w-[220px] max-w-[320px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -217,9 +225,9 @@ function LeadsPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto -mx-5 px-5">
-          <table className="w-full min-w-[1000px]">
-            <thead>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1000px] [&_th]:py-2 [&_th]:pr-3 [&_td]:py-2 [&_td]:pr-3">
+            <thead className="bg-muted/40">
               <tr className="text-left text-[10.5px] uppercase tracking-wider text-muted-foreground border-b border-border">
                 <th className="font-semibold py-3">Họ và tên</th>
                 <th className="font-semibold py-3">Liên hệ</th>
@@ -248,7 +256,7 @@ function LeadsPage() {
                   ].join(" ")}>
                     <td className="py-3.5">
                       <div className="flex items-center gap-2.5">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/30 to-indigo-400/30 grid place-items-center text-[11.5px] font-semibold text-primary">
+                        <div className="h-7 w-7 shrink-0 rounded-full bg-primary/10 grid place-items-center text-[11.5px] font-semibold text-primary">
                           {initials(l.full_name)}
                         </div>
                         <div>
@@ -287,7 +295,7 @@ function LeadsPage() {
           </table>
         </div>
 
-        <div className="flex items-center justify-between gap-3 mt-4 pt-2 border-t border-border">
+        <div className="flex items-center justify-between gap-3 mt-2 pt-2 border-t border-border">
           <div className="text-[12px] text-muted-foreground">
             {total > 0 ? `${(page - 1) * 20 + 1} – ${Math.min(page * 20, total)} của ${total}` : "0 lead"}
           </div>
