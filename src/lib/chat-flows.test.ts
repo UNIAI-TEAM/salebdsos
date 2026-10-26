@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { flowSchema, stepBot, templateFlow, type ChatFlow } from "./chat-flows";
+import { flowSchema, pickCommentFlow, stepBot, templateFlow, type ChatFlow } from "./chat-flows";
 
 const flow = (): ChatFlow => ({ ...templateFlow(), id: "f1", enabled: true });
 
@@ -45,5 +45,19 @@ describe("chat flows", () => {
     const f = flow();
     f.nodes[0].buttons[0].next = "missing";
     expect(flowSchema.safeParse(f).success).toBe(false);
+  });
+
+  it("event QR entry starts its flow on any text, others ignore it", () => {
+    const qr: ChatFlow = { ...flow(), id: "q", trigger: "event_qr", entryCode: "sk-aurora" };
+    expect(stepBot([qr], null, "xin chào", false, {}, "sk-aurora").reason).toBe("start");
+    expect(stepBot([qr], null, "xin chào", true).reason).toBe("idle");
+    expect(stepBot([qr], null, "hi", true, {}, "sk-khac").reason).toBe("idle");
+  });
+  it("fanpage comment flow filters by post and keyword", () => {
+    const c: ChatFlow = { ...flow(), trigger: "fb_comment", postIds: ["p1"], keywords: ["gia"] };
+    expect(pickCommentFlow([c], "p1", "Giá bao nhiêu?")?.id).toBe("f1");
+    expect(pickCommentFlow([c], "p2", "giá")).toBeNull();
+    expect(pickCommentFlow([c], "p1", "đẹp quá")).toBeNull();
+    expect(stepBot([c], null, "giá", true).reason).toBe("idle");
   });
 });
