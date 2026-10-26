@@ -110,15 +110,7 @@ export const Route = createFileRoute("/api/public/lead-forms/$slug")({
         if (nErr) console.error("[lead-form] notification", nErr.message);
 
         {
-          const { sendPushToUser } = await import("@/lib/push.server");
-          await sendPushToUser({
-            userId: assignment.ownerUserId,
-            title: assignment.slaDueAt
-              ? `Khách mới từ landing — gọi trong ${assignment.slaMinutes} phút`
-              : "Khách mới từ landing",
-            body: [payload["full_name"], payload["phone"]].filter(Boolean).join(" · ") || "Có khách để lại thông tin",
-            link: `/leads?lead=${lead.id}`,
-          });
+          // Assignment push is dispatched once by the lead outbox trigger.
         }
 
         const { error: subErr } = await supabaseAdmin.from("lead_submissions").insert({

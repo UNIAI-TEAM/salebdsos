@@ -8,6 +8,8 @@ type PushInput = {
   body?: string | null;
   link?: string | null;
   tag?: string | null;
+  tenantId?: string;
+  ttl?: number;
 };
 
 function vapid() {
@@ -36,12 +38,15 @@ export async function sendPushToUser(input: PushInput): Promise<{ sent: number; 
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  const { data: devices } = await supabaseAdmin
+  let query = supabaseAdmin
     .from("push_devices")
     .select("id,endpoint,p256dh,auth")
     .eq("user_id", input.userId)
     .eq("enabled", true)
     .limit(20);
+  if (input.tenantId) query = query.eq("tenant_id", input.tenantId);
+  const { data: devices, error: deviceError } = await query;
+  if (deviceError) throw deviceError;
 
   const rows = (devices ?? []) as { id: string; endpoint: string; p256dh: string; auth: string }[];
   if (rows.length === 0) return { sent: 0, failed: 0 };
@@ -49,8 +54,9 @@ export async function sendPushToUser(input: PushInput): Promise<{ sent: number; 
   let sent = 0;
   let failed = 0;
 
-  await Promise.allSettled(
-    rows.map(async (device) => {
+  for (let offset = 0; offset < rows.length; offset += 6) {
+    await Promise.allSettled(
+    rows.slice(offset, offset + 6).map(async (device) => {
       const subscription = {
         endpoint: device.endpoint,
         expirationTime: null,
@@ -65,7 +71,7 @@ export async function sendPushToUser(input: PushInput): Promise<{ sent: number; 
               link: input.link ?? "/dashboard",
               tag: input.tag ?? "salebds",
             },
-            options: { urgency: "high", ttl: 60 * 60 * 12 },
+            options: { urgency: "high", ttl: input.ttl ?? 60 * 60 * 12 },
           },
           subscription,
           keys,
@@ -74,6 +80,7 @@ export async function sendPushToUser(input: PushInput): Promise<{ sent: number; 
           method: payload.method,
           headers: payload.headers as unknown as Record<string, string>,
           body: payload.body as unknown as BodyInit,
+          signal: AbortSignal.timeout(8000),
         });
         if (res.ok) {
           sent += 1;
@@ -102,6 +109,7 @@ export async function sendPushToUser(input: PushInput): Promise<{ sent: number; 
       }
     }),
   );
+  }
 
   return { sent, failed };
 }

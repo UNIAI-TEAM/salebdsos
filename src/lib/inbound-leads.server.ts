@@ -221,7 +221,7 @@ export async function ingestInboundLead(input: InboundLead) {
       link: "/inbox",
     } as never);
     const { sendPushToUser } = await import("@/lib/push.server");
-    await sendPushToUser({ userId: ownerUserId, title, body, link: "/inbox" });
+    if (!isNew && existing?.owner_user_id) await sendPushToUser({ userId: ownerUserId, title, body, link: "/inbox" });
   }
 
   await supabaseAdmin.from("audit_logs").insert({

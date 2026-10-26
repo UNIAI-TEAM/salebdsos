@@ -168,6 +168,7 @@ function MobileAppPage() {
               {support.reason}
             </p>
           ) : null}
+          {support?.permission === "denied" ? <p className="text-sm text-destructive">Thông báo đang bị chặn. Cho phép thông báo trong cài đặt trang của trình duyệt.</p> : null}
 
           <div className="flex flex-wrap gap-2">
             <Button
@@ -184,7 +185,7 @@ function MobileAppPage() {
           </div>
 
           <p className="text-[11px] text-muted-foreground">
-            Thông báo được gửi khi có khách mới từ landing, QR danh thiếp, khách chat trên trang dự án và khách yêu cầu gọi lại.
+            Nhận thông báo khi khách được giao hoặc gán lại cho bạn và trước hạn SLA 5 phút; dừng nhắc khi đã phản hồi.
             Thông báo chỉ chạy trên bản đã publish (không chạy trong màn hình xem trước).
           </p>
         </div>
@@ -203,7 +204,7 @@ function MobileAppPage() {
                   <p className="truncate text-sm font-medium">{device.label || "Thiết bị"}</p>
                   <p className="truncate text-[11px] text-muted-foreground">
                     {device.last_seen_at
-                      ? `Nhận gần nhất: ${new Date(device.last_seen_at).toLocaleString("vi-VN")}`
+                      ? `Hoạt động gần nhất: ${new Date(device.last_seen_at).toLocaleString("vi-VN")}`
                       : "Chưa nhận thông báo nào"}
                     {device.last_error ? ` · ${device.last_error}` : ""}
                   </p>

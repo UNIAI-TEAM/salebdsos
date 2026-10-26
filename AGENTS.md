@@ -9,3 +9,4 @@
 - Additional channel onboarding verifies Telegram/WhatsApp through project-linked gateway credentials and Viber through encrypted tenant credentials; account verification never enables messaging, avoiding false delivery claims.
 - Lead allocation uses shared tested pool/load helpers and exact tenant-wide counts; database triggers initialize entry SLA and record successful Sale replies, keeping deadlines consistent across all ingress paths.
 - Landing chat visitor keys include the page identity so visiting another Sale's page cannot reuse a previous personal conversation.
+- Lead assignment push is queued by database triggers for every owner change; SLA jobs revalidate owner/response/deadline, wake on enqueue and stop their schedule after drain, so ingress paths and handovers cannot bypass or duplicate assignment push.

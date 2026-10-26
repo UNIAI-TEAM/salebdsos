@@ -84,6 +84,7 @@ import { Route as AppProjectsIndexRouteImport } from './routes/_app.projects.ind
 import { Route as AppProjectsIdRouteImport } from './routes/_app.projects.$id'
 import { Route as ApiPublicBankWebhookRouteImport } from './routes/api/public/bank-webhook'
 import { Route as ApiPublicContactRequestRouteImport } from './routes/api/public/contact-request'
+import { Route as ApiPublicLeadPushRunRouteImport } from './routes/api/public/lead-push-run'
 import { Route as ApiPublicNurtureRunRouteImport } from './routes/api/public/nurture-run'
 import { Route as ApiPublicProjectTouchRouteImport } from './routes/api/public/project-touch'
 import { Route as ApiPublicTelephonyWebhookRouteImport } from './routes/api/public/telephony-webhook'
@@ -473,6 +474,11 @@ const ApiPublicContactRequestRoute = ApiPublicContactRequestRouteImport.update({
   path: '/api/public/contact-request',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicLeadPushRunRoute = ApiPublicLeadPushRunRouteImport.update({
+  id: '/api/public/lead-push-run',
+  path: '/api/public/lead-push-run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicNurtureRunRoute = ApiPublicNurtureRunRouteImport.update({
   id: '/api/public/nurture-run',
   path: '/api/public/nurture-run',
@@ -620,6 +626,7 @@ export interface FileRoutesByFullPath {
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/bank-webhook': typeof ApiPublicBankWebhookRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
+  '/api/public/lead-push-run': typeof ApiPublicLeadPushRunRoute
   '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
@@ -708,6 +715,7 @@ export interface FileRoutesByTo {
   '/projects/$id': typeof AppProjectsIdRoute
   '/api/public/bank-webhook': typeof ApiPublicBankWebhookRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
+  '/api/public/lead-push-run': typeof ApiPublicLeadPushRunRoute
   '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
@@ -800,6 +808,7 @@ export interface FileRoutesById {
   '/_app/projects/$id': typeof AppProjectsIdRoute
   '/api/public/bank-webhook': typeof ApiPublicBankWebhookRoute
   '/api/public/contact-request': typeof ApiPublicContactRequestRoute
+  '/api/public/lead-push-run': typeof ApiPublicLeadPushRunRoute
   '/api/public/nurture-run': typeof ApiPublicNurtureRunRoute
   '/api/public/project-touch': typeof ApiPublicProjectTouchRoute
   '/api/public/telephony-webhook': typeof ApiPublicTelephonyWebhookRoute
@@ -892,6 +901,7 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/api/public/bank-webhook'
     | '/api/public/contact-request'
+    | '/api/public/lead-push-run'
     | '/api/public/nurture-run'
     | '/api/public/project-touch'
     | '/api/public/telephony-webhook'
@@ -980,6 +990,7 @@ export interface FileRouteTypes {
     | '/projects/$id'
     | '/api/public/bank-webhook'
     | '/api/public/contact-request'
+    | '/api/public/lead-push-run'
     | '/api/public/nurture-run'
     | '/api/public/project-touch'
     | '/api/public/telephony-webhook'
@@ -1071,6 +1082,7 @@ export interface FileRouteTypes {
     | '/_app/projects/$id'
     | '/api/public/bank-webhook'
     | '/api/public/contact-request'
+    | '/api/public/lead-push-run'
     | '/api/public/nurture-run'
     | '/api/public/project-touch'
     | '/api/public/telephony-webhook'
@@ -1107,6 +1119,7 @@ export interface RootRouteChildren {
   ShareSlugRoute: typeof ShareSlugRoute
   ApiPublicBankWebhookRoute: typeof ApiPublicBankWebhookRoute
   ApiPublicContactRequestRoute: typeof ApiPublicContactRequestRoute
+  ApiPublicLeadPushRunRoute: typeof ApiPublicLeadPushRunRoute
   ApiPublicNurtureRunRoute: typeof ApiPublicNurtureRunRoute
   ApiPublicProjectTouchRoute: typeof ApiPublicProjectTouchRoute
   ApiPublicTelephonyWebhookRoute: typeof ApiPublicTelephonyWebhookRoute
@@ -1650,6 +1663,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicContactRequestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/lead-push-run': {
+      id: '/api/public/lead-push-run'
+      path: '/api/public/lead-push-run'
+      fullPath: '/api/public/lead-push-run'
+      preLoaderRoute: typeof ApiPublicLeadPushRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/nurture-run': {
       id: '/api/public/nurture-run'
       path: '/api/public/nurture-run'
@@ -1924,6 +1944,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShareSlugRoute: ShareSlugRoute,
   ApiPublicBankWebhookRoute: ApiPublicBankWebhookRoute,
   ApiPublicContactRequestRoute: ApiPublicContactRequestRoute,
+  ApiPublicLeadPushRunRoute: ApiPublicLeadPushRunRoute,
   ApiPublicNurtureRunRoute: ApiPublicNurtureRunRoute,
   ApiPublicProjectTouchRoute: ApiPublicProjectTouchRoute,
   ApiPublicTelephonyWebhookRoute: ApiPublicTelephonyWebhookRoute,

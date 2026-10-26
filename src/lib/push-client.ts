@@ -23,6 +23,7 @@ export function isStandalone(): boolean {
 export function checkPushSupport(): PushSupport {
   if (typeof window === "undefined") return { supported: false, installed: false, permission: "unsupported" };
   const installed = isStandalone();
+  if (window.top !== window.self) return { supported: false, installed, permission: "unsupported", reason: "Mở ứng dụng trong tab riêng hoặc trên điện thoại để bật thông báo." };
   const hasApi = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
   if (!hasApi) {
     return {
@@ -67,11 +68,15 @@ export async function subscribeToPush(publicKey: string): Promise<{
   p256dh: string;
   auth: string;
 }> {
-  const permission = await Notification.requestPermission();
+  const support = checkPushSupport();
+  if (!support.supported) throw new Error(support.reason ?? "Thiết bị chưa hỗ trợ thông báo.");
+  if (Notification.permission === "denied") throw new Error("Thông báo đang bị chặn. Cho phép thông báo trong cài đặt trang của trình duyệt.");
+  const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
   if (permission !== "granted") throw new Error("Anh/chị chưa cho phép hiện thông báo trên thiết bị này.");
 
   const registration = await navigator.serviceWorker.getRegistration();
-  const ready = registration ?? (await navigator.serviceWorker.ready);
+  if (!registration) throw new Error("Mở bản đã xuất bản trên điện thoại và thử lại sau khi ứng dụng tải xong.");
+  const ready = registration;
   if (!ready) throw new Error("Chưa cài app vào máy. Hãy mở bản đã publish và thêm vào Màn hình chính.");
 
   const existing = await ready.pushManager.getSubscription();

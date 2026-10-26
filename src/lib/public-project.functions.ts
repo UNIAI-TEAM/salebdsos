@@ -166,8 +166,7 @@ export const submitProjectQrLead = createServerFn({ method: "POST" })
       const title = "Khách mới từ QR dự án";
       const body = `${data.full_name} · ${data.phone} — liên hệ trong ${assignment.slaMinutes} phút`;
       await supabaseAdmin.from("notifications").insert({ tenant_id: qr.tenant_id, user_id: assignment.ownerUserId, lead_id: lead.id, type: "lead_new", title, body, link: "/leads" });
-      const { sendPushToUser } = await import("./push.server");
-      await sendPushToUser({ userId: assignment.ownerUserId, title, body, link: "/leads" });
+          // Assignment push is dispatched once by the lead outbox trigger.
     }
 
     return { ok: true };

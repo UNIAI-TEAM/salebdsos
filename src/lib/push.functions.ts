@@ -7,10 +7,12 @@ import { pushPublicKey, sendPushToUser } from "./push.server";
 export const getPushConfig = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase
+    const { data, error } = await context.supabase
       .from("push_devices")
       .select("id,label,user_agent,enabled,last_seen_at,last_error,created_at")
+      .eq("user_id", context.userId)
       .order("created_at", { ascending: false });
+    if (error) throw error;
     return {
       publicKey: pushPublicKey(),
       devices: (data ?? []) as {
@@ -45,6 +47,11 @@ export const registerPushDevice = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    if (data.tenantId) {
+      const { data: membership, error: membershipError } = await context.supabase.from("user_roles")
+        .select("id").eq("tenant_id", data.tenantId).eq("user_id", context.userId).limit(1).maybeSingle();
+      if (membershipError || !membership) throw new Error("Không có quyền đăng ký thông báo cho sàn này.");
+    }
     const { error } = await context.supabase.from("push_devices").upsert(
       {
         tenant_id: data.tenantId ?? null,
