@@ -55,11 +55,7 @@ export function AiFab() {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Đóng trợ lý AI" : "Mở trợ lý AI"}
-        className="fixed z-[60] grid size-13 place-items-center rounded-full border bg-primary text-primary-foreground shadow-lg hover:shadow-xl active:scale-95 lg:bottom-6 lg:right-6"
-        style={{
-          bottom: "calc(6.25rem + env(safe-area-inset-bottom))",
-          right: "1rem",
-        }}
+        className="fixed z-[60] grid size-13 place-items-center rounded-full border bg-primary text-primary-foreground shadow-lg hover:shadow-xl active:scale-95 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] right-4 lg:bottom-6 lg:right-6"
       >
         {open ? <X className="size-6" /> : <Bot className="size-6" />}
       </button>
