@@ -197,6 +197,13 @@
       "when": 1792987557246,
       "tag": "0027_agency_handover_projection_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1792987627481,
+      "tag": "0028_agency_handover_optional_targets",
+      "breakpoints": true
     }
   ]
 }

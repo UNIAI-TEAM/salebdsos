@@ -4424,9 +4424,9 @@ export type Database = {
         Args: {
           p_agency: string
           p_id: string
-          p_reason: string
-          p_sale: string
-          p_team: string
+          p_reason?: string
+          p_sale?: string
+          p_team?: string
           p_tenant: string
         }
         Returns: undefined
