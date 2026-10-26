@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Đại lý & phân phối: hồ sơ đại lý, liên kết sàn đối tác có xác nhận, quyền theo đại lý/nhóm/Sale, cấp và thu hồi từng căn theo dự án; kiểm thử quyền và luồng thực tế.
+
 - [x] Push giao lead/gán lại bằng hàng đợi, nhắc trước SLA 5 phút, hủy nhắc sau phản hồi; thử sàn riêng, gán lại và lịch tự dừng đạt; 25 kiểm thử đạt.
 - [ ] Kích hoạt push thật: chờ xuất bản bản mới (địa chỉ công khai chưa có bộ xử lý mới) và Sale bật thông báo trên điện thoại; hiện 0 thiết bị, chưa xác minh hiển thị thông báo thật.
 
