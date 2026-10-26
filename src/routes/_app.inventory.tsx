@@ -42,10 +42,19 @@ export const Route = createFileRoute("/_app/inventory")({
     projectId: typeof s["projectId"] === "string" ? s["projectId"] : undefined,
   }),
   component: InventoryPage,
+  head: () => ({ meta: [
+    { title: "Giỏ hàng & giữ căn — SaleBDS OS" },
+    { name: "description", content: "Giỏ hàng dự án, trạng thái căn và lịch sử giữ chỗ." },
+    { property: "og:title", content: "Giỏ hàng & giữ căn — SaleBDS OS" },
+    { property: "og:description", content: "Theo dõi căn trống, giữ chỗ và lịch sử trạng thái." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ] }),
 });
 
 type Row = {
   id: string;
+  updated_at: string;
   project_id: string | null;
   product_type: PropertyKind | null;
   name: string;
@@ -69,6 +78,7 @@ type Row = {
 
 type FormState = {
   id?: string;
+  expectedUpdatedAt?: string;
   project_id: string | null;
   product_type: PropertyKind;
   code: string;
@@ -190,7 +200,7 @@ function InventoryPage() {
         attributes: v.attrs as Record<string, unknown>,
       };
       return v.id
-        ? fnUpdate({ data: { id: v.id, ...payload } })
+        ? fnUpdate({ data: { id: v.id, expectedUpdatedAt: v.expectedUpdatedAt ?? "", ...payload } })
         : fnCreate({ data: { tenantId: tenantId!, ...payload } });
     },
     onSuccess: () => { toast.success("Đã lưu sản phẩm"); setEditing(null); invalidate(); },
@@ -204,15 +214,18 @@ function InventoryPage() {
   });
 
   const statusMut = useMutation({
-    mutationFn: () =>
-      fnStatus({
+    mutationFn: () => {
+      if (!statusTarget) throw new Error("Chọn căn trước khi đổi trạng thái");
+      return fnStatus({
         data: {
-          id: statusTarget!.id,
+          id: statusTarget.id,
+          expectedUpdatedAt: statusTarget.updated_at,
           listing_status: statusNext,
           note: statusNote || null,
-          hold_expires_at: holdUntil || null,
+          hold_expires_at: holdUntil ? new Date(holdUntil).toISOString() : null,
         },
-      }),
+      });
+    },
     onSuccess: () => {
       toast.success("Đã cập nhật trạng thái");
       setStatusTarget(null); setStatusNote(""); setHoldUntil("");
@@ -263,6 +276,7 @@ function InventoryPage() {
     }
     setEditing({
       id: r.id,
+      expectedUpdatedAt: r.updated_at,
       project_id: r.project_id,
       product_type: r.product_type ?? "apartment",
       code: r.code ?? "", zone: r.zone ?? "",
@@ -668,7 +682,7 @@ function InventoryPage() {
                 </SelectContent>
               </Select>
             </label>
-            {(statusNext === "reserved" || statusNext === "deposited") && (
+            {(statusNext === "reserved" || statusNext === "locked") && (
               <label className="field">
                 <span>Hạn giữ chỗ / cọc</span>
                 <Input type="datetime-local" value={holdUntil} onChange={(e) => setHoldUntil(e.target.value)} />

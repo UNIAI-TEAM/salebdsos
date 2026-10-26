@@ -129,11 +129,12 @@ export const listContracts = createServerFn({ method: "GET" })
     let installments: any[] = [];
     let commissions: any[] = [];
     let reminders: any[] = [];
+    let installmentHistory: any[] = [];
     if (ids.length) {
       const [insQ, comQ] = await Promise.all([
         supabase
           .from("contract_installments")
-          .select("id,contract_id,name,position,percent,amount,due_date,paid_amount,paid_at,status,note")
+          .select("id,contract_id,name,position,percent,amount,due_date,paid_amount,paid_at,status,note,updated_at")
           .in("contract_id", ids)
           .order("position"),
         supabase
@@ -151,6 +152,11 @@ export const listContracts = createServerFn({ method: "GET" })
         .in("contract_id", ids)
         .order("created_at", { ascending: false });
       reminders = remQ.data ?? [];
+      const historyQ = await supabase.from("installment_history")
+        .select("id,contract_id,installment_id,action,before_row,after_row,occurred_at")
+        .in("contract_id", ids).order("occurred_at", { ascending: false }).limit(500);
+      if (historyQ.error) throw new Error(historyQ.error.message);
+      installmentHistory = historyQ.data ?? [];
     }
 
     const memberIds = Array.from(new Set((rolesQ.data ?? []).map((r: any) => r.user_id)));
@@ -197,6 +203,7 @@ export const listContracts = createServerFn({ method: "GET" })
         owner_name: c.owner_user_id ? memberName.get(c.owner_user_id) ?? null : null,
         installments: ins,
         reminders: reminders.filter((r) => r.contract_id === c.id),
+        installmentHistory: installmentHistory.filter((r) => r.contract_id === c.id),
         commissions: com.map((x) => ({
           ...x,
           amount: Number(x.amount ?? 0),
@@ -516,6 +523,8 @@ export const setInstallments = createServerFn({ method: "POST" })
         rows: z
           .array(
             z.object({
+              id: z.string().uuid().optional(),
+              expected_updated_at: z.string().optional(),
               name: z.string().trim().min(1).max(120),
               percent: z.number().min(0).max(100).nullable().optional(),
               amount: z.number().nonnegative().default(0),
@@ -527,38 +536,13 @@ export const setInstallments = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { contract } = await guard(context as Ctx, data.contractId, true);
-    const { supabase } = context;
-    const { data: existing } = await supabase
-      .from("contract_installments")
-      .select("id,name,paid_amount,paid_at,status")
-      .eq("contract_id", data.contractId);
-    const paidByName = new Map(
-      (existing ?? []).filter((r: any) => r.status === "paid" || Number(r.paid_amount ?? 0) > 0).map((r: any) => [r.name, r]),
-    );
-
-    await supabase.from("contract_installments").delete().eq("contract_id", data.contractId);
-    if (data.rows.length) {
-      const { error } = await supabase.from("contract_installments").insert(
-        data.rows.map((row, index) => {
-          const prior = paidByName.get(row.name);
-          return {
-            tenant_id: contract.tenant_id,
-            contract_id: data.contractId,
-            name: row.name,
-            position: index,
-            percent: row.percent ?? null,
-            amount: row.amount,
-            due_date: row.due_date || null,
-            paid_amount: prior ? Number(prior.paid_amount ?? 0) : 0,
-            paid_at: prior?.paid_at ?? null,
-            status: prior?.status === "paid" ? "paid" : "pending",
-          };
-        }),
-      );
-      if (error) throw new Error(error.message);
-    }
-    return { ok: true, count: data.rows.length };
+    await guard(context as Ctx, data.contractId, true);
+    const { data: count, error } = await context.supabase.rpc("save_contract_installments", {
+      p_contract: data.contractId,
+      p_rows: data.rows,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, count };
   });
 
 export const updateInstallmentDueDate = createServerFn({ method: "POST" })
