@@ -1,5 +1,6 @@
 // Cấu hình kênh liên lạc (Zalo OA, tổng đài gọi điện) — dùng chung client/server
 import { z } from "zod";
+import { onboardingSettingsSchema } from "./channel-onboarding";
 
 export const CHANNELS_KEY = "channels";
 
@@ -22,6 +23,9 @@ export type SmsProvider = (typeof SMS_PROVIDERS)[number]["value"];
 export type TelephonyProvider = (typeof TELEPHONY_PROVIDERS)[number]["value"];
 
 export const channelSettingsSchema = z.object({
+  telegram: onboardingSettingsSchema,
+  whatsapp: onboardingSettingsSchema,
+  viber: onboardingSettingsSchema,
   zalo: z.object({
     enabled: z.boolean().default(false),
     oaId: z.string().max(60).default(""),

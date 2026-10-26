@@ -11,6 +11,15 @@ export const INBOX_COPY = {
   whatsappCosts: "WhatsApp Business: phản hồi hỗ trợ miễn phí trong cửa sổ dịch vụ; tin marketing có phí. Ngoài cửa sổ dịch vụ cần mẫu được duyệt.",
   viberSetup: "Chờ bot doanh nghiệp được Viber hoặc đối tác chính thức duyệt theo điều khoản thương mại.",
   setupRequired: "Cần hoàn tất tài khoản và kết nối trước khi Sale gửi hoặc nhận tin.",
+  telegram: "Telegram", whatsapp: "WhatsApp Business", viber: "Viber",
+  botId: "Telegram Bot ID", phoneNumberId: "WhatsApp Phone Number ID", viberUri: "Viber Bot URI", botToken: "Viber Bot Token",
+  accountVerified: "Đã xác minh tài khoản · chưa bật gửi/nhận", savedOnly: "Đã lưu cấu hình · chưa xác minh tài khoản",
+  secureLinked: "Telegram và WhatsApp dùng kết nối bảo mật trong Lovable. Chọn kết nối cho dự án trước, sau đó nhập mã tài khoản và kiểm tra tại đây; không nhập token gốc vào ứng dụng.",
+  viberSecure: "Nhập Bot Token do Viber cấp sau khi bot được duyệt. Khoá được mã hoá theo sàn và không hiện lại.",
+  noWebhook: "Chưa triển khai nhận tin cho kênh này; việc kiểm tra chỉ xác minh tài khoản, không đăng ký nhận tin hoặc gửi tin khách.",
+  saved: "Đã lưu bảo mật. Chưa bật gửi/nhận.", verifyAccount: "Kiểm tra tài khoản", missingAccount: "Vui lòng nhập mã tài khoản.",
+  checkFailed: "Không kiểm tra được kết nối.", linkedMissing: "Chưa có kết nối cho dự án. Hoàn tất thẻ kết nối Telegram/WhatsApp trong Lovable trước.",
+  mismatch: "Khoá kết nối không thuộc tài khoản đã nhập.", viberMissing: "Chưa lưu Viber Bot Token.",
 } as const;
 
 export const PENDING_INBOX_CHANNELS = [
