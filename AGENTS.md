@@ -10,3 +10,4 @@
 - Lead allocation uses shared tested pool/load helpers and exact tenant-wide counts; database triggers initialize entry SLA and record successful Sale replies, keeping deadlines consistent across all ingress paths.
 - Landing chat visitor keys include the page identity so visiting another Sale's page cannot reuse a previous personal conversation.
 - Lead assignment push is queued by database triggers for every owner change; SLA jobs revalidate owner/response/deadline, wake on enqueue and stop their schedule after drain, so ingress paths and handovers cannot bypass or duplicate assignment push.
+- Public product copy is centralized in a browser-safe content module and the landing uses a scoped semantic palette, keeping capability descriptions maintainable without changing authenticated app themes.

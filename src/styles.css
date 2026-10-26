@@ -80,6 +80,30 @@
   --digital-glass: oklch(0.93 0.006 265 / 7%);
 }
 
+/* Public product introduction uses a local light palette; app theme is unchanged. */
+.salebds-landing {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.22 0.015 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.015 260);
+  --primary: oklch(0.43 0.16 260);
+  --primary-foreground: oklch(1 0 0);
+  --muted: oklch(0.96 0.004 260);
+  --muted-foreground: oklch(0.43 0.015 260);
+  --border: oklch(0.89 0.006 260);
+  --input: oklch(0.89 0.006 260);
+  --accent: oklch(0.94 0.015 260);
+  --accent-foreground: oklch(0.22 0.015 260);
+  --ring: oklch(0.43 0.16 260);
+  letter-spacing: 0;
+}
+.landing-photo-wash {
+  background: linear-gradient(90deg, oklch(1 0 0 / 98%) 0%, oklch(1 0 0 / 94%) 34%, oklch(1 0 0 / 20%) 76%);
+}
+@media (max-width: 639px) {
+  .landing-photo-wash { background: oklch(1 0 0 / 88%); }
+}
+
 /* Chế độ sáng */
 :root {
   --background: oklch(0.984 0.003 265);
