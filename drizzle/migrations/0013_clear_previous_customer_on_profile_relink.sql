@@ -1,0 +1,1 @@
+DO $$ DECLARE definition text; BEGIN SELECT pg_get_functiondef('public.link_channel_profile(uuid,uuid,uuid)'::regprocedure) INTO definition; definition:=replace(definition,'SET lead_id=v_lead.id,contact_name=', 'SET customer_id=CASE WHEN lead_id IS DISTINCT FROM v_lead.id THEN NULL ELSE customer_id END,lead_id=v_lead.id,contact_name='); EXECUTE definition; END $$;

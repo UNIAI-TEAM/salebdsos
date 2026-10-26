@@ -92,6 +92,13 @@
       "when": 1792978264576,
       "tag": "0012_fix_atomic_profile_link_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792978363525,
+      "tag": "0013_clear_previous_customer_on_profile_relink",
+      "breakpoints": true
     }
   ]
 }
