@@ -137,13 +137,7 @@ export const Route = createFileRoute("/api/public/sales-pages/$slug")({
         if (nErr) console.error("[sales-page] notification", nErr.message);
 
         {
-          const { sendPushToUser } = await import("@/lib/push.server");
-          await sendPushToUser({
-            userId: assignment.ownerUserId ?? null,
-            title: "Khách mới từ landing",
-            body: `${full_name} · ${phone}${page.title ? ` · ${page.title}` : ""}`,
-            link: `/leads?lead=${lead.id}`,
-          });
+          // Assignment push is dispatched once by the lead outbox trigger.
         }
 
         // Timeline: ghi nhận nguồn gốc lead

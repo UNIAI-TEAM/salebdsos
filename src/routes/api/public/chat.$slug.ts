@@ -131,14 +131,7 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
             type: "lead_new",
             link: "/inbox",
           } as never);
-
-          const { sendPushToUser } = await import("@/lib/push.server");
-          await sendPushToUser({
-            userId: assignment.ownerUserId,
-            title: "Khách đang chat trên landing dự án",
-            body: text.slice(0, 160),
-            link: "/inbox",
-          });
+          // Assignment push is dispatched once by the lead outbox trigger.
         } else if ((name && !existing?.contact_name) || (phone && !existing?.contact_phone)) {
           await supabaseAdmin
             .from("conversations")

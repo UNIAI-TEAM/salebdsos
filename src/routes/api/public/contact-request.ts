@@ -154,13 +154,7 @@ export const Route = createFileRoute("/api/public/contact-request")({
             lead_id: lead?.id,
             link: "/inbox",
           } as never);
-          const { sendPushToUser } = await import("@/lib/push.server");
-          await sendPushToUser({
-            userId: assignment.ownerUserId,
-            title: `Khách yêu cầu ${CHANNEL_LABEL[channel]}`,
-            body: `${name ?? "Khách"}${phone ? ` · ${phone}` : ""} — liên hệ trong ${assignment.slaMinutes} phút`,
-            link: "/inbox",
-          });
+          // Assignment push is dispatched once by the lead outbox trigger.
         }
 
         // Xác nhận tự động cho khách
