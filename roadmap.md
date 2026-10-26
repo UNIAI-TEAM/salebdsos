@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Bổ sung tab kết nối Telegram/WhatsApp/Viber, lưu cấu hình quản trị và kiểm tra tài khoản không gửi tin; khoá giữ bảo mật.
+- [x] Bổ sung tab kết nối Telegram/WhatsApp/Viber, lưu/xoá cấu hình quản trị và kiểm tra tài khoản không gửi tin; thử lưu/đọc/xoá cấu hình Telegram, 19 kiểm thử đạt. Xác minh nhà cung cấp thật còn chờ tài khoản/kết nối.
 - [ ] Telegram gửi/nhận: chờ quản trị viên hoàn tất thẻ kết nối (đã bỏ qua); chưa đăng ký webhook hoặc gửi tin.
 - [ ] WhatsApp gửi/nhận: chờ số WhatsApp Business và hoàn tất thẻ kết nối (đã bỏ qua); chưa bật gửi/nhận.
 - [ ] Viber gửi/nhận: chờ bot doanh nghiệp được Viber duyệt; chưa có thông tin kết nối.
