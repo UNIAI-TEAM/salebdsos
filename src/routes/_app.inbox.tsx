@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MessageCircle,
   MessagesSquare,
@@ -45,6 +45,10 @@ import {
   formatDuration,
   type ChannelSettings,
 } from "@/lib/channels";
+import { ChatConnections } from "@/components/app/chat-connections";
+import { INBOX_COPY as t, replyChannel, messengerWindowOpen } from "@/lib/omnichannel";
+import { inboxLeadChoices, linkConversationLead } from "@/lib/omnichannel.functions";
+import { Link } from "@tanstack/react-router";
 import { expandShortcut } from "@/lib/social";
 
 const TAG_TONE: Record<string, string> = {
@@ -72,6 +76,7 @@ const CHANNEL_FILTERS = [
   { value: "all", label: "Tất cả" },
   { value: "web_chat", label: "Chat trên trang" },
   { value: "zalo", label: "Zalo OA" },
+  { value: "messenger", label: t.messenger },
   { value: "call", label: "Gọi điện" },
   { value: "sms", label: "SMS brandname" },
   { value: "email", label: "Email" },
@@ -80,6 +85,7 @@ const CHANNEL_FILTERS = [
 const SEND_CHANNELS = [
   { value: "auto", label: "Theo kênh của khách" },
   { value: "zalo", label: "Zalo OA" },
+  { value: "messenger", label: t.messenger },
   { value: "sms", label: "SMS brandname" },
   { value: "email", label: "Email" },
   { value: "note", label: "Ghi chú nội bộ" },
@@ -92,6 +98,7 @@ function timeLabel(value: string) {
 function InboxPage() {
   const { currentTenant } = useAuth();
   const tenantId = currentTenant?.id;
+  useEffect(() => { setActiveId(null); setDraft(""); setSendChannel("auto"); }, [tenantId]);
   const qc = useQueryClient();
 
   const fetchList = useServerFn(listConversations);
@@ -101,6 +108,10 @@ function InboxPage() {
   const saveCall = useServerFn(saveCallResult);
   const fetchChannels = useServerFn(getChannelSettings);
   const persistChannels = useServerFn(saveChannelSettings);
+  const fetchLeadChoices = useServerFn(inboxLeadChoices), linkLead = useServerFn(linkConversationLead);
+  const [linkOpen, setLinkOpen] = useState(false), [leadSearch, setLeadSearch] = useState("");
+  const choices = useQuery({ queryKey: ["inbox-lead-choices", tenantId, leadSearch], enabled: Boolean(tenantId && linkOpen), queryFn: () => { if (!tenantId) throw new Error("Chưa chọn sàn"); return fetchLeadChoices({ data: { tenantId, search: leadSearch } }); } });
+  const linkMutation = useMutation({ mutationFn: (leadId: string) => { if (!tenantId || !activeId) throw new Error("Chưa chọn hội thoại"); return linkLead({ data: { tenantId, conversationId: activeId, leadId } }); }, onSuccess: () => { setLinkOpen(false); refresh(); toast.success("Đã gắn hồ sơ khách"); }, onError: (e: Error) => toast.error(e.message) });
 
   const [channel, setChannel] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("");
@@ -176,20 +187,20 @@ function InboxPage() {
   const sendMutation = useMutation({
     mutationFn: () => {
       if (!tenantId || !activeId) throw new Error("Chưa chọn hội thoại");
-      const fallback = threadQuery.data?.conversation.channel === "zalo" ? "zalo" : "web_chat";
+      const fallback = replyChannel(threadQuery.data?.conversation.channel ?? "note");
       const channelToUse = sendChannel === "auto" ? fallback : sendChannel;
       return send({
         data: {
           tenantId,
           conversationId: activeId,
           body: draft.trim(),
-          channel: channelToUse as "web_chat" | "zalo" | "note" | "sms" | "email",
+          channel: channelToUse as "web_chat" | "zalo" | "messenger" | "note" | "sms" | "email",
           ...(channelToUse === "email" ? { subject: emailSubject } : {}),
         },
       });
     },
     onSuccess: (result) => {
-      setDraft("");
+      if (result.status === "sent") setDraft("");
       if (result.warning) toast.warning(result.warning);
       refresh();
     },
@@ -249,6 +260,11 @@ function InboxPage() {
   const items = listQuery.data?.items ?? [];
   const thread = threadQuery.data;
   const timeline = useMemo(() => thread?.messages ?? [], [thread]);
+  const selectedChannel = sendChannel === "auto" ? replyChannel(thread?.conversation.channel ?? "note") : sendChannel;
+  const connection = channelsQuery.data?.connections.find(c => c.channel === selectedChannel);
+  const channelBlocked = ["zalo", "messenger"].includes(selectedChannel) && (!connection?.configured || !connection.enabled);
+  const messengerLast = thread?.conversation.identities.find(i => i.channel === "messenger")?.last_inbound_at ?? null;
+  const windowBlocked = selectedChannel === "messenger" && !messengerWindowOpen(messengerLast);
 
   const openSettings = () => {
     setConfig(channelsQuery.data?.config ?? DEFAULT_CHANNEL_SETTINGS);
@@ -256,10 +272,10 @@ function InboxPage() {
   };
 
   return (
-    <div className="space-y-5 pb-24 lg:pb-6">
+    <div className="space-y-3 pb-24 lg:pb-6">
       <PageHeader
-        title="Hộp thoại khách hàng"
-        sub="Chat trên trang dự án, Zalo OA và cuộc gọi có ghi âm của cùng một khách nằm trong một hội thoại."
+        compact
+        title={t.title}
         action={
           <div className="flex items-center gap-2">
             <Badge variant={listQuery.data?.unreadTotal ? "destructive" : "outline"}>
@@ -267,15 +283,18 @@ function InboxPage() {
             </Badge>
             {channelsQuery.data?.canManage ? (
               <Button variant="outline" onClick={openSettings}>
-                <Settings2 className="mr-1.5 h-4 w-4" /> Kênh liên lạc
+                <Settings2 className="mr-1.5 h-4 w-4" /> {t.settings}
               </Button>
             ) : null}
           </div>
         }
       />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
-        <SectionCard title="Hội thoại">
+      <div className="flex flex-wrap gap-2" aria-label="Trạng thái kết nối kênh">
+        {channelsQuery.data?.connections.map(c => <Badge key={c.channel} variant={c.configured && c.enabled && c.verified ? "default" : "outline"}>{CHANNEL_LABEL[c.channel]} · {!c.enabled ? t.disabled : !c.configured ? t.disconnected : c.verified ? t.connected : t.configured}</Badge>)}
+      </div>
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
+        <SectionCard compact title="Hội thoại">
           <div className="space-y-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -324,8 +343,8 @@ function InboxPage() {
                 <li key={item.id}>
                   <button
                     type="button"
-                    onClick={() => setActiveId(item.id)}
-                    className={`w-full rounded-xl border p-3 text-left transition ${
+                    onClick={() => { setActiveId(item.id); setDraft(""); setSendChannel("auto"); }}
+                    className={`w-full rounded-lg border p-3 text-left transition ${
                       activeId === item.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/60"
                     }`}
                   >
@@ -352,7 +371,7 @@ function InboxPage() {
           </ul>
         </SectionCard>
 
-        <SectionCard
+        <SectionCard compact
           title={thread ? thread.conversation.name : "Chọn một hội thoại"}
           action={
             thread?.conversation.phone ? (
@@ -374,6 +393,8 @@ function InboxPage() {
             <>
               <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <Badge variant="outline">{CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}</Badge>
+                {thread.conversation.leadId && <Link to="/leads" search={{ lead: thread.conversation.leadId }} className="text-primary underline">Hồ sơ khách</Link>}
+                <Button size="sm" variant="ghost" onClick={() => setLinkOpen(true)}>{t.link}</Button>
                 {thread.conversation.phone ? (
                   <a href={`tel:${thread.conversation.phone}`} className="inline-flex items-center gap-1">
                     <Phone className="h-3.5 w-3.5" /> {thread.conversation.phone}
@@ -414,12 +435,12 @@ function InboxPage() {
                       </p>
                       <p className="whitespace-pre-wrap break-words">{message.body}</p>
                       {message.attachment_url ? (
-                        <audio controls src={message.attachment_url} className="mt-2 w-full" />
+                        message.channel === "call" ? <audio controls src={message.attachment_url} className="mt-2 w-full" /> : <a href={message.attachment_url} target="_blank" rel="noreferrer" className="mt-2 block underline">Tệp đính kèm</a>
                       ) : null}
                       <p className="mt-1 text-[10px] opacity-70">
                         {timeLabel(message.created_at)}
-                        {message.delivery_status === "pending" ? " · chờ gửi" : ""}
-                        {message.delivery_status === "failed" ? " · gửi lỗi" : ""}
+                        {message.direction === "out" ? ` · ${({ sent: t.sent, pending: t.pending, failed: t.failed, delivered: t.delivered, read: t.read } as Record<string, string>)[message.delivery_status] ?? message.delivery_status}` : ""}
+                        {message.error_message ? ` · ${message.error_message}` : ""}
                       </p>
                     </div>
                   ))
@@ -427,6 +448,7 @@ function InboxPage() {
               </div>
 
               <div className="mt-3 space-y-2">
+                {(channelBlocked || windowBlocked) && <p role="status" className="text-xs text-warning">{channelBlocked ? t.notConnected : t.windowClosed}</p>}
                 <div className="flex flex-wrap items-center gap-1.5">
                   {SEND_CHANNELS.map((option) => (
                     <button
@@ -483,7 +505,8 @@ function InboxPage() {
                   />
                   <Button
                     onClick={() => sendMutation.mutate()}
-                    disabled={!draft.trim() || sendMutation.isPending}
+                    aria-label="Gửi tin nhắn"
+                    disabled={!draft.trim() || sendMutation.isPending || channelBlocked || windowBlocked}
                     className="h-auto"
                   >
                     <Send className="h-4 w-4" />
@@ -519,6 +542,7 @@ function InboxPage() {
         </SectionCard>
       </div>
 
+      <Dialog open={linkOpen} onOpenChange={setLinkOpen}><DialogContent><DialogHeader><DialogTitle>{t.link}</DialogTitle></DialogHeader><Input placeholder="Tìm hồ sơ theo tên hoặc SĐT" value={leadSearch} onChange={e => setLeadSearch(e.target.value)} /><div className="max-h-72 space-y-1 overflow-y-auto">{choices.data?.map(l => <Button key={l.id} variant="ghost" className="h-auto w-full justify-start py-3" disabled={linkMutation.isPending} onClick={() => linkMutation.mutate(l.id)}>{l.full_name} · {l.phone ?? "—"}</Button>)}</div></DialogContent></Dialog>
       {/* Lưu kết quả cuộc gọi + ghi âm */}
       <Dialog open={Boolean(callDialog)} onOpenChange={(open) => !open && setCallDialog(null)}>
         <DialogContent className="max-w-md">
@@ -579,6 +603,7 @@ function InboxPage() {
             <DialogTitle>Kênh liên lạc</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {tenantId && <ChatConnections tenantId={tenantId} config={config} />}
             <div className="rounded-xl border border-border p-3">
               <div className="flex items-center justify-between gap-3">
                 <Label className="text-sm font-semibold"><MessagesSquare className="mr-1.5 inline h-4 w-4" />Chat trên trang dự án</Label>
@@ -629,7 +654,7 @@ function InboxPage() {
                 placeholder="Link mở Zalo cho khách, ví dụ zalo.me/…"
               />
               <p className="mt-2 text-[11px] text-muted-foreground">
-                Khi anh/chị có Official Account, gửi khoá kết nối để nhận và trả tin Zalo ngay trong hộp thoại này.
+                Khoá Zalo OA được lưu qua ô bảo mật ở phía trên.
               </p>
             </div>
 
