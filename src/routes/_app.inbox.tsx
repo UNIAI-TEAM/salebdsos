@@ -46,7 +46,7 @@ import {
   type ChannelSettings,
 } from "@/lib/channels";
 import { ChatConnections } from "@/components/app/chat-connections";
-import { INBOX_COPY as t, replyChannel, messengerWindowOpen, PENDING_INBOX_CHANNELS } from "@/lib/omnichannel";
+import { INBOX_COPY as t, replyChannel, messengerWindowOpen, PENDING_INBOX_CHANNELS, canSendPendingChannel } from "@/lib/omnichannel";
 import { inboxLeadChoices, linkConversationLead } from "@/lib/omnichannel.functions";
 import { Link } from "@tanstack/react-router";
 import { expandShortcut } from "@/lib/social";
@@ -262,7 +262,7 @@ function InboxPage() {
   const timeline = useMemo(() => thread?.messages ?? [], [thread]);
   const selectedChannel = sendChannel === "auto" ? replyChannel(thread?.conversation.channel ?? "note") : sendChannel;
   const connection = channelsQuery.data?.connections.find(c => c.channel === selectedChannel);
-  const channelBlocked = ["zalo", "messenger"].includes(selectedChannel) && (!connection?.configured || !connection.enabled);
+  const channelBlocked = !canSendPendingChannel(selectedChannel) || (["zalo", "messenger"].includes(selectedChannel) && (!connection?.configured || !connection.enabled));
   const messengerLast = thread?.conversation.identities.find(i => i.channel === "messenger")?.last_inbound_at ?? null;
   const windowBlocked = selectedChannel === "messenger" && !messengerWindowOpen(messengerLast);
 
