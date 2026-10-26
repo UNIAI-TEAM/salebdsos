@@ -26,11 +26,17 @@ export const channelSettingsSchema = z.object({
     enabled: z.boolean().default(false),
     oaId: z.string().max(60).default(""),
     oaName: z.string().max(120).default(""),
+    appId: z.string().max(60).default(""),
     /** Link mở Zalo OA cho khách trên landing (zalo.me/...) */
     oaLink: z.string().max(300).default(""),
     /** Đã cấu hình khoá kết nối OA ở phần khoá bảo mật chưa */
     tokenConfigured: z.boolean().default(false),
     welcomeText: z.string().max(500).default("Chào anh/chị, em có thể tư vấn dự án nào ạ?"),
+  }).default({}),
+  messenger: z.object({
+    enabled: z.boolean().default(false),
+    pageId: z.string().regex(/^\d*$/).max(60).default(""),
+    pageName: z.string().max(120).default(""),
   }).default({}),
   webChat: z.object({
     enabled: z.boolean().default(true),
@@ -78,6 +84,7 @@ export function parseChannelSettings(value: unknown): ChannelSettings {
 export const CHANNEL_LABEL: Record<string, string> = {
   web_chat: "Chat trên trang",
   zalo: "Zalo OA",
+  messenger: "Messenger",
   call: "Gọi điện",
   sms: "SMS",
   email: "Email",
