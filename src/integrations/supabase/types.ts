@@ -2515,6 +2515,42 @@ export type Database = {
           },
         ]
       }
+      installment_history: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          after_row: Json | null
+          before_row: Json | null
+          contract_id: string
+          id: string
+          installment_id: string
+          occurred_at: string
+          tenant_id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          after_row?: Json | null
+          before_row?: Json | null
+          contract_id: string
+          id?: string
+          installment_id: string
+          occurred_at?: string
+          tenant_id: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          after_row?: Json | null
+          before_row?: Json | null
+          contract_id?: string
+          id?: string
+          installment_id?: string
+          occurred_at?: string
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       interaction_events: {
         Row: {
           browser: string | null
@@ -3379,6 +3415,7 @@ export type Database = {
           direction: string | null
           floor: number | null
           hold_expires_at: string | null
+          hold_owner_user_id: string | null
           id: string
           image_url: string | null
           is_public: boolean
@@ -3411,6 +3448,7 @@ export type Database = {
           direction?: string | null
           floor?: number | null
           hold_expires_at?: string | null
+          hold_owner_user_id?: string | null
           id?: string
           image_url?: string | null
           is_public?: boolean
@@ -3443,6 +3481,7 @@ export type Database = {
           direction?: string | null
           floor?: number | null
           hold_expires_at?: string | null
+          hold_owner_user_id?: string | null
           id?: string
           image_url?: string | null
           is_public?: boolean
@@ -4505,6 +4544,54 @@ export type Database = {
         Args: { p_agency: string }
         Returns: boolean
       }
+      change_product_listing_status: {
+        Args: {
+          p_expected: string
+          p_id: string
+          p_note?: string
+          p_status: Database["public"]["Enums"]["listing_status"]
+          p_until?: string
+        }
+        Returns: {
+          area: number | null
+          attributes: Json
+          bathrooms: number | null
+          bedrooms: number | null
+          category: string | null
+          code: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          deal_id: string | null
+          description: string | null
+          direction: string | null
+          floor: number | null
+          hold_expires_at: string | null
+          hold_owner_user_id: string | null
+          id: string
+          image_url: string | null
+          is_public: boolean
+          legal_status: string | null
+          listing_status: Database["public"]["Enums"]["listing_status"]
+          name: string
+          price: number
+          product_type: Database["public"]["Enums"]["property_kind"] | null
+          project_id: string | null
+          sku: string | null
+          status: string
+          tenant_id: string
+          unit: string | null
+          updated_at: string
+          usable_area: number | null
+          zone: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "products"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       claim_lead_push_jobs: {
         Args: never
         Returns: {
@@ -4575,8 +4662,13 @@ export type Database = {
         Returns: boolean
       }
       refresh_lead_push_schedule: { Args: never; Returns: undefined }
+      release_expired_product_holds: { Args: never; Returns: number }
       release_job_lock: { Args: { _key: string }; Returns: undefined }
       route_agency_lead: { Args: { p_lead: string }; Returns: string }
+      save_contract_installments: {
+        Args: { p_contract: string; p_rows: Json }
+        Returns: number
+      }
     }
     Enums: {
       app_role:
