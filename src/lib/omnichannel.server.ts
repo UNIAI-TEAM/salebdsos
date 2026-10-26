@@ -30,7 +30,7 @@ export async function receiveChannelMessage(args: { tenantId: string; channel: "
   });
   if (error) throw new Error("Không lưu được tin nhắn");
   const { data: health } = await sb.from("settings").select("value").eq("tenant_id", args.tenantId).eq("key", "channel_health").maybeSingle();
-  const state = (health?.value ?? {}) as Record<string, object>;
+  const state = (health?.value ?? {}) as Record<string, { ok?: boolean; checkedAt?: string; lastWebhookAt?: string }>;
   await sb.from("settings").upsert({ tenant_id: args.tenantId, key: "channel_health", value: { ...state, [args.channel]: { ...state[args.channel], lastWebhookAt: new Date().toISOString() } } }, { onConflict: "tenant_id,key" });
   const result = data as { duplicate?: boolean; ownerUserId?: string; leadId?: string };
   if (!result.duplicate && result.ownerUserId) {
@@ -92,7 +92,7 @@ export async function checkChannelConnection(tenantId: string, channel: "zalo" |
     ok = response.ok && body.id === config.messenger.pageId && subscription.ok && Boolean(apps.data?.some(a => a.subscribed_fields?.includes("messages")));
   }
   const { data: previous } = await sb.from("settings").select("value").eq("tenant_id", tenantId).eq("key", "channel_health").maybeSingle();
-  const previousHealth = (previous?.value ?? {}) as Record<string, object>;
+  const previousHealth = (previous?.value ?? {}) as Record<string, { ok?: boolean; checkedAt?: string; lastWebhookAt?: string }>;
   await sb.from("settings").upsert({ tenant_id: tenantId, key: "channel_health", value: { ...previousHealth, [channel]: { ...previousHealth[channel], ok, checkedAt: new Date().toISOString() } } }, { onConflict: "tenant_id,key" });
   return { ok };
 }
