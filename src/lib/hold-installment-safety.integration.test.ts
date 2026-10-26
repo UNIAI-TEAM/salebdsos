@@ -5,6 +5,7 @@ const key = process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 const session = process.env["LOVABLE_BROWSER_SUPABASE_SESSION_JSON"];
 const tenant = process.env["HOLD_SAFETY_TEST_TENANT"];
 const enabled = Boolean(url && key && session && tenant);
+const expiredProduct = process.env["HOLD_SAFETY_EXPIRED_PRODUCT"];
 const token = JSON.parse(session ?? "{}").access_token;
 
 async function request(path: string, method = "GET", body?: unknown) {
@@ -16,6 +17,14 @@ async function request(path: string, method = "GET", body?: unknown) {
   const result = await response.json();
   return { status: response.status, result };
 }
+
+it.skipIf(!enabled || !expiredProduct)("expired hold is released with status history and cleared owner/deal", async () => {
+  const stored = await request(`products?id=eq.${expiredProduct}&select=listing_status,hold_expires_at,hold_owner_user_id,deal_id`);
+  expect(stored.status).toBe(200);
+  expect(stored.result).toEqual([{ listing_status: "available", hold_expires_at: null, hold_owner_user_id: null, deal_id: null }]);
+  const history = await request(`product_status_history?product_id=eq.${expiredProduct}&select=from_status,to_status`);
+  expect(history.result.some((h: any) => h.from_status === "reserved" && h.to_status === "available")).toBe(true);
+});
 
 it.skipIf(!enabled)("only one concurrent request can hold the same unit", async () => {
   const created = await request("products", "POST", { tenant_id: tenant, name: "QA concurrent hold", code: "QA-HOLD-34", product_type: "apartment" });
