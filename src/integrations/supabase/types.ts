@@ -3779,6 +3779,10 @@ export type Database = {
         }
         Returns: Json
       }
+      link_channel_profile: {
+        Args: { p_conversation: string; p_lead: string; p_tenant: string }
+        Returns: boolean
+      }
       release_job_lock: { Args: { _key: string }; Returns: undefined }
     }
     Enums: {

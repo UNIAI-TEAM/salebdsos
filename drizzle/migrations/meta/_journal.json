@@ -71,6 +71,13 @@
       "when": 1792977275404,
       "tag": "0009_omnichannel_two_way",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792978040590,
+      "tag": "0010_safe_channel_identity_linking",
+      "breakpoints": true
     }
   ]
 }
