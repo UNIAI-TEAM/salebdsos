@@ -248,8 +248,8 @@ function Simulator({ flow }: { flow: ChatFlow }) {
   };
   const node = state ? flow.nodes.find((n) => n.id === state.nodeId) : null;
   return (
-    <SectionCard title="Mô phỏng chat" action={<Button variant="ghost" size="icon" aria-label="Làm mới mô phỏng" onClick={reset}><RotateCcw className="h-4 w-4" /></Button>}>
-      <div className="flex h-[520px] flex-col">
+    <SectionCard className="self-start xl:sticky xl:top-4" title="Mô phỏng chat" action={<Button variant="ghost" size="icon" aria-label="Làm mới mô phỏng" onClick={reset}><RotateCcw className="h-4 w-4" /></Button>}>
+      <div className="flex h-[480px] flex-col">
         <div className="flex-1 space-y-2 overflow-y-auto pr-1">
           {msgs.length === 0 && <p className="text-sm text-muted-foreground">Nhắn thử như khách để xem bot rẽ nhánh. {flow.trigger === "keyword" ? `Thử: “${flow.keywords[0] ?? ""}”` : "Gửi bất kỳ lời chào nào."}</p>}
           {msgs.map((m, i) => m.from === "system" ? (
