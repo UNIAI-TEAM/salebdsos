@@ -43,8 +43,12 @@ export const flowSchema = z.object({
   id,
   name: z.string().trim().min(1).max(80),
   enabled: z.boolean().default(false),
-  trigger: z.enum(["first_message", "keyword"]).default("keyword"),
+  trigger: z.enum(["first_message", "keyword", "fb_comment", "event_qr"]).default("keyword"),
   keywords: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
+  /** fb_comment: chỉ chạy với các bài viết này (rỗng = mọi bài). */
+  postIds: z.array(z.string().trim().min(1).max(80)).max(30).default([]),
+  /** event_qr: mã gắn vào QR sự kiện (?chat=<entryCode>). */
+  entryCode: z.string().trim().max(40).default(""),
   startNodeId: id,
   nodes: z.array(nodeSchema).min(1).max(40),
 }).superRefine((f, ctx) => {
@@ -54,6 +58,7 @@ export const flowSchema = z.object({
   for (const n of f.nodes) for (const b of n.buttons)
     if (b.next && !ids.has(b.next)) ctx.addIssue({ code: "custom", message: `Nút "${b.label}" trỏ tới bước không tồn tại` });
   if (f.trigger === "keyword" && f.keywords.length === 0) ctx.addIssue({ code: "custom", message: "Cần ít nhất một từ khóa kích hoạt" });
+  if (f.trigger === "event_qr" && !/^[a-z0-9-]{4,40}$/.test(f.entryCode)) ctx.addIssue({ code: "custom", message: "Mã QR sự kiện chỉ gồm chữ thường, số, gạch ngang (4–40 ký tự)" });
 });
 export const chatFlowsSchema = z.object({ flows: z.array(flowSchema).max(30).default([]) });
 
@@ -82,9 +87,13 @@ export function wantsHuman(text: string) {
   return HANDOFF_WORDS.some((w) => has(text, w));
 }
 
-/** Chọn kịch bản khi chưa có bot đang chạy. */
-export function pickFlow(flows: ChatFlow[], text: string, isFirstMessage: boolean): ChatFlow | null {
+/** Chọn kịch bản khi chưa có bot đang chạy. `entry` = mã QR sự kiện khách vừa quét. */
+export function pickFlow(flows: ChatFlow[], text: string, isFirstMessage: boolean, entry?: string | null): ChatFlow | null {
   const on = flows.filter((f) => f.enabled);
+  if (entry) {
+    const byQr = on.find((f) => f.trigger === "event_qr" && f.entryCode === entry);
+    if (byQr) return byQr;
+  }
   return on.find((f) => f.trigger === "keyword" && f.keywords.some((k) => has(text, k)))
     ?? (isFirstMessage ? on.find((f) => f.trigger === "first_message") ?? null : null);
 }
@@ -114,8 +123,15 @@ export type BotStep = {
   reason: "start" | "next" | "handoff_node" | "handoff_request" | "no_match" | "end" | "idle";
 };
 
+/** Kịch bản mở đầu cho bình luận Fanpage: lọc theo bài viết và từ khóa (rỗng = mọi bình luận). */
+export function pickCommentFlow(flows: ChatFlow[], postId: string | null, text: string): ChatFlow | null {
+  return flows.find((f) => f.enabled && f.trigger === "fb_comment"
+    && (f.postIds.length === 0 || (!!postId && f.postIds.includes(postId)))
+    && (f.keywords.length === 0 || f.keywords.some((k) => has(text, k)))) ?? null;
+}
+
 /** Một lượt bot: từ trạng thái hiện tại + tin khách → tin trả lời, trạng thái mới, có chuyển Sale không. */
-export function stepBot(flows: ChatFlow[], state: BotState, text: string, isFirstMessage: boolean, vars: Record<string, string> = {}): BotStep {
+export function stepBot(flows: ChatFlow[], state: BotState, text: string, isFirstMessage: boolean, vars: Record<string, string> = {}, entry: string | null = null): BotStep {
   const idle: BotStep = { reply: null, media: [], state: null, handoff: false, tag: null, appointment: null, need: null, reason: "idle" };
   const enter = (flow: ChatFlow, nodeId: string, reason: BotStep["reason"]): BotStep => {
     const node = flow.nodes.find((n) => n.id === nodeId)!;
@@ -140,7 +156,7 @@ export function stepBot(flows: ChatFlow[], state: BotState, text: string, isFirs
     if (!b.next) return { reply: null, media: [], state: null, handoff: true, tag: null, appointment: null, need: null, reason: "handoff_node" };
     return enter(current, b.next, "next");
   }
-  const flow = pickFlow(flows, text, isFirstMessage);
+  const flow = pickFlow(flows, text, isFirstMessage, entry);
   return flow ? enter(flow, flow.startNodeId, "start") : idle;
 }
 
@@ -148,7 +164,7 @@ export const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function templateFlow(): ChatFlow {
   return {
-    id: uid(), name: "Tư vấn căn hộ", enabled: false, trigger: "first_message", keywords: [], startNodeId: "start",
+    id: uid(), name: "Tư vấn căn hộ", enabled: false, trigger: "first_message", keywords: [], postIds: [], entryCode: "", startNodeId: "start",
     nodes: [
       { id: "start", text: "Chào {name}! Em là trợ lý dự án {project}. Anh/chị quan tâm điều gì ạ?", media: [], tag: "", handoff: false, appointment: null, need: null, buttons: [
         { id: "b1", label: "Xem bảng giá", keywords: ["gia", "bang gia"], next: "price" },
