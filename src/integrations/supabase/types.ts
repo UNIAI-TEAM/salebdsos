@@ -333,6 +333,7 @@ export type Database = {
           sale_user_id: string
           sla_due_at: string
           status: string
+          team_id: string | null
           tenant_id: string
         }
         Insert: {
@@ -347,6 +348,7 @@ export type Database = {
           sale_user_id: string
           sla_due_at: string
           status?: string
+          team_id?: string | null
           tenant_id: string
         }
         Update: {
@@ -361,6 +363,7 @@ export type Database = {
           sale_user_id?: string
           sla_due_at?: string
           status?: string
+          team_id?: string | null
           tenant_id?: string
         }
         Relationships: [
@@ -390,6 +393,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_lead_referrals_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
           {
@@ -446,6 +456,118 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_referral_handovers: {
+        Row: {
+          actor: string
+          created_at: string
+          from_agency_id: string
+          from_partner_id: string
+          from_sale_id: string
+          from_team_id: string | null
+          id: string
+          master_tenant_id: string
+          reason: string
+          referral_id: string
+          to_agency_id: string
+          to_partner_id: string
+          to_sale_id: string
+          to_team_id: string | null
+        }
+        Insert: {
+          actor: string
+          created_at?: string
+          from_agency_id: string
+          from_partner_id: string
+          from_sale_id: string
+          from_team_id?: string | null
+          id?: string
+          master_tenant_id: string
+          reason: string
+          referral_id: string
+          to_agency_id: string
+          to_partner_id: string
+          to_sale_id: string
+          to_team_id?: string | null
+        }
+        Update: {
+          actor?: string
+          created_at?: string
+          from_agency_id?: string
+          from_partner_id?: string
+          from_sale_id?: string
+          from_team_id?: string | null
+          id?: string
+          master_tenant_id?: string
+          reason?: string
+          referral_id?: string
+          to_agency_id?: string
+          to_partner_id?: string
+          to_sale_id?: string
+          to_team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_referral_handovers_master_tenant_id_fkey"
+            columns: ["master_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_referral_handovers_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "agency_lead_referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_team_routing: {
+        Row: {
+          agency_id: string
+          id: string
+          partner_tenant_id: string
+          project_id: string
+          team_ids: string[]
+        }
+        Insert: {
+          agency_id: string
+          id?: string
+          partner_tenant_id: string
+          project_id: string
+          team_ids?: string[]
+        }
+        Update: {
+          agency_id?: string
+          id?: string
+          partner_tenant_id?: string
+          project_id?: string
+          team_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_team_routing_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_team_routing_partner_tenant_id_fkey"
+            columns: ["partner_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_team_routing_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -4280,9 +4402,38 @@ export type Database = {
         }
         Returns: Json
       }
+      agency_project_pick: {
+        Args: { p_agency: string; p_project: string }
+        Returns: {
+          team_id: string
+          user_id: string
+        }[]
+      }
+      agency_project_pool: {
+        Args: { p_agency: string; p_project: string }
+        Returns: {
+          team_id: string
+          user_id: string
+        }[]
+      }
       agency_referral_action: {
         Args: { p_action: string; p_id: string; p_sale?: string }
         Returns: undefined
+      }
+      agency_referral_handover: {
+        Args: {
+          p_agency: string
+          p_id: string
+          p_reason?: string
+          p_sale?: string
+          p_team?: string
+          p_tenant: string
+        }
+        Returns: undefined
+      }
+      agency_routing_extended: {
+        Args: { p_agency: string; p_tenant: string }
+        Returns: Json
       }
       agency_routing_save: {
         Args: {
@@ -4303,6 +4454,15 @@ export type Database = {
         Returns: {
           user_id: string
         }[]
+      }
+      agency_team_rule_save: {
+        Args: {
+          p_agency: string
+          p_project: string
+          p_teams: string[]
+          p_tenant: string
+        }
+        Returns: undefined
       }
       agency_workspace: {
         Args: { p_agency?: string; p_tenant: string }

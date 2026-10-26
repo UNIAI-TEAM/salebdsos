@@ -1,0 +1,1 @@
+DO $$ DECLARE d text; BEGIN SELECT pg_get_functiondef('public.agency_referral_handover(uuid,uuid,uuid,uuid,uuid,text)'::regprocedure) INTO d; d:=replace(d,'p_sale uuid, p_team uuid, p_reason text','p_sale uuid DEFAULT NULL::uuid, p_team uuid DEFAULT NULL::uuid, p_reason text DEFAULT NULL::text'); EXECUTE d; END $$;
