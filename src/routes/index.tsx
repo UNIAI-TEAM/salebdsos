@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Building2, Users2, BarChart3, QrCode, Brain, Smartphone, MessageSquare, ShieldCheck, FileText, Layers, Calendar, Check, Plus } from "lucide-react";
+import { ArrowRight, Building2, Users2, BarChart3, QrCode, Brain, Smartphone, MessageSquare, ShieldCheck, FileText, Layers, Calendar, Check, Plus, Handshake, Contact, Workflow } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { landingContent as copy } from "@/lib/landing-content";
@@ -30,8 +30,11 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
 });
 
-const featureIcons = [Building2, Users2, Layers, BarChart3, MessageSquare, FileText, BarChart3, ShieldCheck];
+const featureIcons = [Building2, Handshake, Contact, Workflow, Users2, Layers, BarChart3, MessageSquare, FileText, BarChart3, ShieldCheck];
 const workflowIcons = [QrCode, Users2, Calendar, FileText];
+const agencyIcons = [Handshake, Building2, Users2, BarChart3];
+const digitalCardIcons = [QrCode, Building2, Users2, ShieldCheck];
+const scriptIcons = [Workflow, Smartphone, MessageSquare, Users2];
 const aiIcons = [Brain, MessageSquare, Building2];
 const mobileIcons = [BarChart3, Smartphone, QrCode];
 
@@ -78,7 +81,7 @@ function LandingPage() {
         </div>
       </section>
       <div className="border-b border-border bg-card">
-        <div className="mx-auto grid max-w-6xl gap-4 px-5 py-6 sm:grid-cols-3 sm:px-8">
+        <div className="mx-auto grid max-w-6xl gap-4 px-5 py-6 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
           {copy.hero.priorities.map(item => <div key={item} className="flex items-center gap-3 text-sm font-medium"><Check className="h-4 w-4 shrink-0 text-primary" />{item}</div>)}
         </div>
       </div>
@@ -88,6 +91,45 @@ function LandingPage() {
           {copy.features.items.map((item,i) => {
             const Icon = featureIcons[i] ?? Building2;
             return <article key={item.title} className="border-t border-border pt-5">
+              <Icon className="mb-4 h-6 w-6 text-primary" />
+              <h3 className="text-base font-semibold">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+            </article>;
+          })}
+        </div>
+      </Band>
+      <Band id="agencies" muted>
+        <SectionHeading {...copy.agencies} />
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {copy.agencies.items.map((item,i) => {
+            const Icon = agencyIcons[i] ?? Handshake;
+            return <article key={item.title} className="rounded-lg border border-border bg-background p-5">
+              <Icon className="mb-4 h-6 w-6 text-primary" />
+              <h3 className="text-base font-semibold">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+            </article>;
+          })}
+        </div>
+      </Band>
+      <Band id="digital-card">
+        <SectionHeading {...copy.digitalCard} />
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {copy.digitalCard.items.map((item,i) => {
+            const Icon = digitalCardIcons[i] ?? QrCode;
+            return <article key={item.title} className="border-t border-border pt-5">
+              <Icon className="mb-4 h-6 w-6 text-primary" />
+              <h3 className="text-base font-semibold">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+            </article>;
+          })}
+        </div>
+      </Band>
+      <Band id="scripts" muted>
+        <SectionHeading {...copy.scripts} />
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {copy.scripts.items.map((item,i) => {
+            const Icon = scriptIcons[i] ?? Workflow;
+            return <article key={item.title} className="rounded-lg border border-border bg-background p-5">
               <Icon className="mb-4 h-6 w-6 text-primary" />
               <h3 className="text-base font-semibold">{item.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
@@ -138,7 +180,7 @@ function LandingPage() {
         <div className="mt-10 grid gap-8 sm:grid-cols-3">{copy.audience.items.map(item=><article key={item.title}><h3 className="text-lg font-semibold">{item.title}</h3><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p></article>)}</div>
       </Band>
       <Band id="faq">
-        <SectionHeading eyebrow={copy.nav[3].label} title={copy.faqHeading} />
+        <SectionHeading eyebrow={copy.nav[4].label} title={copy.faqHeading} />
         <div className="mt-8 max-w-3xl divide-y divide-border">{copy.faq.map((item,i)=><details key={item.q} open={i===0} className="group py-5 [&_summary::-webkit-details-marker]:hidden">
           <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-base font-medium"><span>{item.q}</span><Plus className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-45" /></summary>
           <p className="mt-3 pr-8 text-sm leading-relaxed text-muted-foreground">{item.a}</p>
@@ -154,7 +196,7 @@ function LandingPage() {
     <footer className="bg-background">
       <div className="mx-auto flex max-w-6xl flex-col justify-between gap-6 px-5 py-8 sm:flex-row sm:px-8">
         <div><p className="font-semibold">{copy.hero.name}</p><p className="mt-2 text-sm text-muted-foreground">{copy.footer.tagline}</p></div>
-        <div className="flex flex-wrap items-center gap-5 text-sm text-muted-foreground"><a href="#features">{copy.nav[0].label}</a><a href="#faq">{copy.nav[3].label}</a><span>{copy.footer.copyright}</span></div>
+        <div className="flex flex-wrap items-center gap-5 text-sm text-muted-foreground"><a href="#features">{copy.nav[0].label}</a><a href="#faq">{copy.nav[4].label}</a><span>{copy.footer.copyright}</span></div>
       </div>
     </footer>
   </div>;
