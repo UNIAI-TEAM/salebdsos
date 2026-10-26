@@ -127,12 +127,17 @@ export async function ingestInboundLead(input: InboundLead) {
         notes: [existing.notes, noteLine].filter(Boolean).join("\n").slice(-4000),
         meta: {
           ...(existing.meta ?? {}),
+          ...(assignment?.agencyRouting ? { shared_agency_routing: true } : {}),
           ...(product ? { product_id: product.id, product_code: product.code } : {}),
           last_inbound_source: input.source,
           last_inbound_at: new Date().toISOString(),
         },
       } as never)
       .eq("id", leadId);
+    if (assignment?.agencyRouting) {
+      const { error } = await supabaseAdmin.rpc('route_agency_lead', { p_lead: leadId });
+      if (error) throw new Error('Không phân phối được khách cho đại lý');
+    }
   } else {
     const assignment = await assignLeadOwner({ tenantId: input.tenantId, projectId, currentOwnerId: null });
     ownerUserId = assignment.ownerUserId;
@@ -152,6 +157,7 @@ export async function ingestInboundLead(input: InboundLead) {
         budget: input.budget?.slice(0, 120) ?? null,
         meta: {
           ...(input.meta ?? {}),
+          shared_agency_routing: assignment.agencyRouting ?? false,
           external_id: input.externalId ?? null,
           ...(product ? { product_id: product.id, product_code: product.code } : {}),
           auto_assigned: assignment.autoAssigned,
