@@ -54,6 +54,7 @@ export const HUBS: Hub[] = [
     { to: "/marketing", label: "Chiến dịch", roles: M },
     { to: "/nurture", label: "Nhắc khách", roles: M },
     { to: "/social-automation", label: "Fanpage", roles: M },
+    { to: "/chat-flows", label: "Kịch bản chat" },
     { to: "/lead-capture", label: "Tạo lead tự động" },
     { to: "/lead-routing", label: "Phân phối lead", roles: M },
     { to: "/content-library", label: "Kho nội dung" },
