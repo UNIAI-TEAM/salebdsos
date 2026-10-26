@@ -5,6 +5,7 @@ import { AppTopbar } from "@/components/app/topbar";
 import { OfflineBanner } from "@/components/app/offline-banner";
 import { MobileTabBar } from "@/components/app/mobile-tabbar";
 import { HubTabs } from "@/components/app/hub-tabs";
+import { AiFab } from "@/components/app/ai-fab";
 import { useAuth } from "@/hooks/use-auth";
 import { SidebarCollapsedProvider } from "@/hooks/use-sidebar-collapsed";
 import { MobileDrawerProvider } from "@/hooks/use-mobile-drawer";
@@ -106,6 +107,7 @@ function AppLayoutShell() {
         </main>
       </div>
       <MobileTabBar />
+      <AiFab />
     </div>
   );
 }
