@@ -50,7 +50,7 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
 
         const { data: messages } = await supabaseAdmin
           .from("conversation_messages")
-          .select("id, direction, body, sender_name, created_at")
+          .select("id, direction, body, sender_name, created_at, attachment_url, meta")
           .eq("conversation_id", conv.id)
           .eq("channel", "web_chat")
           .order("created_at", { ascending: true })
@@ -59,7 +59,7 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
         return json({
           enabled: settings.webChat.enabled,
           config: settings.webChat,
-          messages: messages ?? [],
+          messages: (messages ?? []).map(({ meta, ...m }) => ({ ...m, media_type: (meta as { media_type?: string } | null)?.media_type ?? null })),
         });
       },
 
