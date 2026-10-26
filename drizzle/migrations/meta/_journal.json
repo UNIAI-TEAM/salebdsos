@@ -85,6 +85,13 @@
       "when": 1792978161138,
       "tag": "0011_avoid_legacy_zalo_identity_collision",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792978264576,
+      "tag": "0012_fix_atomic_profile_link_audit",
+      "breakpoints": true
     }
   ]
 }

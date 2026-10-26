@@ -1,0 +1,1 @@
+DO $$ DECLARE definition text; BEGIN SELECT pg_get_functiondef('public.link_channel_profile(uuid,uuid,uuid)'::regprocedure) INTO definition; definition:=replace(definition,'audit_logs(tenant_id,user_id,action','audit_logs(tenant_id,actor_user_id,action'); EXECUTE definition; END $$;
