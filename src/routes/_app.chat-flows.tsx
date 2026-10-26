@@ -124,7 +124,7 @@ function FlowEditor({ tenantId, flow, canEdit, onChange, onDelete }: { tenantId:
   const setNode = (id: string, patch: (n: ChatNode) => ChatNode) => onChange((f) => ({ ...f, nodes: f.nodes.map((n) => (n.id === id ? patch(n) : n)) }));
   const addChild = (nodeId: string, buttonId: string) => {
     const nid = `s${uid().slice(0, 5)}`;
-    onChange((f) => ({ ...f, nodes: [...f.nodes.map((n) => (n.id === nodeId ? { ...n, buttons: n.buttons.map((b) => (b.id === buttonId ? { ...b, next: nid } : b)) } : n)), { id: nid, text: "Nội dung trả lời…", buttons: [], tag: "", handoff: false }] }));
+    onChange((f) => ({ ...f, nodes: [...f.nodes.map((n) => (n.id === nodeId ? { ...n, buttons: n.buttons.map((b) => (b.id === buttonId ? { ...b, next: nid } : b)) } : n)), { id: nid, text: "Nội dung trả lời…", media: [], buttons: [], tag: "", handoff: false }] }));
   };
   const removeNode = (id: string) => onChange((f) => ({ ...f, nodes: f.nodes.filter((n) => n.id !== id).map((n) => ({ ...n, buttons: n.buttons.map((b) => (b.next === id ? { ...b, next: null } : b)) })) }));
 
