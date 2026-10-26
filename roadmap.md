@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Hoa hồng và đối soát riêng sàn tổng → đại lý, đại lý → Sale; xác nhận hai bên, thanh toán từng phần, quyền riêng và kiểm thử.
+- [x] Hoa hồng và đối soát riêng sàn tổng → đại lý, đại lý → Sale; xác nhận hai bên, thanh toán từng phần, quyền riêng. Đã thử hai sổ qua giao diện, đọc lại bằng quyền Sale, chặn chi trùng/vượt số dư và chi đồng thời; 14 kiểm thử đạt. Không tự chuyển tiền hoặc tự ghép giao dịch ngân hàng; sổ hiện có giữ nguyên.
 
 - [x] Phân khách kênh chung → đại lý theo dự án/tải chờ + 30 ngày → Sale được cấp quyền; SLA từ lúc khách vào, chuyển Sale không gia hạn, ghi nhận liên hệ và lịch sử. Kiểm tra biểu mẫu hai khách chia hai đại lý, quyền Sale riêng, đọc lại phản hồi hai sàn; 20 kiểm thử đạt, dữ liệu thử đã xoá. SLA hiển thị trong Phân khách & SLA; chưa có push nhắc SLA liên đại lý hoặc chat xuyên sàn.
 
