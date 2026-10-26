@@ -94,7 +94,7 @@ export const linkConversationLead = createServerFn({ method: "POST" })
     ]);
     if (!conv || !lead || !canAccessConversation(roles, conv.owner_user_id, context.userId) || !canAccessConversation(roles, lead.owner_user_id, context.userId)) throw new Error("Bạn không có quyền gắn hồ sơ này.");
     const { error } = await context.supabase.rpc("link_channel_profile", { p_tenant: data.tenantId, p_conversation: data.conversationId, p_lead: data.leadId });
-    if (error) throw new Error("Không gắn được hồ sơ.");
+    if (error) { console.error("link_channel_profile", error.code, error.message); throw new Error("Không gắn được hồ sơ."); }
     return { ok: true };
   });
 
