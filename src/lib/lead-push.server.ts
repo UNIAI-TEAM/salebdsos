@@ -3,7 +3,7 @@ import { pushConfigured, sendPushToUser } from "./push.server";
 
 export async function runLeadPushJobs() {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-  const { data: jobs, error } = await db.rpc("claim_lead_push_jobs");
+  const { data: jobs, error } = await db.rpc("claim_push_jobs_v2");
   if (error) throw error;
   let accepted = 0;
   for (const job of jobs ?? []) {
