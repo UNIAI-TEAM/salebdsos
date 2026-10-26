@@ -176,6 +176,13 @@
       "when": 1792986944681,
       "tag": "0024_agency_routing_no_sale_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792987135043,
+      "tag": "0025_agency_commission_ledgers",
+      "breakpoints": true
     }
   ]
 }
