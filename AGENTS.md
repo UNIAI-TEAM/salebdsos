@@ -15,5 +15,6 @@
 - Lead allocation uses shared tested pool/load helpers and exact tenant-wide counts; database triggers initialize entry SLA and record successful Sale replies, keeping deadlines consistent across all ingress paths.
 - Landing chat visitor keys include the page identity so visiting another Sale's page cannot reuse a previous personal conversation.
 - Lead assignment push is queued by database triggers for every owner change; SLA jobs revalidate owner/response/deadline, wake on enqueue and stop their schedule after drain, so ingress paths and handovers cannot bypass or duplicate assignment push.
+- Agency referral pushes reuse the bounded lead queue and schedule, revalidate current partner/Sale grants through a service-only projection, and send generic tenant-scoped payloads; this prevents cross-tenant contact leaks and stale handover reminders.
 - Public product copy is centralized in a browser-safe content module and the landing uses a scoped semantic palette, keeping capability descriptions maintainable without changing authenticated app themes.
 - Chat flow bots use pure tested stepBot in src/lib/chat-flows.ts stored in settings; bot replies carry no sender_user_id (so SLA keeps running) and go silent after handoff or any Sale reply; auto-reply runs only on channels in BOT_LIVE_CHANNELS, avoiding unverified sends.

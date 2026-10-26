@@ -2731,6 +2731,7 @@ export type Database = {
           kind: string
           last_error: string | null
           lead_id: string
+          referral_id: string | null
           run_at: string
           state: string
           tenant_id: string
@@ -2745,6 +2746,7 @@ export type Database = {
           kind: string
           last_error?: string | null
           lead_id: string
+          referral_id?: string | null
           run_at: string
           state?: string
           tenant_id: string
@@ -2759,6 +2761,7 @@ export type Database = {
           kind?: string
           last_error?: string | null
           lead_id?: string
+          referral_id?: string | null
           run_at?: string
           state?: string
           tenant_id?: string
@@ -2770,6 +2773,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_push_jobs_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "agency_lead_referrals"
             referencedColumns: ["id"]
           },
         ]
@@ -4416,6 +4426,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      agency_push_target: { Args: { p_job: string }; Returns: Json }
       agency_referral_action: {
         Args: { p_action: string; p_id: string; p_sale?: string }
         Returns: undefined
@@ -4505,6 +4516,31 @@ export type Database = {
           kind: string
           last_error: string | null
           lead_id: string
+          referral_id: string | null
+          run_at: string
+          state: string
+          tenant_id: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "lead_push_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      claim_push_jobs_v2: {
+        Args: never
+        Returns: {
+          attempts: number
+          created_at: string
+          deadline: string | null
+          finished_at: string | null
+          id: string
+          kind: string
+          last_error: string | null
+          lead_id: string
+          referral_id: string | null
           run_at: string
           state: string
           tenant_id: string
