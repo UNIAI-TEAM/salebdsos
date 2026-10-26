@@ -5,7 +5,7 @@ import { BOT_LIVE_CHANNELS, CHAT_FLOWS_KEY, appointmentSlot, parseChatFlows, ste
 
 type BotMeta = { flowId?: string; nodeId?: string; handoff?: boolean; tags?: string[]; appointmentId?: string };
 
-export async function runChatBot(args: { tenantId: string; conversationId: string; channel: string; text: string; vars?: Record<string, string> }) {
+export async function runChatBot(args: { tenantId: string; conversationId: string; channel: string; text: string; vars?: Record<string, string>; entry?: string | null }) {
   if (!(BOT_LIVE_CHANNELS as readonly string[]).includes(args.channel)) return { replied: false };
   const sb = supabaseAdmin;
   const [{ data: cfg }, { data: conv }, { data: human }, { count }] = await Promise.all([
@@ -21,7 +21,7 @@ export async function runChatBot(args: { tenantId: string; conversationId: strin
   if ((human ?? []).length > 0 || bot.handoff) return { replied: false };
   const flows = parseChatFlows(cfg?.value).flows;
   const state: BotState = bot.flowId && bot.nodeId ? { flowId: bot.flowId, nodeId: bot.nodeId } : null;
-  const step = stepBot(flows, state, args.text, (count ?? 0) <= 1, args.vars ?? {});
+  const step = stepBot(flows, state, args.text, (count ?? 0) <= 1, args.vars ?? {}, state ? null : args.entry ?? null);
   if (step.reason === "idle") return { replied: false };
 
   for (const m of step.media) {
