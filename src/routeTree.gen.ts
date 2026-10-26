@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ThankYouRouteImport } from './routes/thank-you'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as AppAgenciesRouteImport } from './routes/_app.agencies'
 import { Route as AppAiAgentRouteImport } from './routes/_app.ai-agent'
 import { Route as AppAiFollowupRouteImport } from './routes/_app.ai-followup'
 import { Route as AppAiLeadScoreRouteImport } from './routes/_app.ai-lead-score'
@@ -134,6 +135,11 @@ const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
   path: '/verify-email',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppAgenciesRoute = AppAgenciesRouteImport.update({
+  id: '/agencies',
+  path: '/agencies',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppAiAgentRoute = AppAiAgentRouteImport.update({
   id: '/ai-agent',
@@ -567,6 +573,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/thank-you': typeof ThankYouRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/agencies': typeof AppAgenciesRoute
   '/ai-agent': typeof AppAiAgentRoute
   '/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/ai-lead-score': typeof AppAiLeadScoreRoute
@@ -659,6 +666,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/thank-you': typeof ThankYouRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/agencies': typeof AppAgenciesRoute
   '/ai-agent': typeof AppAiAgentRoute
   '/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/ai-lead-score': typeof AppAiLeadScoreRoute
@@ -751,6 +759,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/thank-you': typeof ThankYouRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/_app/agencies': typeof AppAgenciesRoute
   '/_app/ai-agent': typeof AppAiAgentRoute
   '/_app/ai-followup': typeof AppAiFollowupRouteWithChildren
   '/_app/ai-lead-score': typeof AppAiLeadScoreRoute
@@ -845,6 +854,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/thank-you'
     | '/verify-email'
+    | '/agencies'
     | '/ai-agent'
     | '/ai-followup'
     | '/ai-lead-score'
@@ -937,6 +947,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/thank-you'
     | '/verify-email'
+    | '/agencies'
     | '/ai-agent'
     | '/ai-followup'
     | '/ai-lead-score'
@@ -1028,6 +1039,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/thank-you'
     | '/verify-email'
+    | '/_app/agencies'
     | '/_app/ai-agent'
     | '/_app/ai-followup'
     | '/_app/ai-lead-score'
@@ -1198,6 +1210,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/verify-email'
       preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/agencies': {
+      id: '/_app/agencies'
+      path: '/agencies'
+      fullPath: '/agencies'
+      preLoaderRoute: typeof AppAgenciesRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/ai-agent': {
       id: '/_app/ai-agent'
@@ -1831,6 +1850,7 @@ const AppProjectsRouteWithChildren = AppProjectsRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAgenciesRoute: typeof AppAgenciesRoute
   AppAiAgentRoute: typeof AppAiAgentRoute
   AppAiFollowupRoute: typeof AppAiFollowupRouteWithChildren
   AppAiLeadScoreRoute: typeof AppAiLeadScoreRoute
@@ -1889,6 +1909,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAgenciesRoute: AppAgenciesRoute,
   AppAiAgentRoute: AppAiAgentRoute,
   AppAiFollowupRoute: AppAiFollowupRouteWithChildren,
   AppAiLeadScoreRoute: AppAiLeadScoreRoute,
