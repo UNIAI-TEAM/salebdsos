@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Bot, CalendarPlus, ClipboardList, Film, LibraryBig, Sparkles, GripVertical, ImagePlus, Plus, RotateCcw, Save, Send, Trash2, UserRound } from "lucide-react";
+import { Bot, CalendarPlus, LayoutGrid, List, QrCode as QrIcon, MessageSquareText, ClipboardList, Film, LibraryBig, Sparkles, GripVertical, ImagePlus, Plus, RotateCcw, Save, Send, Trash2, UserRound } from "lucide-react";
 import { DndContext, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { QrCode } from "@/components/qr-code";
 
 export const Route = createFileRoute("/_app/chat-flows")({
   head: () => ({
@@ -135,6 +136,8 @@ function FlowEditor({ tenantId, flow, canEdit, onChange, onDelete }: { tenantId:
     const nid = `s${uid().slice(0, 5)}`;
     onChange((f) => ({ ...f, nodes: [...f.nodes.map((n) => (n.id === nodeId ? { ...n, buttons: n.buttons.map((b) => (b.id === buttonId ? { ...b, next: nid } : b)) } : n)), { id: nid, text: "Nội dung trả lời…", media: [], buttons: [], tag: "", handoff: false, appointment: null, need: null }] }));
   };
+  const [view, setView] = useState<"map" | "list">("map");
+  const focusNode = (id: string) => { setView("list"); setTimeout(() => document.getElementById(`node-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
   const removeNode = (id: string) => onChange((f) => ({ ...f, nodes: f.nodes.filter((n) => n.id !== id).map((n) => ({ ...n, buttons: n.buttons.map((b) => (b.next === id ? { ...b, next: null } : b)) })) }));
 
   return (
@@ -145,24 +148,42 @@ function FlowEditor({ tenantId, flow, canEdit, onChange, onDelete }: { tenantId:
           <div className="flex items-end justify-between gap-3">
             <div className="space-y-1.5 flex-1">
               <Label htmlFor="ftrig">Khi nào bắt đầu</Label>
-              <select id="ftrig" className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm" value={flow.trigger} onChange={(e) => onChange((f) => ({ ...f, trigger: e.target.value as ChatFlow["trigger"] }))}>
+              <select id="ftrig" className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm" value={flow.trigger} onChange={(e) => onChange((f) => { const trigger = e.target.value as ChatFlow["trigger"]; return { ...f, trigger, entryCode: trigger === "event_qr" && !f.entryCode ? `sk-${uid().slice(0, 6)}` : f.entryCode }; })}>
                 <option value="first_message">Tin nhắn đầu tiên của khách</option>
                 <option value="keyword">Khách nhắn từ khóa</option>
+                <option value="fb_comment">Khách bình luận trên Fanpage</option>
+                <option value="event_qr">Khách quét QR tại sự kiện</option>
               </select>
             </div>
             <div className="flex items-center gap-2 pb-2"><Switch id="fon" checked={flow.enabled} onCheckedChange={(v) => onChange((f) => ({ ...f, enabled: v }))} /><Label htmlFor="fon">Bật</Label></div>
           </div>
+          {flow.trigger === "fb_comment" && (
+            <>
+              <div className="space-y-1.5"><Label htmlFor="fpost">Mã bài viết (để trống = mọi bài)</Label><Input id="fpost" defaultValue={flow.postIds.join(", ")} onBlur={(e) => onChange((f) => ({ ...f, postIds: csv(e.target.value) }))} placeholder="123456_789012" /></div>
+              <div className="space-y-1.5"><Label htmlFor="fckw">Chỉ khi bình luận có từ khóa (tùy chọn)</Label><Input id="fckw" defaultValue={flow.keywords.join(", ")} onBlur={(e) => onChange((f) => ({ ...f, keywords: csv(e.target.value) }))} placeholder="giá, ib, quan tâm" /></div>
+              <p className="text-xs text-muted-foreground md:col-span-2">Bot gửi bước mở đầu qua tin nhắn riêng Messenger cho người bình luận (Facebook cho phép 1 tin/bình luận). Khách trả lời sẽ vào Hộp thoại để Sale tiếp tục. Cần bật Tự động hóa Fanpage.</p>
+            </>
+          )}
+          {flow.trigger === "event_qr" && <EventQrPanel tenantId={tenantId} flow={flow} onChange={onChange} />}
           {flow.trigger === "keyword" && (
             <div className="space-y-1.5 md:col-span-2"><Label htmlFor="fkw">Từ khóa (cách nhau bằng dấu phẩy)</Label><Input id="fkw" defaultValue={flow.keywords.join(", ")} onBlur={(e) => onChange((f) => ({ ...f, keywords: csv(e.target.value) }))} placeholder="giá, bảng giá, tư vấn" /><p className="text-xs text-muted-foreground">Không phân biệt dấu và chữ hoa.</p></div>
           )}
         </fieldset>
       </SectionCard>
 
-      {order.map((id) => {
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-sm font-medium">Các bước kịch bản <span className="text-muted-foreground">({flow.nodes.length})</span></div>
+        <div className="inline-flex rounded-lg border border-border p-0.5" role="tablist">
+          <Button size="sm" variant={view === "map" ? "secondary" : "ghost"} onClick={() => setView("map")} aria-pressed={view === "map"}><LayoutGrid className="h-4 w-4" />Sơ đồ</Button>
+          <Button size="sm" variant={view === "list" ? "secondary" : "ghost"} onClick={() => setView("list")} aria-pressed={view === "list"}><List className="h-4 w-4" />Chi tiết</Button>
+        </div>
+      </div>
+      {view === "map" && <FlowMap flow={flow} depth={depth} onOpen={focusNode} />}
+      {view === "list" && order.map((id) => {
         const node = flow.nodes.find((n) => n.id === id)!;
         const d = depth[id];
         return (
-          <div key={id} style={{ marginLeft: `${Math.min(d ?? 0, 4) * 20}px` }} className="rounded-xl border border-border bg-card p-4 md:p-5 shadow-sm">
+          <div key={id} id={`node-${id}`} style={{ scrollMarginTop: 80, marginLeft: `${Math.min(d ?? 0, 4) * 20}px` }} className="rounded-xl border border-border bg-card p-4 md:p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Bot className="h-4 w-4 text-primary" />
@@ -439,5 +460,134 @@ function AiGenerator({ tenantId, open, onOpenChange, onDone }: { tenantId: strin
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+const TRIGGER_LABEL: Record<ChatFlow["trigger"], string> = {
+  first_message: "Tin nhắn đầu tiên", keyword: "Từ khóa", fb_comment: "Bình luận Fanpage", event_qr: "QR sự kiện",
+};
+
+/** Sơ đồ thẻ: mỗi cột là một tầng, đường nối từ nút bấm tới bước kế tiếp. */
+function FlowMap({ flow, depth, onOpen }: { flow: ChatFlow; depth: Record<string, number>; onOpen: (id: string) => void }) {
+  const cols = useMemo(() => {
+    const max = Math.max(0, ...Object.values(depth));
+    const c: ChatNode[][] = Array.from({ length: max + 1 }, () => []);
+    const orphans: ChatNode[] = [];
+    for (const n of flow.nodes) (depth[n.id] === undefined ? orphans : c[depth[n.id]]).push(n);
+    if (orphans.length) c.push(orphans);
+    return c;
+  }, [flow, depth]);
+  const wrap = useRef<HTMLDivElement>(null);
+  const [lines, setLines] = useState<{ d: string; key: string }[]>([]);
+  useLayoutEffect(() => {
+    const el = wrap.current;
+    if (!el) return;
+    const draw = () => {
+      const box = el.getBoundingClientRect();
+      const out: { d: string; key: string }[] = [];
+      for (const n of flow.nodes) for (const b of n.buttons) {
+        if (!b.next) continue;
+        const from = el.querySelector(`[data-btn="${n.id}:${b.id}"]`)?.getBoundingClientRect();
+        const to = el.querySelector(`[data-node="${b.next}"]`)?.getBoundingClientRect();
+        if (!from || !to) continue;
+        const x1 = from.right - box.left + el.scrollLeft, y1 = from.top + from.height / 2 - box.top;
+        const x2 = to.left - box.left + el.scrollLeft, y2 = to.top + 20 - box.top;
+        const back = x2 <= x1;
+        const mx = back ? Math.max(x1, x2) + 40 : (x1 + x2) / 2;
+        out.push({ key: `${n.id}:${b.id}`, d: back ? `M${x1},${y1} C${mx},${y1} ${x2 - 40},${y2} ${x2},${y2}` : `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}` });
+      }
+      setLines(out);
+    };
+    draw();
+    const ro = new ResizeObserver(draw);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [flow, cols]);
+  return (
+    <div className="rounded-xl border border-border bg-muted/30">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-2.5 text-xs text-muted-foreground">
+        <Badge variant="outline">{TRIGGER_LABEL[flow.trigger]}</Badge>
+        <span>Bấm vào thẻ để sửa chi tiết. Kéo ngang để xem hết sơ đồ.</span>
+      </div>
+      <div ref={wrap} className="relative overflow-x-auto p-4">
+        <svg className="pointer-events-none absolute left-0 top-0 h-full text-primary/60" style={{ width: wrap.current?.scrollWidth ?? "100%" }} aria-hidden>
+          <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" /></marker></defs>
+          {lines.map((l) => <path key={l.key} d={l.d} fill="none" stroke="currentColor" strokeWidth={1.5} markerEnd="url(#arrow)" />)}
+        </svg>
+        <div className="relative flex gap-12">
+          {cols.map((col, ci) => (
+            <div key={ci} className="flex w-60 shrink-0 flex-col gap-4">
+              <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{ci === 0 ? "Bắt đầu" : ci > Math.max(0, ...Object.values(depth)) ? "Chưa nối" : `Tầng ${ci + 1}`}</div>
+              {col.map((n) => (
+                <button key={n.id} data-node={n.id} onClick={() => onOpen(n.id)} className={`w-full rounded-xl border bg-card p-3 text-left shadow-sm transition hover:border-primary hover:shadow-md ${n.id === flow.startNodeId ? "border-primary/60" : "border-border"}`}>
+                  <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium">
+                    {n.handoff ? <UserRound className="h-3.5 w-3.5 text-primary" /> : <MessageSquareText className="h-3.5 w-3.5 text-primary" />}
+                    <span className="truncate">{n.id === flow.startNodeId ? "Mở đầu" : n.id}</span>
+                  </div>
+                  <p className="line-clamp-3 text-xs text-muted-foreground">{n.text}</p>
+                  {(n.media.length > 0 || n.appointment || n.need || n.tag || n.handoff) && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {n.media.length > 0 && <Badge variant="secondary" className="text-[10px]"><Film className="h-3 w-3" />{n.media.length}</Badge>}
+                      {n.appointment && <Badge variant="secondary" className="text-[10px]"><CalendarPlus className="h-3 w-3" />Lịch hẹn</Badge>}
+                      {n.need && <Badge variant="secondary" className="text-[10px]"><ClipboardList className="h-3 w-3" />Nhu cầu</Badge>}
+                      {n.tag && <Badge variant="outline" className="text-[10px]">{n.tag}</Badge>}
+                      {n.handoff && <Badge className="text-[10px]">Chuyển Sale</Badge>}
+                    </div>
+                  )}
+                  {!n.handoff && n.buttons.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {n.buttons.map((b) => (
+                        <div key={b.id} data-btn={`${n.id}:${b.id}`} className="flex items-center justify-between gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px]">
+                          <span className="truncate">{b.label}</span>
+                          <span className="shrink-0 text-muted-foreground">{b.next ? "→" : "Sale"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EventQrPanel({ tenantId, flow, onChange }: { tenantId: string; flow: ChatFlow; onChange: (p: (f: ChatFlow) => ChatFlow) => void }) {
+  const pages = useQuery({
+    queryKey: ["flow-landings", tenantId],
+    queryFn: async () => {
+      const { data } = await supabase.from("ai_sales_pages").select("slug,title").eq("tenant_id", tenantId).eq("is_published", true).not("slug", "is", null).order("created_at", { ascending: false }).limit(50);
+      return (data ?? []) as { slug: string; title: string | null }[];
+    },
+  });
+  const [slug, setSlug] = useState("");
+  const chosen = slug || pages.data?.[0]?.slug || "";
+  const link = chosen && flow.entryCode && typeof window !== "undefined" ? `${window.location.origin}/p/${chosen}?chat=${flow.entryCode}&utm_source=event_qr` : "";
+  return (
+    <div className="space-y-3 md:col-span-2">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-1.5"><Label htmlFor="fentry">Mã QR sự kiện</Label><Input id="fentry" value={flow.entryCode} onChange={(e) => onChange((f) => ({ ...f, entryCode: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40) }))} placeholder="sk-mo-ban-aurora" /></div>
+        <div className="space-y-1.5">
+          <Label htmlFor="fland">Landing mở khi quét</Label>
+          <select id="fland" className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm" value={chosen} onChange={(e) => setSlug(e.target.value)}>
+            {(pages.data ?? []).length === 0 && <option value="">Chưa có landing đã xuất bản</option>}
+            {(pages.data ?? []).map((p) => <option key={p.slug} value={p.slug}>{p.title || p.slug}</option>)}
+          </select>
+        </div>
+      </div>
+      {link ? (
+        <div className="flex flex-col items-start gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center">
+          <QrCode value={link} size={140} filename={`qr-${flow.entryCode}`} />
+          <div className="min-w-0 space-y-2 text-xs text-muted-foreground">
+            <p className="flex items-center gap-1.5 font-medium text-foreground"><QrIcon className="h-4 w-4" />In mã này tại quầy sự kiện</p>
+            <p>Khách quét → mở landing, khung chat bật sẵn; tin đầu tiên của khách sẽ chạy kịch bản này và tạo khách cho Sale.</p>
+            <p className="break-all">{link}</p>
+            <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(link); toast.success("Đã sao chép liên kết"); }}>Sao chép liên kết</Button>
+          </div>
+        </div>
+      ) : <p className="text-xs text-muted-foreground">Cần một landing đã xuất bản và bật chat để tạo QR.</p>}
+    </div>
   );
 }
