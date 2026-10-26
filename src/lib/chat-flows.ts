@@ -155,11 +155,11 @@ export function templateFlow(): ChatFlow {
         { id: "b2", label: "Mặt bằng căn hộ", keywords: ["mat bang", "2pn", "3pn"], next: "layout" },
         { id: "b3", label: "Hẹn xem nhà mẫu", keywords: ["hen", "xem nha"], next: "visit" },
       ] },
-      { id: "price", text: "Bảng giá mới nhất từ ... tỷ/căn. Anh/chị muốn nhận bảng tính dòng tiền không?", media: [], tag: "Đang khảo sát", handoff: false, buttons: [
+      { id: "price", text: "Bảng giá mới nhất từ ... tỷ/căn. Anh/chị muốn nhận bảng tính dòng tiền không?", media: [], tag: "Đang khảo sát", handoff: false, appointment: null, need: null, buttons: [
         { id: "b4", label: "Có, gửi giúp em", keywords: ["co", "ok"], next: "handoff" },
         { id: "b5", label: "Hẹn xem nhà mẫu", keywords: ["hen"], next: "visit" },
       ] },
-      { id: "layout", text: "Dự án có căn 1PN, 2PN, 3PN. Anh/chị cần loại nào để em gửi mặt bằng chi tiết?", media: [], tag: "Đang khảo sát", handoff: false, buttons: [
+      { id: "layout", text: "Dự án có căn 1PN, 2PN, 3PN. Anh/chị cần loại nào để em gửi mặt bằng chi tiết?", media: [], tag: "Đang khảo sát", handoff: false, appointment: null, need: null, buttons: [
         { id: "b6", label: "Gặp chuyên viên", keywords: [], next: "handoff" },
       ] },
       { id: "visit", text: "Dạ, chuyên viên sẽ gọi để chốt giờ xem nhà mẫu với anh/chị ngay ạ.", media: [], tag: "Hẹn xem nhà mẫu", handoff: true, appointment: { title: "Xem nhà mẫu", location: "", daysAhead: 1, hour: 9 }, need: null, buttons: [] },
