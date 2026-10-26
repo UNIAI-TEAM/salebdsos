@@ -151,6 +151,16 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
           senderName: name ?? "Khách",
         });
 
+        try {
+          const { runChatBot } = await import("@/lib/chat-flows.server");
+          const { data: project } = page.project_id
+            ? await supabaseAdmin.from("projects").select("name").eq("id", page.project_id).maybeSingle()
+            : { data: null };
+          await runChatBot({ tenantId: page.tenant_id, conversationId, channel: "web_chat", text, vars: { ...(name ? { name } : {}), project: project?.name ?? "" } });
+        } catch (e) {
+          console.error("chat bot failed", e);
+        }
+
         return json({ ok: true, conversationId });
       },
     },
