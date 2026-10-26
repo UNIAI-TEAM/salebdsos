@@ -26,6 +26,7 @@ import { Route as AppAppointmentsRouteImport } from './routes/_app.appointments'
 import { Route as AppAuthSettingsRouteImport } from './routes/_app.auth-settings'
 import { Route as AppBankReconciliationRouteImport } from './routes/_app.bank-reconciliation'
 import { Route as AppCardDesignerRouteImport } from './routes/_app.card-designer'
+import { Route as AppChatFlowsRouteImport } from './routes/_app.chat-flows'
 import { Route as AppCommissionRulesRouteImport } from './routes/_app.commission-rules'
 import { Route as AppContentLibraryRouteImport } from './routes/_app.content-library'
 import { Route as AppContractsRouteImport } from './routes/_app.contracts'
@@ -182,6 +183,11 @@ const AppBankReconciliationRoute = AppBankReconciliationRouteImport.update({
 const AppCardDesignerRoute = AppCardDesignerRouteImport.update({
   id: '/card-designer',
   path: '/card-designer',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChatFlowsRoute = AppChatFlowsRouteImport.update({
+  id: '/chat-flows',
+  path: '/chat-flows',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCommissionRulesRoute = AppCommissionRulesRouteImport.update({
@@ -571,6 +577,7 @@ export interface FileRoutesByFullPath {
   '/auth-settings': typeof AppAuthSettingsRoute
   '/bank-reconciliation': typeof AppBankReconciliationRoute
   '/card-designer': typeof AppCardDesignerRoute
+  '/chat-flows': typeof AppChatFlowsRoute
   '/commission-rules': typeof AppCommissionRulesRoute
   '/content-library': typeof AppContentLibraryRoute
   '/contracts': typeof AppContractsRoute
@@ -662,6 +669,7 @@ export interface FileRoutesByTo {
   '/auth-settings': typeof AppAuthSettingsRoute
   '/bank-reconciliation': typeof AppBankReconciliationRoute
   '/card-designer': typeof AppCardDesignerRoute
+  '/chat-flows': typeof AppChatFlowsRoute
   '/commission-rules': typeof AppCommissionRulesRoute
   '/content-library': typeof AppContentLibraryRoute
   '/contracts': typeof AppContractsRoute
@@ -753,6 +761,7 @@ export interface FileRoutesById {
   '/_app/auth-settings': typeof AppAuthSettingsRoute
   '/_app/bank-reconciliation': typeof AppBankReconciliationRoute
   '/_app/card-designer': typeof AppCardDesignerRoute
+  '/_app/chat-flows': typeof AppChatFlowsRoute
   '/_app/commission-rules': typeof AppCommissionRulesRoute
   '/_app/content-library': typeof AppContentLibraryRoute
   '/_app/contracts': typeof AppContractsRoute
@@ -846,6 +855,7 @@ export interface FileRouteTypes {
     | '/auth-settings'
     | '/bank-reconciliation'
     | '/card-designer'
+    | '/chat-flows'
     | '/commission-rules'
     | '/content-library'
     | '/contracts'
@@ -937,6 +947,7 @@ export interface FileRouteTypes {
     | '/auth-settings'
     | '/bank-reconciliation'
     | '/card-designer'
+    | '/chat-flows'
     | '/commission-rules'
     | '/content-library'
     | '/contracts'
@@ -1027,6 +1038,7 @@ export interface FileRouteTypes {
     | '/_app/auth-settings'
     | '/_app/bank-reconciliation'
     | '/_app/card-designer'
+    | '/_app/chat-flows'
     | '/_app/commission-rules'
     | '/_app/content-library'
     | '/_app/contracts'
@@ -1255,6 +1267,13 @@ declare module '@tanstack/react-router' {
       path: '/card-designer'
       fullPath: '/card-designer'
       preLoaderRoute: typeof AppCardDesignerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/chat-flows': {
+      id: '/_app/chat-flows'
+      path: '/chat-flows'
+      fullPath: '/chat-flows'
+      preLoaderRoute: typeof AppChatFlowsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/commission-rules': {
@@ -1822,6 +1841,7 @@ interface AppRouteChildren {
   AppAuthSettingsRoute: typeof AppAuthSettingsRoute
   AppBankReconciliationRoute: typeof AppBankReconciliationRoute
   AppCardDesignerRoute: typeof AppCardDesignerRoute
+  AppChatFlowsRoute: typeof AppChatFlowsRoute
   AppCommissionRulesRoute: typeof AppCommissionRulesRoute
   AppContentLibraryRoute: typeof AppContentLibraryRoute
   AppContractsRoute: typeof AppContractsRoute
@@ -1879,6 +1899,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAuthSettingsRoute: AppAuthSettingsRoute,
   AppBankReconciliationRoute: AppBankReconciliationRoute,
   AppCardDesignerRoute: AppCardDesignerRoute,
+  AppChatFlowsRoute: AppChatFlowsRoute,
   AppCommissionRulesRoute: AppCommissionRulesRoute,
   AppContentLibraryRoute: AppContentLibraryRoute,
   AppContractsRoute: AppContractsRoute,
