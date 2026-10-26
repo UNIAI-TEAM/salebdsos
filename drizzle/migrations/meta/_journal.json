@@ -120,6 +120,13 @@
       "when": 1792983462456,
       "tag": "0016_lead_push_outbox_and_sla_schedule",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792983600907,
+      "tag": "0017_restrict_lead_push_runtime_access",
+      "breakpoints": true
     }
   ]
 }
