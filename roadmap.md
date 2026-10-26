@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Phân khách kênh chung → đại lý theo dự án và tải → Sale, SLA và lịch sử; giữ Sale kênh cá nhân, kiểm tra quyền liên sàn.
+- [x] Phân khách kênh chung → đại lý theo dự án/tải chờ + 30 ngày → Sale được cấp quyền; SLA từ lúc khách vào, chuyển Sale không gia hạn, ghi nhận liên hệ và lịch sử. Kiểm tra biểu mẫu hai khách chia hai đại lý, quyền Sale riêng, đọc lại phản hồi hai sàn; 20 kiểm thử đạt, dữ liệu thử đã xoá. SLA hiển thị trong Phân khách & SLA; chưa có push nhắc SLA liên đại lý hoặc chat xuyên sàn.
 
 - [x] Đại lý & phân phối: hồ sơ, xác nhận liên kết sàn đối tác, quyền nhóm/Sale, cấp và thu hồi từng căn theo dự án; luồng hai sàn và Sale chỉ có quyền đại lý đã kiểm tra, 19 kiểm thử đạt; dữ liệu thử đã xoá. Chưa bao gồm booking, phân lead hoặc hoa hồng liên đại lý.
 
