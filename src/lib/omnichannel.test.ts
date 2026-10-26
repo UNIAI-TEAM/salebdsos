@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccessConversation, messengerWindowOpen, replyChannel, visibleVisitorChannel } from "./omnichannel";
+import { canAccessConversation, messengerWindowOpen, replyChannel, visibleVisitorChannel, uniqueChannelIdentity } from "./omnichannel";
 describe("two-way inbox rules", () => {
   it("replies through Messenger rather than web chat", () => expect(replyChannel("messenger")).toBe("messenger"));
   it("replies through Zalo", () => expect(replyChannel("zalo")).toBe("zalo"));
@@ -9,4 +9,7 @@ describe("two-way inbox rules", () => {
   it("blocks Messenger without inbound history", () => expect(messengerWindowOpen(null)).toBe(false));
   it("Sale cannot access another Sale's conversation", () => expect(canAccessConversation(["agent"], "other", "sale")).toBe(false));
   it("Sale cannot send unassigned conversations", () => expect(canAccessConversation(["agent"], null, "sale")).toBe(false));
+  it("never resolves a user from another OA", () => expect(uniqueChannelIdentity([{ account_id: "old-oa", external_user_id: "person" }], "new-oa")).toBeNull());
+  it("blocks multiple users on one customer profile", () => expect(uniqueChannelIdentity([{ account_id: "oa", external_user_id: "one" }, { account_id: "oa", external_user_id: "two" }], "oa")).toBeNull());
+  it("resolves exactly one scoped user", () => expect(uniqueChannelIdentity([{ account_id: "oa", external_user_id: "one" }], "oa")?.external_user_id).toBe("one"));
 });

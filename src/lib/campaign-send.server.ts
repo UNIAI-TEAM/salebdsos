@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { parseSegment, matchLead, reachable, renderTemplate, type Segment } from "@/lib/segments";
 import { loadChannelSettings, sendSmsMessage, sendEmailMessage, sendZaloMessage } from "@/lib/channels.server";
 import { sendPushToUser } from "@/lib/push.server";
+import { uniqueChannelIdentity, INBOX_COPY } from "./omnichannel";
 
 const BATCH = 200;
 
@@ -53,10 +54,11 @@ export async function sendCampaign(campaignId: string, origin: string | null) {
         const r = await sendEmailMessage({ settings, to: l.email, subject: tpl.subject || c.name, text, origin });
         status = r.status; error = r.error ?? null;
       } else if (c.channel === "zalo") {
-        const { data: conv } = await supabaseAdmin.from("conversations").select("contact_zalo_id")
-          .eq("tenant_id", c.tenant_id).eq("lead_id", l.id).not("contact_zalo_id", "is", null).limit(1).maybeSingle();
-        if (!conv?.contact_zalo_id) { status = "failed"; error = "Khách chưa quan tâm Zalo OA"; }
-        else { const r = await sendZaloMessage({ tenantId: c.tenant_id, zaloUserId: conv.contact_zalo_id, text }); status = r.status; error = r.error ?? null; }
+        const { data: identities } = await supabaseAdmin.from("channel_identities").select("account_id,external_user_id")
+          .eq("tenant_id", c.tenant_id).eq("lead_id", l.id).eq("channel", "zalo").eq("account_id", settings.zalo.oaId).limit(2);
+        const identity = uniqueChannelIdentity(identities ?? [], settings.zalo.oaId);
+        if (!identity) { status = "failed"; error = INBOX_COPY.identityMissing; }
+        else { const r = await sendZaloMessage({ tenantId: c.tenant_id, zaloUserId: identity.external_user_id, text }); status = r.status; error = r.error ?? null; }
       } else {
         await sendPushToUser({ userId: l.owner_user_id, title: c.name, body: `${l.full_name ?? "Khách"}: ${text}`, link: "/leads" });
       }
