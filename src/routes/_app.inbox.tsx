@@ -46,7 +46,7 @@ import {
   type ChannelSettings,
 } from "@/lib/channels";
 import { ChatConnections } from "@/components/app/chat-connections";
-import { INBOX_COPY as t, replyChannel, messengerWindowOpen } from "@/lib/omnichannel";
+import { INBOX_COPY as t, replyChannel, messengerWindowOpen, PENDING_INBOX_CHANNELS } from "@/lib/omnichannel";
 import { inboxLeadChoices, linkConversationLead } from "@/lib/omnichannel.functions";
 import { Link } from "@tanstack/react-router";
 import { expandShortcut } from "@/lib/social";
@@ -294,6 +294,7 @@ function InboxPage() {
 
       <div className="flex flex-wrap gap-1.5" aria-label={t.channelStatus}>
         {channelsQuery.data?.connections.map(c => <Badge className="max-w-full whitespace-normal rounded-md px-2 py-1 text-left leading-relaxed" key={c.channel} variant={c.configured && c.enabled && c.verified ? "default" : "outline"}>{CHANNEL_LABEL[c.channel]} · {!c.configured ? t.disconnected : !c.enabled ? t.disabled : c.verified ? t.connected : t.configured} · {c.channel === "sms" || c.channel === "email" ? t.outboundOnly : t.twoWay}</Badge>)}
+        {PENDING_INBOX_CHANNELS.map(c => <Badge key={c.channel} title={c.reason} variant="outline" className="max-w-full whitespace-normal rounded-md px-2 py-1 text-left leading-relaxed">{c.label} · {t.disconnected} · {t.notActivated}</Badge>)}
       </div>
       <div className="grid gap-3 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
         <SectionCard compact title="Hội thoại">
