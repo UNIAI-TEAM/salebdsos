@@ -3,13 +3,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Bot, GripVertical, Plus, RotateCcw, Save, Send, Trash2, UserRound } from "lucide-react";
+import { Bot, Film, GripVertical, ImagePlus, Plus, RotateCcw, Save, Send, Trash2, UserRound } from "lucide-react";
 import { DndContext, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import { getChatFlows, saveChatFlows } from "@/lib/chat-flows.functions";
-import { flowSchema, stepBot, templateFlow, uid, type BotState, type ChatButton, type ChatFlow, type ChatNode } from "@/lib/chat-flows";
+import { flowSchema, stepBot, templateFlow, uid, type BotState, type ChatButton, type ChatFlow, type ChatMedia, type ChatNode } from "@/lib/chat-flows";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -92,7 +93,7 @@ function ChatFlowsPage() {
               ))}
             </div>
           </SectionCard>
-          {flow ? <FlowEditor key={flow.id} flow={flow} canEdit={canEdit} onChange={update} onDelete={() => { setFlows((a) => a.filter((f) => f.id !== flow.id)); setActiveId(null); }} /> : <div />}
+          {flow ? <FlowEditor key={flow.id} tenantId={tenantId!} flow={flow} canEdit={canEdit} onChange={update} onDelete={() => { setFlows((a) => a.filter((f) => f.id !== flow.id)); setActiveId(null); }} /> : <div />}
           {flow ? <Simulator flow={flow} /> : <div />}
         </div>
       )}
@@ -100,7 +101,7 @@ function ChatFlowsPage() {
   );
 }
 
-function FlowEditor({ flow, canEdit, onChange, onDelete }: { flow: ChatFlow; canEdit: boolean; onChange: (p: (f: ChatFlow) => ChatFlow) => void; onDelete: () => void }) {
+function FlowEditor({ tenantId, flow, canEdit, onChange, onDelete }: { tenantId: string; flow: ChatFlow; canEdit: boolean; onChange: (p: (f: ChatFlow) => ChatFlow) => void; onDelete: () => void }) {
   const order = useMemo(() => {
     const seen: string[] = [];
     const walk = (id: string | null) => {
@@ -164,6 +165,7 @@ function FlowEditor({ flow, canEdit, onChange, onDelete }: { flow: ChatFlow; can
             </div>
             <fieldset disabled={!canEdit} className="space-y-3">
               <div className="space-y-1.5"><Label htmlFor={`t-${id}`}>Bot trả lời</Label><Textarea id={`t-${id}`} rows={2} value={node.text} onChange={(e) => setNode(id, (n) => ({ ...n, text: e.target.value }))} /><p className="text-xs text-muted-foreground">Dùng {"{name}"}, {"{project}"} để chèn tên khách và dự án.</p></div>
+              <MediaEditor tenantId={tenantId} media={node.media ?? []} canEdit={canEdit} onChange={(media) => setNode(id, (n) => ({ ...n, media }))} />
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-1.5"><Label htmlFor={`g-${id}`}>Gắn nhãn hội thoại</Label><Input id={`g-${id}`} value={node.tag} onChange={(e) => setNode(id, (n) => ({ ...n, tag: e.target.value }))} placeholder="VD: Hẹn xem nhà mẫu" /></div>
                 <div className="flex items-center gap-2 pt-6"><Switch id={`h-${id}`} checked={node.handoff} onCheckedChange={(v) => setNode(id, (n) => ({ ...n, handoff: v }))} /><Label htmlFor={`h-${id}`}>Dừng bot, báo Sale tiếp nhận</Label></div>
@@ -176,6 +178,62 @@ function FlowEditor({ flow, canEdit, onChange, onDelete }: { flow: ChatFlow; can
         );
       })}
       {canEdit && <Button variant="outline" className="text-destructive" onClick={onDelete}><Trash2 className="h-4 w-4" />Xóa kịch bản</Button>}
+    </div>
+  );
+}
+
+const MAX_MEDIA_MB = 25;
+
+function MediaEditor({ tenantId, media, canEdit, onChange }: { tenantId: string; media: ChatMedia[]; canEdit: boolean; onChange: (m: ChatMedia[]) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [link, setLink] = useState("");
+  const upload = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setBusy(true);
+    try {
+      const next = [...media];
+      for (const file of Array.from(files).slice(0, 4 - media.length)) {
+        const type = file.type.startsWith("video/") ? "video" : file.type.startsWith("image/") ? "image" : null;
+        if (!type) { toast.error(`${file.name}: chỉ nhận ảnh hoặc video`); continue; }
+        if (file.size > MAX_MEDIA_MB * 1024 * 1024) { toast.error(`${file.name}: tối đa ${MAX_MEDIA_MB}MB`); continue; }
+        const ext = file.name.split(".").pop() ?? "bin";
+        const path = `${tenantId}/chat-flows/${Date.now()}-${uid()}.${ext}`;
+        const { error } = await supabase.storage.from("project-assets").upload(path, file, { contentType: file.type });
+        if (error) { toast.error(`Không tải lên được ${file.name}`); continue; }
+        next.push({ type, url: supabase.storage.from("project-assets").getPublicUrl(path).data.publicUrl, caption: "" });
+      }
+      onChange(next);
+    } finally { setBusy(false); }
+  };
+  const addLink = () => {
+    const url = link.trim();
+    if (!url.startsWith("https://")) { toast.error("Đường dẫn phải bắt đầu bằng https://"); return; }
+    onChange([...media, { type: /\.(mp4|webm|mov)(\?|$)/i.test(url) ? "video" : "image", url, caption: "" }]);
+    setLink("");
+  };
+  return (
+    <div className="space-y-2">
+      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Ảnh / video gửi kèm (tối đa 4)</div>
+      {media.length > 0 && (
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {media.map((m, i) => (
+            <div key={m.url + i} className="space-y-1 rounded-lg border border-border p-1.5">
+              {m.type === "video" ? <video src={m.url} className="aspect-video w-full rounded-md bg-muted object-cover" muted preload="metadata" /> : <img src={m.url} alt={m.caption || "Ảnh dự án"} className="aspect-video w-full rounded-md object-cover" />}
+              <Input aria-label="Chú thích" className="h-8 text-xs" value={m.caption} placeholder="Chú thích…" onChange={(e) => onChange(media.map((x, j) => (j === i ? { ...x, caption: e.target.value } : x)))} />
+              {canEdit && <Button variant="ghost" size="sm" className="w-full" onClick={() => onChange(media.filter((_, j) => j !== i))}><Trash2 className="h-3.5 w-3.5" />Gỡ</Button>}
+            </div>
+          ))}
+        </div>
+      )}
+      {canEdit && media.length < 4 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline" size="sm" disabled={busy}>
+            <label className="cursor-pointer"><ImagePlus className="h-4 w-4" />{busy ? "Đang tải lên…" : "Tải ảnh/video"}<input type="file" accept="image/*,video/mp4,video/webm,video/quicktime" multiple className="sr-only" onChange={(e) => { upload(e.target.files); e.target.value = ""; }} /></label>
+          </Button>
+          <Input aria-label="Dán đường dẫn ảnh/video" className="h-9 min-w-[180px] flex-1" value={link} onChange={(e) => setLink(e.target.value)} placeholder="Hoặc dán link https://…mp4 / .jpg" />
+          <Button variant="outline" size="sm" onClick={addLink}><Film className="h-4 w-4" />Thêm link</Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -226,7 +284,7 @@ function SortableButton({ id, disabled, children }: { id: string; disabled: bool
   );
 }
 
-type SimMsg = { from: "in" | "bot" | "system"; text: string };
+type SimMsg = { from: "in" | "bot" | "system"; text: string; media?: ChatMedia };
 
 function Simulator({ flow }: { flow: ChatFlow }) {
   const [msgs, setMsgs] = useState<SimMsg[]>([]);
@@ -240,6 +298,7 @@ function Simulator({ flow }: { flow: ChatFlow }) {
     const next: SimMsg[] = [...msgs, { from: "in", text: t }];
     if (done) { setMsgs([...next, { from: "system", text: "Bot đã dừng — Sale đang tiếp nhận." }]); return; }
     const r = stepBot([live], state, t, msgs.filter((m) => m.from === "in").length === 0, { name: "anh Nam", project: "Aurora Green Bay" });
+    r.media.forEach((m) => next.push({ from: "bot", text: m.caption, media: m }));
     if (r.reply) next.push({ from: "bot", text: r.reply });
     if (r.tag) next.push({ from: "system", text: `Gắn nhãn: ${r.tag}` });
     if (r.handoff) next.push({ from: "system", text: "Chuyển chuyên viên · Sale nhận thông báo" });
@@ -255,7 +314,7 @@ function Simulator({ flow }: { flow: ChatFlow }) {
           {msgs.map((m, i) => m.from === "system" ? (
             <div key={i} className="text-center text-xs text-muted-foreground">{m.text}</div>
           ) : (
-            <div key={i} className={`max-w-[85%] whitespace-pre-wrap rounded-xl px-3 py-2 text-sm ${m.from === "in" ? "ml-auto bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>{m.text}</div>
+            <div key={i} className={`max-w-[85%] whitespace-pre-wrap rounded-xl px-3 py-2 text-sm ${m.from === "in" ? "ml-auto bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>{m.media ? (m.media.type === "video" ? <video src={m.media.url} controls playsInline className="mb-1 w-full rounded-lg" /> : <img src={m.media.url} alt={m.text || "Ảnh dự án"} className="mb-1 w-full rounded-lg object-cover" />) : null}{m.text}</div>
           ))}
         </div>
         {node && !done && (
