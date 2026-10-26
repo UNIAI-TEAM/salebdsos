@@ -81,6 +81,7 @@ export const Route = createFileRoute("/api/public/lead-forms/$slug")({
             source: "Landing Page",
             status: "new",
             meta: {
+              shared_agency_routing: assignment.agencyRouting ?? false,
               lead_form_id: form.id,
               lead_form_slug: params.slug,
               auto_assigned: assignment.autoAssigned,

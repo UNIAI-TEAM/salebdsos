@@ -101,7 +101,7 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
           const { data: lead, error: leadError } = await supabaseAdmin.from("leads").insert({
             tenant_id: page.tenant_id, project_id: page.project_id, owner_user_id: assignment.ownerUserId,
             full_name: name ?? "Khách chat trên landing", phone, source: "web_chat", status: "new",
-            meta: { sales_page_id: page.id, sla_minutes: assignment.slaMinutes, sla_due_at: assignment.slaDueAt, auto_assigned: assignment.autoAssigned },
+            meta: { shared_agency_routing: assignment.agencyRouting ?? false, sales_page_id: page.id, sla_minutes: assignment.slaMinutes, sla_due_at: assignment.slaDueAt, auto_assigned: assignment.autoAssigned },
           }).select("id").single();
           if (leadError || !lead) return json({ error: "Không lưu được khách chat." }, 500);
           const { data: created, error } = await supabaseAdmin

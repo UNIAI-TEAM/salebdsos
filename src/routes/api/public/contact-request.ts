@@ -107,6 +107,7 @@ export const Route = createFileRoute("/api/public/contact-request")({
             source: kind === "card" ? "digital_card" : "landing",
             status: "new",
             meta: {
+              shared_agency_routing: assignment.agencyRouting ?? false,
               preferred_channel: channel,
               auto_assigned: assignment.autoAssigned,
               sla_minutes: assignment.slaMinutes,
