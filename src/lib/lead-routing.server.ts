@@ -1,16 +1,17 @@
 // Phân phối lead tự động theo dự án (chạy trong các route công khai nhận lead)
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { LEAD_ROUTING_KEY, parseLeadRouting, type LeadRoutingConfig } from "@/lib/lead-routing";
+import { LEAD_ROUTING_KEY, parseLeadRouting, routingPool, leastLoadedOwner, type LeadRoutingConfig } from "@/lib/lead-routing";
 
 const SALE_ROLES = new Set(["owner", "admin", "manager", "agent"]);
 
 export async function loadLeadRouting(tenantId: string): Promise<LeadRoutingConfig> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("settings")
     .select("value")
     .eq("tenant_id", tenantId)
     .eq("key", LEAD_ROUTING_KEY)
     .maybeSingle();
+  if (error) throw new Error("Không đọc được cấu hình phân phối khách");
   return parseLeadRouting(data?.value);
 }
 
@@ -32,31 +33,27 @@ export async function assignLeadOwner(input: {
 }): Promise<LeadAssignment> {
   const config = await loadLeadRouting(input.tenantId);
   const slaMinutes = config.slaMinutes;
-  const slaDueAt = config.enabled
-    ? new Date(Date.now() + slaMinutes * 60_000).toISOString()
-    : null;
+  const slaDueAt = new Date(Date.now() + slaMinutes * 60_000).toISOString();
 
   if (input.currentOwnerId) {
     return { ownerUserId: input.currentOwnerId, slaMinutes, slaDueAt, autoAssigned: false };
   }
   if (!config.enabled) {
-    return { ownerUserId: null, slaMinutes, slaDueAt: null, autoAssigned: false };
+    return { ownerUserId: null, slaMinutes, slaDueAt, autoAssigned: false };
   }
 
-  const rule = input.projectId
-    ? config.projectRules.find((item) => item.projectId === input.projectId)
-    : undefined;
-  const pool = (rule?.userIds.length ? rule.userIds : config.fallbackUserIds).filter(Boolean);
+  const pool = routingPool(config, input.projectId).filter(Boolean);
   if (!pool.length) {
     return { ownerUserId: null, slaMinutes, slaDueAt, autoAssigned: false };
   }
 
   // Chỉ nhận thành viên còn vai Sale trong workspace
-  const { data: roleRows } = await supabaseAdmin
+  const { data: roleRows, error: roleError } = await supabaseAdmin
     .from("user_roles")
     .select("user_id,role")
     .eq("tenant_id", input.tenantId)
     .in("user_id", pool);
+  if (roleError) throw new Error("Không xác minh được nhóm Sale");
   const eligible = pool.filter((id) =>
     (roleRows ?? []).some((row) => row.user_id === id && SALE_ROLES.has(row.role)),
   );
@@ -65,26 +62,16 @@ export async function assignLeadOwner(input: {
   }
 
   const since = new Date(Date.now() - 30 * 86400_000).toISOString();
-  let query = supabaseAdmin
-    .from("leads")
-    .select("owner_user_id")
-    .eq("tenant_id", input.tenantId)
-    .in("owner_user_id", eligible)
-    .is("deleted_at", null)
-    .gte("created_at", since);
-  if (input.projectId) query = query.eq("project_id", input.projectId);
-  const { data: recent } = await query;
-
-  const load = new Map<string, number>(eligible.map((id) => [id, 0]));
-  for (const row of recent ?? []) {
-    if (row.owner_user_id && load.has(row.owner_user_id)) {
-      load.set(row.owner_user_id, (load.get(row.owner_user_id) ?? 0) + 1);
-    }
-  }
-  let ownerUserId = eligible[0]!;
-  for (const id of eligible) {
-    if ((load.get(id) ?? 0) < (load.get(ownerUserId) ?? 0)) ownerUserId = id;
-  }
+  // Exact counts across all projects: never let a 1,000-row response cap skew load.
+  const counts = await Promise.all(eligible.map(async (id) => {
+    const { count, error } = await supabaseAdmin.from("leads")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", input.tenantId).eq("owner_user_id", id)
+      .is("deleted_at", null).gte("created_at", since);
+    if (error) throw new Error("Không tính được tải khách của Sale");
+    return [id, count ?? 0] as const;
+  }));
+  const ownerUserId = leastLoadedOwner(eligible, new Map(counts));
 
   return { ownerUserId, slaMinutes, slaDueAt, autoAssigned: true };
 }

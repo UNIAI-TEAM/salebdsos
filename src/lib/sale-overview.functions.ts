@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { TOUCH_LABEL } from "@/lib/journey.functions";
-import { LEAD_ROUTING_KEY, parseLeadRouting, WORKING_LEAD_STATUSES } from "@/lib/lead-routing";
+import { LEAD_ROUTING_KEY, parseLeadRouting, WORKING_LEAD_STATUSES, leadSlaDeadline } from "@/lib/lead-routing";
 
 const MANAGER_ROLES = new Set(["owner", "admin", "manager", "platform_admin"]);
 const SALE_ROLES = new Set(["owner", "admin", "manager", "agent"]);
@@ -210,7 +210,6 @@ export const getSaleOverview = createServerFn({ method: "GET" })
     const routing = parseLeadRouting(routingQ.data?.value);
     const workingStatuses = new Set<string>(WORKING_LEAD_STATUSES);
     const nowMs = now.getTime();
-    const slaMs = routing.slaMinutes * 60_000;
     const coldMs = routing.coldDays * 86400_000;
 
     const leadRef = (lead: typeof leads[number]) => ({
@@ -222,18 +221,20 @@ export const getSaleOverview = createServerFn({ method: "GET" })
     });
 
     const slaAlerts = activeLeads
-      .filter((lead) => lead.status === "new" && nowMs - new Date(lead.created_at).getTime() > slaMs)
-      .slice(0, 20)
+      .filter((lead) => {
+        const due = leadSlaDeadline(lead, routing.slaMinutes);
+        return lead.status === "new" && due !== null && nowMs > due;
+      })
       .map((lead) => ({
         ...leadRef(lead),
         at: lead.created_at,
-        overdueMinutes: Math.round((nowMs - new Date(lead.created_at).getTime() - slaMs) / 60_000),
+        overdueMinutes: Math.max(1, Math.floor((nowMs - (leadSlaDeadline(lead, routing.slaMinutes) ?? nowMs)) / 60_000)),
       }))
-      .sort((a, b) => b.overdueMinutes - a.overdueMinutes);
+      .sort((a, b) => b.overdueMinutes - a.overdueMinutes).slice(0, 20);
 
     const slaDueSoon = activeLeads.filter((lead) => {
-      const age = nowMs - new Date(lead.created_at).getTime();
-      return lead.status === "new" && age <= slaMs;
+      const due = leadSlaDeadline(lead, routing.slaMinutes);
+      return lead.status === "new" && due !== null && nowMs <= due;
     }).length;
 
     const coldLeads = activeLeads
