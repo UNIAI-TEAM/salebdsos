@@ -24,6 +24,9 @@ export async function runChatBot(args: { tenantId: string; conversationId: strin
   const step = stepBot(flows, state, args.text, (count ?? 0) <= 1, args.vars ?? {});
   if (step.reason === "idle") return { replied: false };
 
+  for (const m of step.media) {
+    await appendMessage({ tenantId: args.tenantId, conversationId: args.conversationId, channel: args.channel, direction: "out", body: m.caption || null, attachmentUrl: m.url, senderName: "Trợ lý tự động", deliveryStatus: "sent", meta: { bot: true, media_type: m.type } });
+  }
   if (step.reply) {
     await appendMessage({ tenantId: args.tenantId, conversationId: args.conversationId, channel: args.channel, direction: "out", body: step.reply, senderName: "Trợ lý tự động", deliveryStatus: "sent", meta: { bot: true, flow_id: step.state?.flowId ?? state?.flowId ?? null } });
   }

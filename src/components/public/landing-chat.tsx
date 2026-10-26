@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Send, X } from "lucide-react";
 
-type ChatMessage = { id: string; direction: "in" | "out"; body: string | null; sender_name: string | null; created_at: string };
+type ChatMessage = { id: string; direction: "in" | "out"; body: string | null; sender_name: string | null; created_at: string; attachment_url?: string | null; media_type?: string | null };
 
 const VISITOR_STORAGE_KEY = "salebds-chat-visitor";
 
@@ -143,7 +143,14 @@ export function LandingChat({
                   {message.direction === "out" && message.sender_name ? (
                     <p className="mb-0.5 text-[10px] font-semibold uppercase opacity-70">{message.sender_name}</p>
                   ) : null}
-                  {message.body}
+                  {message.attachment_url?.startsWith("https://") ? (
+                    message.media_type === "video" ? (
+                      <video src={message.attachment_url} controls playsInline preload="metadata" className="mb-1 w-full rounded-lg" />
+                    ) : (
+                      <img src={message.attachment_url} alt={message.body || "Hình ảnh dự án"} loading="lazy" className="mb-1 w-full rounded-lg object-cover" />
+                    )
+                  ) : null}
+                  {message.body ? <span className="whitespace-pre-wrap">{message.body}</span> : null}
                 </div>
               ))
             )}

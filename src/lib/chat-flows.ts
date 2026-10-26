@@ -13,8 +13,14 @@ export const buttonSchema = z.object({
   keywords: z.array(z.string().trim().min(1).max(40)).max(10).default([]),
   next: id.nullable().default(null),
 });
+export const mediaSchema = z.object({
+  type: z.enum(["image", "video"]),
+  url: z.string().trim().url().max(1000).refine((u) => u.startsWith("https://"), "Đường dẫn phải bắt đầu bằng https://"),
+  caption: z.string().trim().max(120).default(""),
+});
 export const nodeSchema = z.object({
   id,
+  media: z.array(mediaSchema).max(4).default([]),
   text: z.string().trim().min(1).max(800),
   buttons: z.array(buttonSchema).max(6).default([]),
   tag: z.string().trim().max(30).default(""),
@@ -38,6 +44,7 @@ export const flowSchema = z.object({
 });
 export const chatFlowsSchema = z.object({ flows: z.array(flowSchema).max(30).default([]) });
 
+export type ChatMedia = z.infer<typeof mediaSchema>;
 export type ChatButton = z.infer<typeof buttonSchema>;
 export type ChatNode = z.infer<typeof nodeSchema>;
 export type ChatFlow = z.infer<typeof flowSchema>;
@@ -83,6 +90,7 @@ export function renderNode(node: ChatNode, vars: Record<string, string>) {
 export type BotState = { flowId: string; nodeId: string } | null;
 export type BotStep = {
   reply: string | null;
+  media: ChatMedia[];
   state: BotState;
   handoff: boolean;
   tag: string | null;
@@ -91,12 +99,13 @@ export type BotStep = {
 
 /** Một lượt bot: từ trạng thái hiện tại + tin khách → tin trả lời, trạng thái mới, có chuyển Sale không. */
 export function stepBot(flows: ChatFlow[], state: BotState, text: string, isFirstMessage: boolean, vars: Record<string, string> = {}): BotStep {
-  const idle: BotStep = { reply: null, state: null, handoff: false, tag: null, reason: "idle" };
+  const idle: BotStep = { reply: null, media: [], state: null, handoff: false, tag: null, reason: "idle" };
   const enter = (flow: ChatFlow, nodeId: string, reason: BotStep["reason"]): BotStep => {
     const node = flow.nodes.find((n) => n.id === nodeId)!;
     const end = node.handoff || node.buttons.length === 0;
     return {
       reply: renderNode(node, vars),
+      media: node.media ?? [],
       state: end ? null : { flowId: flow.id, nodeId },
       handoff: node.handoff,
       tag: node.tag || null,
@@ -106,10 +115,10 @@ export function stepBot(flows: ChatFlow[], state: BotState, text: string, isFirs
   const current = state ? flows.find((f) => f.id === state.flowId && f.enabled) : null;
   const node = current?.nodes.find((n) => n.id === state!.nodeId);
   if (current && node) {
-    if (wantsHuman(text)) return { reply: "Dạ, em chuyển anh/chị sang chuyên viên tư vấn ngay ạ.", state: null, handoff: true, tag: null, reason: "handoff_request" };
+    if (wantsHuman(text)) return { media: [], reply: "Dạ, em chuyển anh/chị sang chuyên viên tư vấn ngay ạ.", state: null, handoff: true, tag: null, reason: "handoff_request" };
     const b = matchButton(node, text);
-    if (!b) return { reply: "Dạ, chuyên viên tư vấn sẽ phản hồi anh/chị trong ít phút nữa ạ.", state: null, handoff: true, tag: null, reason: "no_match" };
-    if (!b.next) return { reply: null, state: null, handoff: true, tag: null, reason: "handoff_node" };
+    if (!b) return { media: [], reply: "Dạ, chuyên viên tư vấn sẽ phản hồi anh/chị trong ít phút nữa ạ.", state: null, handoff: true, tag: null, reason: "no_match" };
+    if (!b.next) return { reply: null, media: [], state: null, handoff: true, tag: null, reason: "handoff_node" };
     return enter(current, b.next, "next");
   }
   const flow = pickFlow(flows, text, isFirstMessage);
@@ -122,20 +131,20 @@ export function templateFlow(): ChatFlow {
   return {
     id: uid(), name: "Tư vấn căn hộ", enabled: false, trigger: "first_message", keywords: [], startNodeId: "start",
     nodes: [
-      { id: "start", text: "Chào {name}! Em là trợ lý dự án {project}. Anh/chị quan tâm điều gì ạ?", tag: "", handoff: false, buttons: [
+      { id: "start", text: "Chào {name}! Em là trợ lý dự án {project}. Anh/chị quan tâm điều gì ạ?", media: [], tag: "", handoff: false, buttons: [
         { id: "b1", label: "Xem bảng giá", keywords: ["gia", "bang gia"], next: "price" },
         { id: "b2", label: "Mặt bằng căn hộ", keywords: ["mat bang", "2pn", "3pn"], next: "layout" },
         { id: "b3", label: "Hẹn xem nhà mẫu", keywords: ["hen", "xem nha"], next: "visit" },
       ] },
-      { id: "price", text: "Bảng giá mới nhất từ ... tỷ/căn. Anh/chị muốn nhận bảng tính dòng tiền không?", tag: "Đang khảo sát", handoff: false, buttons: [
+      { id: "price", text: "Bảng giá mới nhất từ ... tỷ/căn. Anh/chị muốn nhận bảng tính dòng tiền không?", media: [], tag: "Đang khảo sát", handoff: false, buttons: [
         { id: "b4", label: "Có, gửi giúp em", keywords: ["co", "ok"], next: "handoff" },
         { id: "b5", label: "Hẹn xem nhà mẫu", keywords: ["hen"], next: "visit" },
       ] },
-      { id: "layout", text: "Dự án có căn 1PN, 2PN, 3PN. Anh/chị cần loại nào để em gửi mặt bằng chi tiết?", tag: "Đang khảo sát", handoff: false, buttons: [
+      { id: "layout", text: "Dự án có căn 1PN, 2PN, 3PN. Anh/chị cần loại nào để em gửi mặt bằng chi tiết?", media: [], tag: "Đang khảo sát", handoff: false, buttons: [
         { id: "b6", label: "Gặp chuyên viên", keywords: [], next: "handoff" },
       ] },
-      { id: "visit", text: "Dạ, chuyên viên sẽ gọi để chốt giờ xem nhà mẫu với anh/chị ngay ạ.", tag: "Hẹn xem nhà mẫu", handoff: true, buttons: [] },
-      { id: "handoff", text: "Dạ, chuyên viên tư vấn sẽ liên hệ anh/chị trong ít phút nữa ạ.", tag: "", handoff: true, buttons: [] },
+      { id: "visit", text: "Dạ, chuyên viên sẽ gọi để chốt giờ xem nhà mẫu với anh/chị ngay ạ.", media: [], tag: "Hẹn xem nhà mẫu", handoff: true, buttons: [] },
+      { id: "handoff", text: "Dạ, chuyên viên tư vấn sẽ liên hệ anh/chị trong ít phút nữa ạ.", media: [], tag: "", handoff: true, buttons: [] },
     ],
   };
 }
