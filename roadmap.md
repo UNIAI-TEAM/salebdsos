@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Push khách đại lý: nối hàng đợi giao khách/bàn giao và nhắc trước SLA, hủy khi phản hồi hoặc mất quyền; kiểm tra tenant đích, lịch và quyền.
+- [x] Push khách đại lý: hàng đợi riêng theo referral dùng chung lịch; giao khách/bàn giao, nhắc trước SLA 5 phút, hủy khi phản hồi, kiểm tra quyền đích trước gửi. 18 kiểm thử đạt, thử khách trong sàn riêng và xác nhận thao tác Đã liên hệ hủy nhắc; chưa xác minh thông báo trên điện thoại vì 0 thiết bị, cần xuất bản bản mới và bật thông báo.
 
 - [x] Rà soát quyền hồ sơ/giỏ hàng đại lý: chặn đọc cấp căn hết hạn/thu hồi trực tiếp, khóa bảng lịch sử/quyền/hồ sơ chuyển tiếp thô, ẩn lý do và danh tính đại lý khác và ID nhóm nội bộ. 16 kiểm thử đạt, kiểm tra quản trị/Sale, thu hồi quyền và tạm dừng; không đọc CRM sàn tổng, dữ liệu thử đã dọn.
 
