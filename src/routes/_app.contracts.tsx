@@ -74,7 +74,7 @@ const STATUS_TONE: Record<string, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 };
 
-type InstallmentDraft = { name: string; percent: string; amount: string; due_date: string };
+type InstallmentDraft = { id?: string; expected_updated_at?: string; name: string; percent: string; amount: string; due_date: string };
 type CommissionDraft = { beneficiary_user_id: string; role_label: string; percent: string; amount: string };
 
 function Kpi({ icon: Icon, label, value }: { icon: typeof Wallet; label: string; value: string }) {
@@ -184,6 +184,8 @@ function ContractsPage() {
   const insRows: InstallmentDraft[] =
     insDraft ??
     (selected?.installments ?? []).map((row: any) => ({
+      id: row.id,
+      expected_updated_at: row.updated_at,
       name: row.name,
       percent: row.percent == null ? "" : String(row.percent),
       amount: String(Number(row.amount ?? 0)),
@@ -522,7 +524,7 @@ function ContractsPage() {
 
                 <div className="space-y-2">
                   {insRows.map((row, index) => {
-                    const stored = selected.installments[index];
+                    const stored = selected.installments.find((item: any) => item.id === row.id);
                     return (
                       <div key={index} className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-[1fr_90px_140px_150px_auto]">
                         <Input
@@ -603,6 +605,8 @@ function ContractsPage() {
                         data: {
                           contractId: selected.id,
                           rows: insRows.map((row) => ({
+                            id: row.id,
+                            expected_updated_at: row.expected_updated_at,
                             name: row.name,
                             percent: row.percent === "" ? null : Number(row.percent),
                             amount: Number(row.amount || 0),

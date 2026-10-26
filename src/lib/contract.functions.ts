@@ -133,7 +133,7 @@ export const listContracts = createServerFn({ method: "GET" })
       const [insQ, comQ] = await Promise.all([
         supabase
           .from("contract_installments")
-          .select("id,contract_id,name,position,percent,amount,due_date,paid_amount,paid_at,status,note")
+          .select("id,contract_id,name,position,percent,amount,due_date,paid_amount,paid_at,status,note,updated_at")
           .in("contract_id", ids)
           .order("position"),
         supabase
@@ -516,6 +516,8 @@ export const setInstallments = createServerFn({ method: "POST" })
         rows: z
           .array(
             z.object({
+              id: z.string().uuid().optional(),
+              expected_updated_at: z.string().optional(),
               name: z.string().trim().min(1).max(120),
               percent: z.number().min(0).max(100).nullable().optional(),
               amount: z.number().nonnegative().default(0),
@@ -527,38 +529,13 @@ export const setInstallments = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { contract } = await guard(context as Ctx, data.contractId, true);
-    const { supabase } = context;
-    const { data: existing } = await supabase
-      .from("contract_installments")
-      .select("id,name,paid_amount,paid_at,status")
-      .eq("contract_id", data.contractId);
-    const paidByName = new Map(
-      (existing ?? []).filter((r: any) => r.status === "paid" || Number(r.paid_amount ?? 0) > 0).map((r: any) => [r.name, r]),
-    );
-
-    await supabase.from("contract_installments").delete().eq("contract_id", data.contractId);
-    if (data.rows.length) {
-      const { error } = await supabase.from("contract_installments").insert(
-        data.rows.map((row, index) => {
-          const prior = paidByName.get(row.name);
-          return {
-            tenant_id: contract.tenant_id,
-            contract_id: data.contractId,
-            name: row.name,
-            position: index,
-            percent: row.percent ?? null,
-            amount: row.amount,
-            due_date: row.due_date || null,
-            paid_amount: prior ? Number(prior.paid_amount ?? 0) : 0,
-            paid_at: prior?.paid_at ?? null,
-            status: prior?.status === "paid" ? "paid" : "pending",
-          };
-        }),
-      );
-      if (error) throw new Error(error.message);
-    }
-    return { ok: true, count: data.rows.length };
+    await guard(context as Ctx, data.contractId, true);
+    const { data: count, error } = await context.supabase.rpc("save_contract_installments", {
+      p_contract: data.contractId,
+      p_rows: data.rows,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, count };
   });
 
 export const updateInstallmentDueDate = createServerFn({ method: "POST" })

@@ -10,7 +10,7 @@ import {
 } from "@/lib/property-types";
 
 const SELECT =
-  "id,tenant_id,project_id,product_type,sku,code,name,zone,floor,area,usable_area,bedrooms,bathrooms,direction,legal_status,price,currency,unit,status,listing_status,hold_expires_at,deal_id,is_public,description,image_url,attributes,created_at,updated_at";
+  "id,tenant_id,project_id,product_type,sku,code,name,zone,floor,area,usable_area,bedrooms,bathrooms,direction,legal_status,price,currency,unit,status,listing_status,hold_expires_at,hold_owner_user_id,deal_id,is_public,description,image_url,attributes,created_at,updated_at";
 
 const KindEnum = z.enum(PROPERTY_KINDS);
 const ListingEnum = z.enum(LISTING_STATUSES);
@@ -174,10 +174,10 @@ export const createInventoryItem = createServerFn({ method: "POST" })
 export const updateInventoryItem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ id: z.string().uuid() }).and(ItemInput.partial()).parse(d),
+    z.object({ id: z.string().uuid(), expectedUpdatedAt: z.string() }).and(ItemInput.partial()).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { id, ...patch } = data;
+    const { id, expectedUpdatedAt, ...patch } = data;
     const body: Record<string, unknown> = { ...patch };
     if (patch.name !== undefined || patch.code !== undefined || patch.zone !== undefined) {
       body["name"] = displayName(patch as { name?: string | null });
@@ -187,6 +187,7 @@ export const updateInventoryItem = createServerFn({ method: "POST" })
       .from("products")
       .update(body as never)
       .eq("id", id)
+      .eq("updated_at", expectedUpdatedAt)
       .select(SELECT)
       .single();
     if (error) throw new Error(error.message);
@@ -208,6 +209,7 @@ export const changeListingStatus = createServerFn({ method: "POST" })
     z
       .object({
         id: z.string().uuid(),
+        expectedUpdatedAt: z.string(),
         listing_status: ListingEnum,
         note: z.string().trim().max(500).optional().nullable(),
         hold_expires_at: z.string().optional().nullable(),
@@ -215,36 +217,14 @@ export const changeListingStatus = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: row, error } = await supabase
-      .from("products")
-      .update({
-        listing_status: data.listing_status,
-        hold_expires_at:
-          data.listing_status === "reserved" || data.listing_status === "deposited"
-            ? data.hold_expires_at || null
-            : null,
-      })
-      .eq("id", data.id)
-      .select(SELECT)
-      .single();
+    const { data: row, error } = await context.supabase.rpc("change_product_listing_status", {
+      p_id: data.id,
+      p_status: data.listing_status,
+      p_expected: data.expectedUpdatedAt,
+      p_until: data.hold_expires_at || undefined,
+      p_note: data.note || undefined,
+    });
     if (error) throw new Error(error.message);
-
-    if (data.note) {
-      const { data: last } = await supabase
-        .from("product_status_history")
-        .select("id")
-        .eq("product_id", data.id)
-        .order("occurred_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (last?.id) {
-        await supabase
-          .from("product_status_history")
-          .update({ note: data.note })
-          .eq("id", last.id);
-      }
-    }
     return row;
   });
 
