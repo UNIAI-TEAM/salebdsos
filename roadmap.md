@@ -1,6 +1,8 @@
 # Roadmap
 
-- [ ] Đối chiếu và hoàn thiện giao khách cá nhân/kênh chung theo tải 30 ngày, SLA và thông báo Sale; kiểm thử các luồng liên quan.
+- [x] Đối chiếu giao khách: giữ Sale cá nhân, tải toàn sàn 30 ngày, nhóm dự án/dự phòng, SLA khi vào hệ thống, QR/chat theo dõi SLA, push Zalo/Messenger, khách cũ chưa có Sale được phân phối; 29 kiểm thử đạt và mở Tổng quan → Gán lại Sale thành công.
+- [ ] Hotline nhận khách mới: chờ nhà cung cấp tổng đài và định dạng cuộc gọi đến đã xác thực; hiện webhook chỉ cập nhật kết quả cuộc gọi đã có.
+- [ ] Xác minh push tới điện thoại và gửi/nhận kênh thật: chờ thiết bị bật thông báo và tài khoản nhà cung cấp; chưa gửi tin thử.
 
 - [x] Bổ sung tab kết nối Telegram/WhatsApp/Viber, lưu/xoá cấu hình quản trị và kiểm tra tài khoản không gửi tin; thử lưu/đọc/xoá cấu hình Telegram, 19 kiểm thử đạt. Xác minh nhà cung cấp thật còn chờ tài khoản/kết nối.
 - [ ] Telegram gửi/nhận: chờ quản trị viên hoàn tất thẻ kết nối (đã bỏ qua); chưa đăng ký webhook hoặc gửi tin.
