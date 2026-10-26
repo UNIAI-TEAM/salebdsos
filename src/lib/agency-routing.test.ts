@@ -11,3 +11,8 @@ it('warns within 5 minutes and detects overdue without restarting the SLA',()=>{
   expect(referralSla('2026-10-26T03:53:00Z',null,'assigned',now)).toBe('pending');
 });
 it('stops SLA when Sale records contact',()=>expect(referralSla('2026-10-26T03:47:00Z','2026-10-26T03:46:00Z','contacted')).toBe('responded'));
+it('keeps original overdue deadline across a Sale handover',()=>{
+ const before={sale:'a',due:'2026-10-26T03:47:00Z',response:null,status:'assigned'};
+ const after={...before,sale:'b'};
+ expect(referralSla(after.due,after.response,after.status,Date.parse('2026-10-26T04:00:00Z'))).toBe('overdue');
+});
