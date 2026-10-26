@@ -1,0 +1,45 @@
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { INBOX_COPY as t } from "@/lib/omnichannel";
+import { getChatConnectionSetup, saveChatConnection, verifyChatConnection } from "@/lib/omnichannel.functions";
+import type { ChannelSettings } from "@/lib/channels";
+
+export function ChatConnections({ tenantId, config }: { tenantId: string; config: ChannelSettings }) {
+  const qc = useQueryClient();
+  const save = useServerFn(saveChatConnection), verify = useServerFn(verifyChatConnection), setup = useServerFn(getChatConnectionSetup);
+  const [channel, setChannel] = useState<"zalo" | "messenger">("zalo");
+  const [account, setAccount] = useState(config.zalo.oaId), [appId, setAppId] = useState(config.zalo.appId);
+  const [secret, setSecret] = useState(""), [token, setToken] = useState(""), [busy, setBusy] = useState(false);
+  const info = useQuery({ queryKey: ["chat-setup", tenantId], queryFn: () => setup({ data: { tenantId } }) });
+  const change = (value: "zalo" | "messenger") => { setChannel(value); setAccount(value === "zalo" ? config.zalo.oaId : config.messenger.pageId); setSecret(""); setToken(""); };
+  async function run(check: boolean) {
+    setBusy(true);
+    try {
+      if (check) {
+        const r = await verify({ data: { tenantId, channel } });
+        r.ok ? toast.success(t.connected) : toast.warning("Chưa xác minh được tài khoản hoặc đăng ký nhận tin.");
+      } else {
+        await save({ data: { tenantId, channel, accountId: account, ...(channel === "zalo" ? { appId } : {}), ...(secret ? { secret } : {}), ...(token ? { token } : {}) } });
+        setSecret(""); setToken(""); toast.success("Đã lưu bảo mật. Chưa xác minh nhận tin.");
+      }
+      await qc.invalidateQueries({ queryKey: ["channel-settings", tenantId] });
+      await qc.invalidateQueries({ queryKey: ["chat-setup", tenantId] });
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Không lưu được kết nối"); }
+    finally { setBusy(false); }
+  }
+  return <div className="space-y-3 border-b border-border pb-4">
+    <div className="flex gap-2">{(["zalo", "messenger"] as const).map(c => <Button key={c} size="sm" variant={channel === c ? "default" : "outline"} onClick={() => change(c)}>{t[c]}</Button>)}</div>
+    <div><Label>{t.account}</Label><Input value={account} onChange={e => setAccount(e.target.value)} /></div>
+    {channel === "zalo" && <div><Label>{t.appId}</Label><Input value={appId} onChange={e => setAppId(e.target.value)} /></div>}
+    <div><Label>{t.secret}</Label><Input type="password" autoComplete="new-password" value={secret} onChange={e => setSecret(e.target.value)} placeholder="••••••••" /></div>
+    <div><Label>{t.token}</Label><Input type="password" autoComplete="new-password" value={token} onChange={e => setToken(e.target.value)} placeholder="••••••••" /></div>
+    <div><Label>{t.webhook}</Label><Input readOnly value={typeof window === "undefined" ? "" : `${window.location.origin}/api/public/${channel === "zalo" ? "zalo-webhook" : "integrations/facebook"}`} /></div>
+    {channel === "messenger" && info.data?.verifyToken && <div><Label>{t.verifyToken}</Label><Input readOnly value={info.data.verifyToken} /></div>}
+    <div className="flex flex-wrap gap-2"><Button disabled={busy || !account} onClick={() => run(false)}>{t.save}</Button><Button variant="outline" disabled={busy} onClick={() => run(true)}>{t.check}</Button></div>
+  </div>;
+}

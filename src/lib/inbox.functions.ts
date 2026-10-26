@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { CHANNELS_KEY, channelSettingsSchema, parseChannelSettings } from "@/lib/channels";
 
+import { canAccessConversation, replyChannel } from "./omnichannel";
 import { ADMIN_ROLES as MANAGER_ROLES } from "@/lib/permissions";
 
 async function roles(
@@ -42,7 +43,9 @@ export const getChannelSettings = createServerFn({ method: "GET" })
       .eq("tenant_id", data.tenantId)
       .eq("key", CHANNELS_KEY)
       .maybeSingle();
+    const { channelConnectionStatus } = await import("./omnichannel.server");
     return {
+      connections: await channelConnectionStatus(data.tenantId),
       config: parseChannelSettings(row?.value),
       updatedAt: row?.updated_at ?? null,
       canManage: roleList.some((role) => MANAGER_ROLES.has(role)),
@@ -138,7 +141,7 @@ export const getConversation = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await roles(supabase as never, data.tenantId, userId);
+    const roleList = await roles(supabase as never, data.tenantId, userId);
 
     const { data: conv, error } = await supabase
       .from("conversations")
@@ -148,18 +151,27 @@ export const getConversation = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!conv) throw new Error("Không tìm thấy hội thoại");
+    if (!canAccessConversation(roleList, conv.owner_user_id, userId)) throw new Error("Bạn chỉ được xem khách mình phụ trách");
+    let conversationIds = [conv.id];
+    if (conv.lead_id) {
+      let siblings = supabase.from("conversations").select("id").eq("tenant_id", data.tenantId).eq("lead_id", conv.lead_id);
+      if (!roleList.some(r => MANAGER_ROLES.has(r))) siblings = siblings.eq("owner_user_id", userId);
+      const { data: linked } = await siblings;
+      conversationIds = [...new Set([conv.id, ...(linked ?? []).map(c => c.id)])];
+    }
+    const { data: identities } = await supabase.from("channel_identities").select("channel,last_inbound_at").eq("tenant_id", data.tenantId).in("conversation_id", conversationIds);
 
     const [messagesQ, callsQ] = await Promise.all([
       supabase
         .from("conversation_messages")
         .select("id, channel, direction, body, attachment_url, sender_name, delivery_status, error_message, created_at")
-        .eq("conversation_id", data.conversationId)
+        .in("conversation_id", conversationIds)
         .order("created_at", { ascending: true })
         .limit(300),
       supabase
         .from("call_logs")
         .select("id, provider, direction, phone, status, outcome, duration_seconds, recording_url, transcript, notes, started_at")
-        .eq("conversation_id", data.conversationId)
+        .in("conversation_id", conversationIds)
         .order("started_at", { ascending: false })
         .limit(50),
     ]);
@@ -176,6 +188,7 @@ export const getConversation = createServerFn({ method: "GET" })
         name: conv.contact_name || conv.contact_phone || "Khách ẩn danh",
         phone: conv.contact_phone,
         zaloId: conv.contact_zalo_id,
+        identities: identities ?? [],
         status: conv.status,
         leadId: conv.lead_id,
         projectId: conv.project_id,
@@ -197,7 +210,7 @@ export const sendMessage = createServerFn({ method: "POST" })
         tenantId: z.string().uuid(),
         conversationId: z.string().uuid(),
         body: z.string().trim().min(1).max(2000),
-        channel: z.enum(["web_chat", "zalo", "note", "sms", "email"]).optional(),
+        channel: z.enum(["web_chat", "zalo", "messenger", "note", "sms", "email"]).optional(),
         subject: z.string().trim().max(160).optional(),
       })
       .parse(d),
@@ -213,10 +226,10 @@ export const sendMessage = createServerFn({ method: "POST" })
       .eq("id", data.conversationId)
       .maybeSingle();
     if (!conv) throw new Error("Không tìm thấy hội thoại");
-    if (!roleListSend.some((r) => MANAGER_ROLES.has(r)) && (conv as any).owner_user_id && (conv as any).owner_user_id !== userId)
+    if (!canAccessConversation(roleListSend, conv.owner_user_id, userId))
       throw new Error("Bạn chỉ được nhắn khách mình phụ trách");
 
-    const channel = data.channel ?? (conv.channel as string);
+    const channel = data.channel ?? replyChannel(conv.channel as string);
     const { data: profile } = await supabase
       .from("profiles")
       .select("full_name,email")
@@ -230,10 +243,21 @@ export const sendMessage = createServerFn({ method: "POST" })
     let externalId: string | null = null;
     let errorMessage: string | null = null;
 
+    if (channel === "messenger") {
+      const { sendMessengerMessage } = await import("./omnichannel.server");
+      const result = await sendMessengerMessage(data.tenantId, data.conversationId, data.body);
+      status = result.status; externalId = result.externalId; errorMessage = result.error;
+    }
     if (channel === "zalo") {
+      const { loadChannelSettings } = await import("./channels.server");
+      const config = await loadChannelSettings(data.tenantId);
+      let identityQuery = supabase.from("channel_identities").select("external_user_id").eq("tenant_id", data.tenantId);
+      identityQuery = conv.lead_id ? identityQuery.eq("lead_id", conv.lead_id) : identityQuery.eq("conversation_id", data.conversationId);
+      const { data: ids } = await identityQuery.eq("channel", "zalo").eq("account_id", config.zalo.oaId).limit(2);
+      if (ids && ids.length > 1) throw new Error("Khách có nhiều liên kết Zalo; cần kiểm tra hồ sơ trước khi gửi.");
       const result = await sendZaloMessage({
         tenantId: data.tenantId,
-        zaloUserId: conv.contact_zalo_id,
+        zaloUserId: ids?.[0]?.external_user_id ?? conv.contact_zalo_id,
         text: data.body,
       });
       status = result.status;

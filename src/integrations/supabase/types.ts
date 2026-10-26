@@ -1024,6 +1024,96 @@ export type Database = {
           },
         ]
       }
+      channel_events: {
+        Row: {
+          account_id: string
+          channel: string
+          event_id: string
+          received_at: string
+          tenant_id: string
+        }
+        Insert: {
+          account_id: string
+          channel: string
+          event_id: string
+          received_at?: string
+          tenant_id: string
+        }
+        Update: {
+          account_id?: string
+          channel?: string
+          event_id?: string
+          received_at?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_identities: {
+        Row: {
+          account_id: string
+          channel: string
+          conversation_id: string
+          created_at: string
+          external_user_id: string
+          id: string
+          last_inbound_at: string | null
+          lead_id: string | null
+          tenant_id: string
+        }
+        Insert: {
+          account_id: string
+          channel: string
+          conversation_id: string
+          created_at?: string
+          external_user_id: string
+          id?: string
+          last_inbound_at?: string | null
+          lead_id?: string | null
+          tenant_id: string
+        }
+        Update: {
+          account_id?: string
+          channel?: string
+          conversation_id?: string
+          created_at?: string
+          external_user_id?: string
+          id?: string
+          last_inbound_at?: string | null
+          lead_id?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_identities_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_identities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_identities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_leads: {
         Row: {
           conversation: Json | null
@@ -3673,6 +3763,22 @@ export type Database = {
         Args: { _page_id: string; _tenant_id: string }
         Returns: undefined
       }
+      ingest_channel_message: {
+        Args: {
+          p_account: string
+          p_attachment?: string
+          p_body: string
+          p_channel: string
+          p_event: string
+          p_name: string
+          p_owner: string
+          p_phone: string
+          p_project: string
+          p_tenant: string
+          p_user: string
+        }
+        Returns: Json
+      }
       release_job_lock: { Args: { _key: string }; Returns: undefined }
     }
     Enums: {
@@ -3685,7 +3791,14 @@ export type Database = {
         | "platform_admin"
       commission_status: "pending" | "approved" | "paid"
       contract_status: "draft" | "active" | "completed" | "cancelled"
-      conv_channel: "web_chat" | "zalo" | "call" | "sms" | "email" | "note"
+      conv_channel:
+        | "web_chat"
+        | "zalo"
+        | "call"
+        | "sms"
+        | "email"
+        | "note"
+        | "messenger"
       conv_direction: "in" | "out"
       deal_status: "open" | "won" | "lost"
       lead_status:
@@ -3851,7 +3964,15 @@ export const Constants = {
       ],
       commission_status: ["pending", "approved", "paid"],
       contract_status: ["draft", "active", "completed", "cancelled"],
-      conv_channel: ["web_chat", "zalo", "call", "sms", "email", "note"],
+      conv_channel: [
+        "web_chat",
+        "zalo",
+        "call",
+        "sms",
+        "email",
+        "note",
+        "messenger",
+      ],
       conv_direction: ["in", "out"],
       deal_status: ["open", "won", "lost"],
       lead_status: [

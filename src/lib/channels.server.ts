@@ -25,12 +25,14 @@ export async function sendZaloMessage(args: {
   zaloUserId: string | null;
   text: string;
 }): Promise<DispatchResult> {
-  const token = process.env["ZALO_OA_ACCESS_TOKEN"];
-  if (!token) {
+  const { zaloCreds } = await import("./credentials.server");
+  const config = await loadChannelSettings(args.tenantId);
+  const { accessToken: token } = await zaloCreds(args.tenantId);
+  if (!token || !config.zalo.enabled) {
     return {
-      status: "pending",
+      status: "failed",
       externalId: null,
-      error: "Chưa kết nối Zalo OA — tin nhắn đã lưu, sẽ gửi sau khi kết nối.",
+      error: "Chưa kết nối Zalo OA — tin nhắn chưa gửi.",
     };
   }
   if (!args.zaloUserId) {
@@ -157,7 +159,7 @@ export async function appendMessage(args: {
   const patch: Record<string, unknown> = {
     last_message_at: message.created_at,
     last_message_preview: preview,
-    channel: args.channel,
+    ...(args.channel !== "note" && args.channel !== "call" ? { channel: args.channel } : {}),
   };
   if (args.direction === "in") {
     const { data: current } = await supabaseAdmin
@@ -171,7 +173,7 @@ export async function appendMessage(args: {
   await supabaseAdmin
     .from("conversations")
     .update(patch as never)
-    .eq("id", args.conversationId);
+    .eq("id", args.conversationId).eq("tenant_id", args.tenantId);
 
   return message;
 }

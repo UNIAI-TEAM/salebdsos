@@ -1,7 +1,7 @@
 // Khoá bí mật theo sàn (Facebook App Secret, Page Access Token...). Mã hoá AES-GCM, chỉ máy chủ đọc được.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export const CREDENTIAL_KEYS = ["fb_app_secret", "fb_page_token"] as const;
+export const CREDENTIAL_KEYS = ["fb_app_secret", "fb_page_token", "zalo_app_secret", "zalo_access_token"] as const;
 export type CredentialKey = (typeof CREDENTIAL_KEYS)[number];
 
 const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
@@ -53,4 +53,9 @@ export async function facebookCreds(tenantId: string) {
     appSecret: secret ?? process.env["FB_APP_SECRET"] ?? null,
     pageToken: token ?? process.env["FB_PAGE_ACCESS_TOKEN"] ?? null,
   };
+}
+
+export async function zaloCreds(tenantId: string) {
+  const [appSecret, accessToken] = await Promise.all([getCredential(tenantId, "zalo_app_secret"), getCredential(tenantId, "zalo_access_token")]);
+  return { appSecret, accessToken };
 }

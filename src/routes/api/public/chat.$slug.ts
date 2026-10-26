@@ -49,6 +49,7 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
           .from("conversation_messages")
           .select("id, direction, body, sender_name, created_at")
           .eq("conversation_id", conv.id)
+          .eq("channel", "web_chat")
           .order("created_at", { ascending: true })
           .limit(100);
 
