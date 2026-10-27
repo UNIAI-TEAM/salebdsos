@@ -313,7 +313,7 @@
   --primary-foreground: oklch(0.13 0.02 258);
   --primary-soft: oklch(0.24 0.045 258);
 }
-.omni-workspace { height: max(360px, calc(100dvh - 206px)); }
+.omni-workspace { height: max(360px, calc(100dvh - 222px)); }
 @media (max-width: 767px) {
   .omni-workspace { height: max(320px, calc(100dvh - 236px - env(safe-area-inset-bottom))); }
 }

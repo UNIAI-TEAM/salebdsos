@@ -302,7 +302,7 @@ function InboxPage() {
           {channelsQuery.data?.canManage && <Button size="icon" variant="ghost" onClick={openSettings} title={t.settings} aria-label={t.settings}><Settings2 className="size-4" /></Button>}
         </div>
       </header>
-      <div className="omni-workspace flex min-w-0 overflow-hidden rounded-lg border border-border bg-card" data-testid="inbox-workspace">
+      <div className="omni-workspace relative flex min-w-0 overflow-hidden rounded-lg border border-border bg-card" data-testid="inbox-workspace">
         <aside className={`${activeId ? "hidden md:flex" : "flex"} w-full shrink-0 flex-col border-r border-border md:w-72 xl:w-80`} aria-label={ui.conversations}>
           <div className="shrink-0 space-y-2.5 border-b border-border p-3">
             <div className="flex items-center justify-between"><h2 className="text-sm font-semibold">{ui.conversations} <span className="ml-1 text-xs font-normal text-muted-foreground">{items.length}</span></h2>
@@ -357,7 +357,7 @@ function InboxPage() {
             </div>
           </>}
         </section>
-        {thread && detailsOpen && <aside className="absolute inset-0 z-20 flex flex-col bg-card md:static md:w-64 md:shrink-0 md:border-l md:border-border" aria-label={ui.customer}>
+        {thread && detailsOpen && <aside className="absolute inset-y-0 right-0 z-20 flex w-full flex-col bg-card md:w-64 md:border-l md:border-border xl:static xl:shrink-0" aria-label={ui.customer}>
           <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4"><h2 className="text-sm font-semibold">{ui.customer}</h2><Button variant="ghost" size="icon" aria-label={ui.close} onClick={() => setDetailsOpen(false)}><X /></Button></div>
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 text-xs">
             <div className="flex flex-col items-center gap-2 py-2"><span className="grid size-14 place-items-center rounded-full bg-secondary text-lg font-semibold">{initials(thread.conversation.name)}</span><p className="text-center text-sm font-semibold">{thread.conversation.name}</p><Badge variant="outline" className="text-[10px]">{CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}</Badge></div>
