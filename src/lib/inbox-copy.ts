@@ -7,5 +7,6 @@ export const INBOX_LAYOUT_COPY = {
   noMessages: "Chưa có tin nhắn", reply: "Trả lời", note: "Ghi chú nội bộ", quick: "Mẫu trả lời",
   draft: "Nhập tin nhắn trả lời khách…", noteDraft: "Ghi chú cho đồng nghiệp…", smsDraft: "Nhập nội dung SMS…",
   emailSubject: "Tiêu đề email", autoChannel: "Theo kênh của khách", chatWeb: "Chat trên trang", callChannel: "Gọi điện",
+  attachment: "Tệp đính kèm", close: "Đóng thông tin khách",
   send: "Gửi tin nhắn", connections: "Trạng thái kết nối", missingTenant: "Chưa chọn sàn", missingConversation: "Chưa chọn hội thoại",
 } as const;
