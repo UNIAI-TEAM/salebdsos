@@ -315,5 +315,5 @@
 }
 .omni-workspace { height: max(360px, calc(100dvh - 222px)); }
 @media (max-width: 767px) {
-  .omni-workspace { height: max(320px, calc(100dvh - 236px - env(safe-area-inset-bottom))); }
+  .omni-workspace { height: max(280px, calc(100dvh - 290px - env(safe-area-inset-bottom))); }
 }
