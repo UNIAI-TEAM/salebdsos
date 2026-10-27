@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MessageCircle,
   MessagesSquare,
@@ -12,11 +12,12 @@ import {
   Mail,
   MessageSquare,
   Settings2,
-  StickyNote,
+  ArrowLeft, Check, Inbox, ListFilter, PanelRight, Plus, Radio, UserRound, X, Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { PageHeader, SectionCard } from "@/components/app/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { INBOX_LAYOUT_COPY as ui } from "@/lib/inbox-copy";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -52,11 +53,15 @@ import { Link } from "@tanstack/react-router";
 import { expandShortcut } from "@/lib/social";
 
 const TAG_TONE: Record<string, string> = {
-  blue: "border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
-  amber: "border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
-  emerald: "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
-  rose: "border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+  blue: "border-info/30 bg-info/10 text-info", amber: "border-warning/30 bg-warning/10 text-warning",
+  emerald: "border-success/30 bg-success/10 text-success", rose: "border-destructive/30 bg-destructive/10 text-destructive",
 };
+const TAG_DOT: Record<string, string> = { blue: "bg-info", amber: "bg-warning", emerald: "bg-success", rose: "bg-destructive" };
+function initials(name: string) { return name.trim().split(/\s+/).slice(-2).map(part => part[0]).join("").toUpperCase(); }
+function ChannelIcon({ channel }: { channel: string }) {
+  const Icon = channel === "email" ? Mail : channel === "call" ? Phone : channel === "sms" ? MessageSquare : MessageCircle;
+  return <Icon className="size-2.5" />;
+}
 
 export const Route = createFileRoute("/_app/inbox")({
   head: () => ({
@@ -73,22 +78,22 @@ export const Route = createFileRoute("/_app/inbox")({
 });
 
 const CHANNEL_FILTERS = [
-  { value: "all", label: "Tất cả" },
-  { value: "web_chat", label: "Chat trên trang" },
+  { value: "all", label: ui.all },
+  { value: "web_chat", label: ui.chatWeb },
   { value: "zalo", label: "Zalo OA" },
   { value: "messenger", label: t.messenger },
-  { value: "call", label: "Gọi điện" },
+  { value: "call", label: ui.callChannel },
   { value: "sms", label: t.smsOutbound },
   { value: "email", label: t.emailOutbound },
 ] as const;
 
 const SEND_CHANNELS = [
-  { value: "auto", label: "Theo kênh của khách" },
+  { value: "auto", label: ui.autoChannel },
   { value: "zalo", label: "Zalo OA" },
   { value: "messenger", label: t.messenger },
   { value: "sms", label: t.smsOutbound },
   { value: "email", label: t.emailOutbound },
-  { value: "note", label: "Ghi chú nội bộ" },
+  { value: "note", label: ui.note },
 ] as const;
 
 function timeLabel(value: string) {
@@ -118,6 +123,9 @@ function InboxPage() {
   const fetchKit = useServerFn(getInboxKit);
   const saveTags = useServerFn(setConversationTags);
   const [search, setSearch] = useState("");
+  const [unreadOnly, setUnreadOnly] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const messageArea = useRef<HTMLDivElement>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [sendChannel, setSendChannel] = useState<string>("auto");
@@ -159,12 +167,12 @@ function InboxPage() {
   const kitQuery = useQuery({
     queryKey: ["inbox-kit", tenantId],
     enabled: Boolean(tenantId),
-    queryFn: () => fetchKit({ data: { tenantId: tenantId! } }),
+    queryFn: () => { if (!tenantId) throw new Error(ui.missingTenant); return fetchKit({ data: { tenantId } }); },
   });
   const kit = kitQuery.data;
   const tagMeta = (key: string) => kit?.tags.find((t) => t.key === key);
   const tagsMutation = useMutation({
-    mutationFn: (tags: string[]) => saveTags({ data: { tenantId: tenantId!, conversationId: activeId!, tags } }),
+    mutationFn: (tags: string[]) => { if (!tenantId || !activeId) throw new Error(ui.missingConversation); return saveTags({ data: { tenantId, conversationId: activeId, tags } }); },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["inbox-thread", tenantId, activeId] });
       qc.invalidateQueries({ queryKey: ["inbox", tenantId] });
@@ -258,8 +266,10 @@ function InboxPage() {
   });
 
   const items = listQuery.data?.items ?? [];
+  const visibleItems = unreadOnly ? items.filter(item => item.unread > 0) : items;
   const thread = threadQuery.data;
   const timeline = useMemo(() => thread?.messages ?? [], [thread]);
+  useEffect(() => { const area = messageArea.current; if (area) area.scrollTop = area.scrollHeight; }, [activeId, timeline.length]);
   const selectedChannel = sendChannel === "auto" ? replyChannel(thread?.conversation.channel ?? "note") : sendChannel;
   const connection = channelsQuery.data?.connections.find(c => c.channel === selectedChannel);
   const channelBlocked = !canSendPendingChannel(selectedChannel) || (["zalo", "messenger"].includes(selectedChannel) && (!connection?.configured || !connection.enabled));
@@ -272,279 +282,92 @@ function InboxPage() {
   };
 
   return (
-    <div className="space-y-3 pb-24 lg:pb-6">
-      <div className="[&>header]:grid-cols-1 sm:[&>header]:flex">
-      <PageHeader
-        compact
-        title={t.title}
-        action={
-          <div className="flex items-center gap-2">
-            <Badge variant={listQuery.data?.unreadTotal ? "destructive" : "outline"}>
-              {listQuery.data?.unreadTotal ?? 0} chưa đọc
-            </Badge>
-            {channelsQuery.data?.canManage ? (
-              <Button variant="outline" onClick={openSettings}>
-                <Settings2 className="mr-1.5 h-4 w-4" /> {t.settings}
-              </Button>
-            ) : null}
-          </div>
-        }
-      />
-      </div>
-
-      <div className="flex flex-wrap gap-1.5" aria-label={t.channelStatus}>
-        {channelsQuery.data?.connections.map(c => <Badge className="max-w-full whitespace-normal rounded-md px-2 py-1 text-left leading-relaxed" key={c.channel} variant={c.configured && c.enabled && c.verified ? "default" : "outline"}>{CHANNEL_LABEL[c.channel]} · {!c.configured ? t.disconnected : !c.enabled ? t.disabled : c.verified ? t.connected : t.configured} · {c.channel === "sms" || c.channel === "email" ? t.outboundOnly : t.twoWay}</Badge>)}
-        {PENDING_INBOX_CHANNELS.map(c => <Badge key={c.channel} title={c.reason} variant="outline" className="max-w-full whitespace-normal rounded-md px-2 py-1 text-left leading-relaxed">{c.label} · {t.disconnected} · {t.notActivated}</Badge>)}
-      </div>
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
-        <SectionCard compact title="Hội thoại">
-          <div className="space-y-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Tìm theo tên hoặc số điện thoại"
-                className="pl-9"
-              />
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {CHANNEL_FILTERS.map((filter) => (
-                <button
-                  key={filter.value}
-                  type="button"
-                  onClick={() => setChannel(filter.value)}
-                  className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                    channel === filter.value
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border text-muted-foreground"
-                  }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-            {kit?.tags.length ? (
-              <div className="flex flex-wrap gap-1.5">
-                {kit.tags.map((t) => (
-                  <button key={t.key} type="button" onClick={() => setTagFilter(tagFilter === t.key ? "" : t.key)}
-                    className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${tagFilter === t.key ? TAG_TONE[t.tone] : "border-border text-muted-foreground"}`}>
-                    # {t.label}
-                  </button>
-                ))}
+    <div className="omni-inbox relative min-w-0">
+      <header className="mb-3 flex min-h-9 items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <MessagesSquare className="size-5 shrink-0 text-primary" />
+          <h1 className="truncate text-lg font-semibold">{t.title}</h1>
+          <span className="hidden text-xs text-muted-foreground sm:inline">{listQuery.data?.unreadTotal ?? 0} {ui.unread.toLowerCase()}</span>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <Popover><PopoverTrigger asChild><Button size="sm" variant="ghost" aria-label={ui.connections}><Radio className="size-4" /><span className="hidden sm:inline">{ui.channels}</span></Button></PopoverTrigger>
+            <PopoverContent align="end" className="w-80 max-w-[calc(100vw-32px)] p-3">
+              <p className="mb-3 text-sm font-semibold">{ui.connections}</p>
+              <div className="space-y-3" aria-label={t.channelStatus}>
+                {channelsQuery.data?.connections.map(c => <div key={c.channel} className="flex items-start gap-2"><span className={`mt-1.5 size-1.5 shrink-0 rounded-full ${c.configured && c.enabled && c.verified ? "bg-success" : "bg-muted-foreground"}`} /><div className="min-w-0"><p className="text-xs font-medium">{CHANNEL_LABEL[c.channel]}</p><p className="text-[11px] text-muted-foreground">{!c.configured ? t.disconnected : !c.enabled ? t.disabled : c.verified ? t.connected : t.configured} · {c.channel === "sms" || c.channel === "email" ? t.outboundOnly : t.twoWay}</p></div></div>)}
+                {PENDING_INBOX_CHANNELS.map(c => <div key={c.channel} className="flex items-start gap-2" title={c.reason}><span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-muted-foreground" /><div><p className="text-xs font-medium">{c.label}</p><p className="text-[11px] text-muted-foreground">{t.disconnected} · {t.notActivated}</p></div></div>)}
               </div>
-            ) : null}
+            </PopoverContent>
+          </Popover>
+          {channelsQuery.data?.canManage && <Button size="icon" variant="ghost" onClick={openSettings} title={t.settings} aria-label={t.settings}><Settings2 className="size-4" /></Button>}
+        </div>
+      </header>
+      <div className="omni-workspace relative flex min-w-0 overflow-hidden rounded-lg border border-border bg-card" data-testid="inbox-workspace">
+        <aside className={`${activeId ? "hidden md:flex" : "flex"} w-full shrink-0 flex-col border-r border-border md:w-72 xl:w-80`} aria-label={ui.conversations}>
+          <div className="shrink-0 space-y-2.5 border-b border-border p-3">
+            <div className="flex items-center justify-between"><h2 className="text-sm font-semibold">{ui.conversations} <span className="ml-1 text-xs font-normal text-muted-foreground">{items.length}</span></h2>
+              <Popover><PopoverTrigger asChild><Button variant="ghost" size="icon" className={`size-8 ${tagFilter ? "text-primary" : "text-muted-foreground"}`} aria-label={ui.tags} title={ui.tags}><ListFilter /></Button></PopoverTrigger><PopoverContent align="start" className="w-60 p-1"><Button variant="ghost" className="w-full justify-start" onClick={() => setTagFilter("")}>{ui.noTag}</Button>{kit?.tags.map(tag => <Button key={tag.key} variant="ghost" className={`w-full justify-start ${tagFilter === tag.key ? "text-primary" : ""}`} onClick={() => setTagFilter(tagFilter === tag.key ? "" : tag.key)}><span className={`size-2 rounded-full ${TAG_DOT[tag.tone] ?? "bg-muted-foreground"}`} />{tag.label}</Button>)}</PopoverContent></Popover>
+            </div>
+            <div className="relative"><Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder={ui.search} className="h-9 rounded-md bg-muted/40 pl-9 text-xs" /></div>
+            <div className="flex gap-1 rounded-md bg-muted/60 p-1" aria-label={ui.conversations}>
+              <Button size="sm" variant="ghost" className={`h-7 flex-1 ${!unreadOnly ? "bg-card shadow-sm" : "text-muted-foreground"}`} onClick={() => setUnreadOnly(false)} aria-pressed={!unreadOnly}>{ui.all}</Button>
+              <Button size="sm" variant="ghost" className={`h-7 flex-1 ${unreadOnly ? "bg-card shadow-sm" : "text-muted-foreground"}`} onClick={() => setUnreadOnly(true)} aria-pressed={unreadOnly}>{ui.unread}<span className="text-[10px]">{listQuery.data?.unreadTotal ?? 0}</span></Button>
+            </div>
+            <Select value={channel} onValueChange={setChannel}><SelectTrigger className="h-8 border-0 bg-transparent px-1 text-xs shadow-none" aria-label={ui.channels}><SelectValue /></SelectTrigger><SelectContent>{CHANNEL_FILTERS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent></Select>
+            {tagFilter && <Button size="sm" variant="secondary" className="h-6 text-[11px]" onClick={() => setTagFilter("")}>{tagMeta(tagFilter)?.label}<X className="size-3" /></Button>}
           </div>
-
-          <ul className="mt-3 space-y-2">
-            {listQuery.isLoading ? (
-              <li className="py-6 text-center text-sm text-muted-foreground">Đang tải…</li>
-            ) : items.length === 0 ? (
-              <li className="py-6 text-center text-sm text-muted-foreground">Chưa có hội thoại nào.</li>
-            ) : (
-              items.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => { setActiveId(item.id); setDraft(""); setSendChannel("auto"); }}
-                    className={`w-full rounded-lg border p-3 text-left transition ${
-                      activeId === item.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/60"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="truncate text-sm font-semibold">{item.name}</p>
-                      {item.unread ? <Badge variant="destructive" className="shrink-0 text-[10px]">{item.unread}</Badge> : null}
-                    </div>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.preview ?? "—"}</p>
-                    {item.tags?.length ? (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {item.tags.map((k) => tagMeta(k) ? (
-                          <span key={k} className={`rounded-full border px-1.5 text-[10px] ${TAG_TONE[tagMeta(k)!.tone]}`}>{tagMeta(k)!.label}</span>
-                        ) : null)}
-                      </div>
-                    ) : null}
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      {CHANNEL_LABEL[item.channel] ?? item.channel}
-                      {item.projectName ? ` · ${item.projectName}` : ""} · {timeLabel(item.lastAt)}
-                    </p>
-                  </button>
-                </li>
-              ))
-            )}
+          <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-thin" data-testid="inbox-list">
+            {listQuery.isLoading ? <li className="py-12 text-center text-xs text-muted-foreground">{ui.loading}</li> : visibleItems.length === 0 ? <li className="flex flex-col items-center gap-3 px-4 py-16 text-xs text-muted-foreground"><Inbox className="size-8 stroke-1 opacity-50" />{ui.empty}</li> : visibleItems.map(item => <li key={item.id}>
+              <Button variant="ghost" onClick={() => { setActiveId(item.id); setDraft(""); setSendChannel("auto"); setDetailsOpen(false); }} className={`h-auto w-full justify-start gap-3 whitespace-normal rounded-none border-b border-border/50 px-3 py-3 text-left text-foreground hover:bg-muted/60 hover:text-foreground ${activeId === item.id ? "bg-primary-soft hover:bg-primary-soft" : ""}`} aria-pressed={activeId === item.id} data-testid="inbox-conversation">
+                <div className="relative shrink-0"><span className="flex size-10 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">{initials(item.name)}</span><span className="absolute -bottom-1 -right-1 grid size-5 place-items-center rounded-full border-2 border-card bg-primary-soft text-primary"><ChannelIcon channel={item.channel} /></span></div>
+                <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><p className="truncate text-xs font-semibold">{item.name}</p><time className="shrink-0 text-[10px] font-normal text-muted-foreground">{new Date(item.lastAt).toLocaleDateString("vi-VN", {day: "2-digit", month: "2-digit"})}</time></div><div className="mt-1 flex items-center gap-2"><p className="min-w-0 flex-1 truncate text-xs font-normal text-muted-foreground">{item.preview ?? "—"}</p>{item.unread > 0 && <span className="grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] text-primary-foreground">{item.unread}</span>}</div><p className="mt-1 truncate text-[10px] font-normal text-muted-foreground">{CHANNEL_LABEL[item.channel] ?? item.channel}{item.projectName ? ` · ${item.projectName}` : ""}</p>{item.tags?.length ? <div className="mt-1 flex flex-wrap gap-1">{item.tags.map(key => { const meta = tagMeta(key); return meta ? <span key={key} className={`rounded px-1 text-[10px] ${TAG_TONE[meta.tone]}`}>{meta.label}</span> : null; })}</div> : null}</div>
+              </Button>
+            </li>)}
           </ul>
-        </SectionCard>
-
-        <SectionCard compact
-          title={thread ? thread.conversation.name : "Chọn một hội thoại"}
-          action={
-            thread?.conversation.phone ? (
-              <Button
-                size="sm"
-                onClick={() => callMutation.mutate(thread.conversation.phone as string)}
-                disabled={callMutation.isPending}
-              >
-                <PhoneCall className="mr-1.5 h-4 w-4" /> Gọi & ghi âm
-              </Button>
-            ) : undefined
-          }
-        >
-          {!thread ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              Chọn một khách ở danh sách bên cạnh để xem toàn bộ tin nhắn và cuộc gọi.
-            </p>
-          ) : (
-            <>
-              <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="outline">{CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}</Badge>
-                {thread.conversation.needsIdentityReview && <Badge variant="outline" className="text-warning">{t.review}</Badge>}
-                {thread.conversation.leadId && <Link to="/leads" search={{ lead: thread.conversation.leadId }} className="text-primary underline">Hồ sơ khách</Link>}
-                <Button size="sm" variant="ghost" onClick={() => setLinkOpen(true)}>{t.link}</Button>
-                {thread.conversation.phone ? (
-                  <a href={`tel:${thread.conversation.phone}`} className="inline-flex items-center gap-1">
-                    <Phone className="h-3.5 w-3.5" /> {thread.conversation.phone}
-                  </a>
-                ) : null}
+        </aside>
+        <section className={`${activeId ? "flex" : "hidden md:flex"} min-w-0 flex-1 flex-col`} aria-label={ui.messages}>
+          {!thread ? <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-muted-foreground"><div className="grid size-20 place-items-center rounded-full bg-muted/50"><MessagesSquare className="size-9 stroke-1 text-primary" /></div><h2 className="text-sm font-medium text-foreground">{activeId && threadQuery.isLoading ? ui.loading : ui.select}</h2>{activeId && <Button size="sm" variant="ghost" className="md:hidden" onClick={() => setActiveId(null)}><ArrowLeft />{ui.back}</Button>}</div> : <>
+            <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-3 md:px-4">
+              <Button size="icon" variant="ghost" className="shrink-0 md:hidden" aria-label={ui.back} onClick={() => setActiveId(null)}><ArrowLeft /></Button>
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold">{initials(thread.conversation.name)}</span>
+              <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{thread.conversation.name}</h2><p className="truncate text-[11px] text-muted-foreground">{CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}{thread.conversation.phone ? ` · ${thread.conversation.phone}` : ""}</p></div>
+              {thread.conversation.phone && <Button variant="ghost" size="icon" title={ui.call} aria-label={ui.call} onClick={() => { const phone = thread.conversation.phone; if (phone) callMutation.mutate(phone); }} disabled={callMutation.isPending}><PhoneCall /></Button>}
+              <Button variant="ghost" size="icon" aria-label={ui.customer} title={ui.customer} aria-pressed={detailsOpen} className={detailsOpen ? "bg-primary-soft text-primary" : ""} onClick={() => setDetailsOpen(!detailsOpen)}><PanelRight /></Button>
+            </header>
+            {thread.conversation.needsIdentityReview && <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-warning/10 px-4 py-1.5 text-[11px] text-warning"><span>{t.review}</span><Button variant="ghost" size="sm" className="h-6 text-[11px]" onClick={() => setLinkOpen(true)}>{t.link}</Button></div>}
+            <div ref={messageArea} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain bg-muted/20 p-4 scrollbar-thin" data-testid="inbox-messages">
+              {timeline.length === 0 ? <p className="py-10 text-center text-xs text-muted-foreground">{ui.noMessages}</p> : timeline.map(message => <div key={message.id} className={`flex flex-col ${message.direction === "out" ? "items-end" : "items-start"}`}>
+                <div className={`max-w-[90%] rounded-lg px-3 py-2.5 text-sm shadow-sm sm:max-w-[78%] ${message.channel === "note" ? "border border-dashed border-warning bg-warning/10 text-foreground" : message.direction === "out" ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-bl-sm border border-border bg-card text-card-foreground"}`}>
+                  <p className="mb-1 text-[10px] font-medium opacity-70">{message.channel === "note" ? ui.note : CHANNEL_LABEL[message.channel] ?? message.channel}{message.sender_name ? ` · ${message.sender_name}` : ""}</p>
+                  <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{message.body}</p>
+                  {message.attachment_url && (message.channel === "call" ? <audio controls src={message.attachment_url} className="mt-2 max-w-full" /> : <a href={message.attachment_url} target="_blank" rel="noreferrer" className="mt-2 block underline">{ui.attachment}</a>)}
+                </div>
+                <p className="mt-1 max-w-full text-[10px] text-muted-foreground">{timeLabel(message.created_at)}{message.direction === "out" ? ` · ${({ sent: t.sent, pending: t.pending, failed: t.failed, delivered: t.delivered, read: t.read } as Record<string, string>)[message.delivery_status] ?? message.delivery_status}` : ""}{message.error_message ? ` · ${message.error_message}` : ""}</p>
+              </div>)}
+            </div>
+            <div className="relative shrink-0 border-t border-border bg-card p-3 pr-16" data-testid="inbox-composer">
+              <div className="mb-2 flex items-center justify-between gap-2"><Select value={sendChannel} onValueChange={setSendChannel}><SelectTrigger className="h-7 w-auto max-w-full gap-2 border-0 bg-transparent px-1 text-xs shadow-none" aria-label={ui.reply}><SelectValue /></SelectTrigger><SelectContent>{SEND_CHANNELS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent></Select>
+                {kit?.quickReplies.length ? <Popover><PopoverTrigger asChild><Button size="icon" variant="ghost" className="size-7" title={ui.quick} aria-label={ui.quick}><Zap /></Button></PopoverTrigger><PopoverContent align="end" className="max-h-64 w-80 max-w-[calc(100vw-32px)] overflow-y-auto p-1">{kit.quickReplies.map(q => <Button key={q.shortcut} variant="ghost" className="h-auto w-full flex-col items-start gap-1 whitespace-normal py-2 text-left" onClick={() => setDraft(q.text.replace(/\{project\}/g, "dự án"))}><span className="text-xs text-primary">/{q.shortcut}</span><span className="line-clamp-2 text-xs text-muted-foreground">{q.text}</span></Button>)}</PopoverContent></Popover> : null}
               </div>
-              {kit?.tags.length ? (
-                <div className="mb-3 flex flex-wrap gap-1.5" aria-label="Thẻ hội thoại">
-                  {kit.tags.map((t) => {
-                    const on = thread.conversation.tags.includes(t.key);
-                    return (
-                      <button key={t.key} type="button" disabled={tagsMutation.isPending}
-                        onClick={() => tagsMutation.mutate(on ? thread.conversation.tags.filter((x) => x !== t.key) : [...thread.conversation.tags, t.key])}
-                        className={`rounded-full border px-3 py-1 text-xs font-medium transition ${on ? TAG_TONE[t.tone] : "border-dashed border-border text-muted-foreground hover:bg-muted"}`}>
-                        {on ? "✓ " : "+ "}{t.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-
-              <div className="max-h-[52vh] space-y-2 overflow-y-auto rounded-xl border border-border p-3">
-                {timeline.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">Chưa có tin nhắn.</p>
-                ) : (
-                  timeline.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
-                        message.direction === "out"
-                          ? "ml-auto bg-primary text-primary-foreground"
-                          : "bg-muted text-foreground"
-                      } ${message.channel === "note" ? "border border-dashed border-warning bg-warning/10 text-foreground" : ""}`}
-                    >
-                      <p className="mb-0.5 text-[10px] font-semibold uppercase opacity-70">
-                        {message.channel === "note" ? "Ghi chú nội bộ" : CHANNEL_LABEL[message.channel] ?? message.channel}
-                        {message.sender_name ? ` · ${message.sender_name}` : ""}
-                      </p>
-                      <p className="whitespace-pre-wrap break-words">{message.body}</p>
-                      {message.attachment_url ? (
-                        message.channel === "call" ? <audio controls src={message.attachment_url} className="mt-2 w-full" /> : <a href={message.attachment_url} target="_blank" rel="noreferrer" className="mt-2 block underline">Tệp đính kèm</a>
-                      ) : null}
-                      <p className="mt-1 text-[10px] opacity-70">
-                        {timeLabel(message.created_at)}
-                        {message.direction === "out" ? ` · ${({ sent: t.sent, pending: t.pending, failed: t.failed, delivered: t.delivered, read: t.read } as Record<string, string>)[message.delivery_status] ?? message.delivery_status}` : ""}
-                        {message.error_message ? ` · ${message.error_message}` : ""}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="mt-3 space-y-2">
-                {(selectedChannel === "sms" || selectedChannel === "email") && <p role="status" className="text-xs text-muted-foreground">{t.outboundOnly} · {!connection?.configured ? t.disconnected : !connection.enabled ? t.disabled : connection.verified ? t.connected : t.configured}</p>}
-                {(channelBlocked || windowBlocked) && <p role="status" className="text-xs text-warning">{channelBlocked ? t.notConnected : t.windowClosed}</p>}
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {SEND_CHANNELS.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setSendChannel(option.value)}
-                      className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                        sendChannel === option.value
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border text-muted-foreground"
-                      }`}
-                    >
-                      {option.value === "note" ? <StickyNote className="mr-1 inline h-3 w-3" /> : null}
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-                {sendChannel === "email" ? (
-                  <Input
-                    value={emailSubject}
-                    onChange={(event) => setEmailSubject(event.target.value)}
-                    placeholder="Tiêu đề email"
-                  />
-                ) : null}
-                {slashOptions.length > 0 ? (
-                  <div className="rounded-lg border border-border bg-popover p-1 shadow-soft">
-                    {slashOptions.slice(0, 6).map((q) => (
-                      <button key={q.shortcut} type="button" onClick={() => applyQuick(q.shortcut)}
-                        className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted">
-                        <span className="font-mono text-primary">/{q.shortcut}</span>
-                        <span className="line-clamp-1 text-muted-foreground">{q.text}</span>
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-                <div className="flex gap-2">
-                  <Textarea
-                    value={draft}
-                    onKeyDown={(event) => {
-                      if ((event.key === "Tab" || event.key === "Enter") && slashOptions.length > 0) {
-                        event.preventDefault();
-                        applyQuick(slashOptions[0].shortcut);
-                      }
-                    }}
-                    onChange={(event) => setDraft(event.target.value)}
-                    rows={2}
-                    placeholder={
-                      sendChannel === "note"
-                        ? "Ghi chú cho đồng nghiệp…"
-                        : sendChannel === "sms"
-                          ? "Nội dung SMS (nên viết không dấu để tiết kì tiển)…"
-                          : "Nhập tin nhắn trả lời khách…"
-                    }
-                  />
-                  <Button
-                    onClick={() => sendMutation.mutate()}
-                    aria-label="Gửi tin nhắn"
-                    disabled={!draft.trim() || sendMutation.isPending || channelBlocked || windowBlocked}
-                    className="h-auto"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {thread.calls.length > 0 ? (
-                <div className="mt-4">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cuộc gọi</p>
-                  <ul className="space-y-2">
-                    {thread.calls.map((item) => (
-                      <li key={item.id} className="rounded-xl border border-border p-3">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-sm font-medium">{item.phone ?? "—"}</p>
-                          <span className="text-xs text-muted-foreground">
-                            {timeLabel(item.started_at)} · {formatDuration(item.duration_seconds)}
-                          </span>
-                        </div>
-                        {item.notes ? <p className="mt-1 text-xs text-muted-foreground">{item.notes}</p> : null}
-                        {item.recording_url ? (
-                          <audio controls src={item.recording_url} className="mt-2 w-full" />
-                        ) : (
-                          <p className="mt-1 text-[11px] text-muted-foreground">Chưa có ghi âm</p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-            </>
-          )}
-        </SectionCard>
+              {(selectedChannel === "sms" || selectedChannel === "email") && <p role="status" className="mb-2 text-[11px] text-muted-foreground">{t.outboundOnly} · {!connection?.configured ? t.disconnected : !connection.enabled ? t.disabled : connection.verified ? t.connected : t.configured}</p>}
+              {(channelBlocked || windowBlocked) && <p role="status" className="mb-2 text-[11px] text-warning">{channelBlocked ? t.notConnected : t.windowClosed}</p>}
+              {sendChannel === "email" && <Input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder={ui.emailSubject} className="mb-2 h-8 text-xs" />}
+              {slashOptions.length > 0 && <div className="absolute bottom-full left-3 right-3 mb-1 rounded-md border border-border bg-popover p-1 shadow-soft">{slashOptions.slice(0, 6).map(q => <Button key={q.shortcut} variant="ghost" className="h-auto w-full justify-start py-2 text-xs" onClick={() => applyQuick(q.shortcut)}><span className="text-primary">/{q.shortcut}</span><span className="truncate text-muted-foreground">{q.text}</span></Button>)}</div>}
+              <div className="flex items-end gap-2"><Textarea value={draft} onKeyDown={e => { if ((e.key === "Tab" || e.key === "Enter") && slashOptions.length > 0) { e.preventDefault(); applyQuick(slashOptions[0].shortcut); } }} onChange={e => setDraft(e.target.value)} rows={2} placeholder={sendChannel === "note" ? ui.noteDraft : sendChannel === "sms" ? ui.smsDraft : ui.draft} className="max-h-32 min-h-16 resize-none rounded-md border-0 bg-muted/40 text-sm shadow-none" /><Button size="icon" className="mb-1 shrink-0" title={ui.send} aria-label={ui.send} onClick={() => sendMutation.mutate()} disabled={!draft.trim() || sendMutation.isPending || channelBlocked || windowBlocked}><Send /></Button></div>
+            </div>
+          </>}
+        </section>
+        {thread && detailsOpen && <aside className="absolute inset-y-0 right-0 z-20 flex w-full flex-col bg-card md:w-64 md:border-l md:border-border xl:static xl:shrink-0" aria-label={ui.customer}>
+          <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-4"><h2 className="text-sm font-semibold">{ui.customer}</h2><Button variant="ghost" size="icon" aria-label={ui.close} onClick={() => setDetailsOpen(false)}><X /></Button></div>
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 text-xs">
+            <div className="flex flex-col items-center gap-2 py-2"><span className="grid size-14 place-items-center rounded-full bg-secondary text-lg font-semibold">{initials(thread.conversation.name)}</span><p className="text-center text-sm font-semibold">{thread.conversation.name}</p><Badge variant="outline" className="text-[10px]">{CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}</Badge></div>
+            <div><p className="mb-1 text-muted-foreground">{ui.phone}</p>{thread.conversation.phone ? <a href={`tel:${thread.conversation.phone}`} className="font-medium">{thread.conversation.phone}</a> : <p>{ui.noPhone}</p>}</div>
+            <div><p className="mb-1 text-muted-foreground">{ui.project}</p><p>{items.find(i => i.id === activeId)?.projectName ?? ui.noProject}</p></div>
+            <div className="space-y-2">{thread.conversation.leadId && <Button asChild size="sm" variant="outline" className="w-full"><Link to="/leads" search={{ lead: thread.conversation.leadId }}><UserRound />{ui.profile}</Link></Button>}<Button size="sm" variant="ghost" className="w-full" onClick={() => setLinkOpen(true)}>{t.link}</Button></div>
+            {kit?.tags.length ? <div><p className="mb-2 text-muted-foreground">{ui.tags}</p><div className="flex flex-wrap gap-1.5" aria-label={ui.tags}>{kit.tags.map(tag => { const on = thread.conversation.tags.includes(tag.key); return <Button key={tag.key} size="sm" variant="outline" disabled={tagsMutation.isPending} onClick={() => tagsMutation.mutate(on ? thread.conversation.tags.filter(x => x !== tag.key) : [...thread.conversation.tags, tag.key])} className={`h-7 px-2 text-[11px] ${on ? TAG_TONE[tag.tone] : "border-dashed text-muted-foreground"}`}>{on ? <Check className="size-3" /> : <Plus className="size-3" />}{tag.label}</Button>; })}</div></div> : null}
+            {thread.calls.length > 0 && <div><p className="mb-2 font-medium">{ui.calls}</p><ul className="divide-y divide-border">{thread.calls.map(item => <li key={item.id} className="py-3"><p className="font-medium">{item.phone ?? "—"}</p><p className="mt-1 text-[10px] text-muted-foreground">{timeLabel(item.started_at)} · {formatDuration(item.duration_seconds)}</p>{item.notes && <p className="mt-1 text-muted-foreground">{item.notes}</p>}{item.recording_url ? <audio controls src={item.recording_url} className="mt-2 w-full" /> : <p className="mt-1 text-[10px] text-muted-foreground">{ui.noRecording}</p>}</li>)}</ul></div>}
+          </div>
+        </aside>}
       </div>
 
       <Dialog open={linkOpen} onOpenChange={setLinkOpen}><DialogContent><DialogHeader><DialogTitle>{t.link}</DialogTitle></DialogHeader><Input placeholder="Tìm hồ sơ theo tên hoặc SĐT" value={leadSearch} onChange={e => setLeadSearch(e.target.value)} /><div className="max-h-72 space-y-1 overflow-y-auto">{choices.data?.map(l => <Button key={l.id} variant="ghost" className="h-auto w-full justify-start py-3" disabled={linkMutation.isPending} onClick={() => linkMutation.mutate(l.id)}>{l.full_name} · {l.phone ?? "—"}</Button>)}</div></DialogContent></Dialog>
