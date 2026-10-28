@@ -1,0 +1,8 @@
+DROP POLICY crm_private_read ON storage.objects;
+CREATE POLICY crm_private_read ON storage.objects FOR SELECT TO authenticated USING(bucket_id='crm-private' AND private.is_tenant_member(((storage.foldername(name))[1])::uuid) AND (private.crm_admin(((storage.foldername(name))[1])::uuid) OR ((storage.foldername(name))[2])=auth.uid()::text OR EXISTS(SELECT 1 FROM public.files f WHERE f.bucket=bucket_id AND f.path=name AND f.tenant_id=((storage.foldername(name))[1])::uuid AND f.deleted_at IS NULL AND f.related_id IS NOT NULL AND private.crm_record_read(f.tenant_id,f.related_type,f.related_id))));
+-- Messages are immutable history after insertion for non-admin callers.
+DROP POLICY crm_update ON public.conversation_messages;
+CREATE POLICY crm_update ON public.conversation_messages FOR UPDATE TO authenticated USING(private.crm_admin(tenant_id)) WITH CHECK(private.crm_admin(tenant_id));
+CREATE OR REPLACE FUNCTION public.guard_crm_message_sender() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF auth.uid() IS NOT NULL AND NOT private.crm_admin(NEW.tenant_id) AND NEW.sender_user_id IS DISTINCT FROM auth.uid() THEN RAISE EXCEPTION 'Không được giả danh người gửi'; END IF;RETURN NEW; END $$;
+CREATE TRIGGER guard_crm_message_sender BEFORE INSERT ON public.conversation_messages FOR EACH ROW EXECUTE FUNCTION public.guard_crm_message_sender();
+REVOKE ALL ON FUNCTION public.guard_crm_message_sender() FROM PUBLIC,anon,authenticated;
