@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Telegram hai chiều: kiểm tra địa chỉ công khai, gia cố kích hoạt/gửi, kiểm thử Hộp thoại; chỉ trả lời tin thử có mã TEST TELEGRAM 2842 do người dùng tự gửi.
+- [x] Telegram hai chiều: địa chỉ công khai không còn 404; kiểm tra trước kích hoạt, cấu hình origin server-side, chặn thiếu hội thoại/sai binding và báo lỗi nhà cung cấp; 24 kiểm thử đạt. Nhận thật TEST TELEGRAM 2842 → trả lời từ Hộp thoại được Telegram xác nhận → tải lại vẫn thấy Đã gửi. 0 tin chờ, không có lỗi webhook; bản gia cố mới chưa xuất bản.
 
 - [x] Cộng tác viên bán hàng: hồ sơ, Sale phụ trách, khách giới thiệu, duyệt hoa hồng theo hợp đồng và lịch sử chi riêng; thử lưu/đọc lại khoản chi 20/60 triệu, chặn trùng/vượt/sửa đã chi và sàn khác, 3 kiểm thử đạt, mobile không tràn; dữ liệu thử đã dọn. Chưa xuất bản; chưa có tài khoản CTV hoặc cổng tự gửi khách.
 
@@ -31,7 +31,7 @@
 
 - [x] Bổ sung tab kết nối Telegram/WhatsApp/Viber, lưu/xoá cấu hình quản trị và kiểm tra tài khoản không gửi tin; thử lưu/đọc/xoá cấu hình Telegram, 19 kiểm thử đạt. Xác minh nhà cung cấp thật còn chờ tài khoản/kết nối.
 - [x] Telegram: bot Unicomsale đã liên kết và đăng ký nhận tin cho SaleBDS Demo; bộ xử lý xác thực/trả lời đúng định danh và 23 kiểm thử đạt tại local.
-- [ ] Xác minh Telegram hai chiều với người thật: địa chỉ preview công khai đang trả 404 cho webhook (local trả đúng 401); chờ triển khai bản mới và kiểm tra lại trước khi nhắn @Unicomsale_bot. Chưa gửi tin giả hoặc tin cho người không liên quan.
+- [x] Xác minh Telegram hai chiều với người thật: @Unicomsale_bot nhận TEST TELEGRAM 2842 qua địa chỉ dev công khai và phản hồi từ Hộp thoại được xác nhận với message ID; tải lại giữ nguyên. Địa chỉ từ chối thiếu chữ ký (401), dữ liệu sai (400), bỏ qua cập nhật không có tin (200); không gửi cho người không liên quan.
 - [ ] WhatsApp gửi/nhận: chờ số WhatsApp Business và hoàn tất thẻ kết nối (đã bỏ qua); chưa bật gửi/nhận.
 - [ ] Viber gửi/nhận: chờ bot doanh nghiệp được Viber duyệt; chưa có thông tin kết nối.
 - [x] Hiển thị ba kênh mới trong Hộp thoại với trạng thái chờ thiết lập rõ ràng; kiểm tra giao diện bằng tài khoản đăng nhập và 14 kiểm thử đạt.
