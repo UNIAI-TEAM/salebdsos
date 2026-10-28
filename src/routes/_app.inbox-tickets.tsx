@@ -127,9 +127,9 @@ function TicketsPage() {
       />
 
       <div className="grid grid-cols-3 gap-3">
-        <KpiCard compact label="Đang mở" value={kpi?.open ?? 0} />
-        <KpiCard compact label="Quá hạn SLA" value={kpi?.overdue ?? 0} tone={kpi?.overdue ? "danger" : "default"} />
-        <KpiCard compact label="Đã xử lý" value={kpi?.resolved ?? 0} tone="success" />
+        <KpiCard compact icon={TicketCheck} label="Đang mở" value={kpi?.open ?? 0} tone="blue" />
+        <KpiCard compact icon={TicketCheck} label="Quá hạn SLA" value={kpi?.overdue ?? 0} tone={kpi?.overdue ? "rose" : "primary"} />
+        <KpiCard compact icon={CheckCircle2} label="Đã xử lý" value={kpi?.resolved ?? 0} tone="green" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
