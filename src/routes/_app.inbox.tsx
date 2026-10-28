@@ -124,9 +124,16 @@ function InboxPage() {
   const [tagFilter, setTagFilter] = useState<string>("");
   const fetchKit = useServerFn(getInboxKit);
   const saveTags = useServerFn(setConversationTags);
+  const assignConv = useServerFn(assignConversation);
+  const setConvStatus = useServerFn(setConversationStatus);
+  const createCustomer = useServerFn(createCustomerFromConversation);
+  const fetchAssignees = useServerFn(listAssignees);
   const [search, setSearch] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [mineOnly, setMineOnly] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [createCustOpen, setCreateCustOpen] = useState(false);
+  const [custForm, setCustForm] = useState({ fullName: "", phone: "", email: "" });
   const messageArea = useRef<HTMLDivElement>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -137,13 +144,22 @@ function InboxPage() {
   const [callDialog, setCallDialog] = useState<{ callId: string; phone: string } | null>(null);
   const [callForm, setCallForm] = useState({ outcome: "connected", minutes: "1", recordingUrl: "", notes: "" });
 
+  const assigneesQuery = useQuery({
+    queryKey: ["inbox-assignees", tenantId],
+    enabled: Boolean(tenantId),
+    queryFn: () => {
+      if (!tenantId) throw new Error("Chưa chọn workspace");
+      return fetchAssignees({ data: { tenantId } });
+    },
+  });
+
   const listQuery = useQuery({
-    queryKey: ["inbox", tenantId, channel, search, tagFilter],
+    queryKey: ["inbox", tenantId, channel, search, tagFilter, mineOnly],
     enabled: Boolean(tenantId),
     refetchInterval: 20000,
     queryFn: () => {
       if (!tenantId) throw new Error("Chưa chọn workspace");
-      return fetchList({ data: { tenantId, channel, search: search || undefined, tag: tagFilter || undefined } });
+      return fetchList({ data: { tenantId, channel, search: search || undefined, tag: tagFilter || undefined, mine: mineOnly || undefined } });
     },
   });
 
