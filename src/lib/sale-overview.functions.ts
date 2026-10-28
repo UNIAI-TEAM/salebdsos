@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { TOUCH_LABEL } from "@/lib/journey.functions";
 import { LEAD_ROUTING_KEY, parseLeadRouting, WORKING_LEAD_STATUSES, leadSlaDeadline } from "@/lib/lead-routing";
+import { vietnamDayStart } from "@/lib/today-work";
 
 const MANAGER_ROLES = new Set(["owner", "admin", "manager", "platform_admin"]);
 const SALE_ROLES = new Set(["owner", "admin", "manager", "agent"]);
@@ -64,7 +65,7 @@ export const getSaleOverview = createServerFn({ method: "GET" })
       supabase.from("cards").select("id,slug").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null),
       supabase.from("pipeline_deals").select("id,project_id,customer_id,value,currency,status,closed_at").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null),
       supabase.from("leads").select("id,full_name,phone,email,source,status,project_id,card_id,created_at,updated_at,meta").eq("tenant_id", data.tenantId).eq("owner_user_id", ownerId).is("deleted_at", null).order("created_at", { ascending: false }),
-      supabase.from("appointments").select("id,project_id,customer_id,lead_id,title,location,starts_at,ends_at,status,is_published,assigned_to,created_by,customers(full_name)").eq("tenant_id", data.tenantId).or(`assigned_to.eq.${ownerId},created_by.eq.${ownerId}`).gte("starts_at", now.toISOString()).lte("starts_at", scheduleEnd).order("starts_at", { ascending: true }).limit(100),
+      supabase.from("appointments").select("id,project_id,customer_id,lead_id,title,location,starts_at,ends_at,status,is_published,assigned_to,created_by,customers(full_name)").eq("tenant_id", data.tenantId).or(`assigned_to.eq.${ownerId},created_by.eq.${ownerId}`).gte("starts_at", vietnamDayStart(now)).lte("starts_at", scheduleEnd).order("starts_at", { ascending: true }).limit(100),
       supabase.from("settings").select("value").eq("tenant_id", data.tenantId).eq("key", LEAD_ROUTING_KEY).maybeSingle(),
       supabase.from("project_qr_codes").select("id,project_id,code,label,channel").eq("tenant_id", data.tenantId).eq("created_by", ownerId).eq("is_active", true),
     ]);

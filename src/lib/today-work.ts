@@ -2,4 +2,6 @@ export const TODAY_COPY={title:'Việc hôm nay',all:'Tất cả',calls:'Khách 
 export type WorkKind='calls'|'appointments'|'sla'|'debt';
 export type WorkItem={id:string;kind:WorkKind;name:string;detail:string;status:string;urgent:boolean;phone?:string|null;leadId?:string;amount?:number;order:number};
 export function vietnamDay(value:string|Date){return new Date(new Date(value).getTime()+7*3600000).toISOString().slice(0,10);}
+export function vietnamDayStart(value:string|Date){return new Date(`${vietnamDay(value)}T00:00:00+07:00`).toISOString();}
+export function uniqueWork(items:WorkItem[]){const slaIds=new Set(items.filter(i=>i.kind==='sla').map(i=>i.leadId));return items.filter(i=>i.kind!=='calls'||!slaIds.has(i.leadId));}
 export function mergeCallLeads<T extends {id:string}>(...groups:T[][]){return [...new Map(groups.flat().map(x=>[x.id,x])).values()];}
