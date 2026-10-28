@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Cho sàn chọn theme, tải logo và sửa slogan tại Cài đặt; áp dụng riêng theo sàn và kiểm tra lưu/tải lại.
+
 - [x] Cấu hình email riêng tại Tích hợp: Resend theo tài khoản từng sàn, khóa mã hóa, quản trị nhập tên miền/địa chỉ gửi, lấy DNS, xác minh, gửi thử đến chính mình và lịch sử tiếp nhận/thất bại; chặn tên miền chưa xác minh. 5 test quy tắc đạt; giao diện quản trị và chặn địa chỉ khác tên miền đã kiểm tra. Chưa xuất bản.
 - [ ] Kiểm thử Resend tạo/xác minh/gửi thật: chờ quản trị sàn nhập khóa Full access và tên miền sở hữu, thêm DNS; không có tài khoản/khóa để thực hiện thay sàn. Email chiến dịch vẫn chặn, chưa triển khai đồng ý nhận tin/hủy đăng ký.
 
