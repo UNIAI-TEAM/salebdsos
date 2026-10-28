@@ -191,6 +191,7 @@ function ContractsPage() {
           code: form.code || null,
           salePrice: Number(form.salePrice || 0),
           discountAmount: Number(form.discountAmount || 0),
+          discountPolicyId: form.discountPolicyId || null,
           signedAt: form.signedAt || null,
           note: form.note || null,
           withTemplate: true,
@@ -199,7 +200,7 @@ function ContractsPage() {
       });
       toast.success("Đã lập hợp đồng và tạo đợt thanh toán mẫu");
       setCreating(false);
-      setForm({ productId: "", customerId: "", code: "", salePrice: "", discountAmount: "", signedAt: "", commissionPercent: "2", note: "" });
+      setForm({ productId: "", customerId: "", code: "", salePrice: "", discountAmount: "", discountPolicyId: "", signedAt: "", commissionPercent: "2", note: "" });
     });
 
   // --- installment / commission editors -------------------------------------
@@ -435,7 +436,7 @@ function ContractsPage() {
               </div>
               <div className="grid gap-1.5">
                 <Label>Chiết khấu</Label>
-                <Input inputMode="numeric" value={form.discountAmount} onChange={(e) => setForm((p) => ({ ...p, discountAmount: e.target.value }))} />
+                <Input inputMode="numeric" value={form.discountAmount} onChange={(e) => setForm((p) => ({ ...p, discountAmount: e.target.value, discountPolicyId: "" }))} />
               </div>
               <div className="grid gap-1.5">
                 <Label>Hoa hồng Sale (%)</Label>
