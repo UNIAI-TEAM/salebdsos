@@ -23,6 +23,8 @@ import { buildPlotGrid, plotStats, pricePerM2, type PlotUnit } from "@/lib/plot-
 import {
   changeListingStatus, listInventory, listInventoryProjects, updateInventoryItem,
 } from "@/lib/inventory.functions";
+import { listDiscountPolicies } from "@/lib/discount.functions";
+import { bestQuote, type DiscountPolicy } from "@/lib/payment-discount";
 
 export const Route = createFileRoute("/_app/plot-map")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -111,6 +113,20 @@ function PlotMapPage() {
   const zones = useMemo(() => buildPlotGrid(units), [units]);
   const stats = useMemo(() => plotStats(units), [units]);
   const activeZone = zones.find((z) => z.zone === zoneTab) ?? zones[0];
+
+  const fnPolicies = useServerFn(listDiscountPolicies);
+  const policies = useQuery({
+    queryKey: ["plot-map-policies", tenantId, effectiveProject],
+    queryFn: () => fnPolicies({ data: { tenantId: tenantId!, projectId: effectiveProject } }),
+    enabled: !!tenantId && !!effectiveProject,
+  });
+  const discountHint = selected
+    ? bestQuote(
+        selected.price,
+        (policies.data?.policies ?? []) as DiscountPolicy[],
+        { projectId: effectiveProject || null, kind: selected.product_type ?? null },
+      )
+    : null;
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["plot-map", tenantId] });
 
@@ -325,6 +341,22 @@ function PlotMapPage() {
                   </>
                 )}
               </div>
+
+              {discountHint && (
+                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3" data-testid="discount-hint">
+                  <div className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
+                    {discountHint.policy.name}
+                  </div>
+                  <div className="mt-0.5 text-sm">
+                    Thanh toán trong <b>{discountHint.policy.within_days} ngày</b>: giảm{" "}
+                    <b>{discountHint.policy.discount_percent}%</b> (~{money(discountHint.amount)}) — còn{" "}
+                    <b>{money(discountHint.net)}</b>
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-muted-foreground">
+                    Hạn hưởng chiết khấu: {discountHint.deadline.toLocaleDateString("vi-VN")}
+                  </div>
+                </div>
+              )}
 
               <div className="rounded-lg border p-3">
                 <div className="mb-2 text-xs font-medium text-muted-foreground">Đổi trạng thái</div>

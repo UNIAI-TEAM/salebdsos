@@ -42,6 +42,7 @@ export const HUBS: Hub[] = [
     { to: "/contracts", label: "Hợp đồng" },
     { to: "/debt-aging", label: "Tuổi nợ" },
     { to: "/bank-reconciliation", label: "Đối soát" },
+    { to: "/discounts", label: "Chiết khấu TT nhanh", roles: M },
     { to: "/commission-rules", label: "Chính sách hoa hồng", roles: M },
   ] },
   { id: "ai", tabs: [

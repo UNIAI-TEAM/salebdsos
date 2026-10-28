@@ -260,6 +260,13 @@
       "when": 1793160889762,
       "tag": "0036_plot_map_position",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793161406684,
+      "tag": "0037_fast_payment_discounts",
+      "breakpoints": true
     }
   ]
 }

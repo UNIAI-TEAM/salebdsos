@@ -1857,6 +1857,7 @@ export type Database = {
           deal_id: string | null
           deleted_at: string | null
           discount_amount: number
+          discount_policy_id: string | null
           id: string
           lead_id: string | null
           net_price: number
@@ -1880,6 +1881,7 @@ export type Database = {
           deal_id?: string | null
           deleted_at?: string | null
           discount_amount?: number
+          discount_policy_id?: string | null
           id?: string
           lead_id?: string | null
           net_price?: number
@@ -1903,6 +1905,7 @@ export type Database = {
           deal_id?: string | null
           deleted_at?: string | null
           discount_amount?: number
+          discount_policy_id?: string | null
           id?: string
           lead_id?: string | null
           net_price?: number
@@ -1929,6 +1932,13 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "pipeline_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_discount_policy_id_fkey"
+            columns: ["discount_policy_id"]
+            isOneToOne: false
+            referencedRelation: "payment_discount_policies"
             referencedColumns: ["id"]
           },
           {
@@ -3162,6 +3172,60 @@ export type Database = {
           },
           {
             foreignKeyName: "nurture_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_discount_policies: {
+        Row: {
+          active: boolean
+          created_at: string
+          discount_percent: number
+          id: string
+          name: string
+          product_kinds: string[]
+          project_id: string | null
+          sort: number
+          tenant_id: string
+          within_days: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          name: string
+          product_kinds?: string[]
+          project_id?: string | null
+          sort?: number
+          tenant_id: string
+          within_days?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          name?: string
+          product_kinds?: string[]
+          project_id?: string | null
+          sort?: number
+          tenant_id?: string
+          within_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_discount_policies_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_discount_policies_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
