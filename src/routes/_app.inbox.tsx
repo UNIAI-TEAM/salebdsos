@@ -370,6 +370,12 @@ function InboxPage() {
               <Button size="sm" variant="ghost" className={`h-7 flex-1 ${!unreadOnly ? "bg-card shadow-sm" : "text-muted-foreground"}`} onClick={() => setUnreadOnly(false)} aria-pressed={!unreadOnly}>{ui.all}</Button>
               <Button size="sm" variant="ghost" className={`h-7 flex-1 ${unreadOnly ? "bg-card shadow-sm" : "text-muted-foreground"}`} onClick={() => setUnreadOnly(true)} aria-pressed={unreadOnly}>{ui.unread}<span className="text-[10px]">{listQuery.data?.unreadTotal ?? 0}</span></Button>
             </div>
+            {listQuery.data?.canSeeAll && (
+              <label className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
+                <Checkbox checked={mineOnly} onCheckedChange={(v) => setMineOnly(v === true)} data-testid="filter-mine" />
+                Chỉ hội thoại của tôi
+              </label>
+            )}
             <Select value={channel} onValueChange={setChannel}><SelectTrigger className="h-8 border-0 bg-transparent px-1 text-xs shadow-none" aria-label={ui.channels}><SelectValue /></SelectTrigger><SelectContent>{CHANNEL_FILTERS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent></Select>
             {tagFilter && <Button size="sm" variant="secondary" className="h-6 text-[11px]" onClick={() => setTagFilter("")}>{tagMeta(tagFilter)?.label}<X className="size-3" /></Button>}
           </div>
@@ -389,8 +395,40 @@ function InboxPage() {
               <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold">{initials(thread.conversation.name)}</span>
               <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{thread.conversation.name}</h2><p className="flex items-center gap-1 truncate text-[11px] text-muted-foreground"><ChannelGlyph channel={thread.conversation.channel} className="size-3.5" /><span className="truncate">{CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}{thread.conversation.phone ? ` · ${thread.conversation.phone}` : ""}</span></p></div>
               {thread.conversation.phone && <Button variant="ghost" size="icon" title={ui.call} aria-label={ui.call} onClick={() => { const phone = thread.conversation.phone; if (phone) callMutation.mutate(phone); }} disabled={callMutation.isPending}><PhoneCall /></Button>}
+              <Select
+                value={thread.conversation.ownerUserId ?? "none"}
+                onValueChange={(v) => assignMutation.mutate(v === "none" ? null : v)}
+                disabled={assignMutation.isPending}
+              >
+                <SelectTrigger className="h-8 w-auto max-w-36 gap-1.5 border-0 bg-transparent px-2 text-xs shadow-none" aria-label="Người phụ trách" title="Người phụ trách">
+                  <UserRound className="size-3.5 shrink-0 text-muted-foreground" />
+                  <SelectValue placeholder="Chưa giao" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="none">Chưa giao</SelectItem>
+                  {(assigneesQuery.data ?? []).map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="ghost" size="icon"
+                title={thread.conversation.status === "closed" ? "Mở lại hội thoại" : "Đóng hội thoại"}
+                aria-label={thread.conversation.status === "closed" ? "Mở lại hội thoại" : "Đóng hội thoại"}
+                onClick={() => statusMutation.mutate(thread.conversation.status === "closed" ? "open" : "closed")}
+                disabled={statusMutation.isPending}
+                data-testid="toggle-conversation-status"
+              >
+                {thread.conversation.status === "closed" ? <CircleDot className="text-warning" /> : <CircleCheck className="text-success" />}
+              </Button>
               <Button variant="ghost" size="icon" aria-label={ui.customer} title={ui.customer} aria-pressed={detailsOpen} className={detailsOpen ? "bg-primary-soft text-primary" : ""} onClick={() => setDetailsOpen(!detailsOpen)}><PanelRight /></Button>
             </header>
+            {thread.conversation.botPaused && (
+              <div className="flex shrink-0 items-center gap-2 border-b border-border bg-success/10 px-4 py-1.5 text-[11px] text-success" data-testid="bot-paused-banner">
+                <Bot className="size-3.5 shrink-0" />
+                <span>{thread.conversation.ownerName ?? "Sale"} đang trực tiếp trao đổi — bot tạm ngừng nhả tin tự động.</span>
+              </div>
+            )}
             {thread.conversation.needsIdentityReview && <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-warning/10 px-4 py-1.5 text-[11px] text-warning"><span>{t.review}</span><Button variant="ghost" size="sm" className="h-6 text-[11px]" onClick={() => setLinkOpen(true)}>{t.link}</Button></div>}
             <div ref={messageArea} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain bg-muted/20 p-4 scrollbar-thin" data-testid="inbox-messages">
               {timeline.length === 0 ? <p className="py-10 text-center text-xs text-muted-foreground">{ui.noMessages}</p> : timeline.map(message => <div key={message.id} className={`flex flex-col ${message.direction === "out" ? "items-end" : "items-start"}`}>
