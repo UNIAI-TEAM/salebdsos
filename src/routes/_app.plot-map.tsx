@@ -167,8 +167,8 @@ function PlotMapPage() {
       <PageHeader
         compact
         title="Sơ đồ lô"
-        description="Nhìn toàn khu theo sơ đồ, tô màu trạng thái từng lô, giữ chỗ nhanh."
-        actions={
+        sub="Nhìn toàn khu theo sơ đồ, tô màu trạng thái từng lô, giữ chỗ nhanh."
+        action={
           <Button variant="outline" size="sm" onClick={() => list.refetch()} disabled={list.isFetching}>
             <RefreshCw className={`mr-1.5 h-4 w-4 ${list.isFetching ? "animate-spin" : ""}`} />
             Làm mới
