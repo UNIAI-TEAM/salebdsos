@@ -559,3 +559,101 @@ export const setConversationTags = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { tags };
   });
+
+/* ----------------- Giao phụ trách & đóng/mở hội thoại ----------------- */
+
+export const assignConversation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      tenantId: z.string().uuid(),
+      conversationId: z.string().uuid(),
+      userId: z.string().uuid().nullable(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const list = await roles(supabase as never, data.tenantId, userId);
+    const isManager = list.some((r) => MANAGER_ROLES.has(r));
+    // Sale chỉ được tự nhận hoặc rời hội thoại của mình; gán cho người khác cần quản lý
+    if (!isManager && data.userId !== userId && data.userId !== null)
+      throw new Error("Chỉ quản lý được giao hội thoại cho người khác");
+
+    const { data: conv } = await supabase.from("conversations").select("id, owner_user_id")
+      .eq("tenant_id", data.tenantId).eq("id", data.conversationId).maybeSingle();
+    if (!conv) throw new Error("Không tìm thấy hội thoại");
+    if (!isManager && data.userId === null && conv.owner_user_id !== userId)
+      throw new Error("Chỉ rời được hội thoại bạn đang phụ trách");
+
+    const { error } = await supabase.from("conversations")
+      .update({ owner_user_id: data.userId } as never).eq("id", conv.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const setConversationStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      tenantId: z.string().uuid(),
+      conversationId: z.string().uuid(),
+      status: z.enum(["open", "closed"]),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const list = await roles(supabase as never, data.tenantId, userId);
+    const { data: conv } = await supabase.from("conversations").select("id, owner_user_id")
+      .eq("tenant_id", data.tenantId).eq("id", data.conversationId).maybeSingle();
+    if (!conv) throw new Error("Không tìm thấy hội thoại");
+    if (!list.some((r) => MANAGER_ROLES.has(r)) && conv.owner_user_id !== userId)
+      throw new Error("Chỉ đóng/mở hội thoại bạn phụ trách");
+    const { error } = await supabase.from("conversations")
+      .update({ status: data.status } as never).eq("id", conv.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/* ----------------- Tạo hồ sơ khách mới từ hội thoại ----------------- */
+
+export const createCustomerFromConversation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      tenantId: z.string().uuid(),
+      conversationId: z.string().uuid(),
+      fullName: z.string().trim().min(2).max(120),
+      phone: z.string().trim().max(20).optional(),
+      email: z.string().trim().email().max(120).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const list = await roles(supabase as never, data.tenantId, userId);
+    const { data: conv } = await supabase.from("conversations")
+      .select("id, owner_user_id, customer_id, contact_name, contact_phone, project_id")
+      .eq("tenant_id", data.tenantId).eq("id", data.conversationId).maybeSingle();
+    if (!conv) throw new Error("Không tìm thấy hội thoại");
+    if (!list.some((r) => MANAGER_ROLES.has(r)) && conv.owner_user_id !== userId)
+      throw new Error("Chỉ tạo hồ sơ từ hội thoại bạn phụ trách");
+    if (conv.customer_id) throw new Error("Hội thoại đã gắn hồ sơ khách hàng");
+
+    const { data: customer, error } = await supabase
+      .from("customers")
+      .insert({
+        tenant_id: data.tenantId,
+        owner_user_id: conv.owner_user_id ?? userId,
+        full_name: data.fullName,
+        phone: data.phone || conv.contact_phone || null,
+        email: data.email || null,
+        notes: `Tạo từ hội thoại ${conv.contact_name ?? ""}`.trim(),
+      } as never)
+      .select("id, full_name")
+      .single();
+    if (error) throw new Error(error.message);
+
+    const { error: linkErr } = await supabase.from("conversations")
+      .update({ customer_id: customer.id } as never).eq("id", conv.id);
+    if (linkErr) throw new Error(linkErr.message);
+    return { ok: true, customerId: customer.id, name: customer.full_name };
+  });
