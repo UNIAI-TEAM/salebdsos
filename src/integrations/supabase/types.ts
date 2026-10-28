@@ -3421,6 +3421,8 @@ export type Database = {
           is_public: boolean
           legal_status: string | null
           listing_status: Database["public"]["Enums"]["listing_status"]
+          map_col: number | null
+          map_row: number | null
           name: string
           price: number
           product_type: Database["public"]["Enums"]["property_kind"] | null
@@ -3454,6 +3456,8 @@ export type Database = {
           is_public?: boolean
           legal_status?: string | null
           listing_status?: Database["public"]["Enums"]["listing_status"]
+          map_col?: number | null
+          map_row?: number | null
           name: string
           price?: number
           product_type?: Database["public"]["Enums"]["property_kind"] | null
@@ -3487,6 +3491,8 @@ export type Database = {
           is_public?: boolean
           legal_status?: string | null
           listing_status?: Database["public"]["Enums"]["listing_status"]
+          map_col?: number | null
+          map_row?: number | null
           name?: string
           price?: number
           product_type?: Database["public"]["Enums"]["property_kind"] | null
@@ -4573,6 +4579,8 @@ export type Database = {
           is_public: boolean
           legal_status: string | null
           listing_status: Database["public"]["Enums"]["listing_status"]
+          map_col: number | null
+          map_row: number | null
           name: string
           price: number
           product_type: Database["public"]["Enums"]["property_kind"] | null

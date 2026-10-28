@@ -253,6 +253,13 @@
       "when": 1793032128764,
       "tag": "0035_contract_hold_owner_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793160889762,
+      "tag": "0036_plot_map_position",
+      "breakpoints": true
     }
   ]
 }
