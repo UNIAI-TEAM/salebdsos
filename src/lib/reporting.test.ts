@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { contractFinancials, reportWindow, reportContractDate, reportCsv } from "./reporting";
-import { readReportRows } from "./reporting.server";
+import { readReportRows, reportScope } from "./reporting.server";
 
 describe("report consistency", () => {
   it("includes exactly seven Vietnamese calendar days", () => {
@@ -29,5 +29,17 @@ describe("report consistency", () => {
   it("rejects a failed later page instead of partial totals", async () => {
     const q = { order: () => q, range: async (a: number) => a ? { data: null, error: {} } : { data: Array(500).fill({}), error: null } };
     await expect(readReportRows(q)).rejects.toThrow("Không thể tải đầy đủ");
+  });
+  it("Sale cannot request another Sale's reports", async () => {
+    const q = { select: () => q, eq: () => q, order: () => q, range: async () => ({ data: [{ role: "agent" }], error: null }) };
+    expect(await reportScope({ from: () => q }, "tenant", "sale-a", "sale-b")).toEqual({ canManage: false, ownerFilter: "sale-a" });
+  });
+  it("manager can filter a Sale without granting editing rights", async () => {
+    const q = { select: () => q, eq: () => q, order: () => q, range: async () => ({ data: [{ role: "manager" }], error: null }) };
+    expect(await reportScope({ from: () => q }, "tenant", "manager", "sale-b")).toEqual({ canManage: true, ownerFilter: "sale-b" });
+  });
+  it("denies access without a business role", async () => {
+    const q = { select: () => q, eq: () => q, order: () => q, range: async () => ({ data: [], error: null }) };
+    await expect(reportScope({ from: () => q }, "other-tenant", "sale-a")).rejects.toThrow("không có quyền");
   });
 });
