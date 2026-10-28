@@ -1,6 +1,7 @@
 # Roadmap
 
-- [ ] Cấu hình tên miền email riêng theo sàn trong ứng dụng: quản trị nhập tên miền/địa chỉ gửi, xác minh DNS, gửi thử và chặn gửi khi chưa xác minh; chờ chọn dịch vụ hỗ trợ nhiều tên miền độc lập.
+- [x] Cấu hình email riêng tại Tích hợp: Resend theo tài khoản từng sàn, khóa mã hóa, quản trị nhập tên miền/địa chỉ gửi, lấy DNS, xác minh, gửi thử đến chính mình và lịch sử tiếp nhận/thất bại; chặn tên miền chưa xác minh. 5 test quy tắc đạt; giao diện quản trị và chặn địa chỉ khác tên miền đã kiểm tra. Chưa xuất bản.
+- [ ] Kiểm thử Resend tạo/xác minh/gửi thật: chờ quản trị sàn nhập khóa Full access và tên miền sở hữu, thêm DNS; không có tài khoản/khóa để thực hiện thay sàn. Email chiến dịch vẫn chặn, chưa triển khai đồng ý nhận tin/hủy đăng ký.
 
 - [x] Rà soát CRM/CTV: thay quyền quá rộng bằng quyền theo Sale/vai trò, chặn liên kết chéo sàn và nâng platform_admin, khóa tài liệu CRM riêng, lời mời gắn email xác nhận/hiện tại, gỡ chatbot AI cũ công khai, chặn gọi theo hậu tố. 7 kiểm thử trực tiếp Sale/CTV đạt; CTV gửi khách và đọc lại trên giao diện; quản lý bị chặn sửa nhưng được điều phối; chặn hợp đồng chéo sàn/lời mời email cũ/tải tài liệu không đăng nhập. Quét cơ bản sau sửa không còn cảnh báo; bản giao diện mới chưa xuất bản.
 - [ ] Mật khẩu quản trị từng lộ trong tệp quản lý cũ: cần chủ tài khoản đổi mật khẩu, thu hồi phiên và xử lý tệp lịch sử bị công cụ khóa sửa; chưa xác minh đã luân chuyển nên giữ cảnh báo mở.

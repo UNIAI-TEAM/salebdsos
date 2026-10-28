@@ -29,3 +29,4 @@
 - CRM authorization is enforced by database owner/role predicates and tenant-reference guards, including direct Data API requests; assignment changes are limited to admins/managers or the actor's department, so UI filtering is not a security boundary.
 - CRM attachments use a private bucket with tenant/uploader paths and related-record checks; public marketing storage stays separate to prevent unauthenticated document downloads.
 - Staff invitations bind verified recipient email transactionally; existing global identities are invited rather than overwritten, and tenant admins cannot reset passwords for cross-tenant or platform accounts.
+- Tenant sender domains use admin-checked service-only configuration and encrypted tenant credentials; provider verification gates sending, never shared workspace credentials.
