@@ -2,9 +2,7 @@
 BEGIN;
 INSERT INTO public.sales_collaborators(tenant_id,code,full_name,owner_user_id,portal_user_id)
 SELECT tenant_id,'QA-PORTAL-SECURITY','Other CTV',owner_user_id,'11111111-2222-4333-8444-555555555555' FROM public.sales_collaborators WHERE code='QA-PORTAL-2852';
-UPDATE public.collaborator_referrals SET approved=true,commission_amount=60000000 WHERE collaborator_id=(SELECT id FROM public.sales_collaborators WHERE code='QA-PORTAL-2852');
-INSERT INTO public.collaborator_payments(tenant_id,referral_id,amount,reference,actor_user_id)
-SELECT r.tenant_id,r.id,20000000,'QA-PORTAL-SECURITY-PAY',c.owner_user_id FROM public.collaborator_referrals r JOIN public.sales_collaborators c ON c.id=r.collaborator_id WHERE c.code='QA-PORTAL-2852';
+-- QA profile must have one approved 60,000,000 commission and a 20,000,000 payment.
 SELECT set_config('request.jwt.claims',jsonb_build_object('sub',(SELECT portal_user_id FROM public.sales_collaborators WHERE code='QA-PORTAL-2852'),'role','authenticated')::text,true);
 SET LOCAL ROLE authenticated;
 DO $$ DECLARE w jsonb; a uuid; b uuid; denied boolean:=false; BEGIN
