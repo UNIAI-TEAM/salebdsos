@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Gom Việc hôm nay ngay Tổng quan Sale: khách cần gọi/lịch hẹn/SLA/công nợ; không thêm menu, giữ phân quyền và thao tác hiện có. Công nợ theo Sale đang chọn; lịch từ đầu ngày Việt Nam, Tất cả không lặp SLA/khách. 16 kiểm thử đạt; thử Sale có khách, chuyển nhóm, tải lại và mở đúng hồ sơ từ công việc. Chưa xuất bản.
+
 - [x] Cổng CTV /ctv: quản trị mời từ hồ sơ CTV bằng liên kết 7 ngày, đúng email và dùng một lần; tài khoản riêng không cấp role CRM. Tự gửi khách nguyên tử/giữ Sale phụ trách/chặn trùng, xem trạng thái và hoa hồng riêng. Thử nhận lời mời → gửi → tải lại; chặn lời mời dùng lại, trùng điện thoại, CTV khác không thấy khách/hoa hồng, tạm dừng bị chặn; đối chiếu 60/20/40 triệu, 5 test đạt, mobile không tràn. QA đã dọn; chưa xuất bản.
 
 - [x] Telegram hai chiều: địa chỉ công khai không còn 404; kiểm tra trước kích hoạt, cấu hình origin server-side, chặn thiếu hội thoại/sai binding và báo lỗi nhà cung cấp; 24 kiểm thử đạt. Nhận thật TEST TELEGRAM 2842 → trả lời từ Hộp thoại được Telegram xác nhận → tải lại vẫn thấy Đã gửi. 0 tin chờ, không có lỗi webhook; bản gia cố mới chưa xuất bản.
