@@ -355,7 +355,12 @@ function ContractsPage() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="truncate font-semibold">{row.code}</p>
+                      <p className="truncate font-semibold">
+                        {row.code}
+                        {row.contract_kind === "rental" ? (
+                          <span className="ml-1.5 rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-medium text-sky-600">Thuê</span>
+                        ) : null}
+                      </p>
                       <p className="truncate text-[12px] text-muted-foreground">
                         {row.product_label ?? "—"} · {row.customer_name ?? "—"}
                       </p>
@@ -392,8 +397,17 @@ function ContractsPage() {
                 {(data?.contracts ?? []).map((row: any) => (
                   <tr key={row.id} className="border-t border-border transition-colors hover:bg-muted/40">
                     <td className="px-3 py-3 tabular-nums">
-                      <p className="font-medium">{row.code}</p>
-                      <p className="text-[11px] text-muted-foreground">{row.project_name ?? "Chưa gắn dự án"}</p>
+                      <p className="font-medium">
+                        {row.code}
+                        {row.contract_kind === "rental" ? (
+                          <span className="ml-1.5 rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-medium text-sky-600">Thuê</span>
+                        ) : null}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {row.contract_kind === "rental" && row.lease_start
+                          ? `${row.lease_start} → ${row.lease_end ?? "—"}`
+                          : (row.project_name ?? "Chưa gắn dự án")}
+                      </p>
                     </td>
                     <td className="px-3 py-3 tabular-nums text-muted-foreground">{row.product_label ?? "—"}</td>
                     <td className="px-3 py-3 tabular-nums text-muted-foreground">{row.customer_name ?? "—"}</td>
@@ -574,9 +588,15 @@ function ContractsPage() {
                 </div>
               </div>
             )}
-            <p className="text-[11px] text-muted-foreground">
-              Giá sau chiết khấu: {money(Math.max(0, Number(form.salePrice || 0) - Number(form.discountAmount || 0)))}
-            </p>
+            {form.kind === "sale" ? (
+              <p className="text-[11px] text-muted-foreground">
+                Giá sau chiết khấu: {money(Math.max(0, Number(form.salePrice || 0) - Number(form.discountAmount || 0)))}
+              </p>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                Hệ thống tự tạo đợt cọc và các đợt thuê hàng tháng theo thời hạn thuê; căn chuyển sang trạng thái “Đang cho thuê”.
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreating(false)}>Huỷ</Button>
