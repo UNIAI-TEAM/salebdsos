@@ -3415,6 +3415,57 @@ export type Database = {
           },
         ]
       }
+      plot_transform_events: {
+        Row: {
+          action: string
+          child_ids: string[]
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          parent_ids: string[]
+          project_id: string | null
+          tenant_id: string
+        }
+        Insert: {
+          action: string
+          child_ids: string[]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          parent_ids: string[]
+          project_id?: string | null
+          tenant_id: string
+        }
+        Update: {
+          action?: string
+          child_ids?: string[]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          parent_ids?: string[]
+          project_id?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plot_transform_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plot_transform_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_status_history: {
         Row: {
           changed_by: string | null
@@ -4733,6 +4784,50 @@ export type Database = {
         Args: { p_conversation: string; p_lead: string; p_tenant: string }
         Returns: boolean
       }
+      merge_plots: {
+        Args: { p_child: Json; p_ids: string[] }
+        Returns: {
+          area: number | null
+          attributes: Json
+          bathrooms: number | null
+          bedrooms: number | null
+          category: string | null
+          code: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          deal_id: string | null
+          description: string | null
+          direction: string | null
+          floor: number | null
+          hold_expires_at: string | null
+          hold_owner_user_id: string | null
+          id: string
+          image_url: string | null
+          is_public: boolean
+          legal_status: string | null
+          listing_status: Database["public"]["Enums"]["listing_status"]
+          map_col: number | null
+          map_row: number | null
+          name: string
+          price: number
+          product_type: Database["public"]["Enums"]["property_kind"] | null
+          project_id: string | null
+          sku: string | null
+          status: string
+          tenant_id: string
+          unit: string | null
+          updated_at: string
+          usable_area: number | null
+          zone: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "products"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       refresh_lead_push_schedule: { Args: never; Returns: undefined }
       release_expired_product_holds: { Args: never; Returns: number }
       release_job_lock: { Args: { _key: string }; Returns: undefined }
@@ -4740,6 +4835,50 @@ export type Database = {
       save_contract_installments: {
         Args: { p_contract: string; p_rows: Json }
         Returns: number
+      }
+      split_plot: {
+        Args: { p_children: Json; p_expected: string; p_id: string }
+        Returns: {
+          area: number | null
+          attributes: Json
+          bathrooms: number | null
+          bedrooms: number | null
+          category: string | null
+          code: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          deal_id: string | null
+          description: string | null
+          direction: string | null
+          floor: number | null
+          hold_expires_at: string | null
+          hold_owner_user_id: string | null
+          id: string
+          image_url: string | null
+          is_public: boolean
+          legal_status: string | null
+          listing_status: Database["public"]["Enums"]["listing_status"]
+          map_col: number | null
+          map_row: number | null
+          name: string
+          price: number
+          product_type: Database["public"]["Enums"]["property_kind"] | null
+          project_id: string | null
+          sku: string | null
+          status: string
+          tenant_id: string
+          unit: string | null
+          updated_at: string
+          usable_area: number | null
+          zone: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "products"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
     }
     Enums: {
@@ -4781,6 +4920,7 @@ export type Database = {
         | "contracted"
         | "sold"
         | "liquidated"
+        | "retired"
       property_kind:
         | "apartment"
         | "land_plot"
@@ -4956,6 +5096,7 @@ export const Constants = {
         "contracted",
         "sold",
         "liquidated",
+        "retired",
       ],
       property_kind: [
         "apartment",
