@@ -86,11 +86,23 @@ function PlotMapPage() {
   const [note, setNote] = useState("");
   const [rowInput, setRowInput] = useState("");
   const [colInput, setColInput] = useState("");
+  const [mergeMode, setMergeMode] = useState(false);
+  const [mergeIds, setMergeIds] = useState<string[]>([]);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [mergeCode, setMergeCode] = useState("");
+  const [mergeArea, setMergeArea] = useState("");
+  const [mergePrice, setMergePrice] = useState("");
+  const [splitOpen, setSplitOpen] = useState(false);
+  const [splitChildren, setSplitChildren] = useState<SplitChildDraft[]>([emptyChild(), emptyChild()]);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const fnProjects = useServerFn(listInventoryProjects);
   const fnList = useServerFn(listInventory);
   const fnStatus = useServerFn(changeListingStatus);
   const fnUpdate = useServerFn(updateInventoryItem);
+  const fnSplit = useServerFn(splitPlot);
+  const fnMerge = useServerFn(mergePlots);
+  const fnHistory = useServerFn(listPlotTransforms);
 
   const projects = useQuery({
     queryKey: ["plot-map-projects", tenantId],
@@ -116,10 +128,17 @@ function PlotMapPage() {
     enabled: !!tenantId && !!effectiveProject,
   });
 
-  const units = (list.data?.items ?? []) as unknown as Row[];
+  const allUnits = (list.data?.items ?? []) as unknown as Row[];
+  // Lô đã tách/ghép không còn bán — ẩn khỏi sơ đồ, xem lại trong Lịch sử tách/ghép.
+  const units = useMemo(() => allUnits.filter((u) => u.listing_status !== "retired"), [allUnits]);
   const zones = useMemo(() => buildPlotGrid(units), [units]);
   const stats = useMemo(() => plotStats(units), [units]);
   const activeZone = zones.find((z) => z.zone === zoneTab) ?? zones[0];
+  const mergeUnits = useMemo(
+    () => mergeIds.map((id) => units.find((u) => u.id === id)).filter((u): u is Row => !!u),
+    [mergeIds, units],
+  );
+  const totals = useMemo(() => mergeTotals(mergeUnits), [mergeUnits]);
 
   const fnPolicies = useServerFn(listDiscountPolicies);
   const policies = useQuery({
