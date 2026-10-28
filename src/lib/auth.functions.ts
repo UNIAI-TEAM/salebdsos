@@ -58,6 +58,7 @@ export const listMembers = createServerFn({ method: "GET" })
   )
   .handler(async ({ context, data }) => {
     const { supabase } = context;
+    await assertTenantAdmin(supabase, context.userId, data.tenantId);
     const { data: roles, error } = await supabase
       .from("user_roles")
       .select("id, user_id, role, created_at")
@@ -151,28 +152,9 @@ export const acceptInvitation = createServerFn({ method: "POST" })
     z.object({ token: z.string().min(8).max(128) }).parse(d),
   )
   .handler(async ({ context, data }) => {
-    const { userId } = context;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: inv, error: iErr } = await supabaseAdmin
-      .from("invitations")
-      .select("id, tenant_id, role, status, expires_at")
-      .eq("token", data.token)
-      .maybeSingle();
-    if (iErr) throw new Error(iErr.message);
-    if (!inv) throw new Error("Invalid invitation");
-    if (inv.status !== "pending") throw new Error("Invitation no longer pending");
-    if (new Date(inv.expires_at) < new Date()) {
-      await supabaseAdmin.from("invitations").update({ status: "expired" }).eq("id", inv.id);
-      throw new Error("Invitation expired");
-    }
-    await supabaseAdmin
-      .from("user_roles")
-      .insert({ tenant_id: inv.tenant_id, user_id: userId, role: inv.role });
-    await supabaseAdmin
-      .from("invitations")
-      .update({ status: "accepted", accepted_at: new Date().toISOString(), accepted_by: userId })
-      .eq("id", inv.id);
-    return { tenantId: inv.tenant_id as string };
+    const { data: tenantId, error } = await context.supabase.rpc("accept_crm_invitation", { p_token: data.token });
+    if (error) throw new Error(error.message);
+    return { tenantId };
   });
 
 export const updateMemberRole = createServerFn({ method: "POST" })
@@ -251,6 +233,11 @@ export const createStaffAccount = createServerFn({ method: "POST" })
       .eq("email", email)
       .maybeSingle();
 
+    // Existing identities are global: a tenant admin must not overwrite their profile or grant access without acceptance.
+    if (existing?.user_id) {
+      throw new Error("Email đã có tài khoản; hãy gửi lời mời vào sàn thay vì tạo lại tài khoản.");
+    }
+
     let newUserId = existing?.user_id as string | undefined;
     let created = false;
     let verificationSent = false;
@@ -293,7 +280,7 @@ export const createStaffAccount = createServerFn({ method: "POST" })
       .from("user_roles")
       .upsert(
         { tenant_id: data.tenantId, user_id: newUserId, role: data.role } as never,
-        { onConflict: "user_id,role" },
+        { onConflict: "tenant_id,user_id,role" },
       )
       .select("id")
       .single();
@@ -374,6 +361,8 @@ export const resetStaffPassword = createServerFn({ method: "POST" })
     if (!member?.length) throw new Error("Người dùng không thuộc workspace này");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { assertLocalPasswordTarget } = await import("./staff-security.server");
+    await assertLocalPasswordTarget(supabaseAdmin, data.tenantId, data.targetUserId);
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.targetUserId, {
       password: data.password,
     });

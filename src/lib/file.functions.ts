@@ -8,7 +8,7 @@ const SELECT =
 
 const CreateInput = z.object({
   tenantId: z.string().uuid(),
-  bucket: z.string().trim().min(1).max(64).default("project-assets"),
+  bucket: z.literal("crm-private").default("crm-private"),
   path: z.string().trim().min(1).max(500),
   name: z.string().trim().min(1).max(255),
   size: z.number().int().min(0).max(5_000_000_000),
@@ -185,6 +185,7 @@ export const hardDeleteFile = createServerFn({ method: "POST" })
       .from("files")
       .select("bucket,path,name,tenant_id")
       .eq("id", data.id)
+      .is("deleted_at", null)
       .single();
     if (e1) throw new Error(e1.message);
     if (row?.bucket && row?.path) {

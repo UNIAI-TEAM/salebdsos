@@ -19,10 +19,19 @@ import { listLeads } from "@/lib/lead.functions";
 import { toast } from "sonner";
 import { getZipPhase as _getZipPhase, csvEscape as _csvEscape, validateAuditCsv, type ZipPhase as _ZipPhase } from "@/lib/audit-csv";
 
-export const Route = createFileRoute("/_app/files")({ component: FilesPage });
+export const Route = createFileRoute("/_app/files")({
+  head: () => ({ meta: [
+    { title: "Tài liệu CRM — SaleBDS OS" },
+    { name: "description", content: "Quản lý tài liệu khách hàng và hợp đồng theo quyền truy cập của sàn." },
+    { property: "og:title", content: "Tài liệu CRM — SaleBDS OS" },
+    { property: "og:description", content: "Tài liệu khách hàng và hợp đồng được quản lý riêng theo quyền truy cập." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+  ] }),
+  component: FilesPage,
+});
 
 const FOLDER_PRESETS = ["Brochure", "Bảng giá", "Hợp đồng", "Hình ảnh", "Khác"];
-const BUCKET = "project-assets";
+const BUCKET = "crm-private";
 const MAX_SIZE = 25 * 1024 * 1024; // 25MB
 
 function humanSize(n: number) {
@@ -236,10 +245,11 @@ function FilesPage() {
 
   const doUpload = async (file: File, meta: { folder: string; tag: string; leadId: string }) => {
     if (!tenantId) throw new Error("Chưa chọn workspace");
+    if (!user) throw new Error("Cần đăng nhập");
     if (file.size > MAX_SIZE) throw new Error(`Tệp vượt ${humanSize(MAX_SIZE)}`);
     const safeName = file.name.replace(/[^\w.\-]+/g, "_");
     const scope = meta.leadId ? `leads/${meta.leadId}` : "shared";
-    const path = `${tenantId}/${scope}/${Date.now()}_${safeName}`;
+    const path = `${tenantId}/${user.id}/${scope}/${crypto.randomUUID()}_${safeName}`;
     const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
       cacheControl: "3600",
       upsert: false,
