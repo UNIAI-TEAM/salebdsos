@@ -12,7 +12,7 @@ import {
   Mail,
   MessageSquare,
   Settings2,
-  ArrowLeft, Check, Inbox, ListFilter, PanelRight, Plus, Radio, UserRound, X, Zap,
+  ArrowLeft, Bot, Check, CircleCheck, CircleDot, Inbox, ListFilter, PanelRight, Plus, Radio, UserRound, X, Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -28,16 +28,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  assignConversation,
+  createCustomerFromConversation,
   getChannelSettings,
   getConversation,
   getInboxKit,
   listConversations,
+  setConversationStatus,
   setConversationTags,
   saveCallResult,
   saveChannelSettings,
   sendMessage,
   startCall,
 } from "@/lib/inbox.functions";
+import { listAssignees } from "@/lib/tickets.functions";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   CALL_OUTCOMES,
   CHANNEL_LABEL,
