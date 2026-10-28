@@ -420,6 +420,58 @@ export const createContractFromProduct = createServerFn({ method: "POST" })
     return contract;
   });
 
+// ---------------------------------------------------------------- rental
+const RentalInput = z.object({
+  tenantId: z.string().uuid(),
+  productId: z.string().uuid(),
+  customerId: z.string().uuid().nullable().optional(),
+  leadId: z.string().uuid().nullable().optional(),
+  ownerUserId: z.string().uuid().nullable().optional(),
+  code: z.string().max(60).nullable().optional(),
+  monthlyRent: z.number().positive(),
+  deposit: z.number().min(0).default(0),
+  leaseStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  leaseEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  cycleDay: z.number().int().min(1).max(31),
+  note: z.string().max(2000).nullable().optional(),
+});
+
+export const createRentalContract = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => RentalInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { canWrite: mayCreate } = await access(context as Ctx, data.tenantId);
+    if (!mayCreate) throw new Error("Chỉ quản trị viên được lập hợp đồng");
+
+    const { buildRentSchedule } = await import("@/lib/rental");
+    const schedule = buildRentSchedule({
+      leaseStart: data.leaseStart,
+      leaseEnd: data.leaseEnd,
+      cycleDay: data.cycleDay,
+      monthlyRent: data.monthlyRent,
+      deposit: data.deposit,
+    });
+
+    const { data: contractId, error } = await supabase.rpc("create_rental_contract", {
+      p_tenant: data.tenantId,
+      p_product: data.productId,
+      p_customer: data.customerId ?? null,
+      p_lead: data.leadId ?? null,
+      p_owner: data.ownerUserId ?? userId,
+      p_code: data.code ?? null,
+      p_monthly_rent: data.monthlyRent,
+      p_deposit: data.deposit,
+      p_lease_start: data.leaseStart,
+      p_lease_end: data.leaseEnd,
+      p_cycle_day: data.cycleDay,
+      p_note: data.note ?? null,
+      p_schedule: schedule,
+    });
+    if (error) throw new Error(error.message);
+    return loadContract(context as Ctx, contractId as string);
+  });
+
 // ---------------------------------------------------------------- update
 export const updateContract = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
