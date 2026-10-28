@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as CtvRouteImport } from './routes/ctv'
 import { Route as CustomizeRouteImport } from './routes/customize'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -114,6 +115,11 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CtvRoute = CtvRouteImport.update({
+  id: '/ctv',
+  path: '/ctv',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CustomizeRoute = CustomizeRouteImport.update({
@@ -599,6 +605,7 @@ const ApiPublicTelegramWebhookRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ctv': typeof CtvRoute
   '/customize': typeof CustomizeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -697,6 +704,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ctv': typeof CtvRoute
   '/customize': typeof CustomizeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -795,6 +803,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/ctv': typeof CtvRoute
   '/customize': typeof CustomizeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -895,6 +904,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ctv'
     | '/customize'
     | '/login'
     | '/onboarding'
@@ -993,6 +1003,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/ctv'
     | '/customize'
     | '/login'
     | '/onboarding'
@@ -1090,6 +1101,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_app'
+    | '/ctv'
     | '/customize'
     | '/login'
     | '/onboarding'
@@ -1190,6 +1202,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  CtvRoute: typeof CtvRoute
   CustomizeRoute: typeof CustomizeRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -1236,6 +1249,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ctv': {
+      id: '/ctv'
+      path: '/ctv'
+      fullPath: '/ctv'
+      preLoaderRoute: typeof CtvRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/customize': {
@@ -2077,6 +2097,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  CtvRoute: CtvRoute,
   CustomizeRoute: CustomizeRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
