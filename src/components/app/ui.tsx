@@ -13,11 +13,11 @@ const TONES: Record<string, string> = {
 export function KpiCard({
   icon: Icon, label, value, delta, deltaLabel = "so với 30 ngày trước", tone = "primary", compact = false,
 }: {
-  icon: LucideIcon; label: string; value: string; delta: number; deltaLabel?: string;
+  icon: LucideIcon; label: string; value: string; delta?: number; deltaLabel?: string;
   tone?: "primary" | "blue" | "green" | "amber" | "rose" | "indigo";
   compact?: boolean;
 }) {
-  const up = delta >= 0;
+  const up = (delta ?? 0) >= 0;
   if (compact) return (
     <div className="flex min-w-0 items-center gap-3 rounded-lg border border-border bg-card px-3 py-3">
       <div className={["grid h-8 w-8 shrink-0 place-items-center rounded-md", TONES[tone]].join(" ")}><Icon className="h-4 w-4" /></div>
@@ -37,10 +37,12 @@ export function KpiCard({
       </div>
       <div className="mb-2 text-2xl font-semibold leading-none tracking-tight text-foreground tabular-nums sm:text-[28px]">{value}</div>
       <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
-        <span className={["inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-medium", up ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"].join(" ")}>
-          {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-          {Math.abs(delta)}%
-        </span>
+        {delta !== undefined && (
+          <span className={["inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-medium", up ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"].join(" ")}>
+            {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+            {Math.abs(delta)}%
+          </span>
+        )}
         <span className="min-w-0 truncate text-muted-foreground">{deltaLabel}</span>
       </div>
     </div>
