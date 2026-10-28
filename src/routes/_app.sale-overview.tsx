@@ -4,9 +4,11 @@ import { startCall } from "@/lib/inbox.functions";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, AlarmClock, Building2, CalendarClock, CheckCircle2, FileSignature, PhoneCall, QrCode, RefreshCw, ScanLine, Snowflake, UserRoundCheck, Wallet } from "lucide-react";
+import { Activity, AlarmClock, Building2, CalendarClock, CheckCircle2, FileSignature, PhoneCall, QrCode, RefreshCw, ScanLine, UserRoundCheck, Wallet } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getSaleOverview } from "@/lib/sale-overview.functions";
+import { TodayWork } from "@/components/app/today-work";
+import { TODAY_COPY as C, vietnamDay, mergeCallLeads, type WorkItem } from "@/lib/today-work";
 import { getDebtAging } from "@/lib/debt-aging.functions";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
@@ -21,9 +23,9 @@ export const Route = createFileRoute("/_app/sale-overview")({
   head: () => ({
     meta: [
       { title: "Tổng quan Sale — SaleBDS OS" },
-      { name: "description", content: "Lịch hẹn, sự kiện, khách đã quét và chỉ số bán hàng tự động của từng Sale." },
+      { name: "description", content: "Việc hôm nay: khách cần gọi, lịch hẹn, SLA và công nợ của từng Sale." },
       { property: "og:title", content: "Tổng quan Sale — SaleBDS OS" },
-      { property: "og:description", content: "Theo dõi lịch, khách quét QR và hiệu quả bán hàng theo từng Sale." },
+      { property: "og:description", content: "Gom việc hôm nay, theo dõi khách cần gọi, lịch hẹn, SLA và công nợ." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -98,20 +100,33 @@ function SaleOverviewPage() {
   const data = query.data;
   const fetchDebt = useServerFn(getDebtAging);
   const debtQuery = useQuery({
-    queryKey: ["sale-overview-debt", tenantId, project],
-    enabled: Boolean(tenantId),
-    queryFn: () => fetchDebt({ data: { tenantId: tenantId as string, projectId: project } }),
+    queryKey: ["sale-overview-debt", tenantId, ownerId, project],
+    enabled: Boolean(tenantId && ownerId),
+    queryFn: () => {
+      if (!tenantId || !ownerId) throw new Error("Chưa chọn workspace");
+      return fetchDebt({ data: { tenantId, projectId: project, ownerId } });
+    },
     refetchInterval: 60_000,
   });
-  const overdue = (debtQuery.data?.items ?? []).filter((it) => it.daysOverdue > 0);
-  const overdueTotal = overdue.reduce((s, it) => s + it.outstanding, 0);
-  const vnd = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n));
+  const today = vietnamDay(new Date());
+  const work: WorkItem[] = [];
+  if (data) {
+    const calls: WorkItem[] = [
+      ...data.slaAlerts.map(lead => ({id:lead.id, kind:"calls" as const, name:lead.name, detail:[lead.phone,lead.projectName].filter(Boolean).join(" · "), status:`${C.late} ${lead.overdueMinutes} ${C.minutes}`, urgent:true, phone:lead.phone, leadId:lead.id, order:-lead.overdueMinutes})),
+      ...data.slaPending.map(lead => ({id:lead.id, kind:"calls" as const, name:lead.name, detail:[lead.phone,lead.projectName].filter(Boolean).join(" · "), status:`${C.remaining} ${lead.remainingMinutes} ${C.minutes}`, urgent:false, phone:lead.phone, leadId:lead.id, order:lead.remainingMinutes})),
+      ...data.coldLeads.filter(lead=>!data.slaAlerts.some(l=>l.id===lead.id)&&!data.slaPending.some(l=>l.id===lead.id)).map(lead => ({id:lead.id, kind:"calls" as const, name:lead.name, detail:[lead.phone,lead.projectName].filter(Boolean).join(" · "), status:`${C.cold} ${lead.idleDays} ${C.days}`, urgent:false, phone:lead.phone, leadId:lead.id, order:100+lead.idleDays})),
+    ];
+    work.push(...mergeCallLeads(calls).map(item=>({...item,id:`call-${item.id}`})));
+    work.push(...calls.filter(item=>item.order<100).map(item=>({...item,kind:"sla" as const,id:`sla-${item.id}`,order:item.order-10000})));
+    work.push(...data.appointments.filter(item=>item.status==="scheduled" && vietnamDay(item.startsAt)===today).map(item=>({id:`appointment-${item.id}`,kind:"appointments" as const,name:item.title,detail:[item.customerName,item.projectName,item.location].filter(Boolean).join(" · "),status:new Date(item.startsAt).toLocaleTimeString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh",hour:"2-digit",minute:"2-digit"}),urgent:false,order:500+new Date(item.startsAt).getHours()})));
+  }
+  work.push(...(debtQuery.data?.items??[]).filter(item=>item.daysOverdue>0||item.dueDate?.slice(0,10)===today).map(item=>({id:`debt-${item.installmentId}`,kind:"debt" as const,name:item.customerName,detail:[item.contractCode,item.name,item.projectName].join(" · "),status:item.daysOverdue>0?`${C.overdue} ${item.daysOverdue} ${C.days}`:C.due,urgent:item.daysOverdue>0,amount:item.outstanding,order:1000-item.daysOverdue})));
 
   return (
     <div className="space-y-5 pb-24 lg:pb-6">
       <PageHeader
         title="Tổng quan Sale"
-        sub="Lịch làm việc, khách đã quét và kết quả bán hàng được cập nhật tự động."
+        sub="Khách cần gọi, lịch hẹn, SLA và công nợ."
         action={
           <div className="flex w-full items-center gap-2 sm:w-auto">
             {data?.canManage ? (
@@ -120,8 +135,8 @@ function SaleOverviewPage() {
                 <SelectContent>{data.members.map((member) => <SelectItem key={member.userId} value={member.userId}>{member.name}</SelectItem>)}</SelectContent>
               </Select>
             ) : null}
-            <Button variant="outline" size="icon" onClick={() => query.refetch()} aria-label="Cập nhật dữ liệu" title="Cập nhật dữ liệu">
-              <RefreshCw className={query.isFetching ? "animate-spin" : ""} />
+            <Button variant="outline" size="icon" onClick={() => { void query.refetch(); void debtQuery.refetch(); }} aria-label="Cập nhật dữ liệu" title="Cập nhật dữ liệu">
+              <RefreshCw className={query.isFetching || debtQuery.isFetching ? "animate-spin" : ""} />
             </Button>
           </div>
         }
@@ -151,76 +166,8 @@ function SaleOverviewPage() {
             </Select>
           </section>
 
-          <section aria-label="Việc cần xử lý ngay" className="grid gap-4 xl:grid-cols-2">
-            <SectionCard
-              title={`Lead nóng cần gọi · ${data.slaAlerts.length}`}
-              className={data.slaAlerts.length ? "border-destructive/40" : ""}
-              action={
-                <Badge variant={data.slaAlerts.length ? "destructive" : "outline"} className="shrink-0 text-[10px]">
-                  Hạn gọi {data.routing.slaMinutes} phút
-                </Badge>
-              }
-            >
-              {data.slaAlerts.length === 0 ? (
-                <Empty text={data.slaDueSoon > 0 ? `${data.slaDueSoon} khách mới còn trong hạn gọi.` : "Không có khách nào trễ hạn gọi."} />
-              ) : (
-                <ul className="space-y-2">
-                  {data.slaAlerts.slice(0, 6).map((lead) => (
-                    <li key={lead.id} className="flex min-w-0 items-center gap-3 rounded-lg border border-border p-3">
-                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive"><AlarmClock className="h-4 w-4" /></div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{lead.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{[lead.phone, lead.projectName].filter(Boolean).join(" · ")}</p>
-                        <p className="text-[11px] font-medium text-destructive">Trễ {lead.overdueMinutes} phút · nhận {formatTime(lead.at)}</p>
-                      </div>
-                      {lead.phone ? (
-                        <Button size="sm" onClick={() => callLead(lead.phone as string)} disabled={callMutation.isPending} aria-label={`Gọi ${lead.name} qua tổng đài`}>
-                          <PhoneCall className="h-4 w-4" /> Gọi
-                        </Button>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {!data.routing.enabled ? (
-                <p className="mt-3 text-[11px] text-muted-foreground">Phân phối khách tự động đang tắt — quản lý có thể bật trong mục Phân phối lead.</p>
-              ) : null}
-              {data.slaPending.length > 0 ? <ul className="mt-3 space-y-2">{data.slaPending.map((lead) => <li key={lead.id} className="flex min-w-0 items-center justify-between gap-2 border-t border-border pt-2 text-xs"><span className="truncate font-medium">{lead.name}</span><span className="shrink-0 text-primary tabular-nums">Còn {lead.remainingMinutes} phút</span></li>)}</ul> : null}
-              {data.canManage ? <div className="mt-3 flex gap-4"><Link to="/leads" search={{ lead: undefined }} className="text-xs font-medium text-primary">Gán lại Sale</Link><Link to="/handover" className="text-xs font-medium text-primary">Bàn giao khách</Link></div> : null}
-            </SectionCard>
-            <SectionCard
-              title={`Nợ quá hạn · ${overdue.length}`}
-              className={overdue.length ? "border-warning/50" : ""}
-              action={<Link to="/debt-aging" className="text-xs font-medium text-primary">Xem tuổi nợ</Link>}
-            >
-              {debtQuery.isLoading ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">Đang tải…</p>
-              ) : overdue.length === 0 ? (
-                <Empty text="Không có đợt thanh toán nào quá hạn." />
-              ) : (
-                <>
-                  <p className="mb-3 text-xs text-muted-foreground">
-                    Tổng còn phải thu <span className="font-semibold text-foreground tabular-nums">{vnd(overdueTotal)} đ</span>
-                  </p>
-                  <ul className="space-y-2">
-                    {overdue.slice(0, 6).map((it) => (
-                      <li key={it.installmentId} className="flex min-w-0 items-center gap-3 rounded-lg border border-border p-3">
-                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-warning/10 text-warning"><Wallet className="h-4 w-4" /></div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold">{it.customerName} · {it.contractCode}</p>
-                          <p className="truncate text-xs text-muted-foreground">{[it.name, it.projectName].join(" · ")}</p>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <p className="text-sm font-semibold tabular-nums">{vnd(it.outstanding)}</p>
-                          <p className="text-[11px] font-medium text-destructive">Quá {it.daysOverdue} ngày</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </SectionCard>
-          </section>
+          <TodayWork items={work} onCall={callLead} calling={callMutation.isPending} debtLoading={debtQuery.isLoading} debtError={debtQuery.isError} />
+          {data.canManage ? <div className="flex gap-4"><Link to="/leads" search={{ lead: undefined }} className="text-xs font-medium text-primary">Gán lại Sale</Link><Link to="/handover" className="text-xs font-medium text-primary">Bàn giao khách</Link></div> : null}
 
           <section aria-labelledby="sale-metrics-title">
             <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
@@ -270,30 +217,9 @@ function SaleOverviewPage() {
             )}
           </SectionCard>
 
-          <SectionCard
-            title={`Lead nguội · ${data.coldLeads.length}`}
-            className={data.coldLeads.length ? "border-destructive/40" : ""}
-            action={<Badge variant={data.coldLeads.length ? "destructive" : "outline"} className="shrink-0 text-[10px]">Không cập nhật {data.routing.coldDays} ngày</Badge>}
-          >
-            {data.coldLeads.length === 0 ? <Empty text="Tất cả khách đang chăm sóc đều được cập nhật." /> : (
-              <ul className="grid gap-2 md:grid-cols-2">
-                {data.coldLeads.map((lead) => (
-                  <li key={lead.id} className="flex min-w-0 gap-3 rounded-lg border border-border p-3">
-                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-destructive/10 text-destructive"><Snowflake className="h-4 w-4" /></div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold">{lead.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">{[STATUS_LABEL[lead.status] ?? lead.status, lead.projectName].filter(Boolean).join(" · ")}</p>
-                      <p className="text-[11px] text-muted-foreground">Im lặng {lead.idleDays} ngày · cập nhật {formatTime(lead.at)}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </SectionCard>
-
           <div className="grid gap-4 xl:grid-cols-2">
             <SectionCard title="Lịch hẹn sắp tới" action={<Link to="/appointments" className="text-xs font-medium text-primary">Xem lịch</Link>}>
-              {data.appointments.length === 0 ? <Empty text="Chưa có lịch hẹn sắp tới." /> : <ul className="space-y-2">{data.appointments.map((item) => <li key={item.id} className="flex min-w-0 gap-3 rounded-xl border border-border p-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><CalendarClock className="h-4 w-4" /></div><div className="min-w-0"><p className="truncate text-sm font-semibold">{item.title}</p><p className="text-xs text-muted-foreground">{formatTime(item.startsAt)}</p><p className="truncate text-xs text-muted-foreground">{[item.customerName, item.projectName, item.location].filter(Boolean).join(" · ")}</p></div></li>)}</ul>}
+              {data.appointments.filter(item=>item.status==="scheduled" && vietnamDay(item.startsAt)!==today).length === 0 ? <Empty text="Chưa có lịch hẹn sắp tới." /> : <ul className="space-y-2">{data.appointments.filter(item=>item.status==="scheduled" && vietnamDay(item.startsAt)!==today).map((item) => <li key={item.id} className="flex min-w-0 gap-3 rounded-xl border border-border p-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><CalendarClock className="h-4 w-4" /></div><div className="min-w-0"><p className="truncate text-sm font-semibold">{item.title}</p><p className="text-xs text-muted-foreground">{formatTime(item.startsAt)}</p><p className="truncate text-xs text-muted-foreground">{[item.customerName, item.projectName, item.location].filter(Boolean).join(" · ")}</p></div></li>)}</ul>}
             </SectionCard>
             <SectionCard title="Lịch sự kiện dự án">
               {data.events.length === 0 ? <Empty text="Chưa có sự kiện dự án sắp tới." /> : <ul className="space-y-2">{data.events.map((item) => <li key={item.id} className="flex min-w-0 gap-3 rounded-xl border border-border p-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-success/10 text-success"><CalendarClock className="h-4 w-4" /></div><div className="min-w-0"><p className="truncate text-sm font-semibold">{item.title}</p><p className="text-xs text-muted-foreground">{formatTime(item.startsAt)}</p><p className="truncate text-xs text-muted-foreground">{[item.projectName, item.location].filter(Boolean).join(" · ")}</p></div></li>)}</ul>}
