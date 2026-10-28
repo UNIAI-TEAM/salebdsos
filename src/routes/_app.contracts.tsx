@@ -30,6 +30,7 @@ import {
   cancelContract,
   completeContract,
   createContractFromProduct,
+  createRentalContract,
   listContracts,
   markInstallmentPaid,
   updateInstallmentDueDate,
@@ -144,6 +145,7 @@ function ContractsPage() {
 
   // --- create form -----------------------------------------------------------
   const [form, setForm] = useState({
+    kind: "sale" as "sale" | "rental",
     productId: "",
     customerId: "",
     code: "",
@@ -153,9 +155,14 @@ function ContractsPage() {
     signedAt: "",
     commissionPercent: "2",
     note: "",
+    monthlyRent: "",
+    deposit: "",
+    leaseStart: "",
+    leaseEnd: "",
+    cycleDay: "5",
   });
   const sellableProducts = (data?.products ?? []).filter(
-    (p: any) => !["sold", "liquidated"].includes(p.listing_status),
+    (p: any) => !["sold", "liquidated", "rented"].includes(p.listing_status),
   );
   const formProduct = sellableProducts.find((p: any) => p.id === form.productId) ?? null;
 
@@ -180,27 +187,68 @@ function ContractsPage() {
     toast.success(`Đã áp dụng “${p.name}”: giảm ${money(q.amount)}`);
   };
 
+  const emptyForm = {
+    kind: "sale" as "sale" | "rental",
+    productId: "",
+    customerId: "",
+    code: "",
+    salePrice: "",
+    discountAmount: "",
+    discountPolicyId: "",
+    signedAt: "",
+    commissionPercent: "2",
+    note: "",
+    monthlyRent: "",
+    deposit: "",
+    leaseStart: "",
+    leaseEnd: "",
+    cycleDay: "5",
+  };
+
+  const fnCreateRental = useServerFn(createRentalContract);
+
   const submitCreate = () =>
     run.mutate(async () => {
-      await fnCreate({
-        data: {
-          tenantId: tenantId as string,
-          productId: form.productId || null,
-          customerId: form.customerId.startsWith("c:") ? form.customerId.slice(2) : null,
-          leadId: form.customerId.startsWith("l:") ? form.customerId.slice(2) : null,
-          code: form.code || null,
-          salePrice: Number(form.salePrice || 0),
-          discountAmount: Number(form.discountAmount || 0),
-          discountPolicyId: form.discountPolicyId || null,
-          signedAt: form.signedAt || null,
-          note: form.note || null,
-          withTemplate: true,
-          commissionPercent: Number(form.commissionPercent || 0),
-        },
-      });
-      toast.success("Đã lập hợp đồng và tạo đợt thanh toán mẫu");
+      if (form.kind === "rental") {
+        if (!form.productId) throw new Error("Chọn căn/lô cho thuê");
+        if (!form.leaseStart || !form.leaseEnd) throw new Error("Nhập thời hạn thuê");
+        await fnCreateRental({
+          data: {
+            tenantId: tenantId as string,
+            productId: form.productId,
+            customerId: form.customerId.startsWith("c:") ? form.customerId.slice(2) : null,
+            leadId: form.customerId.startsWith("l:") ? form.customerId.slice(2) : null,
+            code: form.code || null,
+            monthlyRent: Number(form.monthlyRent || 0),
+            deposit: Number(form.deposit || 0),
+            leaseStart: form.leaseStart,
+            leaseEnd: form.leaseEnd,
+            cycleDay: Number(form.cycleDay || 5),
+            note: form.note || null,
+          },
+        });
+        toast.success("Đã lập hợp đồng thuê và lịch thu tiền định kỳ");
+      } else {
+        await fnCreate({
+          data: {
+            tenantId: tenantId as string,
+            productId: form.productId || null,
+            customerId: form.customerId.startsWith("c:") ? form.customerId.slice(2) : null,
+            leadId: form.customerId.startsWith("l:") ? form.customerId.slice(2) : null,
+            code: form.code || null,
+            salePrice: Number(form.salePrice || 0),
+            discountAmount: Number(form.discountAmount || 0),
+            discountPolicyId: form.discountPolicyId || null,
+            signedAt: form.signedAt || null,
+            note: form.note || null,
+            withTemplate: true,
+            commissionPercent: Number(form.commissionPercent || 0),
+          },
+        });
+        toast.success("Đã lập hợp đồng và tạo đợt thanh toán mẫu");
+      }
       setCreating(false);
-      setForm({ productId: "", customerId: "", code: "", salePrice: "", discountAmount: "", discountPolicyId: "", signedAt: "", commissionPercent: "2", note: "" });
+      setForm(emptyForm);
     });
 
   // --- installment / commission editors -------------------------------------
@@ -307,7 +355,12 @@ function ContractsPage() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="truncate font-semibold">{row.code}</p>
+                      <p className="truncate font-semibold">
+                        {row.code}
+                        {row.contract_kind === "rental" ? (
+                          <span className="ml-1.5 rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-medium text-sky-600">Thuê</span>
+                        ) : null}
+                      </p>
                       <p className="truncate text-[12px] text-muted-foreground">
                         {row.product_label ?? "—"} · {row.customer_name ?? "—"}
                       </p>
@@ -344,8 +397,17 @@ function ContractsPage() {
                 {(data?.contracts ?? []).map((row: any) => (
                   <tr key={row.id} className="border-t border-border transition-colors hover:bg-muted/40">
                     <td className="px-3 py-3 tabular-nums">
-                      <p className="font-medium">{row.code}</p>
-                      <p className="text-[11px] text-muted-foreground">{row.project_name ?? "Chưa gắn dự án"}</p>
+                      <p className="font-medium">
+                        {row.code}
+                        {row.contract_kind === "rental" ? (
+                          <span className="ml-1.5 rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-medium text-sky-600">Thuê</span>
+                        ) : null}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {row.contract_kind === "rental" && row.lease_start
+                          ? `${row.lease_start} → ${row.lease_end ?? "—"}`
+                          : (row.project_name ?? "Chưa gắn dự án")}
+                      </p>
                     </td>
                     <td className="px-3 py-3 tabular-nums text-muted-foreground">{row.product_label ?? "—"}</td>
                     <td className="px-3 py-3 tabular-nums text-muted-foreground">{row.customer_name ?? "—"}</td>
@@ -375,9 +437,33 @@ function ContractsPage() {
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Lập hợp đồng</DialogTitle>
-            <DialogDescription>Chọn sản phẩm trong giỏ hàng, hệ thống tự tạo 4 đợt thanh toán mẫu 30/30/30/10.</DialogDescription>
+            <DialogDescription>
+              {form.kind === "rental"
+                ? "Hợp đồng cho thuê: hệ thống tự tạo lịch thu tiền hàng tháng theo thời hạn thuê."
+                : "Chọn sản phẩm trong giỏ hàng, hệ thống tự tạo 4 đợt thanh toán mẫu 30/30/30/10."}
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
+            <div className="grid gap-1.5">
+              <Label>Loại hợp đồng</Label>
+              <div className="grid grid-cols-2 gap-2" data-testid="contract-kind">
+                {(["sale", "rental"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    data-testid={`kind-${k}`}
+                    onClick={() => setForm((p) => ({ ...p, kind: k }))}
+                    className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${
+                      form.kind === k
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    {k === "sale" ? "Bán" : "Cho thuê"}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="grid gap-1.5">
               <Label>Sản phẩm</Label>
               <Select
@@ -426,28 +512,57 @@ function ContractsPage() {
                 <Label>Mã hợp đồng</Label>
                 <Input value={form.code} placeholder="Để trống để tự sinh" onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))} />
               </div>
-              <div className="grid gap-1.5">
-                <Label>Ngày ký</Label>
-                <Input type="date" value={form.signedAt} onChange={(e) => setForm((p) => ({ ...p, signedAt: e.target.value }))} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Giá bán</Label>
-                <Input inputMode="numeric" value={form.salePrice} onChange={(e) => setForm((p) => ({ ...p, salePrice: e.target.value }))} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Chiết khấu</Label>
-                <Input inputMode="numeric" value={form.discountAmount} onChange={(e) => setForm((p) => ({ ...p, discountAmount: e.target.value, discountPolicyId: "" }))} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Hoa hồng Sale (%)</Label>
-                <Input inputMode="decimal" value={form.commissionPercent} onChange={(e) => setForm((p) => ({ ...p, commissionPercent: e.target.value }))} />
-              </div>
+              {form.kind === "sale" ? (
+                <div className="grid gap-1.5">
+                  <Label>Ngày ký</Label>
+                  <Input type="date" value={form.signedAt} onChange={(e) => setForm((p) => ({ ...p, signedAt: e.target.value }))} />
+                </div>
+              ) : null}
+              {form.kind === "rental" ? (
+                <>
+                  <div className="grid gap-1.5">
+                    <Label>Giá thuê / tháng</Label>
+                    <Input inputMode="numeric" data-testid="rental-monthly-rent" value={form.monthlyRent} onChange={(e) => setForm((p) => ({ ...p, monthlyRent: e.target.value }))} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Tiền cọc</Label>
+                    <Input inputMode="numeric" value={form.deposit} onChange={(e) => setForm((p) => ({ ...p, deposit: e.target.value }))} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Thuê từ ngày</Label>
+                    <Input type="date" data-testid="rental-lease-start" value={form.leaseStart} onChange={(e) => setForm((p) => ({ ...p, leaseStart: e.target.value }))} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Thuê đến ngày</Label>
+                    <Input type="date" data-testid="rental-lease-end" value={form.leaseEnd} onChange={(e) => setForm((p) => ({ ...p, leaseEnd: e.target.value }))} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Ngày thu tiền hàng tháng</Label>
+                    <Input inputMode="numeric" data-testid="rental-cycle-day" value={form.cycleDay} onChange={(e) => setForm((p) => ({ ...p, cycleDay: e.target.value }))} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid gap-1.5">
+                    <Label>Giá bán</Label>
+                    <Input inputMode="numeric" value={form.salePrice} onChange={(e) => setForm((p) => ({ ...p, salePrice: e.target.value }))} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Chiết khấu</Label>
+                    <Input inputMode="numeric" value={form.discountAmount} onChange={(e) => setForm((p) => ({ ...p, discountAmount: e.target.value, discountPolicyId: "" }))} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Hoa hồng Sale (%)</Label>
+                    <Input inputMode="decimal" value={form.commissionPercent} onChange={(e) => setForm((p) => ({ ...p, commissionPercent: e.target.value }))} />
+                  </div>
+                </>
+              )}
             </div>
             <div className="grid gap-1.5">
               <Label>Ghi chú</Label>
               <Textarea rows={2} value={form.note} onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))} />
             </div>
-            {policySuggestions.length > 0 && (
+            {form.kind === "sale" && policySuggestions.length > 0 && (
               <div className="grid gap-1.5" data-testid="discount-suggestions">
                 <Label>Chiết khấu thanh toán nhanh áp dụng được</Label>
                 <div className="flex flex-wrap gap-1.5">
@@ -473,9 +588,15 @@ function ContractsPage() {
                 </div>
               </div>
             )}
-            <p className="text-[11px] text-muted-foreground">
-              Giá sau chiết khấu: {money(Math.max(0, Number(form.salePrice || 0) - Number(form.discountAmount || 0)))}
-            </p>
+            {form.kind === "sale" ? (
+              <p className="text-[11px] text-muted-foreground">
+                Giá sau chiết khấu: {money(Math.max(0, Number(form.salePrice || 0) - Number(form.discountAmount || 0)))}
+              </p>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                Hệ thống tự tạo đợt cọc và các đợt thuê hàng tháng theo thời hạn thuê; căn chuyển sang trạng thái “Đang cho thuê”.
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreating(false)}>Huỷ</Button>

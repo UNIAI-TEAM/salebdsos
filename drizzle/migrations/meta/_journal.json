@@ -302,6 +302,13 @@
       "when": 1793163389528,
       "tag": "0042_message_tickets",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793164446983,
+      "tag": "0043_rental_contracts",
+      "breakpoints": true
     }
   ]
 }

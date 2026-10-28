@@ -6,7 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ADMIN_ROLES, SALE_ROLES, TEAM_VIEW_ROLES } from "@/lib/permissions";
 
 const CONTRACT_SELECT =
-  "id,tenant_id,project_id,product_id,customer_id,lead_id,deal_id,owner_user_id,code,sale_price,discount_amount,net_price,currency,status,signed_at,completed_at,note,created_at,updated_at";
+  "id,tenant_id,project_id,product_id,customer_id,lead_id,deal_id,owner_user_id,code,sale_price,discount_amount,net_price,currency,status,signed_at,completed_at,note,created_at,updated_at,contract_kind,lease_start,lease_end,monthly_rent,deposit_amount,rent_cycle_day";
 
 export const CONTRACT_STATUSES = ["draft", "active", "completed", "cancelled"] as const;
 export type ContractStatus = (typeof CONTRACT_STATUSES)[number];
@@ -418,6 +418,60 @@ export const createContractFromProduct = createServerFn({ method: "POST" })
     }
 
     return contract;
+  });
+
+// ---------------------------------------------------------------- rental
+const RentalInput = z.object({
+  tenantId: z.string().uuid(),
+  productId: z.string().uuid(),
+  customerId: z.string().uuid().nullable().optional(),
+  leadId: z.string().uuid().nullable().optional(),
+  ownerUserId: z.string().uuid().nullable().optional(),
+  code: z.string().max(60).nullable().optional(),
+  monthlyRent: z.number().positive(),
+  deposit: z.number().min(0).default(0),
+  leaseStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  leaseEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  cycleDay: z.number().int().min(1).max(31),
+  note: z.string().max(2000).nullable().optional(),
+});
+
+export const createRentalContract = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => RentalInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { canWrite: mayCreate } = await access(context as Ctx, data.tenantId);
+    if (!mayCreate) throw new Error("Chỉ quản trị viên được lập hợp đồng");
+
+    const { buildRentSchedule } = await import("@/lib/rental");
+    const schedule = buildRentSchedule({
+      leaseStart: data.leaseStart,
+      leaseEnd: data.leaseEnd,
+      cycleDay: data.cycleDay,
+      monthlyRent: data.monthlyRent,
+      deposit: data.deposit,
+    });
+
+    const rentalArgs = {
+      p_tenant: data.tenantId,
+      p_product: data.productId,
+      p_customer: data.customerId ?? null,
+      p_lead: data.leadId ?? null,
+      p_owner: data.ownerUserId ?? userId,
+      p_code: data.code ?? null,
+      p_monthly_rent: data.monthlyRent,
+      p_deposit: data.deposit,
+      p_lease_start: data.leaseStart,
+      p_lease_end: data.leaseEnd,
+      p_cycle_day: data.cycleDay,
+      p_note: data.note ?? null,
+      p_schedule: schedule,
+    };
+    // Kiểu sinh tự động đánh dấu tham số RPC là non-null; một số tham số thực tế cho phép NULL.
+    const { data: contractId, error } = await supabase.rpc("create_rental_contract", rentalArgs as never);
+    if (error) throw new Error(error.message);
+    return loadContract(context as Ctx, contractId as string);
   });
 
 // ---------------------------------------------------------------- update
