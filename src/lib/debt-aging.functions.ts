@@ -1,3 +1,4 @@
+import { readReportRows, readReportRelated, reportScope, reportOwners } from "./reporting.server";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -20,32 +21,28 @@ export type AgingItem = {
 
 export const getDebtAging = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid(), projectId: z.string().uuid().optional() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid(), projectId: z.string().uuid().optional(), ownerId: z.string().uuid().optional() }).parse(d))
   .handler(async ({ data, context }) => {
     const sb = (context as any).supabase;
-    const { data: r } = await sb.from("user_roles").select("role").eq("tenant_id", data.tenantId).eq("user_id", context.userId);
-    const roles = (r ?? []).map((x: any) => x.role as string);
-    if (!roles.some((x: string) => SALE_ROLES.has(x))) throw new Error("Bạn không có quyền xem công nợ");
-    const team = roles.some((x: string) => TEAM_VIEW_ROLES.has(x));
+    const { canManage: team, ownerFilter } = await reportScope(sb, data.tenantId, context.userId, data.ownerId);
+    const owners = await reportOwners(sb, data.tenantId, team);
 
     let cq = sb
       .from("contracts")
       .select("id,code,project_id,customer_id,lead_id,owner_user_id")
       .eq("tenant_id", data.tenantId)
       .is("deleted_at", null)
-      .in("status", ["draft", "active"]);
-    if (!team) cq = cq.eq("owner_user_id", context.userId);
+      .in("status", ["draft", "active", "completed"]);
+    if (ownerFilter) cq = cq.eq("owner_user_id", ownerFilter);
     if (data.projectId) cq = cq.eq("project_id", data.projectId);
-    const { data: contracts, error } = await cq.limit(2000);
-    if (error) throw new Error(error.message);
-    const ids = (contracts ?? []).map((c: any) => c.id);
-
-    const [{ data: ins }, { data: projects }, { data: customers }, { data: leads }, { data: profiles }] = await Promise.all([
-      ids.length ? sb.from("contract_installments").select("id,contract_id,name,amount,paid_amount,due_date").in("contract_id", ids) : { data: [] },
-      sb.from("projects").select("id,name").eq("tenant_id", data.tenantId),
-      sb.from("customers").select("id,full_name").eq("tenant_id", data.tenantId).limit(5000),
-      sb.from("leads").select("id,full_name").eq("tenant_id", data.tenantId).limit(5000),
-      sb.from("profiles").select("user_id,full_name,email"),
+    const contracts = await readReportRows(cq);
+    const ids = contracts.map((c: any) => c.id);
+    const [ins, projects, customers, leads, profiles] = await Promise.all([
+      readReportRelated(sb, "contract_installments", "id,contract_id,name,amount,paid_amount,due_date", "contract_id", ids),
+      readReportRows(sb.from("projects").select("id,name").eq("tenant_id", data.tenantId)),
+      readReportRelated(sb, "customers", "id,full_name", "id", [...new Set(contracts.map((c) => c.customer_id).filter(Boolean))]),
+      readReportRelated(sb, "leads", "id,full_name", "id", [...new Set(contracts.map((c) => c.lead_id).filter(Boolean))]),
+      readReportRelated(sb, "profiles", "user_id,full_name,email", "user_id", [...new Set(contracts.map((c) => c.owner_user_id).filter(Boolean))], "user_id"),
     ]);
     const pName = new Map((projects ?? []).map((p: any) => [p.id, p.name]));
     const cName = new Map((customers ?? []).map((p: any) => [p.id, p.full_name]));
@@ -59,6 +56,7 @@ export const getDebtAging = createServerFn({ method: "GET" })
       const outstanding = Math.max(0, Number(i.amount) - Number(i.paid_amount ?? 0));
       if (outstanding <= 0) continue;
       const c: any = cById.get(i.contract_id);
+      if (!c) continue;
       items.push({
         installmentId: i.id,
         contractId: c.id,
@@ -91,7 +89,8 @@ export const getDebtAging = createServerFn({ method: "GET" })
     }
     return {
       today,
-      scope: team ? "team" : "own",
+      scope: ownerFilter ? "own" : "team",
+      owners,
       projects: projects ?? [],
       totals,
       contracts: [...byContract.values()].sort((a, b) => b.maxDays - a.maxDays || b.total - a.total),

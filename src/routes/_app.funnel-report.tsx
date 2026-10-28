@@ -1,3 +1,5 @@
+import { ReportActions, ReportOwnerFilter } from "@/components/app/report-actions";
+import { REPORT_COPY, downloadReport } from "@/lib/reporting";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -67,20 +69,20 @@ function Stage({
   rate?: string;
 }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-border bg-card p-4 shadow-soft">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></div>
+    <div className="min-w-0 rounded-lg border border-border bg-card p-3 shadow-soft">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></div>
         {rate ? <Badge variant="outline" className="shrink-0 text-[10px]">{rate}</Badge> : null}
       </div>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
+      <p className="mt-1 text-xl font-bold text-foreground">{value}</p>
       <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>
     </div>
   );
 }
 
 function Bar({ value, total }: { value: number; total: number }) {
-  const width = total ? Math.max(4, Math.round((value / total) * 100)) : 0;
+  const width = total && value > 0 ? Math.min(100, Math.max(4, Math.round((value / total) * 100))) : 0;
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
       <div className="h-full rounded-full bg-primary" style={{ width: `${width}%` }} />
@@ -95,10 +97,10 @@ function FunnelCards({ rows, max }: { rows: FunnelRow[]; max: number }) {
       {rows.map((row) => {
         const open = openKey === row.key;
         return (
-          <li key={row.key} className="rounded-2xl border border-border bg-card p-3">
-            <button
+          <li key={row.key} className="rounded-lg border border-border bg-card p-3">
+            <Button variant="ghost"
               type="button"
-              className="w-full text-left"
+              className="h-auto w-full flex-col items-stretch p-0 text-left hover:bg-transparent"
               onClick={() => setOpenKey(open ? null : row.key)}
               aria-expanded={open}
             >
@@ -122,7 +124,7 @@ function FunnelCards({ rows, max }: { rows: FunnelRow[]; max: number }) {
                   <p className="text-[10px] text-muted-foreground">Hợp đồng</p>
                 </div>
               </div>
-            </button>
+            </Button>
             {open ? (
               <dl className="mt-3 space-y-1.5 border-t border-border/70 pt-3 text-xs">
                 {[
@@ -201,7 +203,7 @@ function MonthTrend({ rows }: { rows: FunnelRow[] }) {
         </ResponsiveContainer>
       </div>
       <p className="text-[11px] text-muted-foreground">
-        Cột: số khách gửi thông tin · vào giỏ hàng · ký hợp đồng trong tháng. Đường: tỷ lệ chốt hợp đồng trên khách gửi thông tin.
+        Nhóm theo tháng khách vào hệ thống; theo dõi kết quả hiện tại của cùng nhóm khách.
       </p>
     </div>
   );
@@ -264,17 +266,19 @@ function FunnelReportPage() {
   const tenantId = currentTenant?.id;
   const [days, setDays] = useState("30");
   const [projectId, setProjectId] = useState("all");
+  const [ownerId, setOwnerId] = useState("all");
   const fetchReport = useServerFn(getFunnelReport);
 
   const query = useQuery({
-    queryKey: ["funnel-report", tenantId, days, projectId],
+    queryKey: ["funnel-report", tenantId, days, projectId, ownerId],
     enabled: Boolean(tenantId),
     queryFn: () =>
       fetchReport({
         data: {
-          tenantId: tenantId as string,
+          tenantId: tenantId || "",
           days: Number(days),
           ...(projectId !== "all" ? { projectId } : {}),
+          ...(ownerId !== "all" ? { ownerId } : {}),
         },
       }),
   });
@@ -283,14 +287,11 @@ function FunnelReportPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
+      <PageHeader compact
         title="Báo cáo phễu bán hàng"
-        sub="Khách gửi thông tin → giỏ hàng → hợp đồng, kèm tỷ lệ chuyển đổi theo dự án và nguồn khách."
+        sub="Kết quả hiện tại của nhóm khách vào hệ thống trong kỳ đã chọn."
         action={
-          <Button variant="outline" size="sm" onClick={() => query.refetch()} disabled={query.isFetching}>
-            <RefreshCw className={`h-4 w-4 ${query.isFetching ? "animate-spin" : ""}`} />
-            Làm mới
-          </Button>
+          <ReportActions busy={query.isFetching} ready={Boolean(data)} refresh={() => { void query.refetch(); }} exportData={() => { if (!data) return; downloadReport("pheu-ban-hang", ["Nhóm", "Tên", "Khách mới", "Vào giỏ", "Khách có hợp đồng", "Tỷ lệ chốt (%)", "Giá trị hợp đồng (VND)", "Đã thu (VND)", "Hoa hồng (VND)"], [...data.byProject.map(r => ["Dự án", r.label, r.submitted, r.cart, r.contract, r.submittedToContract, r.contractValue, r.collected, r.commission]), ...data.bySource.map(r => ["Nguồn", r.label, r.submitted, r.cart, r.contract, r.submittedToContract, r.contractValue, r.collected, r.commission]), ...data.byMonth.map(r => ["Tháng", r.key, r.submitted, r.cart, r.contract, r.submittedToContract, r.contractValue, r.collected, r.commission])]); }} />
         }
       />
 
@@ -305,7 +306,7 @@ function FunnelReportPage() {
           </SelectContent>
         </Select>
         <Select value={projectId} onValueChange={setProjectId}>
-          <SelectTrigger className="h-9 w-[220px]"><SelectValue placeholder="Tất cả dự án" /></SelectTrigger>
+          <SelectTrigger className="h-9 w-[220px] max-w-full"><SelectValue placeholder="Tất cả dự án" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả dự án</SelectItem>
             {(data?.projects ?? []).map((project) => (
@@ -313,6 +314,7 @@ function FunnelReportPage() {
             ))}
           </SelectContent>
         </Select>
+        <ReportOwnerFilter value={ownerId} onChange={setOwnerId} owners={data?.owners ?? []} />
         {data ? (
           <Badge variant="secondary" className="text-[11px]">
             {data.scope === "team" ? "Toàn sàn" : "Khách của tôi"}
@@ -328,7 +330,7 @@ function FunnelReportPage() {
         </SectionCard>
       ) : data ? (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <Stage icon={UserRoundCheck} label="Khách gửi thông tin" value={data.totals.submitted} hint={`Trong ${data.days} ngày gần nhất`} />
             <Stage
               icon={PackageCheck}
@@ -341,7 +343,7 @@ function FunnelReportPage() {
               icon={FileSignature}
               label="Ký hợp đồng"
               value={data.totals.contract}
-              hint="Hợp đồng hiệu lực hoặc đã hoàn tất"
+              hint={`${data.totals.contractCount} hợp đồng hiệu lực của nhóm khách này`}
               rate={`${data.totals.cartToContract}% từ giỏ hàng`}
             />
             <Stage
@@ -353,7 +355,7 @@ function FunnelReportPage() {
             />
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-4 text-sm shadow-soft">
+          <div className="rounded-lg border border-border bg-card p-4 text-sm shadow-soft">
             <p className="text-xs font-medium text-muted-foreground">Hoa hồng tự tính theo chính sách</p>
             <p className="mt-1 text-lg font-bold">
               {money(data.totals.commission)}
@@ -363,28 +365,28 @@ function FunnelReportPage() {
             </p>
           </div>
 
-          <SectionCard
+          <SectionCard compact
             title="Xu hướng chốt hợp đồng theo tháng"
             action={<Badge variant="outline" className="shrink-0 text-[10px]">{data.byMonth.length} tháng</Badge>}
           >
             <MonthTrend rows={data.byMonth} />
           </SectionCard>
 
-          <SectionCard
+          <SectionCard compact
             title="So sánh phễu theo từng tháng"
             action={<Badge variant="outline" className="shrink-0 text-[10px]">Tháng gần nhất trước</Badge>}
           >
             <FunnelTable rows={[...data.byMonth].reverse()} emptyText="Chưa có số liệu theo tháng." />
           </SectionCard>
 
-          <SectionCard
+          <SectionCard compact
             title="Tỷ lệ chuyển đổi theo dự án"
             action={<Badge variant="outline" className="shrink-0 text-[10px]">{data.byProject.length} dự án</Badge>}
           >
             <FunnelTable rows={data.byProject} emptyText="Chưa có khách gửi thông tin trong khoảng thời gian này." />
           </SectionCard>
 
-          <SectionCard
+          <SectionCard compact
             title="Tỷ lệ chuyển đổi theo nguồn khách"
             action={<Badge variant="outline" className="shrink-0 text-[10px]">{data.bySource.length} nguồn</Badge>}
           >

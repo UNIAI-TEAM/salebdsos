@@ -1,16 +1,16 @@
 // Báo cáo doanh thu theo dự án: hợp đồng, giá trị, tiền đã thu, hoa hồng, KPI theo tháng.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { contractFinancials, reportContractDate, reportWindow } from "./reporting";
+import { readReportRows, readReportRelated, reportScope, reportOwners } from "./reporting.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-const SALE_ROLES = new Set(["owner", "admin", "manager", "agent", "platform_admin"]);
-const MANAGER_ROLES = new Set(["owner", "admin", "manager", "platform_admin"]);
 
 const Input = z.object({
   tenantId: z.string().uuid(),
   months: z.number().int().min(1).max(24).default(6),
   projectId: z.string().uuid().optional(),
   ownerId: z.string().uuid().optional(),
+  kind: z.enum(["sale", "rental"]).optional(),
 });
 
 export type RevenueRow = {
@@ -50,16 +50,12 @@ function finish(row: RevenueRow): RevenueRow {
     ...row,
     contractValue: Math.round(row.contractValue),
     collected: Math.round(row.collected),
-    outstanding: Math.round(Math.max(0, row.contractValue - row.collected)),
+    outstanding: Math.round(row.outstanding),
     collectRate: rate(row.collected, row.contractValue),
     commissionTotal: Math.round(row.commissionTotal),
     commissionUnpaid: Math.round(row.commissionUnpaid),
     commissionPaid: Math.round(row.commissionPaid),
   };
-}
-
-function monthKey(iso: string) {
-  return iso.slice(0, 7);
 }
 
 export const getRevenueReport = createServerFn({ method: "GET" })
@@ -68,61 +64,51 @@ export const getRevenueReport = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: roles, error: roleError } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("tenant_id", data.tenantId)
-      .eq("user_id", userId);
-    if (roleError) throw new Error(roleError.message);
-    const roleList = (roles ?? []).map((row) => row.role);
-    if (!roleList.some((role) => SALE_ROLES.has(role))) {
-      throw new Error("Bạn không có quyền xem báo cáo doanh thu của workspace này");
-    }
-    const canManage = roleList.some((role) => MANAGER_ROLES.has(role));
-    const ownerFilter = canManage ? data.ownerId ?? null : userId;
+    const { canManage, ownerFilter } = await reportScope(supabase, data.tenantId, userId, data.ownerId);
 
-    const now = new Date();
+    const now = new Date(`${reportWindow(1).today}T00:00:00Z`);
     const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (data.months - 1), 1));
-    const startIso = start.toISOString();
+    const startIso = start.toISOString().slice(0, 10);
+    const endDate = reportWindow(1).today;
 
     let contractQuery = supabase
       .from("contracts")
-      .select("id,project_id,owner_user_id,code,net_price,status,signed_at,created_at,completed_at")
+      .select("id,project_id,owner_user_id,code,net_price,status,signed_at,created_at,completed_at,contract_kind")
       .eq("tenant_id", data.tenantId)
       .is("deleted_at", null)
       .in("status", ["active", "completed"])
-      .gte("created_at", startIso);
+      ;
+    if (data.kind) contractQuery = contractQuery.eq("contract_kind", data.kind);
     if (data.projectId) contractQuery = contractQuery.eq("project_id", data.projectId);
     if (ownerFilter) contractQuery = contractQuery.eq("owner_user_id", ownerFilter);
 
     const [contractsQ, projectsQ] = await Promise.all([
-      contractQuery,
-      supabase.from("projects").select("id,name").eq("tenant_id", data.tenantId).is("deleted_at", null),
+      readReportRows(contractQuery),
+      readReportRows(supabase.from("projects").select("id,name").eq("tenant_id", data.tenantId).is("deleted_at", null)),
     ]);
-    if (contractsQ.error) throw new Error(contractsQ.error.message);
-    if (projectsQ.error) throw new Error(projectsQ.error.message);
-
-    const contracts = contractsQ.data ?? [];
-    const projectName = new Map((projectsQ.data ?? []).map((row) => [row.id, row.name]));
+    const contracts = contractsQ.filter((row) => { const date = reportContractDate(row); return date >= startIso && date <= endDate; });
+    const projectName = new Map(projectsQ.map((row) => [row.id, row.name]));
+    const owners = await reportOwners(supabase, data.tenantId, canManage);
     const ids = contracts.map((row) => row.id);
 
     const collectedByContract = new Map<string, number>();
+    const valueByContract = new Map<string, number>();
+    const outstandingByContract = new Map<string, number>();
     const commissionByContract = new Map<string, { total: number; unpaid: number; paid: number }>();
 
     if (ids.length) {
       const [installmentsQ, commissionsQ] = await Promise.all([
-        supabase.from("contract_installments").select("contract_id,paid_amount").in("contract_id", ids),
-        supabase.from("contract_commissions").select("contract_id,amount,status").in("contract_id", ids),
+        readReportRelated(supabase, "contract_installments", "id,contract_id,amount,paid_amount", "contract_id", ids),
+        readReportRelated(supabase, "contract_commissions", "id,contract_id,amount,status,beneficiary_user_id", "contract_id", ids),
       ]);
-      if (installmentsQ.error) throw new Error(installmentsQ.error.message);
-      if (commissionsQ.error) throw new Error(commissionsQ.error.message);
-      for (const row of installmentsQ.data ?? []) {
-        collectedByContract.set(
-          row.contract_id,
-          (collectedByContract.get(row.contract_id) ?? 0) + Number(row.paid_amount ?? 0),
-        );
+      for (const contract of contracts) {
+        const financials = contractFinancials(contract, installmentsQ.filter((i) => i.contract_id === contract.id));
+        collectedByContract.set(contract.id, financials.collected);
+        valueByContract.set(contract.id, financials.value);
+        outstandingByContract.set(contract.id, financials.outstanding);
       }
-      for (const row of commissionsQ.data ?? []) {
+      for (const row of commissionsQ) {
+        if (ownerFilter && row.beneficiary_user_id !== ownerFilter) continue;
         const bucket = commissionByContract.get(row.contract_id) ?? { total: 0, unpaid: 0, paid: 0 };
         const amount = Number(row.amount ?? 0);
         bucket.total += amount;
@@ -144,7 +130,7 @@ export const getRevenueReport = createServerFn({ method: "GET" })
     }
 
     for (const row of contracts) {
-      const value = Number(row.net_price ?? 0);
+      const value = valueByContract.get(row.id) ?? 0;
       const collected = collectedByContract.get(row.id) ?? 0;
       const commission = commissionByContract.get(row.id) ?? { total: 0, unpaid: 0, paid: 0 };
 
@@ -152,6 +138,7 @@ export const getRevenueReport = createServerFn({ method: "GET" })
         bucket.contracts += 1;
         bucket.contractValue += value;
         bucket.collected += collected;
+        bucket.outstanding += outstandingByContract.get(row.id) ?? 0;
         bucket.commissionTotal += commission.total;
         bucket.commissionUnpaid += commission.unpaid;
         bucket.commissionPaid += commission.paid;
@@ -165,7 +152,7 @@ export const getRevenueReport = createServerFn({ method: "GET" })
       apply(projectBucket);
       projectBuckets.set(projectKey, projectBucket);
 
-      const mk = monthKey((row.signed_at ? `${row.signed_at}T00:00:00.000Z` : row.created_at) as string);
+      const mk = reportContractDate(row).slice(0, 7);
       const monthBucket = monthBuckets.get(mk) ?? { ...emptyBucket(mk), key: mk };
       apply(monthBucket);
       monthBuckets.set(mk, monthBucket);
@@ -179,8 +166,10 @@ export const getRevenueReport = createServerFn({ method: "GET" })
     return {
       months: data.months,
       canManage,
+      owners,
+      period: { start: startIso, end: endDate },
       scope: ownerFilter ? "own" : "team",
-      projects: (projectsQ.data ?? []).map((row) => ({ id: row.id, name: row.name })),
+      projects: projectsQ.map((row) => ({ id: row.id, name: row.name })),
       totals: finish(totals),
       byProject,
       byMonth,

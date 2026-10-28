@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Hoàn thiện Báo cáo: Tổng quan thực, lọc dự án/Sale/bán-thuê, xuất CSV; phễu cùng nhóm khách, ngày Việt Nam, hợp đồng thuê theo lịch thu, đọc phân trang và báo lỗi thay vì số thiếu. Kiểm tra đăng nhập 5 trang, tải 5 CSV, lọc Sale/thuê, 390px không tràn; đối chiếu hợp đồng 2,9 tỷ/thu 870 triệu/nợ 2,03 tỷ/hoa hồng 58 triệu. Chưa xuất bản.
+
 - [x] Thiết kế Hộp thoại tinh gọn kiểu Omni Chat: danh sách/cuộn riêng, khung chat, thông tin khách mở khi cần; kiểm tra hội thoại có dữ liệu, soạn nháp không gửi, trạng thái kênh, desktop/mobile; 14 kiểm thử đạt.
 
 - [x] Gia cố giữ căn đồng thời bằng khóa/phiên bản, giải phóng giữ chỗ hết hạn mỗi giờ (không giải phóng cọc/hợp đồng), bảo toàn ID, số đã thu, ngày thu và lịch sử khi sửa đợt. 19 kiểm thử đạt; sửa tên qua giao diện sàn thử, đọc lại tiền giữ nguyên; dữ liệu thử đã dọn. Chưa xuất bản màn hình mới.

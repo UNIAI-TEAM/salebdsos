@@ -1,3 +1,6 @@
+import { ReportActions, ReportOwnerFilter } from "@/components/app/report-actions";
+import { downloadReport } from "@/lib/reporting";
+import { Button } from "@/components/ui/button";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -28,8 +31,8 @@ const money = (v: number) =>
 
 const COLS: { key: AgingBucket; label: string; tone: string }[] = [
   { key: "due", label: "Đến hạn (7 ngày)", tone: "text-primary" },
-  { key: "d1_15", label: "Quá hạn 1–15 ngày", tone: "text-amber-600" },
-  { key: "d16_30", label: "Quá hạn 16–30 ngày", tone: "text-orange-600" },
+  { key: "d1_15", label: "Quá hạn 1–15 ngày", tone: "text-warning" },
+  { key: "d16_30", label: "Quá hạn 16–30 ngày", tone: "text-warning" },
   { key: "d30_plus", label: "Quá hạn trên 30 ngày", tone: "text-destructive" },
   { key: "not_due", label: "Chưa đến hạn", tone: "text-muted-foreground" },
 ];
@@ -38,56 +41,52 @@ function DebtAgingPage() {
   const { currentTenant } = useAuth();
   const tenantId = currentTenant?.id;
   const [projectId, setProjectId] = useState("all");
+  const [ownerId, setOwnerId] = useState("all");
   const fetchAging = useServerFn(getDebtAging);
   const q = useQuery({
-    queryKey: ["debt-aging", tenantId, projectId],
+    queryKey: ["debt-aging", tenantId, projectId, ownerId],
     enabled: !!tenantId,
-    queryFn: () => fetchAging({ data: { tenantId: tenantId!, projectId: projectId === "all" ? undefined : projectId } }),
+    queryFn: () => { if (!tenantId) throw new Error("Chưa chọn sàn"); return fetchAging({ data: { tenantId, projectId: projectId === "all" ? undefined : projectId, ownerId: ownerId === "all" ? undefined : ownerId } }); },
   });
   const [bucket, setBucket] = useState<AgingBucket | "all">("all");
 
   if (!q.data) return <div className="p-6 text-sm text-muted-foreground">{q.error ? (q.error as Error).message : "Đang tải…"}</div>;
-  const { totals, contracts, items, projects, scope } = q.data;
+  const { totals, contracts, items, projects, scope, owners } = q.data;
   const overdue = totals.d1_15.amount + totals.d16_30.amount + totals.d30_plus.amount;
   const list = bucket === "all" ? items : items.filter((i) => i.bucket === bucket);
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader
+      <PageHeader compact
         title="Tuổi nợ hợp đồng"
         sub={`${scope === "own" ? "Hợp đồng của bạn" : "Toàn sàn"} · Tổng quá hạn ${money(overdue)}`}
         action={
-          <Select value={projectId} onValueChange={setProjectId}>
-            <SelectTrigger className="h-10 w-52" aria-label="Lọc dự án"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả dự án</SelectItem>
-              {projects.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <ReportActions busy={q.isFetching} ready={Boolean(q.data)} refresh={() => { void q.refetch(); }} exportData={() => downloadReport("cong-no", ["Hợp đồng", "Khách", "Dự án", "Sale", "Đợt", "Ngày đến hạn", "Còn nợ (VND)", "Số ngày quá hạn"], list.map(i => [i.contractCode, i.customerName, i.projectName, i.ownerName, i.name, i.dueDate, i.outstanding, i.daysOverdue]))} />
         }
       />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
+      <div className="my-3 flex flex-wrap gap-2"><Select value={projectId} onValueChange={setProjectId}><SelectTrigger className="h-9 w-52" aria-label="Lọc dự án"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Tất cả dự án</SelectItem>{projects.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select><ReportOwnerFilter value={ownerId} onChange={setOwnerId} owners={owners} /></div>
+      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
         {COLS.map((c) => (
-          <button
+          <Button variant="outline"
             key={c.key}
             onClick={() => setBucket(bucket === c.key ? "all" : c.key)}
-            className={["rounded-2xl border bg-card p-4 text-left shadow-soft transition", bucket === c.key ? "border-primary ring-1 ring-primary" : "border-border"].join(" ")}
+            className={["h-auto items-start flex-col rounded-lg border bg-card p-3 text-left shadow-soft transition", bucket === c.key ? "border-primary ring-1 ring-primary" : "border-border"].join(" ")}
           >
             <p className="text-xs text-muted-foreground">{c.label}</p>
             <p className={["mt-1 text-xl font-bold", c.tone].join(" ")}>{money(totals[c.key].amount)}</p>
             <p className="text-[11px] text-muted-foreground">{totals[c.key].count} đợt</p>
-          </button>
+          </Button>
         ))}
       </div>
 
-      <SectionCard title="Theo hợp đồng" className="mb-6">
+      <SectionCard compact title="Theo hợp đồng" className="mb-6">
         {contracts.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">Không còn khoản phải thu nào.</p>
         ) : (
           <>
             <div className="space-y-3 md:hidden">
-              {contracts.map((c) => (
+              {contracts.filter(c => bucket === "all" || c[bucket] > 0).map((c) => (
                 <div key={c.contractId} className="rounded-xl border border-border p-3">
                   <div className="flex items-center justify-between"><p className="font-semibold">{c.contractCode}</p><p className="font-bold">{money(c.total)}</p></div>
                   <p className="text-xs text-muted-foreground">{c.customerName} · {c.projectName}</p>
@@ -107,7 +106,7 @@ function DebtAgingPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {contracts.map((c) => (
+                  {contracts.filter(c => bucket === "all" || c[bucket] > 0).map((c) => (
                     <tr key={c.contractId} className="border-b border-border hover:bg-muted/40">
                       <td className="py-2.5 pr-3"><p className="font-medium">{c.contractCode}</p><p className="text-xs text-muted-foreground">{c.projectName}</p></td>
                       <td className="pr-3">{c.customerName}</td><td className="pr-3">{c.ownerName}</td>
@@ -122,13 +121,13 @@ function DebtAgingPage() {
         )}
       </SectionCard>
 
-      <SectionCard title={bucket === "all" ? "Chi tiết từng đợt" : `Chi tiết: ${COLS.find((c) => c.key === bucket)?.label}`}>
+      <SectionCard compact title={bucket === "all" ? "Chi tiết từng đợt" : `Chi tiết: ${COLS.find((c) => c.key === bucket)?.label}`}>
         {list.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">Không có đợt nào.</p>
         ) : (
           <div className="divide-y divide-border">
             {list.map((i) => {
-              const col = COLS.find((c) => c.key === i.bucket)!;
+              const col = COLS.find((c) => c.key === i.bucket) ?? COLS[0];
               return (
                 <div key={i.installmentId} className="flex items-center gap-3 py-2.5">
                   <div className="min-w-0 flex-1">

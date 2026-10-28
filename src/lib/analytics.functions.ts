@@ -1,6 +1,8 @@
 // Analytics dashboard — server functions reading from analytics_daily
 // (aggregated table). Today's data falls back to live interaction_events.
 import { createServerFn } from "@tanstack/react-start";
+import { reportWindow, reportDate } from "./reporting";
+import { readReportRows, reportScope } from "./reporting.server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -20,40 +22,46 @@ export const getDashboardKpis = createServerFn({ method: "GET" })
   .inputValidator((d) => Filters.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
+    const scope = await reportScope(supabase, data.tenantId, context.userId, data.ownerId);
+    data = { ...data, ownerId: scope.ownerFilter || undefined };
     const days = data.days;
-    const today = new Date();
-    const sinceDate = new Date(today.getTime() - days * 86400_000);
-    const since = dayStr(sinceDate);
-    const prevSince = dayStr(new Date(sinceDate.getTime() - days * 86400_000));
-    const todayStr = dayStr(today);
+    const window = reportWindow(days);
+    const todayStr = window.today;
+    const today = new Date(`${todayStr}T12:00:00Z`);
+    const since = window.since;
+    const prevSince = reportWindow(days * 2).since;
 
     // Filter cards by owner if requested
     let cardIdsFilter: string[] | null = null;
-    if (data.ownerId || data.cardId) {
+    if (data.ownerId || data.cardId || data.projectId) {
       let q = supabase.from("cards").select("id").eq("tenant_id", data.tenantId);
+      q = q.is("deleted_at", null);
       if (data.ownerId) q = q.eq("owner_user_id", data.ownerId);
       if (data.cardId) q = q.eq("id", data.cardId);
-      const { data: c } = await q;
+      if (data.projectId) {
+        const links = await readReportRows(supabase.from("card_projects").select("card_id,project_id").eq("tenant_id", data.tenantId).eq("project_id", data.projectId), "card_id");
+        q = q.in("id", links.length ? links.map(r => r.card_id) : ["00000000-0000-0000-0000-000000000000"]);
+      }
+      const c = await readReportRows(q);
       cardIdsFilter = (c ?? []).map((r: any) => r.id);
       if (cardIdsFilter.length === 0) cardIdsFilter = ["00000000-0000-0000-0000-000000000000"];
     }
 
     // Aggregated rows (analytics_daily)
     let aggQ = supabase.from("analytics_daily")
-      .select("source, day, event_count, unique_visitors, card_id")
-      .eq("tenant_id", data.tenantId).gte("day", prevSince);
+      .select("source,day,event_count,unique_visitors,card_id")
+      .eq("tenant_id", data.tenantId).gte("day", prevSince).lt("day", todayStr);
     if (data.source) aggQ = aggQ.eq("source", data.source);
     if (cardIdsFilter) aggQ = aggQ.in("card_id", cardIdsFilter);
-    const { data: agg, error: aggErr } = await aggQ;
-    if (aggErr) throw aggErr;
+    const agg = await readReportRows(aggQ.order("card_id").order("source"), "day");
 
     // Today's live events (not yet aggregated)
     let liveQ = supabase.from("interaction_events")
       .select("source, occurred_at, card_id, ip_hash")
-      .eq("tenant_id", data.tenantId).gte("occurred_at", todayStr);
+      .eq("tenant_id", data.tenantId).gte("occurred_at", reportWindow(1).startIso).lt("occurred_at", window.endIso);
     if (data.source) liveQ = liveQ.eq("source", data.source);
     if (cardIdsFilter) liveQ = liveQ.in("card_id", cardIdsFilter);
-    const { data: live } = await liveQ;
+    const live = await readReportRows(liveQ);
 
     type Row = { source: string; day: string; count: number; uniques: number; card_id: string };
     const rows: Row[] = (agg ?? []).map((r: any) => ({
@@ -74,7 +82,7 @@ export const getDashboardKpis = createServerFn({ method: "GET" })
       rows.push({ source, day: todayStr, count: v.count, uniques: v.ips.size, card_id });
     }
 
-    const inWindow = rows.filter((r) => r.day >= since);
+    const inWindow = rows.filter((r) => r.day >= since && r.day <= todayStr);
     const inPrev = rows.filter((r) => r.day < since);
 
     // Source totals (current window)
@@ -100,13 +108,14 @@ export const getDashboardKpis = createServerFn({ method: "GET" })
     // Leads (current vs previous window)
     let leadsQ = supabase.from("leads").select("id, status, created_at, project_id, owner_user_id, card_id, source")
       .eq("tenant_id", data.tenantId).is("deleted_at", null)
-      .gte("created_at", prevSince);
+      .gte("created_at", `${prevSince}T00:00:00+07:00`).lt("created_at", window.endIso);
     if (data.projectId) leadsQ = leadsQ.eq("project_id", data.projectId);
     if (data.ownerId) leadsQ = leadsQ.eq("owner_user_id", data.ownerId);
+    if (data.cardId) leadsQ = leadsQ.eq("card_id", data.cardId);
     if (data.source) leadsQ = leadsQ.eq("source", data.source);
-    const { data: leadsAll } = await leadsQ;
-    const leadsCurr = (leadsAll ?? []).filter((l: any) => l.created_at >= since);
-    const leadsPrev = (leadsAll ?? []).filter((l: any) => l.created_at < since);
+    const leadsAll = await readReportRows(leadsQ);
+    const leadsCurr = (leadsAll ?? []).filter((l: any) => reportDate(l.created_at) >= since);
+    const leadsPrev = (leadsAll ?? []).filter((l: any) => reportDate(l.created_at) < since);
     const wonCurr = leadsCurr.filter((l: any) => l.status === "won").length;
 
     const total = (m: Map<string, number>) => Array.from(m.values()).reduce((s, n) => s + n, 0);
@@ -166,24 +175,31 @@ export const getTopRankings = createServerFn({ method: "GET" })
   .inputValidator((d) => Filters.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const since = dayStr(new Date(Date.now() - data.days * 86400_000));
+    const scope = await reportScope(supabase, data.tenantId, context.userId, data.ownerId);
+    data = { ...data, ownerId: scope.ownerFilter || undefined };
+    const since = reportWindow(data.days).since;
 
     // top cards by aggregated event_count
     let aggQ = supabase.from("analytics_daily")
-      .select("card_id, event_count")
-      .eq("tenant_id", data.tenantId).gte("day", since);
+      .select("card_id,event_count")
+      .eq("tenant_id", data.tenantId).gte("day", since).lt("day", reportWindow(1).today);
     if (data.source) aggQ = aggQ.eq("source", data.source);
-    const { data: agg } = await aggQ;
+    const agg = await readReportRows(aggQ.order("card_id").order("source"), "day");
     const cardCount = new Map<string, number>();
     for (const r of (agg ?? []) as any[])
       cardCount.set(r.card_id, (cardCount.get(r.card_id) ?? 0) + r.event_count);
 
+    let liveQ = supabase.from("interaction_events").select("id,card_id").eq("tenant_id", data.tenantId).gte("occurred_at", reportWindow(1).startIso).lt("occurred_at", reportWindow(1).endIso);
+    if (data.source) liveQ = liveQ.eq("source", data.source);
+    for (const row of await readReportRows(liveQ)) cardCount.set(row.card_id, (cardCount.get(row.card_id) || 0) + 1);
     const cardIds = Array.from(cardCount.keys());
     let cardsRows: any[] = [];
     if (cardIds.length) {
-      const { data: rows } = await supabase
-        .from("cards").select("id, display_name, owner_user_id, slug")
-        .in("id", cardIds).is("deleted_at", null);
+      let cq = supabase.from("cards").select("id, display_name, owner_user_id, slug").eq("tenant_id", data.tenantId).is("deleted_at", null);
+      if (data.ownerId) cq = cq.eq("owner_user_id", data.ownerId);
+      if (data.cardId) cq = cq.eq("id", data.cardId);
+      if (data.projectId) { const links = await readReportRows(supabase.from("card_projects").select("card_id").eq("tenant_id", data.tenantId).eq("project_id", data.projectId), "card_id"); cq = cq.in("id", links.length ? links.map(r => r.card_id) : ["00000000-0000-0000-0000-000000000000"]); }
+      const rows = await readReportRows(cq);
       cardsRows = rows ?? [];
     }
     const topCards = cardsRows
@@ -191,10 +207,13 @@ export const getTopRankings = createServerFn({ method: "GET" })
       .sort((a, b) => b.touches - a.touches).slice(0, 10);
 
     // top projects by lead count
-    const sinceISO = new Date(Date.now() - data.days * 86400_000).toISOString();
-    const { data: leadsRows } = await supabase
-      .from("leads").select("project_id, owner_user_id, status, created_at")
-      .eq("tenant_id", data.tenantId).is("deleted_at", null).gte("created_at", sinceISO);
+    let lq = supabase.from("leads").select("id,project_id,owner_user_id,status,created_at")
+      .eq("tenant_id", data.tenantId).is("deleted_at", null).gte("created_at", reportWindow(data.days).startIso).lt("created_at", reportWindow(data.days).endIso);
+    if (data.projectId) lq = lq.eq("project_id", data.projectId);
+    if (data.ownerId) lq = lq.eq("owner_user_id", data.ownerId);
+    if (data.source) lq = lq.eq("source", data.source);
+    if (data.cardId) lq = lq.eq("card_id", data.cardId);
+    const leadsRows = await readReportRows(lq);
     const projCount = new Map<string, { leads: number; won: number }>();
     const ownerCount = new Map<string, { leads: number; won: number }>();
     for (const l of (leadsRows ?? []) as any[]) {
@@ -212,8 +231,7 @@ export const getTopRankings = createServerFn({ method: "GET" })
     const projIds = Array.from(projCount.keys());
     let projects: any[] = [];
     if (projIds.length) {
-      const { data: r } = await supabase.from("projects")
-        .select("id, name, cover_url").in("id", projIds);
+      const r = await readReportRows(supabase.from("projects").select("id,name,cover_url").eq("tenant_id", data.tenantId).in("id", projIds));
       projects = (r ?? []).map((p: any) => ({
         ...p, leads: projCount.get(p.id)?.leads ?? 0, won: projCount.get(p.id)?.won ?? 0,
       })).sort((a, b) => b.leads - a.leads).slice(0, 10);
@@ -225,8 +243,7 @@ export const getTopRankings = createServerFn({ method: "GET" })
     ]));
     let agents: any[] = [];
     if (ownerIds.length) {
-      const { data: profs } = await supabase.from("profiles")
-        .select("user_id, full_name, email, avatar_url").in("user_id", ownerIds);
+      const profs = await readReportRows(supabase.from("profiles").select("user_id,full_name,email,avatar_url").in("user_id", ownerIds), "user_id");
       // also tally touches via owned cards
       const ownerTouches = new Map<string, number>();
       for (const c of cardsRows)
@@ -249,6 +266,7 @@ export const listAnalyticsFilters = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { tenantId: string }) => d)
   .handler(async ({ data, context }) => {
+    await reportScope(context.supabase, data.tenantId, context.userId);
     const [cards, projects, roles] = await Promise.all([
       context.supabase.from("cards").select("id, display_name")
         .eq("tenant_id", data.tenantId).is("deleted_at", null).order("display_name"),
@@ -256,11 +274,11 @@ export const listAnalyticsFilters = createServerFn({ method: "GET" })
         .eq("tenant_id", data.tenantId).is("deleted_at", null).order("name"),
       context.supabase.from("user_roles").select("user_id").eq("tenant_id", data.tenantId),
     ]);
+    if (cards.error || projects.error || roles.error) throw new Error("Không thể tải bộ lọc báo cáo.");
     const ownerIds = Array.from(new Set((roles.data ?? []).map((r: any) => r.user_id)));
     let owners: any[] = [];
     if (ownerIds.length) {
-      const { data: profs } = await context.supabase
-        .from("profiles").select("user_id, full_name, email").in("user_id", ownerIds);
+      const profs = await readReportRows(context.supabase.from("profiles").select("user_id,full_name,email").in("user_id", ownerIds), "user_id");
       owners = (profs ?? []).map((p: any) => ({
         user_id: p.user_id, name: p.full_name ?? p.email ?? "Thành viên",
       }));

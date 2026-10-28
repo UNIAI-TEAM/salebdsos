@@ -63,10 +63,10 @@ export const HUBS: Hub[] = [
     { to: "/content-library", label: "Kho nội dung" },
   ] },
   { id: "reports", tabs: [
-    { to: "/dashboard", label: "Tổng quan sàn" },
+    { to: "/dashboard", label: "Tổng quan", roles: M },
     { to: "/funnel-report", label: "Phễu" },
-    { to: "/revenue-report", label: "Doanh thu" },
-    { to: "/analytics", label: "Analytics", roles: M },
+    { to: "/revenue-report", label: "Doanh thu", roles: M },
+    { to: "/analytics", label: "Tương tác", roles: M },
   ] },
   { id: "org", tabs: [
     { to: "/sales-directory", label: "Quản lý Sale", roles: M },

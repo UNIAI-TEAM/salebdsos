@@ -1,3 +1,5 @@
+import { ReportActions, ReportOwnerFilter } from "@/components/app/report-actions";
+import { REPORT_COPY, downloadReport } from "@/lib/reporting";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -60,20 +62,20 @@ function Kpi({
   badge?: string;
 }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-border bg-card p-4 shadow-soft">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></div>
+    <div className="min-w-0 rounded-lg border border-border bg-card p-3 shadow-soft">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></div>
         {badge ? <Badge variant="outline" className="shrink-0 text-[10px]">{badge}</Badge> : null}
       </div>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
+      <p className="mt-1 text-xl font-bold text-foreground">{value}</p>
       <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>
     </div>
   );
 }
 
 function Bar({ value, total }: { value: number; total: number }) {
-  const width = total ? Math.max(4, Math.round((value / total) * 100)) : 0;
+  const width = total && value > 0 ? Math.min(100, Math.max(4, Math.round((value / total) * 100))) : 0;
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
       <div className="h-full rounded-full bg-primary" style={{ width: `${width}%` }} />
@@ -85,7 +87,7 @@ function RevenueCards({ rows, max, labelOf }: { rows: RevenueRow[]; max: number;
   return (
     <ul className="space-y-2 md:hidden">
       {rows.map((row) => (
-        <li key={row.key} className="rounded-2xl border border-border bg-card p-3">
+        <li key={row.key} className="rounded-lg border border-border bg-card p-3">
           <div className="flex items-center gap-2">
             <p className="min-w-0 flex-1 truncate text-sm font-semibold">{labelOf(row)}</p>
             <Badge variant="outline" className="shrink-0 text-[10px]">{row.collectRate}% đã thu</Badge>
@@ -181,17 +183,21 @@ function RevenueReportPage() {
   const tenantId = currentTenant?.id;
   const [months, setMonths] = useState("6");
   const [projectId, setProjectId] = useState("all");
+  const [ownerId, setOwnerId] = useState("all");
+  const [kind, setKind] = useState("all");
   const fetchReport = useServerFn(getRevenueReport);
 
   const query = useQuery({
-    queryKey: ["revenue-report", tenantId, months, projectId],
+    queryKey: ["revenue-report", tenantId, months, projectId, ownerId, kind],
     enabled: Boolean(tenantId),
     queryFn: () =>
       fetchReport({
         data: {
-          tenantId: tenantId as string,
+          tenantId: tenantId || "",
           months: Number(months),
+          ...(kind === "sale" || kind === "rental" ? { kind } : {}),
           ...(projectId !== "all" ? { projectId } : {}),
+          ...(ownerId !== "all" ? { ownerId } : {}),
         },
       }),
   });
@@ -201,14 +207,11 @@ function RevenueReportPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader
+      <PageHeader compact
         title="Báo cáo doanh thu theo dự án"
-        sub="Tổng hợp đồng, giá trị hợp đồng, tiền đã thu và hoa hồng theo từng dự án, kèm KPI theo tháng."
+        
         action={
-          <Button variant="outline" size="sm" onClick={() => query.refetch()} disabled={query.isFetching}>
-            <RefreshCw className={`h-4 w-4 ${query.isFetching ? "animate-spin" : ""}`} />
-            Làm mới
-          </Button>
+          <ReportActions busy={query.isFetching} ready={Boolean(data)} refresh={() => { void query.refetch(); }} exportData={() => { if (!data) return; downloadReport("doanh-thu", ["Nhóm", "Tên", "Hợp đồng", "Giá trị hợp đồng (VND)", "Đã thu (VND)", "Còn phải thu (VND)", "Hoa hồng (VND)", "HH đã trả (VND)"], [...data.byProject.map(r => ["Dự án", r.label, r.contracts, r.contractValue, r.collected, r.outstanding, r.commissionTotal, r.commissionPaid]), ...data.byMonth.map(r => ["Tháng", r.key, r.contracts, r.contractValue, r.collected, r.outstanding, r.commissionTotal, r.commissionPaid])]); }} />
         }
       />
 
@@ -223,7 +226,7 @@ function RevenueReportPage() {
           </SelectContent>
         </Select>
         <Select value={projectId} onValueChange={setProjectId}>
-          <SelectTrigger className="h-9 w-[220px]"><SelectValue placeholder="Tất cả dự án" /></SelectTrigger>
+          <SelectTrigger className="h-9 w-[220px] max-w-full"><SelectValue placeholder="Tất cả dự án" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả dự án</SelectItem>
             {(data?.projects ?? []).map((project) => (
@@ -231,6 +234,8 @@ function RevenueReportPage() {
             ))}
           </SelectContent>
         </Select>
+        <ReportOwnerFilter value={ownerId} onChange={setOwnerId} owners={data?.owners ?? []} />
+        <Select value={kind} onValueChange={setKind}><SelectTrigger className="h-9 w-[180px]" aria-label={REPORT_COPY.kind}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{REPORT_COPY.allKinds}</SelectItem><SelectItem value="sale">{REPORT_COPY.sale}</SelectItem><SelectItem value="rental">{REPORT_COPY.rental}</SelectItem></SelectContent></Select>
         {data ? (
           <Badge variant="secondary" className="text-[11px]">
             {data.scope === "team" ? "Toàn sàn" : "Hợp đồng của tôi"}
@@ -248,7 +253,7 @@ function RevenueReportPage() {
         </SectionCard>
       ) : data ? (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <Kpi
               icon={FileSignature}
               label="Hợp đồng"
@@ -259,7 +264,7 @@ function RevenueReportPage() {
               icon={BadgeDollarSign}
               label="Giá trị hợp đồng"
               value={money(data.totals.contractValue)}
-              hint="Giá bán sau chiết khấu"
+              hint="Bán: giá sau giảm · Thuê: tổng lịch thu gồm cọc"
             />
             <Kpi
               icon={Wallet}
@@ -276,7 +281,7 @@ function RevenueReportPage() {
             />
           </div>
 
-          <SectionCard
+          <SectionCard compact
             title="Doanh thu theo dự án"
             action={<Badge variant="outline" className="shrink-0 text-[10px]">{data.byProject.length} dự án</Badge>}
           >
@@ -288,7 +293,7 @@ function RevenueReportPage() {
             />
           </SectionCard>
 
-          <SectionCard
+          <SectionCard compact
             title="KPI theo tháng"
             action={<Badge variant="outline" className="shrink-0 text-[10px]">{data.months} tháng</Badge>}
           >

@@ -1,3 +1,5 @@
+import { REPORT_META, REPORT_COPY, downloadReport } from "@/lib/reporting";
+import { ReportActions } from "@/components/app/report-actions";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -17,14 +19,14 @@ import {
   getDashboardKpis, getTopRankings, listAnalyticsFilters,
 } from "@/lib/analytics.functions";
 
-export const Route = createFileRoute("/_app/analytics")({ component: AnalyticsPage });
+export const Route = createFileRoute("/_app/analytics")({ head: () => ({ meta: REPORT_META("Tương tác & danh thiếp", "Báo cáo lượt chạm NFC, QR, danh thiếp và hiệu quả thu hút khách theo dự án và Sale.") }), component: AnalyticsPage });
 
 const SOURCE_META: Record<string, { label: string; color: string; icon: any }> = {
-  nfc: { label: "NFC Tap", color: "oklch(0.59 0.22 285)", icon: Radio },
-  qr: { label: "QR Code", color: "oklch(0.65 0.16 240)", icon: QrCode },
-  link: { label: "Direct Link", color: "oklch(0.68 0.16 152)", icon: Link2 },
-  social: { label: "Social Bio", color: "oklch(0.74 0.17 60)", icon: Share2 },
-  direct: { label: "Direct", color: "oklch(0.6 0.02 265)", icon: MousePointerClick },
+  nfc: { label: "NFC Tap", color: "var(--chart-1)", icon: Radio },
+  qr: { label: "QR Code", color: "var(--chart-2)", icon: QrCode },
+  link: { label: "Direct Link", color: "var(--chart-3)", icon: Link2 },
+  social: { label: "Social Bio", color: "var(--chart-4)", icon: Share2 },
+  direct: { label: "Direct", color: "var(--muted-foreground)", icon: MousePointerClick },
 };
 
 function fmt(n: number) { return n.toLocaleString("vi-VN"); }
@@ -46,7 +48,7 @@ function AnalyticsPage() {
   const fetchFilters = useServerFn(listAnalyticsFilters);
 
   const params = useMemo(() => ({
-    tenantId: tenantId!, days,
+    tenantId: tenantId || "", days,
     source: source === "all" ? undefined : source,
     projectId: projectId === "all" ? undefined : projectId,
     ownerId: ownerId === "all" ? undefined : ownerId,
@@ -54,7 +56,7 @@ function AnalyticsPage() {
 
   const filtersQ = useQuery({
     queryKey: ["analytics-filters", tenantId],
-    queryFn: () => fetchFilters({ data: { tenantId: tenantId! } }),
+    queryFn: () => fetchFilters({ data: { tenantId: tenantId || "" } }),
     enabled: !!tenantId,
   });
   const kpisQ = useQuery({
@@ -73,7 +75,7 @@ function AnalyticsPage() {
   const bySource = (kpisQ.data?.bySource ?? []).map((r) => ({
     ...r,
     label: SOURCE_META[r.source]?.label ?? r.source,
-    color: SOURCE_META[r.source]?.color ?? "oklch(0.6 0.02 265)",
+    color: SOURCE_META[r.source]?.color ?? "var(--muted-foreground)",
   }));
   const totalTouches = bySource.reduce((s, r) => s + r.count, 0);
   const funnel = kpisQ.data?.funnel ?? [];
@@ -82,8 +84,8 @@ function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Báo cáo & Analytics"
-        sub="Số liệu tổng hợp từ analytics_daily — cập nhật mỗi ngày, dữ liệu hôm nay tính realtime."
+        compact title="Tương tác & danh thiếp"
+        
         action={
           <div className="flex flex-wrap gap-2">
             <Select value={String(days)} onValueChange={(v) => setDays(Number(v))}>
@@ -126,23 +128,27 @@ function AnalyticsPage() {
         }
       />
 
+      {kpisQ.isError || topsQ.isError || filtersQ.isError ? <p role="alert" className="text-sm text-destructive">{REPORT_COPY.error}</p> : null}
+      <ReportActions busy={kpisQ.isFetching || topsQ.isFetching} ready={Boolean(kpis)} refresh={() => { void kpisQ.refetch(); void topsQ.refetch(); void filtersQ.refetch(); }} exportData={() => downloadReport("tuong-tac", ["Ngày", "NFC", "QR", "Link", "Social", "Tổng"], daily.map((d: any) => [d.day, d.nfc, d.qr, d.link, d.social, d.total]))} />
+      {!kpis ? <p className="py-6 text-center text-muted-foreground">{kpisQ.isError ? REPORT_COPY.error : REPORT_COPY.loading}</p> : null}
+      {kpis && <>
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard icon={Radio} label="NFC Taps" value={fmt(kpis?.nfc ?? 0)} delta={kpis?.deltas.nfc ?? 0} tone="primary" />
-        <KpiCard icon={QrCode} label="QR Scans" value={fmt(kpis?.qr ?? 0)} delta={kpis?.deltas.qr ?? 0} tone="blue" />
-        <KpiCard icon={Link2} label="Lượt xem link" value={fmt((kpis?.link ?? 0) + (kpis?.social ?? 0) + (kpis?.direct ?? 0))} delta={kpis?.deltas.touches ?? 0} tone="indigo" />
-        <KpiCard icon={Users2} label="Lead mới" value={fmt(kpis?.leads ?? 0)} delta={kpis?.deltas.leads ?? 0} tone="amber" />
+        <KpiCard compact icon={Radio} label="NFC Taps" value={fmt(kpis?.nfc ?? 0)} delta={kpis?.deltas.nfc ?? 0} tone="primary" />
+        <KpiCard compact icon={QrCode} label="QR Scans" value={fmt(kpis?.qr ?? 0)} delta={kpis?.deltas.qr ?? 0} tone="blue" />
+        <KpiCard compact icon={Link2} label="Lượt xem link" value={fmt((kpis?.link ?? 0) + (kpis?.social ?? 0) + (kpis?.direct ?? 0))} delta={kpis?.deltas.touches ?? 0} tone="indigo" />
+        <KpiCard compact icon={Users2} label="Lead mới" value={fmt(kpis?.leads ?? 0)} delta={kpis?.deltas.leads ?? 0} tone="amber" />
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard icon={Target} label="Tỷ lệ chuyển đổi" value={`${kpis?.conversion ?? 0}%`} delta={0} deltaLabel="trên tổng lead" tone="green" />
-        <KpiCard icon={BarChart3} label="Tổng lượt chạm" value={fmt(kpis?.totalTouches ?? 0)} delta={kpis?.deltas.touches ?? 0} tone="primary" />
-        <KpiCard icon={MousePointerClick} label="Lead đã chốt" value={fmt(kpis?.won ?? 0)} delta={0} deltaLabel="trong kỳ" tone="rose" />
-        <KpiCard icon={Share2} label="Social Bio" value={fmt(kpis?.social ?? 0)} delta={0} deltaLabel="lượt chạm" tone="indigo" />
+        <KpiCard compact icon={Target} label="Tỷ lệ chuyển đổi" value={`${kpis?.conversion ?? 0}%`} delta={0} deltaLabel="trên tổng lead" tone="green" />
+        <KpiCard compact icon={BarChart3} label="Tổng lượt chạm" value={fmt(kpis?.totalTouches ?? 0)} delta={kpis?.deltas.touches ?? 0} tone="primary" />
+        <KpiCard compact icon={MousePointerClick} label="Lead đã chốt" value={fmt(kpis?.won ?? 0)} delta={0} deltaLabel="trong kỳ" tone="rose" />
+        <KpiCard compact icon={Share2} label="Social Bio" value={fmt(kpis?.social ?? 0)} delta={0} deltaLabel="lượt chạm" tone="indigo" />
       </div>
 
       {/* Trends + donut */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <SectionCard title={`Xu hướng tương tác (${days} ngày)`} className="lg:col-span-2">
+        <SectionCard compact title={`Xu hướng tương tác (${days} ngày)`} className="lg:col-span-2">
           {kpisQ.isLoading ? (
             <div className="h-[280px] grid place-items-center text-sm text-muted-foreground">Đang tải…</div>
           ) : daily.every((d: any) => d.total === 0) ? (
@@ -153,10 +159,10 @@ function AnalyticsPage() {
             <div className="h-[280px]">
               <ResponsiveContainer>
                 <LineChart data={daily} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid stroke="oklch(0.93 0.008 265)" vertical={false} />
+                  <CartesianGrid stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="day" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid oklch(0.93 0.008 265)" }} />
+                  <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid var(--border)" }} />
                   <Line type="monotone" dataKey="nfc" stroke={SOURCE_META.nfc.color} strokeWidth={2.2} dot={false} name="NFC" />
                   <Line type="monotone" dataKey="qr" stroke={SOURCE_META.qr.color} strokeWidth={2.2} dot={false} name="QR" />
                   <Line type="monotone" dataKey="link" stroke={SOURCE_META.link.color} strokeWidth={2.2} dot={false} name="Link" />
@@ -167,7 +173,7 @@ function AnalyticsPage() {
           )}
         </SectionCard>
 
-        <SectionCard title="Phân bổ kênh">
+        <SectionCard compact title="Phân bổ kênh">
           {totalTouches === 0 ? (
             <div className="h-[280px] grid place-items-center text-sm text-muted-foreground">—</div>
           ) : (
@@ -178,7 +184,7 @@ function AnalyticsPage() {
                     <Pie data={bySource} dataKey="count" nameKey="label" innerRadius={50} outerRadius={75} paddingAngle={2}>
                       {bySource.map((s) => <Cell key={s.source} fill={s.color} />)}
                     </Pie>
-                    <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid oklch(0.93 0.008 265)" }} />
+                    <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid var(--border)" }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -201,7 +207,7 @@ function AnalyticsPage() {
       </div>
 
       {/* Funnel */}
-      <SectionCard title="Funnel chuyển đổi">
+      <SectionCard compact title="Funnel chuyển đổi">
         {funnel.length === 0 || funnel[0].v === 0 ? (
           <div className="text-[12.5px] text-muted-foreground py-6 text-center">Chưa đủ dữ liệu để dựng funnel.</div>
         ) : (
@@ -215,7 +221,7 @@ function AnalyticsPage() {
                   </span>
                 </div>
                 <div className="h-7 rounded-lg bg-muted overflow-hidden">
-                  <div className="h-full bg-brand-gradient rounded-lg flex items-center px-3 text-white text-[10.5px] font-bold"
+                  <div className="h-full bg-primary rounded-lg flex items-center px-3 text-primary-foreground text-[10.5px] font-bold"
                     style={{ width: `${Math.max(2, f.pct)}%`, opacity: 1 - i * 0.1 }}>
                     {f.pct}%
                   </div>
@@ -228,14 +234,14 @@ function AnalyticsPage() {
 
       {/* Rankings */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <SectionCard title="Top Cards (lượt chạm)">
+        <SectionCard compact title="Top Cards (lượt chạm)">
           <RankList loading={topsQ.isLoading} empty="Chưa có card nào ghi nhận lượt chạm.">
             {(tops?.topCards ?? []).map((c: any, i: number) => (
               <RankRow key={c.id} idx={i + 1} title={c.display_name} sub={`/c/${c.slug}`} value={fmt(c.touches)} />
             ))}
           </RankList>
         </SectionCard>
-        <SectionCard title="Top Dự án (số lead)">
+        <SectionCard compact title="Top Dự án (số lead)">
           <RankList loading={topsQ.isLoading} empty="Chưa có lead theo dự án.">
             {(tops?.topProjects ?? []).map((p: any, i: number) => (
               <RankRow key={p.id} idx={i + 1} title={p.name}
@@ -243,7 +249,7 @@ function AnalyticsPage() {
             ))}
           </RankList>
         </SectionCard>
-        <SectionCard title="Top Sales Agents">
+        <SectionCard compact title="Top Sales Agents">
           <RankList loading={topsQ.isLoading} empty="Chưa có nhân sự nào ghi nhận hoạt động.">
             {(tops?.topAgents ?? []).map((a: any, i: number) => (
               <RankRow key={a.user_id} idx={i + 1} title={a.name}
@@ -254,7 +260,7 @@ function AnalyticsPage() {
         </SectionCard>
       </div>
 
-      {tenantId && <CustomerJourney tenantId={tenantId} days={days} />}
+      </>}
     </div>
   );
 }
@@ -274,7 +280,7 @@ function RankRow({ idx, title, sub, value, avatar }: {
     <li className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted/60 transition">
       <span className="w-6 text-[11px] font-bold text-muted-foreground text-center">{idx}</span>
       {avatar !== undefined && (
-        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-indigo-500 grid place-items-center text-white text-[10.5px] font-bold shrink-0">
+        <div className="h-8 w-8 rounded-full bg-primary grid place-items-center text-primary-foreground text-[10.5px] font-bold shrink-0">
           {avatar}
         </div>
       )}
