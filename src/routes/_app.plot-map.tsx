@@ -540,8 +540,158 @@ function PlotMapPage() {
                   Lưu vị trí
                 </Button>
               </div>
+
+              {selected.listing_status === "available" && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setSplitChildren([
+                      { ...emptyChild(), code: `${selected.code}-A` },
+                      { ...emptyChild(), code: `${selected.code}-B` },
+                    ]);
+                    setSplitOpen(true);
+                  }}
+                  data-testid="open-split"
+                >
+                  <Scissors className="mr-1.5 h-4 w-4" />
+                  Tách lô này thành nhiều lô
+                </Button>
+              )}
             </div>
           )}
+          <DialogFooter />
+        </DialogContent>
+      </Dialog>
+
+      {/* Tách lô */}
+      <Dialog open={splitOpen} onOpenChange={setSplitOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Tách lô {selected?.code}</DialogTitle>
+            <DialogDescription>
+              Lô gốc {selected?.area ? `(${selected.area} m²)` : ""} sẽ chuyển sang "Đã tách/ghép" và không còn bán;
+              các lô con mới xuất hiện trên sơ đồ.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[50vh] space-y-2 overflow-y-auto pr-1">
+            {splitChildren.map((c, i) => (
+              <div key={i} className="grid grid-cols-2 gap-2 rounded-lg border p-2 sm:grid-cols-6">
+                <Input
+                  placeholder="Mã lô *"
+                  value={c.code}
+                  onChange={(e) => setSplitChildren((rows) => rows.map((r, j) => (j === i ? { ...r, code: e.target.value } : r)))}
+                  data-testid={`split-code-${i}`}
+                />
+                <Input
+                  placeholder="Diện tích m² *"
+                  inputMode="decimal"
+                  value={c.area}
+                  onChange={(e) => setSplitChildren((rows) => rows.map((r, j) => (j === i ? { ...r, area: e.target.value } : r)))}
+                  data-testid={`split-area-${i}`}
+                />
+                <Input
+                  placeholder="Giá bán"
+                  inputMode="numeric"
+                  value={c.price}
+                  onChange={(e) => setSplitChildren((rows) => rows.map((r, j) => (j === i ? { ...r, price: e.target.value } : r)))}
+                />
+                <Input
+                  placeholder="Hàng"
+                  inputMode="numeric"
+                  value={c.map_row}
+                  onChange={(e) => setSplitChildren((rows) => rows.map((r, j) => (j === i ? { ...r, map_row: e.target.value } : r)))}
+                />
+                <Input
+                  placeholder="Cột"
+                  inputMode="numeric"
+                  value={c.map_col}
+                  onChange={(e) => setSplitChildren((rows) => rows.map((r, j) => (j === i ? { ...r, map_col: e.target.value } : r)))}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={splitChildren.length <= 2}
+                  onClick={() => setSplitChildren((rows) => rows.filter((_, j) => j !== i))}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSplitChildren((rows) => [...rows, emptyChild()])}
+              disabled={splitChildren.length >= 20}
+            >
+              <Plus className="mr-1.5 h-4 w-4" /> Thêm lô con
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSplitOpen(false)}>Huỷ</Button>
+            <Button onClick={() => splitMut.mutate()} disabled={splitMut.isPending} data-testid="submit-split">
+              {splitMut.isPending ? "Đang tách…" : "Tách lô"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ghép lô */}
+      <Dialog open={mergeOpen} onOpenChange={setMergeOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ghép {mergeUnits.length} lô</DialogTitle>
+            <DialogDescription>
+              {mergeUnits.map((u) => u.code).join(" + ")} — các lô gốc chuyển sang "Đã tách/ghép", lô mới xuất hiện trên sơ đồ.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <div className="rounded-lg bg-muted/50 p-3 text-sm">
+              Tổng diện tích: <b>{totals.area} m²</b> · Tổng giá: <b>{money(totals.price)}</b>
+            </div>
+            <Input placeholder="Mã lô mới *" value={mergeCode} onChange={(e) => setMergeCode(e.target.value)} data-testid="merge-code" />
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder={`Diện tích (mặc định ${totals.area})`} inputMode="decimal" value={mergeArea} onChange={(e) => setMergeArea(e.target.value)} />
+              <Input placeholder={`Giá (mặc định ${money(totals.price)})`} inputMode="numeric" value={mergePrice} onChange={(e) => setMergePrice(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMergeOpen(false)}>Huỷ</Button>
+            <Button onClick={() => mergeMut.mutate()} disabled={mergeMut.isPending} data-testid="submit-merge">
+              {mergeMut.isPending ? "Đang ghép…" : "Ghép lô"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Lịch sử tách/ghép */}
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Lịch sử tách/ghép lô</DialogTitle>
+            <DialogDescription>Mọi lần tách/ghép đều được ghi lại kèm người thực hiện và thời điểm.</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[50vh] space-y-2 overflow-y-auto" data-testid="transform-history">
+            {history.isLoading && <p className="py-6 text-center text-sm text-muted-foreground">Đang tải…</p>}
+            {history.data?.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted-foreground">Dự án chưa có lần tách/ghép nào.</p>
+            )}
+            {history.data?.map((e) => (
+              <div key={e.id} className="rounded-lg border p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline">{e.action === "split" ? "Tách lô" : "Ghép lô"}</Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(e.created_at).toLocaleString("vi-VN")}
+                  </span>
+                </div>
+                <div className="mt-1.5">
+                  {e.parents.map((p) => p.code).join(" + ")}{" "}
+                  <span className="text-muted-foreground">→</span>{" "}
+                  {e.children.map((c) => c.code).join(", ")}
+                </div>
+              </div>
+            ))}
+          </div>
           <DialogFooter />
         </DialogContent>
       </Dialog>
