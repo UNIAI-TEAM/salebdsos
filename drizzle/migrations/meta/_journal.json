@@ -330,6 +330,13 @@
       "when": 1793173799175,
       "tag": "0046_collaborator_portal",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1793176452742,
+      "tag": "0047_crm_access_isolation",
+      "breakpoints": true
     }
   ]
 }
