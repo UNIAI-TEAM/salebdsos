@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { INBOX_LAYOUT_COPY as ui } from "@/lib/inbox-copy";
+import { ChannelGlyph } from "@/components/app/channel-glyph";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -58,10 +59,6 @@ const TAG_TONE: Record<string, string> = {
 };
 const TAG_DOT: Record<string, string> = { blue: "bg-info", amber: "bg-warning", emerald: "bg-success", rose: "bg-destructive" };
 function initials(name: string) { return name.trim().split(/\s+/).slice(-2).map(part => part[0]).join("").toUpperCase(); }
-function ChannelIcon({ channel }: { channel: string }) {
-  const Icon = channel === "email" ? Mail : channel === "call" ? Phone : channel === "sms" ? MessageSquare : MessageCircle;
-  return <Icon className="size-2.5" />;
-}
 
 export const Route = createFileRoute("/_app/inbox")({
   head: () => ({
