@@ -23,6 +23,8 @@ import { buildPlotGrid, plotStats, pricePerM2, type PlotUnit } from "@/lib/plot-
 import {
   changeListingStatus, listInventory, listInventoryProjects, updateInventoryItem,
 } from "@/lib/inventory.functions";
+import { listDiscountPolicies } from "@/lib/discount.functions";
+import { bestQuote, type DiscountPolicy } from "@/lib/payment-discount";
 
 export const Route = createFileRoute("/_app/plot-map")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -111,6 +113,20 @@ function PlotMapPage() {
   const zones = useMemo(() => buildPlotGrid(units), [units]);
   const stats = useMemo(() => plotStats(units), [units]);
   const activeZone = zones.find((z) => z.zone === zoneTab) ?? zones[0];
+
+  const fnPolicies = useServerFn(listDiscountPolicies);
+  const policies = useQuery({
+    queryKey: ["plot-map-policies", tenantId, effectiveProject],
+    queryFn: () => fnPolicies({ data: { tenantId: tenantId!, projectId: effectiveProject } }),
+    enabled: !!tenantId && !!effectiveProject,
+  });
+  const discountHint = selected
+    ? bestQuote(
+        selected.price,
+        (policies.data?.policies ?? []) as DiscountPolicy[],
+        { projectId: effectiveProject || null, kind: selected.product_type ?? null },
+      )
+    : null;
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["plot-map", tenantId] });
 
