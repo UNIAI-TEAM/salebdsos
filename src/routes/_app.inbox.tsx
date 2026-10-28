@@ -458,7 +458,7 @@ function InboxPage() {
             <div className="flex flex-col items-center gap-2 py-2"><span className="grid size-14 place-items-center rounded-full bg-secondary text-lg font-semibold">{initials(thread.conversation.name)}</span><p className="text-center text-sm font-semibold">{thread.conversation.name}</p><Badge variant="outline" className="gap-1 text-[10px]"><ChannelGlyph channel={thread.conversation.channel} className="size-3" />{CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}</Badge></div>
             <div><p className="mb-1 text-muted-foreground">{ui.phone}</p>{thread.conversation.phone ? <a href={`tel:${thread.conversation.phone}`} className="font-medium">{thread.conversation.phone}</a> : <p>{ui.noPhone}</p>}</div>
             <div><p className="mb-1 text-muted-foreground">{ui.project}</p><p>{items.find(i => i.id === activeId)?.projectName ?? ui.noProject}</p></div>
-            <div className="space-y-2">{thread.conversation.leadId && <Button asChild size="sm" variant="outline" className="w-full"><Link to="/leads" search={{ lead: thread.conversation.leadId }}><UserRound />{ui.profile}</Link></Button>}<Button size="sm" variant="ghost" className="w-full" onClick={() => setLinkOpen(true)}>{t.link}</Button></div>
+            <div className="space-y-2">{thread.conversation.leadId && <Button asChild size="sm" variant="outline" className="w-full"><Link to="/leads" search={{ lead: thread.conversation.leadId }}><UserRound />{ui.profile}</Link></Button>}<Button size="sm" variant="ghost" className="w-full" onClick={() => setLinkOpen(true)}>{t.link}</Button>{!thread.conversation.customerId && <Button size="sm" variant="outline" className="w-full" onClick={() => { setCustForm({ fullName: thread.conversation.name === "Khách ẩn danh" ? "" : thread.conversation.name, phone: thread.conversation.phone ?? "", email: "" }); setCreateCustOpen(true); }} data-testid="create-customer-from-conversation"><Plus />Tạo khách hàng mới từ hội thoại</Button>}</div>
             {kit?.tags.length ? <div><p className="mb-2 text-muted-foreground">{ui.tags}</p><div className="flex flex-wrap gap-1.5" aria-label={ui.tags}>{kit.tags.map(tag => { const on = thread.conversation.tags.includes(tag.key); return <Button key={tag.key} size="sm" variant="outline" disabled={tagsMutation.isPending} onClick={() => tagsMutation.mutate(on ? thread.conversation.tags.filter(x => x !== tag.key) : [...thread.conversation.tags, tag.key])} className={`h-7 px-2 text-[11px] ${on ? TAG_TONE[tag.tone] : "border-dashed text-muted-foreground"}`}>{on ? <Check className="size-3" /> : <Plus className="size-3" />}{tag.label}</Button>; })}</div></div> : null}
             {thread.calls.length > 0 && <div><p className="mb-2 font-medium">{ui.calls}</p><ul className="divide-y divide-border">{thread.calls.map(item => <li key={item.id} className="py-3"><p className="font-medium">{item.phone ?? "—"}</p><p className="mt-1 text-[10px] text-muted-foreground">{timeLabel(item.started_at)} · {formatDuration(item.duration_seconds)}</p>{item.notes && <p className="mt-1 text-muted-foreground">{item.notes}</p>}{item.recording_url ? <audio controls src={item.recording_url} className="mt-2 w-full" /> : <p className="mt-1 text-[10px] text-muted-foreground">{ui.noRecording}</p>}</li>)}</ul></div>}
           </div>
@@ -466,6 +466,33 @@ function InboxPage() {
       </div>
 
       <Dialog open={linkOpen} onOpenChange={setLinkOpen}><DialogContent><DialogHeader><DialogTitle>{t.link}</DialogTitle></DialogHeader><Input placeholder="Tìm hồ sơ theo tên hoặc SĐT" value={leadSearch} onChange={e => setLeadSearch(e.target.value)} /><div className="max-h-72 space-y-1 overflow-y-auto">{choices.data?.map(l => <Button key={l.id} variant="ghost" className="h-auto w-full justify-start py-3" disabled={linkMutation.isPending} onClick={() => linkMutation.mutate(l.id)}>{l.full_name} · {l.phone ?? "—"}</Button>)}</div></DialogContent></Dialog>
+
+      {/* Tạo hồ sơ khách mới từ hội thoại */}
+      <Dialog open={createCustOpen} onOpenChange={setCreateCustOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Tạo khách hàng mới từ hội thoại</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Họ tên *</Label>
+              <Input className="mt-1" value={custForm.fullName} onChange={(e) => setCustForm((f) => ({ ...f, fullName: e.target.value }))} data-testid="cust-name" />
+            </div>
+            <div>
+              <Label className="text-xs">Số điện thoại</Label>
+              <Input className="mt-1" value={custForm.phone} onChange={(e) => setCustForm((f) => ({ ...f, phone: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Email</Label>
+              <Input className="mt-1" value={custForm.email} onChange={(e) => setCustForm((f) => ({ ...f, email: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateCustOpen(false)}>Huỷ</Button>
+            <Button onClick={() => createCustMutation.mutate()} disabled={custForm.fullName.trim().length < 2 || createCustMutation.isPending} data-testid="submit-create-customer">
+              {createCustMutation.isPending ? "Đang tạo…" : "Tạo & gắn vào hội thoại"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Lưu kết quả cuộc gọi + ghi âm */}
       <Dialog open={Boolean(callDialog)} onOpenChange={(open) => !open && setCallDialog(null)}>
         <DialogContent className="max-w-md">
