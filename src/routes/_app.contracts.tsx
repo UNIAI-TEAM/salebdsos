@@ -38,6 +38,8 @@ import {
   setInstallments,
   updateContract,
 } from "@/lib/contract.functions";
+import { listDiscountPolicies } from "@/lib/discount.functions";
+import { applicablePolicies, quoteDiscount, type DiscountPolicy } from "@/lib/payment-discount";
 
 export const Route = createFileRoute("/_app/contracts")({
   head: () => ({
@@ -147,6 +149,7 @@ function ContractsPage() {
     code: "",
     salePrice: "",
     discountAmount: "",
+    discountPolicyId: "",
     signedAt: "",
     commissionPercent: "2",
     note: "",
@@ -154,6 +157,28 @@ function ContractsPage() {
   const sellableProducts = (data?.products ?? []).filter(
     (p: any) => !["sold", "liquidated"].includes(p.listing_status),
   );
+  const formProduct = sellableProducts.find((p: any) => p.id === form.productId) ?? null;
+
+  const fnPolicies = useServerFn(listDiscountPolicies);
+  const policiesQ = useQuery({
+    queryKey: ["contract-discount-policies", tenantId, formProduct?.project_id],
+    queryFn: () => fnPolicies({ data: { tenantId: tenantId as string, projectId: formProduct?.project_id ?? null } }),
+    enabled: !!tenantId && !!formProduct,
+  });
+  const policySuggestions = useMemo(() => {
+    if (!formProduct) return [] as DiscountPolicy[];
+    return applicablePolicies(
+      (policiesQ.data?.policies ?? []) as DiscountPolicy[],
+      { projectId: formProduct.project_id ?? null, kind: formProduct.product_type ?? null },
+    );
+  }, [policiesQ.data, formProduct]);
+
+  const applyPolicy = (p: DiscountPolicy) => {
+    const price = Number(form.salePrice || formProduct?.price || 0);
+    const q = quoteDiscount(price, p);
+    setForm((prev) => ({ ...prev, discountAmount: String(q.amount), discountPolicyId: p.id }));
+    toast.success(`Đã áp dụng “${p.name}”: giảm ${money(q.amount)}`);
+  };
 
   const submitCreate = () =>
     run.mutate(async () => {
