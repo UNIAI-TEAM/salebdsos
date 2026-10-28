@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Map as MapIcon, Pin, RefreshCw } from "lucide-react";
+import { Combine, History, Map as MapIcon, Pin, Plus, RefreshCw, Scissors, Trash2 } from "lucide-react";
 import { PageHeader, SectionCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,10 +21,16 @@ import {
 } from "@/lib/property-types";
 import { buildPlotGrid, plotStats, pricePerM2, type PlotUnit } from "@/lib/plot-map";
 import {
+  mergeTotals, validateMergeDraft, validateSplitDraft, type SplitChildDraft,
+} from "@/lib/plot-transform";
+import {
   changeListingStatus, listInventory, listInventoryProjects, updateInventoryItem,
 } from "@/lib/inventory.functions";
 import { listDiscountPolicies } from "@/lib/discount.functions";
+import { listPlotTransforms, mergePlots, splitPlot } from "@/lib/plot-transform.functions";
 import { bestQuote, type DiscountPolicy } from "@/lib/payment-discount";
+
+const emptyChild = (): SplitChildDraft => ({ code: "", area: "", price: "", map_row: "", map_col: "" });
 
 export const Route = createFileRoute("/_app/plot-map")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -63,6 +69,7 @@ const CELL_TONE: Record<ListingStatus, string> = {
   contracted: "bg-indigo-500/15 border-indigo-500/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/25",
   sold: "bg-rose-500/15 border-rose-500/40 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25",
   liquidated: "bg-zinc-500/10 border-zinc-500/30 text-zinc-500",
+  retired: "bg-muted/50 border-dashed border-border text-muted-foreground/50",
 };
 
 function PlotMapPage() {
