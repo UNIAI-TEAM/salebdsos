@@ -77,4 +77,4 @@
 - [x] Kịch bản chat GĐ1: thư viện mẫu BĐS, AI sinh theo dự án, tự tạo lịch hẹn & ghi nhu cầu
 
 - [x] Giai đoạn A — sàn đất/phân lô: sơ đồ lô theo khu (hàng×cột), tô màu trạng thái, giữ chỗ nhanh, đặt vị trí lô; 6 kiểm thử plot-map đạt; đã thử giữ chỗ + gán vị trí trên giao diện, mobile không tràn; dữ liệu thử đã xoá. Còn lại: chiết khấu theo đợt, tách/ghép lô.
-- [ ] Chiết khấu TT nhanh: chính sách theo dự án/loại hình, gợi ý trên sơ đồ lô và form hợp đồng, lưu chính sách đã áp dụng vào hợp đồng; kiểm thử payment-discount.
+- [x] Chiết khấu TT nhanh: chính sách theo dự án/loại hình (trang Chiết khấu TT nhanh), gợi ý trên sơ đồ lô và form hợp đồng, lưu chính sách đã áp dụng vào hợp đồng; 7 kiểm thử đạt; đã thử tạo chính sách → gợi ý -3%/60tr trên sơ đồ → áp dụng vào form hợp đồng; dữ liệu thử đã xoá.
