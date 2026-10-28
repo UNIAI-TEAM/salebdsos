@@ -283,6 +283,45 @@ function InboxPage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const assignMutation = useMutation({
+    mutationFn: (userId: string | null) => {
+      if (!tenantId || !activeId) throw new Error("Chưa chọn hội thoại");
+      return assignConv({ data: { tenantId, conversationId: activeId, userId } });
+    },
+    onSuccess: () => { toast.success("Đã cập nhật người phụ trách"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: (status: "open" | "closed") => {
+      if (!tenantId || !activeId) throw new Error("Chưa chọn hội thoại");
+      return setConvStatus({ data: { tenantId, conversationId: activeId, status } });
+    },
+    onSuccess: (_r, status) => { toast.success(status === "closed" ? "Đã đóng hội thoại" : "Đã mở lại hội thoại"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const createCustMutation = useMutation({
+    mutationFn: () => {
+      if (!tenantId || !activeId) throw new Error("Chưa chọn hội thoại");
+      return createCustomer({
+        data: {
+          tenantId,
+          conversationId: activeId,
+          fullName: custForm.fullName,
+          phone: custForm.phone || undefined,
+          email: custForm.email || undefined,
+        },
+      });
+    },
+    onSuccess: (r) => {
+      toast.success(`Đã tạo hồ sơ khách "${r.name}" và gắn vào hội thoại`);
+      setCreateCustOpen(false);
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const items = listQuery.data?.items ?? [];
   const visibleItems = unreadOnly ? items.filter(item => item.unread > 0) : items;
   const thread = threadQuery.data;
