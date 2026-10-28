@@ -4700,6 +4700,100 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_email_domains: {
+        Row: {
+          checked_at: string | null
+          dns_records: Json
+          domain: string
+          enabled: boolean
+          provider_domain_id: string
+          reply_to: string | null
+          sender_email: string
+          sender_name: string
+          status: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          checked_at?: string | null
+          dns_records?: Json
+          domain: string
+          enabled?: boolean
+          provider_domain_id: string
+          reply_to?: string | null
+          sender_email: string
+          sender_name: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          checked_at?: string | null
+          dns_records?: Json
+          domain?: string
+          enabled?: boolean
+          provider_domain_id?: string
+          reply_to?: string | null
+          sender_email?: string
+          sender_name?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_email_domains_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_email_send_logs: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          provider_id: string | null
+          recipient: string
+          status: string
+          subject: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          provider_id?: string | null
+          recipient: string
+          status: string
+          subject: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          provider_id?: string | null
+          recipient?: string
+          status?: string
+          subject?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_email_send_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           created_at: string
