@@ -189,14 +189,15 @@ export const activateTelegram = createServerFn({ method: 'POST' })
   .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await admin(context, data.tenantId);
-    const { telegramCall, telegramCredentials } = await import('./telegram.server');
+    const { telegramCall, telegramCredentials, telegramWebhookUrl, checkTelegramWebhook } = await import('./telegram.server');
     const { supabaseAdmin: sb } = await import('@/integrations/supabase/client.server');
     const bot = await telegramCall('getMe');
     if (!bot.id) throw new Error(copy.checkFailed);
     const creds = telegramCredentials();
     const { data: existing, error: readError } = await sb.from('telegram_bot_bindings').select('tenant_id').eq('bot_id',String(bot.id)).maybeSingle();
     if (readError || (existing && existing.tenant_id !== data.tenantId)) throw new Error('Bot đã thuộc sàn khác.');
-    const url = 'https://project--037ef328-074a-4c9e-8c29-68ffe926410e-dev.lovable.app/api/public/telegram/webhook';
+    const url = telegramWebhookUrl();
+    await checkTelegramWebhook(url);
     const current = await telegramCall('getWebhookInfo');
     if (current.url && current.url !== url) throw new Error('Bot đang nhận tin tại ứng dụng khác; chưa thay đổi kết nối.');
     const { error } = await sb.from('telegram_bot_bindings').upsert({ bot_id:String(bot.id),tenant_id:data.tenantId,key_digest:creds.digest,enabled:false },{onConflict:'bot_id'});

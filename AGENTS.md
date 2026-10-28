@@ -14,6 +14,7 @@
 - Channel profile changes use authenticated atomic link_channel_profile; ingestion never guesses profiles from phones or reuses legacy conversations, preventing mixed-customer history and partial links.
 - Pending inbox providers use one shared capability registry and remain send-blocked until their runtime integration is implemented and verified, preventing labels from implying working messaging.
 - Additional account verification never enables messaging; Telegram activation binds the project bot exclusively to one tenant in a service-only registry and verifies a derived webhook secret plus credential digest on every receive/send, preventing cross-tenant use of project-wide credentials.
+- Telegram activation preflights the credential-free public POST auth gate before changing any binding or webhook; its public origin can be configured server-side, preventing activation on missing or redirected deployments.
 - Lead allocation uses shared tested pool/load helpers and exact tenant-wide counts; database triggers initialize entry SLA and record successful Sale replies, keeping deadlines consistent across all ingress paths.
 - Landing chat visitor keys include the page identity so visiting another Sale's page cannot reuse a previous personal conversation.
 - Lead assignment push is queued by database triggers for every owner change; SLA jobs revalidate owner/response/deadline, wake on enqueue and stop their schedule after drain, so ingress paths and handovers cannot bypass or duplicate assignment push.
