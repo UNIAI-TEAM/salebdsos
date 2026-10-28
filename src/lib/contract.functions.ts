@@ -468,7 +468,8 @@ export const createRentalContract = createServerFn({ method: "POST" })
       p_note: data.note ?? null,
       p_schedule: schedule,
     };
-    const { data: contractId, error } = await supabase.rpc("create_rental_contract", rentalArgs);
+    // Kiểu sinh tự động đánh dấu tham số RPC là non-null; một số tham số thực tế cho phép NULL.
+    const { data: contractId, error } = await supabase.rpc("create_rental_contract", rentalArgs as never);
     if (error) throw new Error(error.message);
     return loadContract(context as Ctx, contractId as string);
   });
