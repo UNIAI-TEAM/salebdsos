@@ -274,6 +274,13 @@
       "when": 1793161815186,
       "tag": "0038_plot_split_merge",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1793161896382,
+      "tag": "0039_split_plot_items_payload",
+      "breakpoints": true
     }
   ]
 }
