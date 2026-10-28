@@ -17,6 +17,7 @@ export const HUBS: Hub[] = [
   ] },
   { id: "inbox", tabs: [
     { to: "/inbox", label: INBOX_COPY.title },
+    { to: "/inbox-tickets", label: "Ticket tin nhắn" },
     { to: "/appointments", label: "Lịch hẹn" },
   ] },
   { id: "projects", tabs: [

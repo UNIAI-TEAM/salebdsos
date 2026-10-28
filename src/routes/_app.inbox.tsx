@@ -12,7 +12,7 @@ import {
   Mail,
   MessageSquare,
   Settings2,
-  ArrowLeft, Check, Inbox, ListFilter, PanelRight, Plus, Radio, UserRound, X, Zap,
+  ArrowLeft, Bot, Check, CircleCheck, CircleDot, Inbox, ListFilter, PanelRight, Plus, Radio, UserRound, X, Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -28,16 +28,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  assignConversation,
+  createCustomerFromConversation,
   getChannelSettings,
   getConversation,
   getInboxKit,
   listConversations,
+  setConversationStatus,
   setConversationTags,
   saveCallResult,
   saveChannelSettings,
   sendMessage,
   startCall,
 } from "@/lib/inbox.functions";
+import { listAssignees } from "@/lib/tickets.functions";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   CALL_OUTCOMES,
   CHANNEL_LABEL,
@@ -119,9 +124,16 @@ function InboxPage() {
   const [tagFilter, setTagFilter] = useState<string>("");
   const fetchKit = useServerFn(getInboxKit);
   const saveTags = useServerFn(setConversationTags);
+  const assignConv = useServerFn(assignConversation);
+  const setConvStatus = useServerFn(setConversationStatus);
+  const createCustomer = useServerFn(createCustomerFromConversation);
+  const fetchAssignees = useServerFn(listAssignees);
   const [search, setSearch] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [mineOnly, setMineOnly] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [createCustOpen, setCreateCustOpen] = useState(false);
+  const [custForm, setCustForm] = useState({ fullName: "", phone: "", email: "" });
   const messageArea = useRef<HTMLDivElement>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -132,13 +144,22 @@ function InboxPage() {
   const [callDialog, setCallDialog] = useState<{ callId: string; phone: string } | null>(null);
   const [callForm, setCallForm] = useState({ outcome: "connected", minutes: "1", recordingUrl: "", notes: "" });
 
+  const assigneesQuery = useQuery({
+    queryKey: ["inbox-assignees", tenantId],
+    enabled: Boolean(tenantId),
+    queryFn: () => {
+      if (!tenantId) throw new Error("Chưa chọn workspace");
+      return fetchAssignees({ data: { tenantId } });
+    },
+  });
+
   const listQuery = useQuery({
-    queryKey: ["inbox", tenantId, channel, search, tagFilter],
+    queryKey: ["inbox", tenantId, channel, search, tagFilter, mineOnly],
     enabled: Boolean(tenantId),
     refetchInterval: 20000,
     queryFn: () => {
       if (!tenantId) throw new Error("Chưa chọn workspace");
-      return fetchList({ data: { tenantId, channel, search: search || undefined, tag: tagFilter || undefined } });
+      return fetchList({ data: { tenantId, channel, search: search || undefined, tag: tagFilter || undefined, mine: mineOnly || undefined } });
     },
   });
 
@@ -262,6 +283,53 @@ function InboxPage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  const assignMutation = useMutation({
+    mutationFn: (userId: string | null) => {
+      if (!tenantId || !activeId) throw new Error("Chưa chọn hội thoại");
+      return assignConv({ data: { tenantId, conversationId: activeId, userId } });
+    },
+    onSuccess: async () => {
+      toast.success("Đã cập nhật người phụ trách");
+      await qc.refetchQueries({ queryKey: ["inbox-thread", tenantId, activeId] });
+      void qc.invalidateQueries({ queryKey: ["inbox", tenantId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: (status: "open" | "closed") => {
+      if (!tenantId || !activeId) throw new Error("Chưa chọn hội thoại");
+      return setConvStatus({ data: { tenantId, conversationId: activeId, status } });
+    },
+    onSuccess: async (_r, status) => {
+      toast.success(status === "closed" ? "Đã đóng hội thoại" : "Đã mở lại hội thoại");
+      await qc.refetchQueries({ queryKey: ["inbox-thread", tenantId, activeId] });
+      void qc.invalidateQueries({ queryKey: ["inbox", tenantId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const createCustMutation = useMutation({
+    mutationFn: () => {
+      if (!tenantId || !activeId) throw new Error("Chưa chọn hội thoại");
+      return createCustomer({
+        data: {
+          tenantId,
+          conversationId: activeId,
+          fullName: custForm.fullName,
+          phone: custForm.phone || undefined,
+          email: custForm.email || undefined,
+        },
+      });
+    },
+    onSuccess: (r) => {
+      toast.success(`Đã tạo hồ sơ khách "${r.name}" và gắn vào hội thoại`);
+      setCreateCustOpen(false);
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const items = listQuery.data?.items ?? [];
   const visibleItems = unreadOnly ? items.filter(item => item.unread > 0) : items;
   const thread = threadQuery.data;
@@ -310,6 +378,12 @@ function InboxPage() {
               <Button size="sm" variant="ghost" className={`h-7 flex-1 ${!unreadOnly ? "bg-card shadow-sm" : "text-muted-foreground"}`} onClick={() => setUnreadOnly(false)} aria-pressed={!unreadOnly}>{ui.all}</Button>
               <Button size="sm" variant="ghost" className={`h-7 flex-1 ${unreadOnly ? "bg-card shadow-sm" : "text-muted-foreground"}`} onClick={() => setUnreadOnly(true)} aria-pressed={unreadOnly}>{ui.unread}<span className="text-[10px]">{listQuery.data?.unreadTotal ?? 0}</span></Button>
             </div>
+            {listQuery.data?.canSeeAll && (
+              <label className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
+                <Checkbox checked={mineOnly} onCheckedChange={(v) => setMineOnly(v === true)} data-testid="filter-mine" />
+                Chỉ hội thoại của tôi
+              </label>
+            )}
             <Select value={channel} onValueChange={setChannel}><SelectTrigger className="h-8 border-0 bg-transparent px-1 text-xs shadow-none" aria-label={ui.channels}><SelectValue /></SelectTrigger><SelectContent>{CHANNEL_FILTERS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent></Select>
             {tagFilter && <Button size="sm" variant="secondary" className="h-6 text-[11px]" onClick={() => setTagFilter("")}>{tagMeta(tagFilter)?.label}<X className="size-3" /></Button>}
           </div>
@@ -329,8 +403,40 @@ function InboxPage() {
               <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold">{initials(thread.conversation.name)}</span>
               <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{thread.conversation.name}</h2><p className="flex items-center gap-1 truncate text-[11px] text-muted-foreground"><ChannelGlyph channel={thread.conversation.channel} className="size-3.5" /><span className="truncate">{CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}{thread.conversation.phone ? ` · ${thread.conversation.phone}` : ""}</span></p></div>
               {thread.conversation.phone && <Button variant="ghost" size="icon" title={ui.call} aria-label={ui.call} onClick={() => { const phone = thread.conversation.phone; if (phone) callMutation.mutate(phone); }} disabled={callMutation.isPending}><PhoneCall /></Button>}
+              <Select
+                value={thread.conversation.ownerUserId ?? "none"}
+                onValueChange={(v) => assignMutation.mutate(v === "none" ? null : v)}
+                disabled={assignMutation.isPending}
+              >
+                <SelectTrigger className="h-8 w-auto max-w-36 gap-1.5 border-0 bg-transparent px-2 text-xs shadow-none" aria-label="Người phụ trách" title="Người phụ trách">
+                  <UserRound className="size-3.5 shrink-0 text-muted-foreground" />
+                  <SelectValue placeholder="Chưa giao" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="none">Chưa giao</SelectItem>
+                  {(assigneesQuery.data ?? []).map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="ghost" size="icon"
+                title={thread.conversation.status === "closed" ? "Mở lại hội thoại" : "Đóng hội thoại"}
+                aria-label={thread.conversation.status === "closed" ? "Mở lại hội thoại" : "Đóng hội thoại"}
+                onClick={() => statusMutation.mutate(thread.conversation.status === "closed" ? "open" : "closed")}
+                disabled={statusMutation.isPending}
+                data-testid="toggle-conversation-status"
+              >
+                {thread.conversation.status === "closed" ? <CircleDot className="text-warning" /> : <CircleCheck className="text-success" />}
+              </Button>
               <Button variant="ghost" size="icon" aria-label={ui.customer} title={ui.customer} aria-pressed={detailsOpen} className={detailsOpen ? "bg-primary-soft text-primary" : ""} onClick={() => setDetailsOpen(!detailsOpen)}><PanelRight /></Button>
             </header>
+            {thread.conversation.botPaused && (
+              <div className="flex shrink-0 items-center gap-2 border-b border-border bg-success/10 px-4 py-1.5 text-[11px] text-success" data-testid="bot-paused-banner">
+                <Bot className="size-3.5 shrink-0" />
+                <span>{thread.conversation.ownerName ?? "Sale"} đang trực tiếp trao đổi — bot tạm ngừng nhả tin tự động.</span>
+              </div>
+            )}
             {thread.conversation.needsIdentityReview && <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-warning/10 px-4 py-1.5 text-[11px] text-warning"><span>{t.review}</span><Button variant="ghost" size="sm" className="h-6 text-[11px]" onClick={() => setLinkOpen(true)}>{t.link}</Button></div>}
             <div ref={messageArea} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain bg-muted/20 p-4 scrollbar-thin" data-testid="inbox-messages">
               {timeline.length === 0 ? <p className="py-10 text-center text-xs text-muted-foreground">{ui.noMessages}</p> : timeline.map(message => <div key={message.id} className={`flex flex-col ${message.direction === "out" ? "items-end" : "items-start"}`}>
@@ -360,7 +466,7 @@ function InboxPage() {
             <div className="flex flex-col items-center gap-2 py-2"><span className="grid size-14 place-items-center rounded-full bg-secondary text-lg font-semibold">{initials(thread.conversation.name)}</span><p className="text-center text-sm font-semibold">{thread.conversation.name}</p><Badge variant="outline" className="gap-1 text-[10px]"><ChannelGlyph channel={thread.conversation.channel} className="size-3" />{CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}</Badge></div>
             <div><p className="mb-1 text-muted-foreground">{ui.phone}</p>{thread.conversation.phone ? <a href={`tel:${thread.conversation.phone}`} className="font-medium">{thread.conversation.phone}</a> : <p>{ui.noPhone}</p>}</div>
             <div><p className="mb-1 text-muted-foreground">{ui.project}</p><p>{items.find(i => i.id === activeId)?.projectName ?? ui.noProject}</p></div>
-            <div className="space-y-2">{thread.conversation.leadId && <Button asChild size="sm" variant="outline" className="w-full"><Link to="/leads" search={{ lead: thread.conversation.leadId }}><UserRound />{ui.profile}</Link></Button>}<Button size="sm" variant="ghost" className="w-full" onClick={() => setLinkOpen(true)}>{t.link}</Button></div>
+            <div className="space-y-2">{thread.conversation.leadId && <Button asChild size="sm" variant="outline" className="w-full"><Link to="/leads" search={{ lead: thread.conversation.leadId }}><UserRound />{ui.profile}</Link></Button>}<Button size="sm" variant="ghost" className="w-full" onClick={() => setLinkOpen(true)}>{t.link}</Button>{!thread.conversation.customerId && <Button size="sm" variant="outline" className="w-full" onClick={() => { setCustForm({ fullName: thread.conversation.name === "Khách ẩn danh" ? "" : thread.conversation.name, phone: thread.conversation.phone ?? "", email: "" }); setCreateCustOpen(true); }} data-testid="create-customer-from-conversation"><Plus />Tạo khách hàng mới từ hội thoại</Button>}</div>
             {kit?.tags.length ? <div><p className="mb-2 text-muted-foreground">{ui.tags}</p><div className="flex flex-wrap gap-1.5" aria-label={ui.tags}>{kit.tags.map(tag => { const on = thread.conversation.tags.includes(tag.key); return <Button key={tag.key} size="sm" variant="outline" disabled={tagsMutation.isPending} onClick={() => tagsMutation.mutate(on ? thread.conversation.tags.filter(x => x !== tag.key) : [...thread.conversation.tags, tag.key])} className={`h-7 px-2 text-[11px] ${on ? TAG_TONE[tag.tone] : "border-dashed text-muted-foreground"}`}>{on ? <Check className="size-3" /> : <Plus className="size-3" />}{tag.label}</Button>; })}</div></div> : null}
             {thread.calls.length > 0 && <div><p className="mb-2 font-medium">{ui.calls}</p><ul className="divide-y divide-border">{thread.calls.map(item => <li key={item.id} className="py-3"><p className="font-medium">{item.phone ?? "—"}</p><p className="mt-1 text-[10px] text-muted-foreground">{timeLabel(item.started_at)} · {formatDuration(item.duration_seconds)}</p>{item.notes && <p className="mt-1 text-muted-foreground">{item.notes}</p>}{item.recording_url ? <audio controls src={item.recording_url} className="mt-2 w-full" /> : <p className="mt-1 text-[10px] text-muted-foreground">{ui.noRecording}</p>}</li>)}</ul></div>}
           </div>
@@ -368,6 +474,33 @@ function InboxPage() {
       </div>
 
       <Dialog open={linkOpen} onOpenChange={setLinkOpen}><DialogContent><DialogHeader><DialogTitle>{t.link}</DialogTitle></DialogHeader><Input placeholder="Tìm hồ sơ theo tên hoặc SĐT" value={leadSearch} onChange={e => setLeadSearch(e.target.value)} /><div className="max-h-72 space-y-1 overflow-y-auto">{choices.data?.map(l => <Button key={l.id} variant="ghost" className="h-auto w-full justify-start py-3" disabled={linkMutation.isPending} onClick={() => linkMutation.mutate(l.id)}>{l.full_name} · {l.phone ?? "—"}</Button>)}</div></DialogContent></Dialog>
+
+      {/* Tạo hồ sơ khách mới từ hội thoại */}
+      <Dialog open={createCustOpen} onOpenChange={setCreateCustOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Tạo khách hàng mới từ hội thoại</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Họ tên *</Label>
+              <Input className="mt-1" value={custForm.fullName} onChange={(e) => setCustForm((f) => ({ ...f, fullName: e.target.value }))} data-testid="cust-name" />
+            </div>
+            <div>
+              <Label className="text-xs">Số điện thoại</Label>
+              <Input className="mt-1" value={custForm.phone} onChange={(e) => setCustForm((f) => ({ ...f, phone: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Email</Label>
+              <Input className="mt-1" value={custForm.email} onChange={(e) => setCustForm((f) => ({ ...f, email: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateCustOpen(false)}>Huỷ</Button>
+            <Button onClick={() => createCustMutation.mutate()} disabled={custForm.fullName.trim().length < 2 || createCustMutation.isPending} data-testid="submit-create-customer">
+              {createCustMutation.isPending ? "Đang tạo…" : "Tạo & gắn vào hội thoại"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* Lưu kết quả cuộc gọi + ghi âm */}
       <Dialog open={Boolean(callDialog)} onOpenChange={(open) => !open && setCallDialog(null)}>
         <DialogContent className="max-w-md">

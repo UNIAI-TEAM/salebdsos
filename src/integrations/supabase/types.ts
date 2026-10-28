@@ -3004,6 +3004,75 @@ export type Database = {
           },
         ]
       }
+      message_tickets: {
+        Row: {
+          assignee_user_id: string | null
+          code: string
+          conversation_id: string | null
+          created_at: string
+          created_by: string | null
+          due_at: string | null
+          id: string
+          kind: string
+          priority: string
+          resolved_at: string | null
+          source: string | null
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_user_id?: string | null
+          code?: string
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_at?: string | null
+          id?: string
+          kind?: string
+          priority?: string
+          resolved_at?: string | null
+          source?: string | null
+          status?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_user_id?: string | null
+          code?: string
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_at?: string | null
+          id?: string
+          kind?: string
+          priority?: string
+          resolved_at?: string | null
+          source?: string | null
+          status?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_tickets_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_tickets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nfc_short_codes: {
         Row: {
           card_id: string
