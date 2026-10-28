@@ -30,6 +30,7 @@ import {
   cancelContract,
   completeContract,
   createContractFromProduct,
+  createRentalContract,
   listContracts,
   markInstallmentPaid,
   updateInstallmentDueDate,
@@ -144,6 +145,7 @@ function ContractsPage() {
 
   // --- create form -----------------------------------------------------------
   const [form, setForm] = useState({
+    kind: "sale" as "sale" | "rental",
     productId: "",
     customerId: "",
     code: "",
@@ -153,9 +155,14 @@ function ContractsPage() {
     signedAt: "",
     commissionPercent: "2",
     note: "",
+    monthlyRent: "",
+    deposit: "",
+    leaseStart: "",
+    leaseEnd: "",
+    cycleDay: "5",
   });
   const sellableProducts = (data?.products ?? []).filter(
-    (p: any) => !["sold", "liquidated"].includes(p.listing_status),
+    (p: any) => !["sold", "liquidated", "rented"].includes(p.listing_status),
   );
   const formProduct = sellableProducts.find((p: any) => p.id === form.productId) ?? null;
 
@@ -180,27 +187,68 @@ function ContractsPage() {
     toast.success(`Đã áp dụng “${p.name}”: giảm ${money(q.amount)}`);
   };
 
+  const emptyForm = {
+    kind: "sale" as "sale" | "rental",
+    productId: "",
+    customerId: "",
+    code: "",
+    salePrice: "",
+    discountAmount: "",
+    discountPolicyId: "",
+    signedAt: "",
+    commissionPercent: "2",
+    note: "",
+    monthlyRent: "",
+    deposit: "",
+    leaseStart: "",
+    leaseEnd: "",
+    cycleDay: "5",
+  };
+
+  const fnCreateRental = useServerFn(createRentalContract);
+
   const submitCreate = () =>
     run.mutate(async () => {
-      await fnCreate({
-        data: {
-          tenantId: tenantId as string,
-          productId: form.productId || null,
-          customerId: form.customerId.startsWith("c:") ? form.customerId.slice(2) : null,
-          leadId: form.customerId.startsWith("l:") ? form.customerId.slice(2) : null,
-          code: form.code || null,
-          salePrice: Number(form.salePrice || 0),
-          discountAmount: Number(form.discountAmount || 0),
-          discountPolicyId: form.discountPolicyId || null,
-          signedAt: form.signedAt || null,
-          note: form.note || null,
-          withTemplate: true,
-          commissionPercent: Number(form.commissionPercent || 0),
-        },
-      });
-      toast.success("Đã lập hợp đồng và tạo đợt thanh toán mẫu");
+      if (form.kind === "rental") {
+        if (!form.productId) throw new Error("Chọn căn/lô cho thuê");
+        if (!form.leaseStart || !form.leaseEnd) throw new Error("Nhập thời hạn thuê");
+        await fnCreateRental({
+          data: {
+            tenantId: tenantId as string,
+            productId: form.productId,
+            customerId: form.customerId.startsWith("c:") ? form.customerId.slice(2) : null,
+            leadId: form.customerId.startsWith("l:") ? form.customerId.slice(2) : null,
+            code: form.code || null,
+            monthlyRent: Number(form.monthlyRent || 0),
+            deposit: Number(form.deposit || 0),
+            leaseStart: form.leaseStart,
+            leaseEnd: form.leaseEnd,
+            cycleDay: Number(form.cycleDay || 5),
+            note: form.note || null,
+          },
+        });
+        toast.success("Đã lập hợp đồng thuê và lịch thu tiền định kỳ");
+      } else {
+        await fnCreate({
+          data: {
+            tenantId: tenantId as string,
+            productId: form.productId || null,
+            customerId: form.customerId.startsWith("c:") ? form.customerId.slice(2) : null,
+            leadId: form.customerId.startsWith("l:") ? form.customerId.slice(2) : null,
+            code: form.code || null,
+            salePrice: Number(form.salePrice || 0),
+            discountAmount: Number(form.discountAmount || 0),
+            discountPolicyId: form.discountPolicyId || null,
+            signedAt: form.signedAt || null,
+            note: form.note || null,
+            withTemplate: true,
+            commissionPercent: Number(form.commissionPercent || 0),
+          },
+        });
+        toast.success("Đã lập hợp đồng và tạo đợt thanh toán mẫu");
+      }
       setCreating(false);
-      setForm({ productId: "", customerId: "", code: "", salePrice: "", discountAmount: "", discountPolicyId: "", signedAt: "", commissionPercent: "2", note: "" });
+      setForm(emptyForm);
     });
 
   // --- installment / commission editors -------------------------------------
