@@ -35,6 +35,7 @@ export const getDashboardKpis = createServerFn({ method: "GET" })
     let cardIdsFilter: string[] | null = null;
     if (data.ownerId || data.cardId || data.projectId) {
       let q = supabase.from("cards").select("id").eq("tenant_id", data.tenantId);
+      q = q.is("deleted_at", null);
       if (data.ownerId) q = q.eq("owner_user_id", data.ownerId);
       if (data.cardId) q = q.eq("id", data.cardId);
       if (data.projectId) {
@@ -48,11 +49,11 @@ export const getDashboardKpis = createServerFn({ method: "GET" })
 
     // Aggregated rows (analytics_daily)
     let aggQ = supabase.from("analytics_daily")
-      .select("source, day, event_count, unique_visitors, card_id")
+      .select("id,source,day,event_count,unique_visitors,card_id")
       .eq("tenant_id", data.tenantId).gte("day", prevSince).lt("day", todayStr);
     if (data.source) aggQ = aggQ.eq("source", data.source);
     if (cardIdsFilter) aggQ = aggQ.in("card_id", cardIdsFilter);
-    const agg = await readReportRows(aggQ, "day");
+    const agg = await readReportRows(aggQ);
 
     // Today's live events (not yet aggregated)
     let liveQ = supabase.from("interaction_events")
@@ -107,7 +108,7 @@ export const getDashboardKpis = createServerFn({ method: "GET" })
     // Leads (current vs previous window)
     let leadsQ = supabase.from("leads").select("id, status, created_at, project_id, owner_user_id, card_id, source")
       .eq("tenant_id", data.tenantId).is("deleted_at", null)
-      .gte("created_at", prevSince);
+      .gte("created_at", `${prevSince}T00:00:00+07:00`).lt("created_at", window.endIso);
     if (data.projectId) leadsQ = leadsQ.eq("project_id", data.projectId);
     if (data.ownerId) leadsQ = leadsQ.eq("owner_user_id", data.ownerId);
     if (data.cardId) leadsQ = leadsQ.eq("card_id", data.cardId);
@@ -180,10 +181,10 @@ export const getTopRankings = createServerFn({ method: "GET" })
 
     // top cards by aggregated event_count
     let aggQ = supabase.from("analytics_daily")
-      .select("card_id, event_count")
+      .select("id,card_id,event_count")
       .eq("tenant_id", data.tenantId).gte("day", since).lt("day", reportWindow(1).today);
     if (data.source) aggQ = aggQ.eq("source", data.source);
-    const agg = await readReportRows(aggQ, "day");
+    const agg = await readReportRows(aggQ);
     const cardCount = new Map<string, number>();
     for (const r of (agg ?? []) as any[])
       cardCount.set(r.card_id, (cardCount.get(r.card_id) ?? 0) + r.event_count);

@@ -28,7 +28,7 @@ export function contractFinancials(
   contract: { contract_kind?: string; net_price?: number | string | null },
   installments: { position?: number; amount?: number | string; paid_amount?: number | string | null }[],
 ) {
-  // Rental position 0 is the deposit when present; its amount is not rental revenue.
+  // Rental total contractual receivables include rent and deposit, not one month of rent.
   const totalDue = installments.reduce((s, i) => s + Number(i.amount || 0), 0);
   const collected = installments.reduce((s, i) => s + Number(i.paid_amount || 0), 0);
   const value = contract.contract_kind === "rental" ? totalDue : Number(contract.net_price || 0);

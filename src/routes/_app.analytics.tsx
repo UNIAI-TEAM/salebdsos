@@ -131,6 +131,7 @@ function AnalyticsPage() {
       {kpisQ.isError || topsQ.isError || filtersQ.isError ? <p role="alert" className="text-sm text-destructive">{REPORT_COPY.error}</p> : null}
       <ReportActions busy={kpisQ.isFetching || topsQ.isFetching} ready={Boolean(kpis)} refresh={() => { void kpisQ.refetch(); void topsQ.refetch(); void filtersQ.refetch(); }} exportData={() => downloadReport("tuong-tac", ["Ngày", "NFC", "QR", "Link", "Social", "Tổng"], daily.map((d: any) => [d.day, d.nfc, d.qr, d.link, d.social, d.total]))} />
       {!kpis ? <p className="py-6 text-center text-muted-foreground">{kpisQ.isError ? REPORT_COPY.error : REPORT_COPY.loading}</p> : null}
+      {kpis && <>
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard compact icon={Radio} label="NFC Taps" value={fmt(kpis?.nfc ?? 0)} delta={kpis?.deltas.nfc ?? 0} tone="primary" />
@@ -259,7 +260,7 @@ function AnalyticsPage() {
         </SectionCard>
       </div>
 
-      {tenantId && <CustomerJourney tenantId={tenantId} days={days} />}
+      </>}
     </div>
   );
 }

@@ -82,7 +82,7 @@ function Stage({
 }
 
 function Bar({ value, total }: { value: number; total: number }) {
-  const width = total ? Math.max(4, Math.round((value / total) * 100)) : 0;
+  const width = total && value > 0 ? Math.min(100, Math.max(4, Math.round((value / total) * 100))) : 0;
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
       <div className="h-full rounded-full bg-primary" style={{ width: `${width}%` }} />
@@ -289,7 +289,7 @@ function FunnelReportPage() {
     <div className="space-y-4">
       <PageHeader compact
         title="Báo cáo phễu bán hàng"
-        sub="Khách gửi thông tin → giỏ hàng → hợp đồng, kèm tỷ lệ chuyển đổi theo dự án và nguồn khách."
+        sub="Kết quả hiện tại của nhóm khách vào hệ thống trong kỳ đã chọn."
         action={
           <ReportActions busy={query.isFetching} ready={Boolean(data)} refresh={() => { void query.refetch(); }} exportData={() => { if (!data) return; downloadReport("pheu-ban-hang", ["Nhóm", "Tên", "Khách mới", "Vào giỏ", "Khách có hợp đồng", "Tỷ lệ chốt (%)", "Giá trị hợp đồng (VND)", "Đã thu (VND)", "Hoa hồng (VND)"], [...data.byProject.map(r => ["Dự án", r.label, r.submitted, r.cart, r.contract, r.submittedToContract, r.contractValue, r.collected, r.commission]), ...data.bySource.map(r => ["Nguồn", r.label, r.submitted, r.cart, r.contract, r.submittedToContract, r.contractValue, r.collected, r.commission]), ...data.byMonth.map(r => ["Tháng", r.key, r.submitted, r.cart, r.contract, r.submittedToContract, r.contractValue, r.collected, r.commission])]); }} />
         }
@@ -306,7 +306,7 @@ function FunnelReportPage() {
           </SelectContent>
         </Select>
         <Select value={projectId} onValueChange={setProjectId}>
-          <SelectTrigger className="h-9 w-[220px]"><SelectValue placeholder="Tất cả dự án" /></SelectTrigger>
+          <SelectTrigger className="h-9 w-[220px] max-w-full"><SelectValue placeholder="Tất cả dự án" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả dự án</SelectItem>
             {(data?.projects ?? []).map((project) => (

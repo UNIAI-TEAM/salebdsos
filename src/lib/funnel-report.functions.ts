@@ -4,11 +4,8 @@ import { contractFinancials, reportContractDate, reportWindow } from "./reportin
 import { readReportRows, readReportRelated, reportScope, reportOwners } from "./reporting.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const SALE_ROLES = new Set(["owner", "admin", "manager", "agent", "platform_admin"]);
-const MANAGER_ROLES = new Set(["owner", "admin", "manager", "platform_admin"]);
-
 const CART_STATUSES = new Set(["locked", "reserved", "negotiating", "deposited"]);
-const CONTRACT_STATUSES = new Set(["contracted", "sold"]);
+const CONTRACT_STATUSES = new Set(["contracted", "sold", "rented"]);
 
 const Input = z.object({
   tenantId: z.string().uuid(),
@@ -45,6 +42,8 @@ function normalizeSource(value: string | null | undefined) {
   if (lower.startsWith("qr:") || lower.includes("qr danh thiếp")) return "QR danh thiếp";
   if (lower.includes("digital_card") || lower.includes("danh thiếp")) return "Danh thiếp số";
   if (lower.includes("landing")) return "Landing dự án";
+  if (lower.includes("telegram")) return "Telegram";
+  if (lower.includes("messenger") || lower.includes("facebook")) return "Facebook / Messenger";
   if (lower.includes("zalo")) return "Zalo";
   if (lower.includes("web_chat") || lower.includes("chat")) return "Chat trên trang";
   if (lower.includes("form")) return "Biểu mẫu";
@@ -139,7 +138,8 @@ export const getFunnelReport = createServerFn({ method: "GET" })
     // Cohort funnel: all stages describe customers entering during the selected period.
     const leadIds = new Set(leads.map((l) => l.id));
     const dealLead = new Map(deals.map((d) => [d.id, d.lead_id]));
-    const contracts = contractsQ.filter((c) => leadIds.has(c.lead_id || dealLead.get(c.deal_id)));
+    const productDeal = new Map(products.map((p) => [p.id, p.deal_id]));
+    const contracts = contractsQ.filter((c) => leadIds.has(c.lead_id || dealLead.get(c.deal_id || productDeal.get(c.product_id))));
     const projectName = new Map(projectsQ.map((row) => [row.id, row.name]));
     const owners = await reportOwners(supabase, data.tenantId, canManage);
     const valueByContract = new Map<string, number>();
@@ -194,7 +194,7 @@ export const getFunnelReport = createServerFn({ method: "GET" })
 
     // Giao dịch không gắn sản phẩm vẫn tính là đã vào giỏ hàng
     for (const deal of deals) {
-      if (!deal.lead_id) continue;
+      if (!deal.lead_id || deal.status === "lost") continue;
       cartLeadIds.add(deal.lead_id);
     }
 
@@ -202,11 +202,6 @@ export const getFunnelReport = createServerFn({ method: "GET" })
     let collectedTotal = 0;
     let commissionTotal = 0;
     let commissionPaidTotal = 0;
-    // Hợp đồng luôn được tính về dự án ghi trên hợp đồng (sản phẩm đã bán), không theo dự án khách quan tâm ban đầu
-    const contractByProject = new Map<
-      string,
-      { count: number; value: number; collected: number; commission: number; commissionPaid: number }
-    >();
     for (const row of contracts) {
       const value = valueByContract.get(row.id) ?? 0;
       const collected = collectedByContract.get(row.id) ?? 0;
@@ -218,16 +213,6 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       const productDealId = row.product_id ? products.find((p) => p.id === row.product_id)?.deal_id ?? null : null;
       const linkedDealId = row.deal_id ?? productDealId;
       const leadId = row.lead_id ?? (linkedDealId ? dealById.get(linkedDealId)?.lead_id ?? null : null);
-      const leadProjectId = leadId ? leads.find((l) => l.id === leadId)?.project_id ?? null : null;
-      const projectKey = row.project_id ?? leadProjectId ?? "none";
-      const projectAgg =
-        contractByProject.get(projectKey) ?? { count: 0, value: 0, collected: 0, commission: 0, commissionPaid: 0 };
-      projectAgg.count += 1;
-      projectAgg.value += value;
-      projectAgg.collected += collected;
-      projectAgg.commission += com.total;
-      projectAgg.commissionPaid += com.paid;
-      contractByProject.set(projectKey, projectAgg);
       if (!leadId) continue;
       cartLeadIds.add(leadId);
       contractLeadIds.add(leadId);
@@ -251,7 +236,7 @@ export const getFunnelReport = createServerFn({ method: "GET" })
       const [year, month] = key.split("-");
       return `${month}/${year}`;
     };
-    const startMonth = new Date(Date.now() - data.days * 86400_000);
+    const startMonth = new Date(`${window.since}T12:00:00Z`);
     const cursor = new Date(Date.UTC(startMonth.getUTCFullYear(), startMonth.getUTCMonth(), 1));
     const nowMonth = new Date();
     const lastMonth = Date.UTC(nowMonth.getUTCFullYear(), nowMonth.getUTCMonth(), 1);

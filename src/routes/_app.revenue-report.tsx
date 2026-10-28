@@ -75,7 +75,7 @@ function Kpi({
 }
 
 function Bar({ value, total }: { value: number; total: number }) {
-  const width = total ? Math.max(4, Math.round((value / total) * 100)) : 0;
+  const width = total && value > 0 ? Math.min(100, Math.max(4, Math.round((value / total) * 100))) : 0;
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
       <div className="h-full rounded-full bg-primary" style={{ width: `${width}%` }} />
@@ -226,7 +226,7 @@ function RevenueReportPage() {
           </SelectContent>
         </Select>
         <Select value={projectId} onValueChange={setProjectId}>
-          <SelectTrigger className="h-9 w-[220px]"><SelectValue placeholder="Tất cả dự án" /></SelectTrigger>
+          <SelectTrigger className="h-9 w-[220px] max-w-full"><SelectValue placeholder="Tất cả dự án" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả dự án</SelectItem>
             {(data?.projects ?? []).map((project) => (

@@ -5,9 +5,6 @@ import { contractFinancials, reportContractDate, reportWindow } from "./reportin
 import { readReportRows, readReportRelated, reportScope, reportOwners } from "./reporting.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const SALE_ROLES = new Set(["owner", "admin", "manager", "agent", "platform_admin"]);
-const MANAGER_ROLES = new Set(["owner", "admin", "manager", "platform_admin"]);
-
 const Input = z.object({
   tenantId: z.string().uuid(),
   months: z.number().int().min(1).max(24).default(6),
@@ -53,16 +50,12 @@ function finish(row: RevenueRow): RevenueRow {
     ...row,
     contractValue: Math.round(row.contractValue),
     collected: Math.round(row.collected),
-    outstanding: Math.round(Math.max(0, row.contractValue - row.collected)),
+    outstanding: Math.round(row.outstanding),
     collectRate: rate(row.collected, row.contractValue),
     commissionTotal: Math.round(row.commissionTotal),
     commissionUnpaid: Math.round(row.commissionUnpaid),
     commissionPaid: Math.round(row.commissionPaid),
   };
-}
-
-function monthKey(iso: string) {
-  return iso.slice(0, 7);
 }
 
 export const getRevenueReport = createServerFn({ method: "GET" })
@@ -100,6 +93,7 @@ export const getRevenueReport = createServerFn({ method: "GET" })
 
     const collectedByContract = new Map<string, number>();
     const valueByContract = new Map<string, number>();
+    const outstandingByContract = new Map<string, number>();
     const commissionByContract = new Map<string, { total: number; unpaid: number; paid: number }>();
 
     if (ids.length) {
@@ -111,6 +105,7 @@ export const getRevenueReport = createServerFn({ method: "GET" })
         const financials = contractFinancials(contract, installmentsQ.filter((i) => i.contract_id === contract.id));
         collectedByContract.set(contract.id, financials.collected);
         valueByContract.set(contract.id, financials.value);
+        outstandingByContract.set(contract.id, financials.outstanding);
       }
       for (const row of commissionsQ) {
         if (ownerFilter && row.beneficiary_user_id !== ownerFilter) continue;
@@ -143,6 +138,7 @@ export const getRevenueReport = createServerFn({ method: "GET" })
         bucket.contracts += 1;
         bucket.contractValue += value;
         bucket.collected += collected;
+        bucket.outstanding += outstandingByContract.get(row.id) ?? 0;
         bucket.commissionTotal += commission.total;
         bucket.commissionUnpaid += commission.unpaid;
         bucket.commissionPaid += commission.paid;
