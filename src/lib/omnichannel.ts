@@ -1,4 +1,5 @@
 export const INBOX_COPY = {
+  activateTelegram: "Bật gửi & nhận Telegram", telegramReady: "Đã bật Telegram · chờ tin nhắn thử", telegramLive: "Gửi và nhận tin nhắn riêng",
   title: "Hộp thoại đa kênh", connected: "Đã kết nối", configured: "Đã cấu hình · chưa xác minh", disconnected: "Chưa kết nối", disabled: "Đang tắt",
   review: "Chưa xác nhận hồ sơ khách", identityMissing: "Chưa xác định duy nhất tài khoản khách trên kênh này; cần kiểm tra liên kết trước khi gửi.",
   twoWay: "Gửi & nhận", outboundOnly: "Chỉ gửi đi · chưa đồng bộ phản hồi", smsOutbound: "SMS · chỉ gửi đi", emailOutbound: "Email · chỉ gửi đi", channelStatus: "Trạng thái & khả năng của kênh",
@@ -24,7 +25,6 @@ export const INBOX_COPY = {
 } as const;
 
 export const PENDING_INBOX_CHANNELS = [
-  { channel: "telegram", label: "Telegram", reason: INBOX_COPY.telegramSetup, active: false },
   { channel: "whatsapp", label: "WhatsApp Business", reason: INBOX_COPY.whatsappSetup, active: false },
   { channel: "viber", label: "Viber", reason: INBOX_COPY.viberSetup, active: false },
 ] as const;
@@ -34,7 +34,7 @@ export function canSendPendingChannel(channel: string) {
 }
 
 export function replyChannel(channel: string) {
-  return ["web_chat", "zalo", "messenger", "sms", "email"].includes(channel) ? channel : "note";
+  return ["web_chat", "zalo", "messenger", "telegram", "sms", "email"].includes(channel) ? channel : "note";
 }
 export function messengerWindowOpen(lastInbound: string | null, now = Date.now()) {
   if (!lastInbound) return false;
