@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Hoàn thiện Báo cáo: tổng quan thực, bộ lọc và xuất CSV; thống nhất kỳ báo cáo/phễu, chống thiếu dữ liệu và kiểm tra bằng tài khoản đăng nhập.
+
 - [x] Thiết kế Hộp thoại tinh gọn kiểu Omni Chat: danh sách/cuộn riêng, khung chat, thông tin khách mở khi cần; kiểm tra hội thoại có dữ liệu, soạn nháp không gửi, trạng thái kênh, desktop/mobile; 14 kiểm thử đạt.
 
 - [x] Gia cố giữ căn đồng thời bằng khóa/phiên bản, giải phóng giữ chỗ hết hạn mỗi giờ (không giải phóng cọc/hợp đồng), bảo toàn ID, số đã thu, ngày thu và lịch sử khi sửa đợt. 19 kiểm thử đạt; sửa tên qua giao diện sàn thử, đọc lại tiền giữ nguyên; dữ liệu thử đã dọn. Chưa xuất bản màn hình mới.
