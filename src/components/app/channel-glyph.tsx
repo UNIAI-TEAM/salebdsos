@@ -40,6 +40,11 @@ function Glyph({ channel }: { channel: string }) {
   }
 }
 
+/** Kênh có màu thương hiệu riêng (Zalo, Messenger, WhatsApp, Telegram, Viber). */
+export function isBrandChannel(channel: string) {
+  return channel in BRAND_BG;
+}
+
 /** Huy hiệu tròn nhỏ màu thương hiệu của kênh; dùng ở danh sách, bong bóng tin nhắn và chi tiết khách. */
 export function ChannelGlyph({ channel, className = "size-5" }: { channel: string; className?: string }) {
   const brand = BRAND_BG[channel];
