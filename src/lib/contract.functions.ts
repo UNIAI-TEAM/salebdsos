@@ -6,7 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ADMIN_ROLES, SALE_ROLES, TEAM_VIEW_ROLES } from "@/lib/permissions";
 
 const CONTRACT_SELECT =
-  "id,tenant_id,project_id,product_id,customer_id,lead_id,deal_id,owner_user_id,code,sale_price,discount_amount,net_price,currency,status,signed_at,completed_at,note,created_at,updated_at";
+  "id,tenant_id,project_id,product_id,customer_id,lead_id,deal_id,owner_user_id,code,sale_price,discount_amount,net_price,currency,status,signed_at,completed_at,note,created_at,updated_at,contract_kind,lease_start,lease_end,monthly_rent,deposit_amount,rent_cycle_day";
 
 export const CONTRACT_STATUSES = ["draft", "active", "completed", "cancelled"] as const;
 export type ContractStatus = (typeof CONTRACT_STATUSES)[number];
