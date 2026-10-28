@@ -254,6 +254,7 @@ async function dispatch(args: {
     return {
       channel,
       result: await sendEmailMessage({
+        tenantId: args.tenantId,
         settings: channels,
         to: args.email,
         subject: "Nhắc lịch chốt hợp đồng",

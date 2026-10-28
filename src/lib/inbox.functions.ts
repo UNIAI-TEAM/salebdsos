@@ -315,6 +315,7 @@ export const sendMessage = createServerFn({ method: "POST" })
           email = (lead?.email as string | null) ?? null;
         }
         const result = await sendEmailMessage({
+          tenantId: data.tenantId,
           settings,
           to: email,
           subject: data.subject || "Thông tin dự án",
