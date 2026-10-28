@@ -15,7 +15,12 @@ export const Route = createFileRoute('/api/public/telegram/webhook')({
     const { data: bindings, error } = await sb.from('telegram_bot_bindings').select('tenant_id,key_digest').eq('bot_id', String(bot.id)).eq('enabled', true).limit(2);
     const binding = bindings?.length === 1 ? bindings[0] : null;
     if (error || !binding || !signatureEquals(binding.key_digest, creds.digest)) return new Response('Unconfigured', { status: 403 });
-    await receiveChannelMessage({ tenantId: binding.tenant_id, channel: 'telegram', accountId: String(bot.id), ...inbound });
+    try {
+      await receiveChannelMessage({ tenantId: binding.tenant_id, channel: 'telegram', accountId: String(bot.id), ...inbound });
+    } catch {
+      // Telegram retries a failed delivery; never acknowledge an unpersisted message.
+      return new Response('Delivery unavailable', { status: 503 });
+    }
     return Response.json({ ok: true });
   } } },
 });
