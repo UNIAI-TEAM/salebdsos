@@ -1711,6 +1711,102 @@ export type Database = {
         }
         Relationships: []
       }
+      collaborator_payments: {
+        Row: {
+          actor_user_id: string
+          amount: number
+          id: string
+          paid_at: string
+          reference: string
+          referral_id: string
+          tenant_id: string
+        }
+        Insert: {
+          actor_user_id: string
+          amount: number
+          id?: string
+          paid_at?: string
+          reference: string
+          referral_id: string
+          tenant_id: string
+        }
+        Update: {
+          actor_user_id?: string
+          amount?: number
+          id?: string
+          paid_at?: string
+          reference?: string
+          referral_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_payments_tenant_id_referral_id_fkey"
+            columns: ["tenant_id", "referral_id"]
+            isOneToOne: false
+            referencedRelation: "collaborator_referrals"
+            referencedColumns: ["tenant_id", "id"]
+          },
+        ]
+      }
+      collaborator_referrals: {
+        Row: {
+          approved: boolean
+          collaborator_id: string
+          commission_amount: number
+          contract_id: string | null
+          created_at: string
+          id: string
+          lead_id: string
+          note: string | null
+          tenant_id: string
+        }
+        Insert: {
+          approved?: boolean
+          collaborator_id: string
+          commission_amount?: number
+          contract_id?: string | null
+          created_at?: string
+          id?: string
+          lead_id: string
+          note?: string | null
+          tenant_id: string
+        }
+        Update: {
+          approved?: boolean
+          collaborator_id?: string
+          commission_amount?: number
+          contract_id?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string
+          note?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_referrals_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_referrals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_referrals_tenant_id_collaborator_id_fkey"
+            columns: ["tenant_id", "collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "sales_collaborators"
+            referencedColumns: ["tenant_id", "id"]
+          },
+        ]
+      }
       contract_commissions: {
         Row: {
           amount: number
@@ -4055,6 +4151,56 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_collaborators: {
+        Row: {
+          code: string
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          note: string | null
+          owner_user_id: string
+          phone: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          note?: string | null
+          owner_user_id: string
+          phone?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          note?: string | null
+          owner_user_id?: string
+          phone?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_collaborators_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_events: {
         Row: {
           capacity: number | null
@@ -4878,6 +5024,22 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      collaborator_command: {
+        Args: { p_action: string; p_data: Json; p_tenant: string }
+        Returns: string
+      }
+      collaborator_contracts: {
+        Args: { p_referral: string; p_tenant: string }
+        Returns: {
+          code: string
+          id: string
+          net_price: number
+        }[]
+      }
+      collaborator_workspace: {
+        Args: { p_search?: string; p_tenant: string }
+        Returns: Json
       }
       create_rental_contract: {
         Args: {
