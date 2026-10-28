@@ -70,6 +70,7 @@ export const HUBS: Hub[] = [
   ] },
   { id: "org", tabs: [
     { to: "/sales-directory", label: "Quản lý Sale", roles: M },
+    { to: "/collaborators", label: "Cộng tác viên", roles: ["owner", "admin", "manager", "agent"] },
     { to: "/members", label: "Thành viên", roles: A },
     { to: "/departments", label: "Phòng ban" },
     { to: "/team", label: "Nhóm", roles: M },

@@ -120,6 +120,7 @@ export const ROUTE_CAPABILITY: Record<string, Capability> = {
   "/members": "system.members",
   "/team": "system.members",
   "/sales-directory": "system.members",
+  "/collaborators": "reports.own",
   "/commission-rules": "system.automation",
   "/nurture": "system.automation",
   "/lead-capture": "leads.edit",
