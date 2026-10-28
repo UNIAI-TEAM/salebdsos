@@ -467,7 +467,8 @@ export const createRentalContract = createServerFn({ method: "POST" })
       p_cycle_day: data.cycleDay,
       p_note: data.note ?? null,
       p_schedule: schedule,
-    });
+    };
+    const { data: contractId, error } = await supabase.rpc("create_rental_contract", rentalArgs);
     if (error) throw new Error(error.message);
     return loadContract(context as Ctx, contractId as string);
   });

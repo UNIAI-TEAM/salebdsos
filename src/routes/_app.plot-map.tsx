@@ -68,6 +68,7 @@ const CELL_TONE: Record<ListingStatus, string> = {
   deposited: "bg-violet-500/15 border-violet-500/40 text-violet-700 dark:text-violet-300 hover:bg-violet-500/25",
   contracted: "bg-indigo-500/15 border-indigo-500/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/25",
   sold: "bg-rose-500/15 border-rose-500/40 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25",
+  rented: "bg-cyan-500/15 border-cyan-500/40 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/25",
   liquidated: "bg-zinc-500/10 border-zinc-500/30 text-zinc-500",
   retired: "bg-muted/50 border-dashed border-border text-muted-foreground/50",
 };
