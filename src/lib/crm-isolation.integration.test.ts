@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 const url=process.env['VITE_SUPABASE_URL'], key=process.env['VITE_SUPABASE_PUBLISHABLE_KEY'];
 const session=JSON.parse(process.env['LOVABLE_BROWSER_SUPABASE_SESSION_JSON']??'{}');
-const enabled=Boolean(url&&key&&session.access_token&&process.env['CRM_SECURITY_QA']);
+const phase=process.env['CRM_SECURITY_QA'];
+const enabled=Boolean(url&&key&&session.access_token&&phase==='sale');
 const tenant='11111111-2222-4333-8444-555555550047',foreign='11111111-2222-4333-8444-555555550048';
 const own='22222222-2222-4333-8444-555555550047',other='22222222-2222-4333-8444-555555550048';
 async function req(path:string,method='GET',body?:unknown){
@@ -35,5 +36,21 @@ describe.skipIf(!enabled)('Direct CRM and CTV access isolation',()=>{
  });
  it('CTV own portal is accessible without general CRM access',async()=>{
   const r=await req('rpc/collaborator_portal_workspace','POST',{});expect(r.status).toBe(200);expect(r.data.profile.name).toBe('QA CTV Security');expect(r.data.referrals).toEqual([]);
+ });
+});
+describe.skipIf(!url||!key||!session.access_token||phase!=='manager')('Manager write boundary',()=>{
+ it('manager cannot edit contact notes',async()=>{
+  expect((await req(`leads?id=eq.${own}`,'PATCH',{notes:'Manager must not edit'})).status).toBeGreaterThanOrEqual(400);
+ });
+ it('manager can reassign within the same tenant',async()=>{
+  const r=await req(`leads?id=eq.${own}`,'PATCH',{owner_user_id:'f2a2301c-ab4a-486e-a626-af048ffdfe4e'});expect(r.status).toBe(200);
+ });
+});
+describe.skipIf(!url||!key||!session.access_token||phase!=='admin')('Cross-tenant write boundary',()=>{
+ it('admin cannot create an active contract linked to another tenant lead',async()=>{
+  const r=await req('contracts','POST',{tenant_id:tenant,code:'QA-CROSS-REJECT',sale_price:1000,net_price:1000,status:'active',lead_id:'22222222-2222-4333-8444-555555550049'});expect(r.status).toBeGreaterThanOrEqual(400);
+ });
+ it('tenant admin cannot manufacture platform administrator privileges',async()=>{
+  const r=await req('user_roles','POST',{tenant_id:tenant,user_id:session.user.id,role:'platform_admin'});expect(r.status).toBeGreaterThanOrEqual(400);
  });
 });
