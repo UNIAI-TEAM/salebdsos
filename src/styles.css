@@ -104,6 +104,22 @@
   .landing-photo-wash { background: oklch(1 0 0 / 88%); }
 }
 
+/* Tenant presets override only semantic accents; light/dark surfaces stay accessible. */
+:root[data-tenant-theme="blue"] { --tenant-primary: #2563eb; --tenant-primary-ink: #ffffff; --tenant-soft: #dbeafe; }
+:root[data-tenant-theme="green"] { --tenant-primary: #047857; --tenant-primary-ink: #ffffff; --tenant-soft: #d1fae5; }
+:root[data-tenant-theme="graphite"] { --tenant-primary: #3f3f46; --tenant-primary-ink: #ffffff; --tenant-soft: #e4e4e7; }
+:root.dark[data-tenant-theme="blue"] { --tenant-primary: #60a5fa; --tenant-primary-ink: #0a1628; --tenant-soft: #172b46; }
+:root.dark[data-tenant-theme="green"] { --tenant-primary: #34d399; --tenant-primary-ink: #052e24; --tenant-soft: #143b30; }
+:root.dark[data-tenant-theme="graphite"] { --tenant-primary: #d4d4d8; --tenant-primary-ink: #18181b; --tenant-soft: #303034; }
+:root[data-tenant-theme]:not([data-tenant-theme="legacy"]) {
+ --primary: var(--tenant-primary); --primary-foreground: var(--tenant-primary-ink); --primary-soft: var(--tenant-soft);
+ --ring: var(--tenant-primary); --sidebar-primary: var(--tenant-primary); --sidebar-primary-foreground: var(--tenant-primary-ink); --sidebar-ring: var(--tenant-primary); --chart-1: var(--tenant-primary);
+}
+.theme-swatch-blue { background: #2563eb; }
+.theme-swatch-green { background: #047857; }
+.theme-swatch-graphite { background: #3f3f46; }
+.theme-swatch-legacy { background: #8b5cf6; }
+
 /* Chế độ sáng */
 :root {
   --background: oklch(0.984 0.003 265);

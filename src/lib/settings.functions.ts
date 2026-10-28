@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { brandingSchema,validLogo,BRAND_COPY } from './tenant-branding';
+import { ADMIN_ROLES } from './permissions';
 
 export const SETTING_KEYS = ["general", "notifications", "branding", "business"] as const;
 export type SettingKey = (typeof SETTING_KEYS)[number];
@@ -17,11 +19,10 @@ const notificationsSchema = z.object({
   inapp_enabled: z.boolean().optional().default(true),
   digest_frequency: z.enum(["off", "daily", "weekly"]).optional().default("daily"),
 });
-const brandingSchema = z.object({
-  primary_color: z.string().trim().regex(/^#([0-9a-fA-F]{6})$/, "Mã màu HEX").optional().default("#2563EB"),
-  logo_url: z.string().trim().url().max(500).optional().or(z.literal("")).default(""),
-  tagline: z.string().trim().max(160).optional().default(""),
-});
+async function brandingAccess(context:any,tenantId:string,write=false){
+ const {data,error}=await context.supabase.from('user_roles').select('role').eq('tenant_id',tenantId).eq('user_id',context.userId);
+ if(error||!data?.length||(write&&!data.some((r:any)=>ADMIN_ROLES.has(r.role))))throw new Error('Bạn không có quyền cấu hình thương hiệu sàn này.');
+}
 const businessSchema = z.object({
   working_hours_start: z.string().regex(/^\d{2}:\d{2}$/).optional().default("08:00"),
   working_hours_end: z.string().regex(/^\d{2}:\d{2}$/).optional().default("18:00"),
@@ -85,6 +86,7 @@ export const updateSetting = createServerFn({ method: "POST" })
     return { ...base, value };
   })
   .handler(async ({ context, data }) => {
+    await brandingAccess(context,data.tenantId,true);
     const { error } = await context.supabase
       .from("settings")
       .upsert(
@@ -106,6 +108,7 @@ export const resetSetting = createServerFn({ method: "POST" })
     z.object({ tenantId: z.string().uuid(), key: z.enum(SETTING_KEYS) }).parse(d),
   )
   .handler(async ({ context, data }) => {
+    await brandingAccess(context,data.tenantId,true);
     const { error } = await context.supabase
       .from("settings")
       .delete()
@@ -114,3 +117,24 @@ export const resetSetting = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const getTenantBranding=createServerFn({method:'GET'}).middleware([requireSupabaseAuth]).inputValidator((d:unknown)=>z.object({tenantId:z.string().uuid()}).parse(d)).handler(async({data,context})=>{
+ await brandingAccess(context,data.tenantId);
+ const {supabaseAdmin:sb}=await import('@/integrations/supabase/client.server');
+ const {data:row,error}=await sb.from('settings').select('value').eq('tenant_id',data.tenantId).eq('key','branding').maybeSingle();
+ if(error)throw new Error('Không tải được thương hiệu sàn.');
+ const result=brandingSchema.safeParse(row?.value??{});return result.success?result.data:brandingSchema.parse({});
+});
+export const uploadTenantLogo=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((d:unknown)=>z.object({tenantId:z.string().uuid(),mime:z.enum(['image/png','image/jpeg','image/webp']),base64:z.string().max(2800000)}).parse(d)).handler(async({data,context})=>{
+ await brandingAccess(context,data.tenantId,true);
+ const bytes=Uint8Array.from(atob(data.base64),v=>v.charCodeAt(0));
+ if(!validLogo(bytes,data.mime))throw new Error(BRAND_COPY.invalid);
+ const {supabaseAdmin:sb}=await import('@/integrations/supabase/client.server');
+ const extension=data.mime==='image/png'?'png':data.mime==='image/jpeg'?'jpg':'webp';
+ const path=`${data.tenantId}/branding/${crypto.randomUUID()}.${extension}`;
+ const {error}=await sb.storage.from('project-assets').upload(path,bytes,{contentType:data.mime,upsert:false});
+ if(error)throw new Error('Không tải được logo.');
+ // Browser-visible URLs must use the browser origin, never the server-local backend.
+ const origin=import.meta.env.VITE_SUPABASE_URL;
+ return {url:`${origin}/storage/v1/object/public/project-assets/${path}`};
+});

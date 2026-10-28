@@ -13,6 +13,7 @@ import { useSidebarShortcut } from "@/hooks/use-sidebar-shortcut";
 import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { capabilityForPath, ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/permissions";
+import { TenantBrandingProvider } from '@/hooks/use-tenant-branding';
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -46,7 +47,7 @@ function AppLayout() {
   return (
     <SidebarCollapsedProvider>
       <MobileDrawerProvider>
-        <AppLayoutShell />
+        <TenantBrandingProvider><AppLayoutShell /></TenantBrandingProvider>
       </MobileDrawerProvider>
     </SidebarCollapsedProvider>
   );
