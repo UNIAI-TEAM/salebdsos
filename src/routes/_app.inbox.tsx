@@ -563,7 +563,7 @@ function InboxPage() {
             <DialogTitle>Kênh liên lạc</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {tenantId && <ChatConnections tenantId={tenantId} config={config} onConfigChange={setConfig} />}
+            {tenantId && <ChatConnections tenantId={tenantId} config={config} onConfigChange={setConfig} telegramEnabled={channelsQuery.data?.connections.find(c=>c.channel==='telegram')?.enabled} />}
             <div className="rounded-xl border border-border p-3">
               <div className="flex items-center justify-between gap-3">
                 <Label className="text-sm font-semibold"><MessagesSquare className="mr-1.5 inline h-4 w-4" />Chat trên trang dự án</Label>

@@ -9,7 +9,7 @@ import { INBOX_COPY as t, PENDING_INBOX_CHANNELS } from "@/lib/omnichannel";
 import { getChatConnectionSetup, saveChatConnection, verifyChatConnection, saveAdditionalConnection, verifyAdditionalConnection, clearAdditionalConnection, activateTelegram } from "@/lib/omnichannel.functions";
 import type { ChannelSettings } from "@/lib/channels";
 
-export function ChatConnections({ tenantId, config, onConfigChange }: { tenantId: string; config: ChannelSettings; onConfigChange: (config: ChannelSettings) => void }) {
+export function ChatConnections({ tenantId, config, onConfigChange, telegramEnabled = false }: { tenantId: string; config: ChannelSettings; onConfigChange: (config: ChannelSettings) => void; telegramEnabled?: boolean }) {
   const qc = useQueryClient();
   const save = useServerFn(saveChatConnection), verify = useServerFn(verifyChatConnection), setup = useServerFn(getChatConnectionSetup);
   const [channel, setChannel] = useState<"zalo" | "messenger" | "telegram" | "whatsapp" | "viber">("zalo");
@@ -53,7 +53,7 @@ export function ChatConnections({ tenantId, config, onConfigChange }: { tenantId
     {!additional && <div><Label>{t.secret}</Label><Input type="password" autoComplete="new-password" value={secret} onChange={e => setSecret(e.target.value)} placeholder="••••••••" /></div>}
     {(!additional || channel === "viber") && <div><Label htmlFor="channel-token">{channel === "viber" ? t.botToken : t.token}</Label><Input id="channel-token" type="password" autoComplete="new-password" value={token} onChange={e => setToken(e.target.value)} placeholder="••••••••" /></div>}
     {!additional && <div><Label>{t.webhook}</Label><Input readOnly value={typeof window === "undefined" ? "" : `${window.location.origin}/api/public/${channel === "zalo" ? "zalo-webhook" : "integrations/facebook"}`} /></div>}
-    {additional && <div className="space-y-2 text-xs text-muted-foreground"><p>{channel === "viber" ? t.viberSecure : t.secureLinked}</p><p>{channel === 'telegram' ? t.telegramLive : t.noWebhook}</p><p role="status">{config[channel].accountVerified ? t.accountVerified : config[channel].accountId ? t.savedOnly : t.disconnected}</p></div>}
+    {additional && <div className="space-y-2 text-xs text-muted-foreground"><p>{channel === "viber" ? t.viberSecure : t.secureLinked}</p><p>{channel === 'telegram' ? t.telegramLive : t.noWebhook}</p><p role="status">{channel === 'telegram' && telegramEnabled ? t.telegramReady : config[channel].accountVerified ? t.accountVerified : config[channel].accountId ? t.savedOnly : t.disconnected}</p></div>}
     {channel === 'telegram' && <Button disabled={busy} onClick={async () => {
       setBusy(true);
       try { await activate({data:{tenantId}}); await qc.invalidateQueries({queryKey:['channel-settings',tenantId]}); const updated = qc.getQueryData<{config:ChannelSettings}>(['channel-settings',tenantId]); if (updated) {onConfigChange(updated.config);setAccount(updated.config.telegram.accountId);} toast.success(t.telegramReady); }
