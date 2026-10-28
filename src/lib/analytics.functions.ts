@@ -33,10 +33,14 @@ export const getDashboardKpis = createServerFn({ method: "GET" })
 
     // Filter cards by owner if requested
     let cardIdsFilter: string[] | null = null;
-    if (data.ownerId || data.cardId) {
+    if (data.ownerId || data.cardId || data.projectId) {
       let q = supabase.from("cards").select("id").eq("tenant_id", data.tenantId);
       if (data.ownerId) q = q.eq("owner_user_id", data.ownerId);
       if (data.cardId) q = q.eq("id", data.cardId);
+      if (data.projectId) {
+        const links = await readReportRows(supabase.from("card_projects").select("card_id,project_id").eq("tenant_id", data.tenantId).eq("project_id", data.projectId), "card_id");
+        q = q.in("id", links.length ? links.map(r => r.card_id) : ["00000000-0000-0000-0000-000000000000"]);
+      }
       const c = await readReportRows(q);
       cardIdsFilter = (c ?? []).map((r: any) => r.id);
       if (cardIdsFilter.length === 0) cardIdsFilter = ["00000000-0000-0000-0000-000000000000"];
@@ -193,6 +197,7 @@ export const getTopRankings = createServerFn({ method: "GET" })
       let cq = supabase.from("cards").select("id, display_name, owner_user_id, slug").eq("tenant_id", data.tenantId).is("deleted_at", null);
       if (data.ownerId) cq = cq.eq("owner_user_id", data.ownerId);
       if (data.cardId) cq = cq.eq("id", data.cardId);
+      if (data.projectId) { const links = await readReportRows(supabase.from("card_projects").select("card_id").eq("tenant_id", data.tenantId).eq("project_id", data.projectId), "card_id"); cq = cq.in("id", links.length ? links.map(r => r.card_id) : ["00000000-0000-0000-0000-000000000000"]); }
       const rows = await readReportRows(cq);
       cardsRows = rows ?? [];
     }
