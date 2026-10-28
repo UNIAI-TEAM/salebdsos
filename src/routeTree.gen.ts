@@ -54,6 +54,7 @@ import { Route as AppMobileAppRouteImport } from './routes/_app.mobile-app'
 import { Route as AppNfcCodesRouteImport } from './routes/_app.nfc-codes'
 import { Route as AppNurtureRouteImport } from './routes/_app.nurture'
 import { Route as AppPipelineRouteImport } from './routes/_app.pipeline'
+import { Route as AppPlotMapRouteImport } from './routes/_app.plot-map'
 import { Route as AppProductsRouteImport } from './routes/_app.products'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppProjectsRouteImport } from './routes/_app.projects'
@@ -324,6 +325,11 @@ const AppNurtureRoute = AppNurtureRouteImport.update({
 const AppPipelineRoute = AppPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPlotMapRoute = AppPlotMapRouteImport.update({
+  id: '/plot-map',
+  path: '/plot-map',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProductsRoute = AppProductsRouteImport.update({
@@ -611,6 +617,7 @@ export interface FileRoutesByFullPath {
   '/nfc-codes': typeof AppNfcCodesRoute
   '/nurture': typeof AppNurtureRoute
   '/pipeline': typeof AppPipelineRoute
+  '/plot-map': typeof AppPlotMapRoute
   '/products': typeof AppProductsRoute
   '/profile': typeof AppProfileRoute
   '/projects': typeof AppProjectsRouteWithChildren
@@ -703,6 +710,7 @@ export interface FileRoutesByTo {
   '/nfc-codes': typeof AppNfcCodesRoute
   '/nurture': typeof AppNurtureRoute
   '/pipeline': typeof AppPipelineRoute
+  '/plot-map': typeof AppPlotMapRoute
   '/products': typeof AppProductsRoute
   '/profile': typeof AppProfileRoute
   '/prompt-library': typeof AppPromptLibraryRoute
@@ -797,6 +805,7 @@ export interface FileRoutesById {
   '/_app/nfc-codes': typeof AppNfcCodesRoute
   '/_app/nurture': typeof AppNurtureRoute
   '/_app/pipeline': typeof AppPipelineRoute
+  '/_app/plot-map': typeof AppPlotMapRoute
   '/_app/products': typeof AppProductsRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/projects': typeof AppProjectsRouteWithChildren
@@ -892,6 +901,7 @@ export interface FileRouteTypes {
     | '/nfc-codes'
     | '/nurture'
     | '/pipeline'
+    | '/plot-map'
     | '/products'
     | '/profile'
     | '/projects'
@@ -984,6 +994,7 @@ export interface FileRouteTypes {
     | '/nfc-codes'
     | '/nurture'
     | '/pipeline'
+    | '/plot-map'
     | '/products'
     | '/profile'
     | '/prompt-library'
@@ -1077,6 +1088,7 @@ export interface FileRouteTypes {
     | '/_app/nfc-codes'
     | '/_app/nurture'
     | '/_app/pipeline'
+    | '/_app/plot-map'
     | '/_app/products'
     | '/_app/profile'
     | '/_app/projects'
@@ -1475,6 +1487,13 @@ declare module '@tanstack/react-router' {
       path: '/pipeline'
       fullPath: '/pipeline'
       preLoaderRoute: typeof AppPipelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/plot-map': {
+      id: '/_app/plot-map'
+      path: '/plot-map'
+      fullPath: '/plot-map'
+      preLoaderRoute: typeof AppPlotMapRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/products': {
@@ -1888,6 +1907,7 @@ interface AppRouteChildren {
   AppNfcCodesRoute: typeof AppNfcCodesRoute
   AppNurtureRoute: typeof AppNurtureRoute
   AppPipelineRoute: typeof AppPipelineRoute
+  AppPlotMapRoute: typeof AppPlotMapRoute
   AppProductsRoute: typeof AppProductsRoute
   AppProfileRoute: typeof AppProfileRoute
   AppProjectsRoute: typeof AppProjectsRouteWithChildren
@@ -1947,6 +1967,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNfcCodesRoute: AppNfcCodesRoute,
   AppNurtureRoute: AppNurtureRoute,
   AppPipelineRoute: AppPipelineRoute,
+  AppPlotMapRoute: AppPlotMapRoute,
   AppProductsRoute: AppProductsRoute,
   AppProfileRoute: AppProfileRoute,
   AppProjectsRoute: AppProjectsRouteWithChildren,

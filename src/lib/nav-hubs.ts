@@ -22,6 +22,7 @@ export const HUBS: Hub[] = [
   { id: "projects", tabs: [
     { to: "/projects", label: "Dự án" },
     { to: "/inventory", label: "Giỏ hàng" },
+    { to: "/plot-map", label: "Sơ đồ lô" },
     { to: "/landings", label: "Landing dự án" },
     { to: "/products", label: "Sản phẩm khác" },
     { to: "/files", label: "Tài liệu" },

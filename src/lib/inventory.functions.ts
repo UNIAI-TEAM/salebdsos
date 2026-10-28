@@ -10,7 +10,7 @@ import {
 } from "@/lib/property-types";
 
 const SELECT =
-  "id,tenant_id,project_id,product_type,sku,code,name,zone,floor,area,usable_area,bedrooms,bathrooms,direction,legal_status,price,currency,unit,status,listing_status,hold_expires_at,hold_owner_user_id,deal_id,is_public,description,image_url,attributes,created_at,updated_at";
+  "id,tenant_id,project_id,product_type,sku,code,name,zone,floor,area,usable_area,bedrooms,bathrooms,direction,legal_status,price,currency,unit,status,listing_status,hold_expires_at,hold_owner_user_id,deal_id,is_public,description,image_url,attributes,map_row,map_col,created_at,updated_at";
 
 const KindEnum = z.enum(PROPERTY_KINDS);
 const ListingEnum = z.enum(LISTING_STATUSES);
@@ -37,6 +37,8 @@ const ItemInput = z.object({
   description: z.string().trim().max(4000).optional().nullable(),
   image_url: z.string().trim().max(2000).optional().nullable(),
   attributes: z.record(z.string(), z.unknown()).default({}),
+  map_row: z.number().int().positive().optional().nullable(),
+  map_col: z.number().int().positive().optional().nullable(),
 });
 
 function displayName(v: { name?: string | null; code?: string | null; zone?: string | null }) {
