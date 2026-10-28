@@ -447,6 +447,32 @@ function ContractsPage() {
               <Label>Ghi chú</Label>
               <Textarea rows={2} value={form.note} onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))} />
             </div>
+            {policySuggestions.length > 0 && (
+              <div className="grid gap-1.5" data-testid="discount-suggestions">
+                <Label>Chiết khấu thanh toán nhanh áp dụng được</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {policySuggestions.map((p) => {
+                    const price = Number(form.salePrice || formProduct?.price || 0);
+                    const q = quoteDiscount(price, p);
+                    const active = form.discountPolicyId === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => applyPolicy(p)}
+                        className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+                          active
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
+                        }`}
+                      >
+                        {p.name}: -{p.discount_percent}% ({money(q.amount)}) nếu TT trong {p.within_days} ngày
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <p className="text-[11px] text-muted-foreground">
               Giá sau chiết khấu: {money(Math.max(0, Number(form.salePrice || 0) - Number(form.discountAmount || 0)))}
             </p>
