@@ -1749,6 +1749,50 @@ export type Database = {
           },
         ]
       }
+      collaborator_portal_invites: {
+        Row: {
+          collaborator_id: string
+          created_at: string
+          created_by: string
+          email: string
+          expires_at: string
+          id: string
+          tenant_id: string
+          token_hash: string
+          used_at: string | null
+        }
+        Insert: {
+          collaborator_id: string
+          created_at?: string
+          created_by: string
+          email: string
+          expires_at?: string
+          id?: string
+          tenant_id: string
+          token_hash: string
+          used_at?: string | null
+        }
+        Update: {
+          collaborator_id?: string
+          created_at?: string
+          created_by?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          tenant_id?: string
+          token_hash?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_portal_invites_tenant_id_collaborator_id_fkey"
+            columns: ["tenant_id", "collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "sales_collaborators"
+            referencedColumns: ["tenant_id", "id"]
+          },
+        ]
+      }
       collaborator_referrals: {
         Row: {
           approved: boolean
@@ -4161,6 +4205,7 @@ export type Database = {
           note: string | null
           owner_user_id: string
           phone: string | null
+          portal_user_id: string | null
           status: string
           tenant_id: string
           updated_at: string
@@ -4174,6 +4219,7 @@ export type Database = {
           note?: string | null
           owner_user_id: string
           phone?: string | null
+          portal_user_id?: string | null
           status?: string
           tenant_id: string
           updated_at?: string
@@ -4187,6 +4233,7 @@ export type Database = {
           note?: string | null
           owner_user_id?: string
           phone?: string | null
+          portal_user_id?: string | null
           status?: string
           tenant_id?: string
           updated_at?: string
@@ -5037,6 +5084,22 @@ export type Database = {
           net_price: number
         }[]
       }
+      collaborator_portal_accept: { Args: { p_token: string }; Returns: string }
+      collaborator_portal_invite: {
+        Args: { p_collaborator: string; p_tenant: string }
+        Returns: string
+      }
+      collaborator_portal_submit: {
+        Args: {
+          p_email?: string
+          p_name: string
+          p_need?: string
+          p_phone: string
+          p_request?: string
+        }
+        Returns: string
+      }
+      collaborator_portal_workspace: { Args: never; Returns: Json }
       collaborator_workspace: {
         Args: { p_search?: string; p_tenant: string }
         Returns: Json
