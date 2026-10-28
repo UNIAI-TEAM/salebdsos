@@ -164,7 +164,7 @@ export const getConversation = createServerFn({ method: "GET" })
     const [messagesQ, callsQ] = await Promise.all([
       supabase
         .from("conversation_messages")
-        .select("id, channel, direction, body, attachment_url, sender_name, delivery_status, error_message, created_at")
+        .select("id, channel, direction, body, attachment_url, sender_name, sender_user_id, delivery_status, error_message, created_at")
         .in("conversation_id", conversationIds)
         .order("created_at", { ascending: true })
         .limit(300),
@@ -181,6 +181,23 @@ export const getConversation = createServerFn({ method: "GET" })
       await supabase.from("conversations").update({ unread_count: 0 } as never).eq("id", conv.id);
     }
 
+    const convMeta = (conv.meta ?? {}) as Record<string, unknown>;
+    const bot = (convMeta.bot ?? {}) as { flowId?: string; handoff?: boolean };
+    const msgs = messagesQ.data ?? [];
+    // Bot tạm ngừng khi đã chuyển giao, hoặc khi Sale đã trực tiếp trả lời trong lúc flow còn hoạt động
+    const humanReplied = msgs.some((m) => m.direction === "out" && m.sender_user_id);
+    const botPaused = bot.handoff === true || (Boolean(bot.flowId) && humanReplied);
+
+    let ownerName: string | null = null;
+    if (conv.owner_user_id) {
+      const { data: ownerProfile } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("user_id", conv.owner_user_id)
+        .maybeSingle();
+      ownerName = ownerProfile?.full_name || ownerProfile?.email || null;
+    }
+
     return {
       conversation: {
         id: conv.id,
@@ -191,12 +208,16 @@ export const getConversation = createServerFn({ method: "GET" })
         identities: identities ?? [],
         status: conv.status,
         leadId: conv.lead_id,
+        customerId: conv.customer_id,
         needsIdentityReview: (conv.meta as { identity_review_required?: boolean } | null)?.identity_review_required === true,
         projectId: conv.project_id,
         ownerUserId: conv.owner_user_id,
-        tags: (((conv.meta ?? {}) as any).tags ?? []) as string[],
+        ownerName,
+        botPaused,
+        botActive: Boolean(bot.flowId) && !botPaused,
+        tags: (convMeta.tags ?? []) as string[],
       },
-      messages: messagesQ.data ?? [],
+      messages: msgs,
       calls: callsQ.data ?? [],
     };
   });
