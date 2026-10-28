@@ -428,8 +428,8 @@ function PlotMapPage() {
                   <button
                     key={u.id}
                     type="button"
-                    onClick={() => openUnit(u as Row)}
-                    className={`rounded-md border px-2.5 py-1 text-xs font-medium ${LISTING_STATUS_TONE[u.listing_status]}`}
+                    onClick={() => (mergeMode ? toggleMergeUnit(u as Row) : openUnit(u as Row))}
+                    className={`rounded-md border px-2.5 py-1 text-xs font-medium ${LISTING_STATUS_TONE[u.listing_status]} ${mergeIds.includes(u.id) ? "ring-2 ring-primary ring-offset-1" : ""}`}
                   >
                     {u.code ?? u.name ?? "—"}
                   </button>
