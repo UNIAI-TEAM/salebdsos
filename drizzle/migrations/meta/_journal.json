@@ -288,6 +288,13 @@
       "when": 1793162371538,
       "tag": "0040_merge_plots_lock_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793162448069,
+      "tag": "0041_merge_plots_lock_loop",
+      "breakpoints": true
     }
   ]
 }
