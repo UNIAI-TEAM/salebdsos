@@ -423,9 +423,33 @@ function ContractsPage() {
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Lập hợp đồng</DialogTitle>
-            <DialogDescription>Chọn sản phẩm trong giỏ hàng, hệ thống tự tạo 4 đợt thanh toán mẫu 30/30/30/10.</DialogDescription>
+            <DialogDescription>
+              {form.kind === "rental"
+                ? "Hợp đồng cho thuê: hệ thống tự tạo lịch thu tiền hàng tháng theo thời hạn thuê."
+                : "Chọn sản phẩm trong giỏ hàng, hệ thống tự tạo 4 đợt thanh toán mẫu 30/30/30/10."}
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
+            <div className="grid gap-1.5">
+              <Label>Loại hợp đồng</Label>
+              <div className="grid grid-cols-2 gap-2" data-testid="contract-kind">
+                {(["sale", "rental"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    data-testid={`kind-${k}`}
+                    onClick={() => setForm((p) => ({ ...p, kind: k }))}
+                    className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${
+                      form.kind === k
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    {k === "sale" ? "Bán" : "Cho thuê"}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="grid gap-1.5">
               <Label>Sản phẩm</Label>
               <Select
