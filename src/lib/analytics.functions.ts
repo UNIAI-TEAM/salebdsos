@@ -49,11 +49,11 @@ export const getDashboardKpis = createServerFn({ method: "GET" })
 
     // Aggregated rows (analytics_daily)
     let aggQ = supabase.from("analytics_daily")
-      .select("id,source,day,event_count,unique_visitors,card_id")
+      .select("source,day,event_count,unique_visitors,card_id")
       .eq("tenant_id", data.tenantId).gte("day", prevSince).lt("day", todayStr);
     if (data.source) aggQ = aggQ.eq("source", data.source);
     if (cardIdsFilter) aggQ = aggQ.in("card_id", cardIdsFilter);
-    const agg = await readReportRows(aggQ);
+    const agg = await readReportRows(aggQ.order("card_id").order("source"), "day");
 
     // Today's live events (not yet aggregated)
     let liveQ = supabase.from("interaction_events")
@@ -181,10 +181,10 @@ export const getTopRankings = createServerFn({ method: "GET" })
 
     // top cards by aggregated event_count
     let aggQ = supabase.from("analytics_daily")
-      .select("id,card_id,event_count")
+      .select("card_id,event_count")
       .eq("tenant_id", data.tenantId).gte("day", since).lt("day", reportWindow(1).today);
     if (data.source) aggQ = aggQ.eq("source", data.source);
-    const agg = await readReportRows(aggQ);
+    const agg = await readReportRows(aggQ.order("card_id").order("source"), "day");
     const cardCount = new Map<string, number>();
     for (const r of (agg ?? []) as any[])
       cardCount.set(r.card_id, (cardCount.get(r.card_id) ?? 0) + r.event_count);
