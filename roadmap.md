@@ -24,7 +24,7 @@
 - [ ] Xác minh push tới điện thoại và gửi/nhận kênh thật: chờ thiết bị bật thông báo và tài khoản nhà cung cấp; chưa gửi tin thử.
 
 - [x] Bổ sung tab kết nối Telegram/WhatsApp/Viber, lưu/xoá cấu hình quản trị và kiểm tra tài khoản không gửi tin; thử lưu/đọc/xoá cấu hình Telegram, 19 kiểm thử đạt. Xác minh nhà cung cấp thật còn chờ tài khoản/kết nối.
-- [ ] Telegram gửi/nhận: chờ quản trị viên hoàn tất thẻ kết nối (đã bỏ qua); chưa đăng ký webhook hoặc gửi tin.
+- [ ] Telegram gửi/nhận: bot đã liên kết; triển khai nhận tin có xác thực, phản hồi đúng khách và kích hoạt đúng sàn; thử thật chờ anh nhắn bot.
 - [ ] WhatsApp gửi/nhận: chờ số WhatsApp Business và hoàn tất thẻ kết nối (đã bỏ qua); chưa bật gửi/nhận.
 - [ ] Viber gửi/nhận: chờ bot doanh nghiệp được Viber duyệt; chưa có thông tin kết nối.
 - [x] Hiển thị ba kênh mới trong Hộp thoại với trạng thái chờ thiết lập rõ ràng; kiểm tra giao diện bằng tài khoản đăng nhập và 14 kiểm thử đạt.

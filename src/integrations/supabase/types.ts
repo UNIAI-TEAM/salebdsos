@@ -4451,6 +4451,35 @@ export type Database = {
           },
         ]
       }
+      telegram_bot_bindings: {
+        Row: {
+          bot_id: string
+          enabled: boolean
+          key_digest: string
+          tenant_id: string
+        }
+        Insert: {
+          bot_id: string
+          enabled?: boolean
+          key_digest: string
+          tenant_id: string
+        }
+        Update: {
+          bot_id?: string
+          enabled?: boolean
+          key_digest?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_bot_bindings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_credentials: {
         Row: {
           ciphertext: string
@@ -5004,6 +5033,7 @@ export type Database = {
         | "email"
         | "note"
         | "messenger"
+        | "telegram"
       conv_direction: "in" | "out"
       deal_status: "open" | "won" | "lost"
       lead_status:
@@ -5179,6 +5209,7 @@ export const Constants = {
         "email",
         "note",
         "messenger",
+        "telegram",
       ],
       conv_direction: ["in", "out"],
       deal_status: ["open", "won", "lost"],
