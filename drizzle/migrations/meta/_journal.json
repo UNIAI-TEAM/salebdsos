@@ -267,6 +267,34 @@
       "when": 1793161406684,
       "tag": "0037_fast_payment_discounts",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1793161815186,
+      "tag": "0038_plot_split_merge",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1793161896382,
+      "tag": "0039_split_plot_items_payload",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1793162371538,
+      "tag": "0040_merge_plots_lock_fix",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793162448069,
+      "tag": "0041_merge_plots_lock_loop",
+      "breakpoints": true
     }
   ]
 }

@@ -11,11 +11,11 @@ async function roles(context: any, tenantId: string) {
     .eq("tenant_id", tenantId)
     .eq("user_id", context.userId);
   if (error) throw new Error(error.message);
-  const list = (data ?? []).map((r: any) => r.role as string);
-  if (!list.some((r) => SALE_ROLES.has(r))) {
+  const list: string[] = (data ?? []).map((r: { role: string }) => r.role);
+  if (!list.some((r: string) => SALE_ROLES.has(r))) {
     throw new Error("Bạn không có quyền xem chính sách chiết khấu của workspace này");
   }
-  return { canManage: list.some((r) => ADMIN_ROLES.has(r)) };
+  return { canManage: list.some((r: string) => ADMIN_ROLES.has(r)) };
 }
 
 const PolicyInput = z.object({

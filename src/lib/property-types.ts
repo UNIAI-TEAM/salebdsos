@@ -19,6 +19,7 @@ export const LISTING_STATUSES = [
   "contracted",
   "sold",
   "liquidated",
+  "retired",
 ] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
 
@@ -31,6 +32,7 @@ export const LISTING_STATUS_LABEL: Record<ListingStatus, string> = {
   contracted: "Ký HĐMB",
   sold: "Đã bán",
   liquidated: "Đã thanh lý",
+  retired: "Đã tách/ghép",
 };
 
 export const LISTING_STATUS_TONE: Record<ListingStatus, string> = {
@@ -42,6 +44,7 @@ export const LISTING_STATUS_TONE: Record<ListingStatus, string> = {
   contracted: "bg-indigo-500/10 text-indigo-600 border-indigo-500/30",
   sold: "bg-rose-500/10 text-rose-600 border-rose-500/30",
   liquidated: "bg-zinc-500/10 text-zinc-500 border-zinc-500/30",
+  retired: "bg-muted text-muted-foreground/60 border-dashed border-border",
 };
 
 /** Trạng thái còn có thể bán (dùng cho tỷ lệ hấp thụ). */
