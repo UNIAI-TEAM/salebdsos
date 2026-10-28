@@ -453,7 +453,7 @@ export const createRentalContract = createServerFn({ method: "POST" })
       deposit: data.deposit,
     });
 
-    const { data: contractId, error } = await supabase.rpc("create_rental_contract", {
+    const rentalArgs = {
       p_tenant: data.tenantId,
       p_product: data.productId,
       p_customer: data.customerId ?? null,

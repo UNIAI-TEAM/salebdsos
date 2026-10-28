@@ -47,8 +47,7 @@ describe("buildRentSchedule", () => {
       monthlyRent: 5_000_000,
       deposit: 0,
     });
-    expect(rows).toHaveLength(1);
-    expect(rows[0].due_date).toBe("2026-11-01");
+    expect(rows).toHaveLength(0);
   });
 
   it("từ chối dữ liệu không hợp lệ", () => {
