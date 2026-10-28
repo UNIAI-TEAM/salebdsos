@@ -36,3 +36,4 @@ export function collaboratorTotals(rows: Pick<CollaboratorReferral,'approved'|'c
   return {approved,paid,outstanding:Math.max(0,approved-paid)};
 }
 export const ctvMoney = (amount:number) => new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(amount);
+export const ctvCompactMoney = (amount:number) => new Intl.NumberFormat('vi-VN',{notation:'compact',maximumFractionDigits:1}).format(amount);
