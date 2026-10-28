@@ -1850,21 +1850,27 @@ export type Database = {
         Row: {
           code: string
           completed_at: string | null
+          contract_kind: string
           created_at: string
           created_by: string | null
           currency: string
           customer_id: string | null
           deal_id: string | null
           deleted_at: string | null
+          deposit_amount: number | null
           discount_amount: number
           discount_policy_id: string | null
           id: string
           lead_id: string | null
+          lease_end: string | null
+          lease_start: string | null
+          monthly_rent: number | null
           net_price: number
           note: string | null
           owner_user_id: string | null
           product_id: string | null
           project_id: string | null
+          rent_cycle_day: number | null
           sale_price: number
           signed_at: string | null
           status: Database["public"]["Enums"]["contract_status"]
@@ -1874,21 +1880,27 @@ export type Database = {
         Insert: {
           code: string
           completed_at?: string | null
+          contract_kind?: string
           created_at?: string
           created_by?: string | null
           currency?: string
           customer_id?: string | null
           deal_id?: string | null
           deleted_at?: string | null
+          deposit_amount?: number | null
           discount_amount?: number
           discount_policy_id?: string | null
           id?: string
           lead_id?: string | null
+          lease_end?: string | null
+          lease_start?: string | null
+          monthly_rent?: number | null
           net_price?: number
           note?: string | null
           owner_user_id?: string | null
           product_id?: string | null
           project_id?: string | null
+          rent_cycle_day?: number | null
           sale_price?: number
           signed_at?: string | null
           status?: Database["public"]["Enums"]["contract_status"]
@@ -1898,21 +1910,27 @@ export type Database = {
         Update: {
           code?: string
           completed_at?: string | null
+          contract_kind?: string
           created_at?: string
           created_by?: string | null
           currency?: string
           customer_id?: string | null
           deal_id?: string | null
           deleted_at?: string | null
+          deposit_amount?: number | null
           discount_amount?: number
           discount_policy_id?: string | null
           id?: string
           lead_id?: string | null
+          lease_end?: string | null
+          lease_start?: string | null
+          monthly_rent?: number | null
           net_price?: number
           note?: string | null
           owner_user_id?: string | null
           product_id?: string | null
           project_id?: string | null
+          rent_cycle_day?: number | null
           sale_price?: number
           signed_at?: string | null
           status?: Database["public"]["Enums"]["contract_status"]
@@ -4832,6 +4850,24 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      create_rental_contract: {
+        Args: {
+          p_code: string
+          p_customer: string
+          p_cycle_day: number
+          p_deposit: number
+          p_lead: string
+          p_lease_end: string
+          p_lease_start: string
+          p_monthly_rent: number
+          p_note: string
+          p_owner: string
+          p_product: string
+          p_schedule: Json
+          p_tenant: string
+        }
+        Returns: string
+      }
       dispatch_lead_push: { Args: never; Returns: undefined }
       ingest_channel_message: {
         Args: {
@@ -4990,6 +5026,7 @@ export type Database = {
         | "sold"
         | "liquidated"
         | "retired"
+        | "rented"
       property_kind:
         | "apartment"
         | "land_plot"
@@ -5166,6 +5203,7 @@ export const Constants = {
         "sold",
         "liquidated",
         "retired",
+        "rented",
       ],
       property_kind: [
         "apartment",
