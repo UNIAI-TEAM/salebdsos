@@ -1,0 +1,10 @@
+import { z } from 'zod';
+export const EMAIL_COPY = {
+ title: 'Email tên miền của sàn', domain: 'Tên miền gửi', sender: 'Địa chỉ gửi', name: 'Tên sàn hiển thị', reply: 'Địa chỉ nhận phản hồi', key: 'Khóa Resend (Full access)', keyHint: 'Nhập khóa trong ô bảo mật; khóa đã lưu không hiển thị lại.',
+ save: 'Lưu & lấy bản ghi DNS', verify: 'Kiểm tra xác minh', test: 'Gửi thử đến email của tôi', enabled: 'Bật gửi email', missing: 'Chưa cấu hình', verified: 'Đã xác minh', pending: 'Chờ xác minh DNS', saved: 'Đã lưu cấu hình email', accepted: 'Resend đã nhận email thử; kiểm tra hộp thư của anh/chị.', disabled: 'Tạm dừng gửi', dns: 'Bản ghi DNS', history: 'Lần gửi gần đây', empty: 'Chưa có lần gửi', providerHint: 'Tài khoản Resend riêng của sàn · không dùng cho gửi quảng cáo không được đồng ý.', copy: 'Sao chép', copied: 'Đã sao chép', loading: 'Đang tải…', checkHint: 'Thêm các bản ghi dưới đây tại nơi quản lý tên miền. Không xóa bản ghi email đang dùng.', status: 'Trạng thái', acceptedLabel: 'Resend đã nhận', failedLabel: 'Gửi thất bại', record: 'Loại', host: 'Tên', value: 'Giá trị', priority: 'Ưu tiên', ttl: 'TTL',
+};
+export const tenantEmailInput = z.object({ tenantId: z.string().uuid(), domain: z.string().trim().toLowerCase().regex(/^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/), senderName: z.string().trim().min(1).max(120).regex(/^[^<>\r\n]+$/), senderEmail: z.string().trim().toLowerCase().email(), replyTo: z.string().trim().email().optional().or(z.literal('')), apiKey: z.string().trim().regex(/^re_[a-zA-Z0-9_]+$/).optional(), enabled: z.boolean() }).refine(v => v.senderEmail.split('@')[1] === v.domain, { message: 'Địa chỉ gửi phải thuộc đúng tên miền đã nhập.', path: ['senderEmail'] });
+export function emailReady(config: { domain: string; sender_email: string; status: string; enabled: boolean } | null) {
+ return !!config && config.enabled && config.status === 'verified' && config.sender_email.split('@')[1] === config.domain;
+}
+export function emailAdmin(roles: string[]) { return roles.some(r => ['owner','admin','platform_admin'].includes(r)); }

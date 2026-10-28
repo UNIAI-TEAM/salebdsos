@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getIntegrations, rotatePortalKey, saveIntegrations } from "@/lib/integrations.functions";
 import { PORTALS } from "@/lib/integrations";
 import { FacebookCredentials } from "@/components/app/facebook-credentials";
+import { TenantEmailSettings } from "@/components/app/tenant-email-settings";
 
 export const Route = createFileRoute("/_app/integrations")({
   head: () => ({
@@ -107,6 +108,8 @@ function IntegrationsPage() {
         sub="Khách gửi thông tin từ Zalo OA, Facebook Lead Ads hay portal BĐS sẽ tự vào hệ thống, chia Sale và vào giỏ hàng khi có mã căn."
         action={<Button onClick={() => save.mutate()} disabled={save.isPending}><Save className="mr-2 h-4 w-4" />Lưu</Button>}
       />
+
+      {tenantId && <TenantEmailSettings key={tenantId} tenantId={tenantId} />}
 
       <SectionCard title="Dự án mặc định">
         <p className="mb-3 text-sm text-muted-foreground">Dùng khi kênh ngoài không gửi kèm tên dự án.</p>

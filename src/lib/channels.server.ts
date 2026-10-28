@@ -240,6 +240,7 @@ export async function sendSmsMessage(args: {
 
 /** Gửi email cho khách. Cần tên miền gửi email đã xác thực; chưa có → pending. */
 export async function sendEmailMessage(args: {
+  tenantId?: string;
   settings: ChannelSettings;
   to: string | null;
   subject: string;
@@ -250,37 +251,7 @@ export async function sendEmailMessage(args: {
   if (!args.settings.email.enabled) {
     return { status: "pending", externalId: null, error: "Kênh email chưa được bật trong Cấu hình kênh liên lạc." };
   }
-  const origin = args.origin || process.env["PUBLIC_SITE_URL"];
-  if (!origin) {
-    return {
-      status: "pending",
-      externalId: null,
-      error: "Chưa thiết lập tên miền gửi email — nội dung đã lưu, sẽ gửi sau khi thiết lập.",
-    };
-  }
-  try {
-    const response = await fetch(`${origin}/lovable/email/transactional/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        templateName: "agent-message",
-        recipientEmail: args.to,
-        templateData: { subject: args.subject, message: args.text },
-      }),
-    });
-    if (!response.ok) {
-      return {
-        status: "pending",
-        externalId: null,
-        error: "Chưa thiết lập tên miền gửi email — nội dung đã lưu, sẽ gửi sau khi thiết lập.",
-      };
-    }
-    return { status: "sent", externalId: null, error: null };
-  } catch {
-    return {
-      status: "pending",
-      externalId: null,
-      error: "Chưa thiết lập tên miền gửi email — nội dung đã lưu, sẽ gửi sau khi thiết lập.",
-    };
-  }
+  if (!args.tenantId) return { status: "pending", externalId: null, error: "Gửi email chiến dịch cần thiết lập đồng ý nhận tin riêng; chưa bật bằng cấu hình tên miền." };
+  const { sendTenantEmail } = await import('./tenant-email.server');
+  return sendTenantEmail({tenantId:args.tenantId,to:args.to,subject:args.subject,text:args.text});
 }

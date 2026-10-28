@@ -181,6 +181,7 @@ export const Route = createFileRoute("/api/public/contact-request")({
         if (settings.email.enabled && settings.email.autoConfirm && email) {
           const text = `Cảm ơn ${name ?? "anh/chị"} đã quan tâm. Chuyên viên sẽ liên hệ trong ${assignment.slaMinutes} phút.`;
           const result = await sendEmailMessage({
+            tenantId: source.tenantId,
             settings,
             to: email,
             subject: "Đã nhận yêu cầu tư vấn",

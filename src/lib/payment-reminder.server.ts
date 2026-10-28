@@ -46,7 +46,7 @@ export async function runPaymentReminders() {
           const st = await loadChannelSettings(i.tenant_id);
           const text = `Kinh gui ${cus.full_name ?? "Quy khach"}: ${i.name} HD ${c.code} con ${fmt(outstanding)}, han ${i.due_date.split("-").reverse().join("/")}. Noi dung CK: ${c.code.replace(/-/g, "")}`;
           if (st.sms.enabled && cus.phone) await sendSmsMessage({ settings: st, phone: cus.phone, text });
-          else if (st.email.enabled && cus.email) await sendEmailMessage({ settings: st, to: cus.email, subject: `Nhắc thanh toán hợp đồng ${c.code}`, text });
+          else if (st.email.enabled && cus.email) await sendEmailMessage({ tenantId:i.tenant_id, settings: st, to: cus.email, subject: `Nhắc thanh toán hợp đồng ${c.code}`, text });
         }
       } catch (e) {
         console.error("customer reminder", e);

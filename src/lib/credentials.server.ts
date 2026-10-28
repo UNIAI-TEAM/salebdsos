@@ -1,7 +1,7 @@
 // Khoá bí mật theo sàn (Facebook App Secret, Page Access Token...). Mã hoá AES-GCM, chỉ máy chủ đọc được.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export const CREDENTIAL_KEYS = ["fb_app_secret", "fb_page_token", "zalo_app_secret", "zalo_access_token", "viber_bot_token"] as const;
+export const CREDENTIAL_KEYS = ["fb_app_secret", "fb_page_token", "zalo_app_secret", "zalo_access_token", "viber_bot_token", "resend_api_key"] as const;
 export type CredentialKey = (typeof CREDENTIAL_KEYS)[number];
 
 const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
