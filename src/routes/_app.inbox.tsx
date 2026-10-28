@@ -288,7 +288,11 @@ function InboxPage() {
       if (!tenantId || !activeId) throw new Error("Chưa chọn hội thoại");
       return assignConv({ data: { tenantId, conversationId: activeId, userId } });
     },
-    onSuccess: () => { toast.success("Đã cập nhật người phụ trách"); refresh(); },
+    onSuccess: async () => {
+      toast.success("Đã cập nhật người phụ trách");
+      await qc.refetchQueries({ queryKey: ["inbox-thread", tenantId, activeId] });
+      void qc.invalidateQueries({ queryKey: ["inbox", tenantId] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -297,7 +301,11 @@ function InboxPage() {
       if (!tenantId || !activeId) throw new Error("Chưa chọn hội thoại");
       return setConvStatus({ data: { tenantId, conversationId: activeId, status } });
     },
-    onSuccess: (_r, status) => { toast.success(status === "closed" ? "Đã đóng hội thoại" : "Đã mở lại hội thoại"); refresh(); },
+    onSuccess: async (_r, status) => {
+      toast.success(status === "closed" ? "Đã đóng hội thoại" : "Đã mở lại hội thoại");
+      await qc.refetchQueries({ queryKey: ["inbox-thread", tenantId, activeId] });
+      void qc.invalidateQueries({ queryKey: ["inbox", tenantId] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
