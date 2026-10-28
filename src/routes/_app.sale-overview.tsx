@@ -117,7 +117,7 @@ function SaleOverviewPage() {
       ...data.coldLeads.filter(lead=>!data.slaAlerts.some(l=>l.id===lead.id)&&!data.slaPending.some(l=>l.id===lead.id)).map(lead => ({id:lead.id, kind:"calls" as const, name:lead.name, detail:[lead.phone,lead.projectName].filter(Boolean).join(" · "), status:`${C.cold} ${lead.idleDays} ${C.days}`, urgent:false, phone:lead.phone, leadId:lead.id, order:100+lead.idleDays})),
     ];
     work.push(...mergeCallLeads(calls).map(item=>({...item,id:`call-${item.id}`})));
-    work.push(...calls.filter(item=>item.order<100).map(item=>({...item,kind:"sla" as const,id:`sla-${item.id}`,order:item.order-10000})));
+    work.push(...calls.filter(item=>data.slaAlerts.some(lead=>lead.id===item.leadId)||data.slaPending.some(lead=>lead.id===item.leadId)).map(item=>({...item,kind:"sla" as const,id:`sla-${item.id}`,order:item.order-10000})));
     work.push(...data.appointments.filter(item=>item.status==="scheduled" && vietnamDay(item.startsAt)===today).map(item=>({id:`appointment-${item.id}`,kind:"appointments" as const,name:item.title,detail:[item.customerName,item.projectName,item.location].filter(Boolean).join(" · "),status:new Date(item.startsAt).toLocaleTimeString("vi-VN",{timeZone:"Asia/Ho_Chi_Minh",hour:"2-digit",minute:"2-digit"}),urgent:false,order:500+new Date(item.startsAt).getHours()})));
   }
   work.push(...(debtQuery.data?.items??[]).filter(item=>item.daysOverdue>0||item.dueDate?.slice(0,10)===today).map(item=>({id:`debt-${item.installmentId}`,kind:"debt" as const,name:item.customerName,detail:[item.contractCode,item.name,item.projectName].join(" · "),status:item.daysOverdue>0?`${C.overdue} ${item.daysOverdue} ${C.days}`:C.due,urgent:item.daysOverdue>0,amount:item.outstanding,order:1000-item.daysOverdue})));

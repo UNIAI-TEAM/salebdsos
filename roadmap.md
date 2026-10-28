@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Gom Việc hôm nay ngay Tổng quan Sale: khách cần gọi/lịch hẹn/SLA/công nợ; không thêm menu, giữ phân quyền và thao tác hiện có.
+- [x] Gom Việc hôm nay ngay Tổng quan Sale: khách cần gọi/lịch hẹn/SLA/công nợ; không thêm menu, giữ phân quyền và thao tác hiện có. Công nợ theo Sale đang chọn; lịch từ đầu ngày Việt Nam, Tất cả không lặp SLA/khách. 16 kiểm thử đạt; thử Sale có khách, chuyển nhóm, tải lại và mở đúng hồ sơ từ công việc. Chưa xuất bản.
 
 - [x] Cổng CTV /ctv: quản trị mời từ hồ sơ CTV bằng liên kết 7 ngày, đúng email và dùng một lần; tài khoản riêng không cấp role CRM. Tự gửi khách nguyên tử/giữ Sale phụ trách/chặn trùng, xem trạng thái và hoa hồng riêng. Thử nhận lời mời → gửi → tải lại; chặn lời mời dùng lại, trùng điện thoại, CTV khác không thấy khách/hoa hồng, tạm dừng bị chặn; đối chiếu 60/20/40 triệu, 5 test đạt, mobile không tràn. QA đã dọn; chưa xuất bản.
 
