@@ -16,6 +16,7 @@ const titles: Record<string, { title: string; sub: string }> = {
   "/leads": { title: "Leads (CRM)", sub: "Quản lý & chăm sóc khách hàng tiềm năng" },
   "/customers": { title: "Khách hàng", sub: "Cơ sở dữ liệu khách hàng đã chuyển đổi" },
   "/projects": { title: "Dự án", sub: "Danh mục dự án bất động sản" },
+  "/plot-map": { title: "Sơ đồ lô", sub: "Trạng thái từng lô theo khu, giữ chỗ nhanh" },
   "/pipeline": { title: "Sales Pipeline", sub: "Theo dõi cơ hội bán hàng theo giai đoạn" },
   "/appointments": { title: "Lịch hẹn", sub: "Lịch gặp khách & follow-up" },
   "/ai-followup": { title: "AI Follow-up", sub: "AI tự động chăm sóc lead 24/7" },

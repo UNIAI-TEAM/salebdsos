@@ -75,3 +75,5 @@
 - [x] Landing: thêm mục Đại lý & phân phối, Danh thiếp số, Kịch bản bán hàng; cập nhật điều hướng, FAQ và mô tả tìm kiếm
 
 - [x] Kịch bản chat GĐ1: thư viện mẫu BĐS, AI sinh theo dự án, tự tạo lịch hẹn & ghi nhu cầu
+
+- [ ] Giai đoạn A — sàn đất/phân lô: sơ đồ lô theo khu (hàng×cột), tô màu trạng thái, giữ chỗ nhanh, đặt vị trí lô; kiểm thử plot-map; còn lại: chiết khấu theo đợt, tách/ghép lô.
