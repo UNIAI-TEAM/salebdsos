@@ -75,7 +75,7 @@ function Stage({
         {rate ? <Badge variant="outline" className="shrink-0 text-[10px]">{rate}</Badge> : null}
       </div>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
+      <p className="mt-1 text-xl font-bold text-foreground">{value}</p>
       <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>
     </div>
   );
@@ -275,7 +275,7 @@ function FunnelReportPage() {
     queryFn: () =>
       fetchReport({
         data: {
-          tenantId: tenantId as string,
+          tenantId: tenantId || "",
           days: Number(days),
           ...(projectId !== "all" ? { projectId } : {}),
           ...(ownerId !== "all" ? { ownerId } : {}),
@@ -330,7 +330,7 @@ function FunnelReportPage() {
         </SectionCard>
       ) : data ? (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <Stage icon={UserRoundCheck} label="Khách gửi thông tin" value={data.totals.submitted} hint={`Trong ${data.days} ngày gần nhất`} />
             <Stage
               icon={PackageCheck}

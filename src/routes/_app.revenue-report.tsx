@@ -68,7 +68,7 @@ function Kpi({
         {badge ? <Badge variant="outline" className="shrink-0 text-[10px]">{badge}</Badge> : null}
       </div>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
+      <p className="mt-1 text-xl font-bold text-foreground">{value}</p>
       <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>
     </div>
   );
@@ -193,7 +193,7 @@ function RevenueReportPage() {
     queryFn: () =>
       fetchReport({
         data: {
-          tenantId: tenantId as string,
+          tenantId: tenantId || "",
           months: Number(months),
           ...(kind === "sale" || kind === "rental" ? { kind } : {}),
           ...(projectId !== "all" ? { projectId } : {}),
@@ -209,7 +209,7 @@ function RevenueReportPage() {
     <div className="space-y-4">
       <PageHeader compact
         title="Báo cáo doanh thu theo dự án"
-        sub="Tổng hợp đồng, giá trị hợp đồng, tiền đã thu và hoa hồng theo từng dự án, kèm KPI theo tháng."
+        
         action={
           <ReportActions busy={query.isFetching} ready={Boolean(data)} refresh={() => { void query.refetch(); }} exportData={() => { if (!data) return; downloadReport("doanh-thu", ["Nhóm", "Tên", "Hợp đồng", "Giá trị hợp đồng (VND)", "Đã thu (VND)", "Còn phải thu (VND)", "Hoa hồng (VND)", "HH đã trả (VND)"], [...data.byProject.map(r => ["Dự án", r.label, r.contracts, r.contractValue, r.collected, r.outstanding, r.commissionTotal, r.commissionPaid]), ...data.byMonth.map(r => ["Tháng", r.key, r.contracts, r.contractValue, r.collected, r.outstanding, r.commissionTotal, r.commissionPaid])]); }} />
         }
@@ -253,7 +253,7 @@ function RevenueReportPage() {
         </SectionCard>
       ) : data ? (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <Kpi
               icon={FileSignature}
               label="Hợp đồng"
