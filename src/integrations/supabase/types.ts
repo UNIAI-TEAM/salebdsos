@@ -4851,6 +4851,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_crm_invitation: { Args: { p_token: string }; Returns: string }
       acquire_job_lock: {
         Args: { _key: string; _seconds: number }
         Returns: boolean

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { getCustomer360 } from "@/lib/customer-360.functions";
 import type { C360Kind } from "@/lib/customer-360";
+import { useAuth } from "@/hooks/use-auth";
 
 const META: Record<C360Kind, { icon: any; label: string }> = {
   lead: { icon: UserPlus, label: "Gửi thông tin" },
@@ -29,6 +30,7 @@ const vnd = (n: number) => new Intl.NumberFormat("vi-VN").format(Math.round(n)) 
 const dt = (s: string) => new Date(s).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
 
 export function Customer360({ tenantId, id }: { tenantId: string; id: string }) {
+  const { user } = useAuth();
   const fn = useServerFn(getCustomer360);
   const q = useQuery({ queryKey: ["customer-360", tenantId, id], queryFn: () => fn({ data: { tenantId, id } }) });
   const [filter, setFilter] = useState<C360Kind | "all">("all");
@@ -40,10 +42,11 @@ export function Customer360({ tenantId, id }: { tenantId: string; id: string }) 
     if (file.size > 20 * 1024 * 1024) return toast.error("Tệp vượt 20 MB");
     setBusy(true);
     try {
-      const path = `${tenantId}/customers/${id}/${Date.now()}_${file.name.replace(/[^\w.\-]+/g, "_")}`;
-      const { error } = await supabase.storage.from("project-assets").upload(path, file, { contentType: file.type || undefined });
+      if (!user) throw new Error("Cần đăng nhập");
+      const path = `${tenantId}/${user.id}/customers/${id}/${crypto.randomUUID()}_${file.name.replace(/[^\w.\-]+/g, "_")}`;
+      const { error } = await supabase.storage.from("crm-private").upload(path, file, { contentType: file.type || undefined });
       if (error) throw error;
-      await createRec({ data: { tenantId, bucket: "project-assets", path, name: file.name, size: file.size, mime: file.type || null, folder: "Khách hàng", related_type: "customer", related_id: id } as any });
+      await createRec({ data: { tenantId, bucket: "crm-private", path, name: file.name, size: file.size, mime: file.type || null, folder: "Khách hàng", related_type: "customer", related_id: id } as any });
       toast.success("Đã đính kèm tệp");
       qc.invalidateQueries({ queryKey: ["customer-360", tenantId, id] });
     } catch (e: any) { toast.error(e.message ?? "Không tải được tệp"); } finally { setBusy(false); }
@@ -106,7 +109,7 @@ export function Customer360({ tenantId, id }: { tenantId: string; id: string }) 
                 {e.amount ? <div className="text-sm tabular-nums text-primary">{vnd(e.amount)}</div> : null}
                 {e.detail && <div className="text-xs text-muted-foreground mt-0.5 line-clamp-3 whitespace-pre-line">{e.detail}</div>}
                 {e.kind === "file" && e.link && (
-                  <button onClick={() => download(e.link!)} className="mt-1 inline-flex items-center gap-1 text-xs text-primary"><Download className="h-3.5 w-3.5" />Tải xuống</button>
+                  <button onClick={() => { if (e.link) download(e.link); }} className="mt-1 inline-flex items-center gap-1 text-xs text-primary"><Download className="h-3.5 w-3.5" />Tải xuống</button>
                 )}
                 {e.kind === "call" && e.link && <audio controls src={e.link} className="mt-2 h-8 w-full" />}
               </div>
