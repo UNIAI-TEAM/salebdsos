@@ -398,12 +398,13 @@ function PlotMapPage() {
                   const cell = activeZone.cells.find((x) => x.row === r && x.col === c);
                   if (!cell) return <div key={`${r}-${c}`} className="h-14 rounded-md border border-dashed border-border/50" />;
                   const u = cell.unit as Row;
+                  const picked = mergeIds.includes(u.id);
                   return (
                     <button
                       key={u.id}
                       type="button"
-                      onClick={() => openUnit(u)}
-                      className={`flex h-14 flex-col items-center justify-center rounded-md border text-xs font-medium transition-colors ${CELL_TONE[u.listing_status]}`}
+                      onClick={() => (mergeMode ? toggleMergeUnit(u) : openUnit(u))}
+                      className={`flex h-14 flex-col items-center justify-center rounded-md border text-xs font-medium transition-colors ${CELL_TONE[u.listing_status]} ${picked ? "ring-2 ring-primary ring-offset-1" : ""}`}
                       data-testid={`plot-cell-${u.code ?? u.id}`}
                     >
                       <span className="max-w-full truncate px-1">{u.code ?? u.name ?? "—"}</span>
