@@ -69,9 +69,9 @@ export const Route = createFileRoute("/_app/inbox")({
   head: () => ({
     meta: [
       { title: `${t.title} — SaleBDS OS` },
-      { name: "description", content: "Hội thoại khách hàng qua chat web, Zalo OA và Messenger; SMS và email chỉ gửi đi, với trạng thái kết nối rõ ràng." },
+      { name: "description", content: "Hội thoại khách hàng qua chat web, Zalo OA, Messenger và Telegram; SMS và email chỉ gửi đi, với trạng thái kết nối rõ ràng." },
       { property: "og:title", content: `${t.title} — SaleBDS OS` },
-      { property: "og:description", content: "Hội thoại khách hàng qua chat web, Zalo OA và Messenger; SMS và email chỉ gửi đi, với trạng thái kết nối rõ ràng." },
+      { property: "og:description", content: "Hội thoại khách hàng qua chat web, Zalo OA, Messenger và Telegram; SMS và email chỉ gửi đi, với trạng thái kết nối rõ ràng." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -84,6 +84,7 @@ const CHANNEL_FILTERS = [
   { value: "web_chat", label: ui.chatWeb },
   { value: "zalo", label: "Zalo OA" },
   { value: "messenger", label: t.messenger },
+  { value: "telegram", label: t.telegram },
   { value: "call", label: ui.callChannel },
   { value: "sms", label: t.smsOutbound },
   { value: "email", label: t.emailOutbound },
@@ -93,6 +94,7 @@ const SEND_CHANNELS = [
   { value: "auto", label: ui.autoChannel },
   { value: "zalo", label: "Zalo OA" },
   { value: "messenger", label: t.messenger },
+  { value: "telegram", label: t.telegram },
   { value: "sms", label: t.smsOutbound },
   { value: "email", label: t.emailOutbound },
   { value: "note", label: ui.note },
@@ -220,7 +222,7 @@ function InboxPage() {
           tenantId,
           conversationId: activeId,
           body: draft.trim(),
-          channel: channelToUse as "web_chat" | "zalo" | "messenger" | "note" | "sms" | "email",
+          channel: channelToUse as "web_chat" | "zalo" | "messenger" | "telegram" | "note" | "sms" | "email",
           ...(channelToUse === "email" ? { subject: emailSubject } : {}),
         },
       });
@@ -337,7 +339,7 @@ function InboxPage() {
   useEffect(() => { const area = messageArea.current; if (area) area.scrollTop = area.scrollHeight; }, [activeId, timeline.length]);
   const selectedChannel = sendChannel === "auto" ? replyChannel(thread?.conversation.channel ?? "note") : sendChannel;
   const connection = channelsQuery.data?.connections.find(c => c.channel === selectedChannel);
-  const channelBlocked = !canSendPendingChannel(selectedChannel) || (["zalo", "messenger"].includes(selectedChannel) && (!connection?.configured || !connection.enabled));
+  const channelBlocked = !canSendPendingChannel(selectedChannel) || (["zalo", "messenger", "telegram"].includes(selectedChannel) && (!connection?.configured || !connection.enabled));
   const messengerLast = thread?.conversation.identities.find(i => i.channel === "messenger")?.last_inbound_at ?? null;
   const windowBlocked = selectedChannel === "messenger" && !messengerWindowOpen(messengerLast);
 

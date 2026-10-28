@@ -232,7 +232,7 @@ export const sendMessage = createServerFn({ method: "POST" })
         tenantId: z.string().uuid(),
         conversationId: z.string().uuid(),
         body: z.string().trim().min(1).max(2000),
-        channel: z.enum(["web_chat", "zalo", "messenger", "note", "sms", "email"]).optional(),
+        channel: z.enum(["web_chat", "zalo", "messenger", "telegram", "note", "sms", "email"]).optional(),
         subject: z.string().trim().max(160).optional(),
       })
       .parse(d),
@@ -265,6 +265,11 @@ export const sendMessage = createServerFn({ method: "POST" })
     let externalId: string | null = null;
     let errorMessage: string | null = null;
 
+    if (channel === "telegram") {
+      const { sendTelegramMessage } = await import("./telegram.server");
+      const result = await sendTelegramMessage(data.tenantId, data.conversationId, data.body);
+      status = result.status; externalId = result.externalId; errorMessage = result.error;
+    }
     if (channel === "messenger") {
       const { sendMessengerMessage } = await import("./omnichannel.server");
       const result = await sendMessengerMessage(data.tenantId, data.conversationId, data.body);

@@ -89,6 +89,7 @@ export const CHANNEL_LABEL: Record<string, string> = {
   web_chat: "Chat trên trang",
   zalo: "Zalo OA",
   messenger: "Messenger",
+  telegram: "Telegram",
   call: "Gọi điện",
   sms: "SMS",
   email: "Email",

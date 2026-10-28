@@ -12,7 +12,7 @@ export function signatureEquals(actual: string, expected: string) {
 export const metaSignature = (raw: string, secret: string) => "sha256=" + createHmac("sha256", secret).update(raw).digest("hex");
 export const zaloSignature = (raw: string, appId: string, timestamp: string, secret: string) => "mac=" + createHash("sha256").update(appId + raw + timestamp + secret).digest("hex");
 
-export async function receiveChannelMessage(args: { tenantId: string; channel: "zalo" | "messenger"; accountId: string; userId: string; eventId: string; body: string; name?: string; phone?: string; attachment?: string }) {
+export async function receiveChannelMessage(args: { tenantId: string; channel: "zalo" | "messenger" | "telegram"; accountId: string; userId: string; eventId: string; body: string; name?: string; phone?: string; attachment?: string }) {
   const { assignLeadOwner } = await import("./lead-routing.server");
   const { data: settings } = await sb.from("settings").select("value").eq("tenant_id", args.tenantId).eq("key", "integrations").maybeSingle();
   const projectId = parseIntegrationSettings(settings?.value).defaultProjectId;
@@ -48,9 +48,9 @@ export async function receiveChannelMessage(args: { tenantId: string; channel: "
   await sb.from("settings").upsert({ tenant_id: args.tenantId, key: "channel_health", value: { ...state, [args.channel]: { ...state[args.channel], lastWebhookAt: new Date().toISOString() } } }, { onConflict: "tenant_id,key" });
   const result = data as { duplicate?: boolean; ownerUserId?: string; leadId?: string };
   if (!result.duplicate && result.ownerUserId) {
-    await sb.from("notifications").insert({ tenant_id: args.tenantId, user_id: result.ownerUserId, lead_id: result.leadId, type: "lead", title: `Tin nhắn mới · ${args.channel === "zalo" ? "Zalo OA" : "Messenger"}`, body: args.body.slice(0, 160), link: "/inbox" } as never);
+    await sb.from("notifications").insert({ tenant_id: args.tenantId, user_id: result.ownerUserId, lead_id: result.leadId, type: "lead", title: `Tin nhắn mới · ${args.channel === "telegram" ? "Telegram" : args.channel === "zalo" ? "Zalo OA" : "Messenger"}`, body: args.body.slice(0, 160), link: "/inbox" } as never);
     const { sendPushToUser } = await import("./push.server");
-    if (identity?.lead_id && owner) await sendPushToUser({ userId: result.ownerUserId, title: `Tin nhắn mới · ${args.channel === "zalo" ? "Zalo OA" : "Messenger"}`, body: args.body.slice(0, 160), link: "/inbox" });
+    if (identity?.lead_id && owner) await sendPushToUser({ userId: result.ownerUserId, title: `Tin nhắn mới · ${args.channel === "telegram" ? "Telegram" : args.channel === "zalo" ? "Zalo OA" : "Messenger"}`, body: args.body.slice(0, 160), link: "/inbox" });
   }
   return result;
 }
@@ -80,7 +80,11 @@ export async function channelConnectionStatus(tenantId: string) {
   const s = await credentialStatus(tenantId);
   const { data: row } = await sb.from("settings").select("value").eq("tenant_id", tenantId).eq("key", "channel_health").maybeSingle();
   const health = (row?.value ?? {}) as Record<string, { ok?: boolean; checkedAt?: string; lastWebhookAt?: string }>;
+  const { data: telegram } = await sb.from("telegram_bot_bindings").select("enabled,key_digest").eq("tenant_id",tenantId).maybeSingle();
+  const key = process.env["TELEGRAM_API_KEY"];
+  const ready = Boolean(telegram?.enabled && key && telegram.key_digest === createHash("sha256").update(key).digest("hex"));
   return [
+    { channel: "telegram", configured: ready, enabled: ready, verified: Boolean(ready && health.telegram?.lastWebhookAt), checkedAt: config.telegram.checkedAt },
     { channel: "web_chat", configured: config.webChat.enabled, enabled: config.webChat.enabled, verified: config.webChat.enabled, checkedAt: null },
     { channel: "zalo", configured: Boolean(config.zalo.oaId && config.zalo.appId && s.zalo_app_secret && s.zalo_access_token), enabled: config.zalo.enabled, verified: Boolean(health.zalo?.ok && health.zalo?.lastWebhookAt), checkedAt: health.zalo?.checkedAt ?? null },
     { channel: "messenger", configured: Boolean(config.messenger.pageId && s.fb_app_secret && s.fb_page_token), enabled: config.messenger.enabled, verified: Boolean(health.messenger?.ok && health.messenger?.lastWebhookAt), checkedAt: health.messenger?.checkedAt ?? null },
