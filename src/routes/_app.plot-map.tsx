@@ -342,6 +342,22 @@ function PlotMapPage() {
                 )}
               </div>
 
+              {discountHint && (
+                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3" data-testid="discount-hint">
+                  <div className="text-xs font-medium text-emerald-600 dark:text-emerald-300">
+                    {discountHint.policy.name}
+                  </div>
+                  <div className="mt-0.5 text-sm">
+                    Thanh toán trong <b>{discountHint.policy.within_days} ngày</b>: giảm{" "}
+                    <b>{discountHint.policy.discount_percent}%</b> (~{money(discountHint.amount)}) — còn{" "}
+                    <b>{money(discountHint.net)}</b>
+                  </div>
+                  <div className="mt-0.5 text-[11px] text-muted-foreground">
+                    Hạn hưởng chiết khấu: {discountHint.deadline.toLocaleDateString("vi-VN")}
+                  </div>
+                </div>
+              )}
+
               <div className="rounded-lg border p-3">
                 <div className="mb-2 text-xs font-medium text-muted-foreground">Đổi trạng thái</div>
                 <div className="grid grid-cols-2 gap-2">
