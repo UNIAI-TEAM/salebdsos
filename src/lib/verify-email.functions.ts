@@ -28,27 +28,16 @@ export const checkEmailVerification = createServerFn({ method: "GET" })
     const nextCheckAt = new Date(now.getTime() + POLL_SECONDS * 1000).toISOString();
     const base = { serverTime, nextCheckAt, pollSeconds: POLL_SECONDS };
     try {
+      // Public callers always receive the same answer. Only a validated session may inspect itself.
+      const { getRequestHeader } = await import("@tanstack/react-start/server");
+      const bearer = getRequestHeader("authorization")?.match(/^Bearer (.+)$/i)?.[1];
+      if (!bearer) return { ...base, status: "pending", confirmedAt: null, user: null };
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const email = data.email.toLowerCase();
-      let page = 1;
-      const perPage = 200;
-      for (let i = 0; i < 25; i++) {
-        const { data: list, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
-        if (error) return { ...base, status: "error", confirmedAt: null, message: error.message };
-        const u = list.users.find((x) => (x.email ?? "").toLowerCase() === email);
-        if (u) {
-          const confirmedAt = u.email_confirmed_at ?? (u as any).confirmed_at ?? null;
-          return {
-            ...base,
-            status: confirmedAt ? "verified" : "pending",
-            confirmedAt,
-            user: null,
-          };
-        }
-        if (list.users.length < perPage) break;
-        page += 1;
-      }
-      return { ...base, status: "not_found", confirmedAt: null, user: null };
+      const { data: authenticated } = await supabaseAdmin.auth.getUser(bearer);
+      const u = authenticated.user;
+      if (!u || u.email?.toLowerCase() !== data.email.toLowerCase()) return { ...base, status: "pending", confirmedAt: null, user: null };
+      const confirmedAt = u.email_confirmed_at ?? null;
+      return { ...base, status: confirmedAt ? "verified" : "pending", confirmedAt, user: null };
     } catch (e: any) {
       return { ...base, status: "error", confirmedAt: null, message: e?.message ?? "Unknown error" };
     }

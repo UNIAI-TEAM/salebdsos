@@ -206,6 +206,7 @@ export const getFileSignedUrl = createServerFn({ method: "POST" })
       .from("files")
       .select("bucket,path,name,tenant_id")
       .eq("id", data.id)
+      .is("deleted_at", null)
       .single();
     if (error) throw new Error(error.message);
     const { data: signed, error: e2 } = await supabase.storage

@@ -548,11 +548,12 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
     let qrCode: string | null = null;
     if (row.project_id) {
       const [{ data: p }, { data: publicAppointments, error: appointmentsError }, { data: qr }] = await Promise.all([
-        supabaseAdmin.from("projects").select("name,location,cover_url,cta_phone").eq("id", row.project_id).maybeSingle(),
+        supabaseAdmin.from("projects").select("name,location,cover_url,cta_phone").eq("id", row.project_id).eq("tenant_id", row.tenant_id).is("deleted_at", null).maybeSingle(),
         supabaseAdmin
           .from("appointments")
           .select("id,title,location,starts_at,ends_at")
           .eq("project_id", row.project_id)
+          .eq("tenant_id", row.tenant_id)
           .eq("is_published", true)
           .eq("status", "scheduled")
           .gte("ends_at", new Date().toISOString())
@@ -562,6 +563,7 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
           .from("project_qr_codes")
           .select("code")
           .eq("project_id", row.project_id)
+          .eq("tenant_id", row.tenant_id)
           .eq("is_active", true)
           .order("created_at", { ascending: true })
           .limit(1)
@@ -569,8 +571,8 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       ]);
       project = p ?? null;
       if (appointmentsError) console.error("[sales-page] public appointments", appointmentsError.message);
-      appointments = (publicAppointments ?? []) as PublicProjectAppointment[];
-      qrCode = qr?.code ?? null;
+      appointments = p ? (publicAppointments ?? []) as PublicProjectAppointment[] : [];
+      qrCode = p ? qr?.code ?? null : null;
     }
 
     // Giỏ hàng được bật hiển thị công khai — bảng giá & bảng trạng thái theo loại hình
@@ -592,13 +594,14 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
       currency: string;
       attributes: Record<string, string | number | boolean | null> | null;
     }> = [];
-    if (row.project_id) {
+    if (row.project_id && project) {
       const { data: units } = await supabaseAdmin
         .from("products")
         .select(
           "id,code,name,product_type,zone,floor,area,usable_area,bedrooms,bathrooms,direction,legal_status,listing_status,price,currency,attributes",
         )
         .eq("project_id", row.project_id)
+        .eq("tenant_id", row.tenant_id)
         .eq("is_public", true)
         .eq("status", "active")
         .order("zone", { ascending: true })
@@ -640,6 +643,7 @@ export const getPublicSalesPage = createServerFn({ method: "GET" })
         .from("cards")
         .select("slug,display_name,title,company,avatar_url")
         .eq("owner_user_id", row.owner_user_id)
+        .eq("tenant_id", row.tenant_id)
         .eq("is_published", true)
         .is("deleted_at", null)
         .order("updated_at", { ascending: false })

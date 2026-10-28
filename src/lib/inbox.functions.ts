@@ -6,6 +6,7 @@ import { CHANNELS_KEY, channelSettingsSchema, parseChannelSettings } from "@/lib
 
 import { canAccessConversation, replyChannel } from "./omnichannel";
 import { ADMIN_ROLES as MANAGER_ROLES } from "@/lib/permissions";
+import { matchedCallPhone } from "./call-destination";
 
 async function roles(
   supabase: { from: (t: "user_roles") => any },
@@ -370,21 +371,25 @@ export const startCall = createServerFn({ method: "POST" })
     if (digits.length < 8) throw new Error("Số điện thoại không hợp lệ");
     const sbAny = supabase as any;
     const [{ data: leadHit }, { data: convHit }, { data: custHit }] = await Promise.all([
-      sbAny.from("leads").select("id,owner_user_id").eq("tenant_id", data.tenantId).ilike("phone", `%${digits}`).limit(5),
-      sbAny.from("conversations").select("id,owner_user_id").eq("tenant_id", data.tenantId).ilike("contact_phone", `%${digits}`).limit(5),
-      sbAny.from("customers").select("id").eq("tenant_id", data.tenantId).ilike("phone", `%${digits}`).limit(5),
+      sbAny.from("leads").select("id,owner_user_id,phone").eq("tenant_id", data.tenantId).ilike("phone", `%${digits}`).limit(5),
+      sbAny.from("conversations").select("id,owner_user_id,contact_phone").eq("tenant_id", data.tenantId).ilike("contact_phone", `%${digits}`).limit(5),
+      sbAny.from("customers").select("id,owner_user_id,phone").eq("tenant_id", data.tenantId).ilike("phone", `%${digits}`).limit(5),
     ]);
     const hits = [...(leadHit ?? []), ...(convHit ?? []), ...(custHit ?? [])] as any[];
     if (!hits.length) throw new Error("Chỉ gọi được số của khách trong workspace");
     if (!roleListCall.some((r) => MANAGER_ROLES.has(r)) && !hits.some((h) => !h.owner_user_id || h.owner_user_id === userId))
       throw new Error("Bạn chỉ được gọi khách mình phụ trách");
 
+    const destination = matchedCallPhone(data.phone, hits.map((h) => h.phone ?? h.contact_phone));
+    if (data.leadId && !(leadHit ?? []).some((h: any) => h.id === data.leadId && matchedCallPhone(destination, [h.phone]))) throw new Error("Khách liên kết không khớp số gọi");
+    if (data.conversationId && !(convHit ?? []).some((h: any) => h.id === data.conversationId && matchedCallPhone(destination, [h.contact_phone]))) throw new Error("Hội thoại không khớp số gọi");
+
     const { loadChannelSettings, startProviderCall, appendMessage } = await import("@/lib/channels.server");
     const settings = await loadChannelSettings(data.tenantId);
     const result = await startProviderCall({
       provider: settings.telephony.provider,
       fromNumber: settings.telephony.hotline,
-      toNumber: data.phone,
+      toNumber: destination,
       recordCalls: settings.telephony.recordCalls,
     });
 
@@ -398,7 +403,7 @@ export const startCall = createServerFn({ method: "POST" })
         provider: settings.telephony.provider,
         external_call_id: result.externalId,
         direction: "out",
-        phone: data.phone,
+        phone: destination,
         status: result.status === "sent" ? "ringing" : result.status === "pending" ? "manual" : "failed",
       } as never)
       .select("id, status")
