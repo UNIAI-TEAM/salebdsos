@@ -48,7 +48,7 @@ export function ChannelGlyph({ channel, className = "size-5" }: { channel: strin
       role="img"
       aria-label={CHANNEL_LABEL[channel] ?? channel}
       title={CHANNEL_LABEL[channel] ?? channel}
-      className={`grid shrink-0 place-items-center rounded-full ${brand ? "text-white" : "bg-muted text-muted-foreground"}`}
+      className={`grid shrink-0 place-items-center rounded-full ${brand ? "text-white" : "bg-muted text-muted-foreground"} ${className}`}
       style={brand ? { backgroundColor: brand } : undefined}
     >
       <Glyph channel={channel} />
