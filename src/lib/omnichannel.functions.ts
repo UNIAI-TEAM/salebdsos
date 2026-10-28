@@ -170,6 +170,10 @@ export const clearAdditionalConnection = createServerFn({ method: "POST" })
     const { data: row, error: readError } = await sb.from("settings").select("value").eq("tenant_id", data.tenantId).eq("key", CHANNELS_KEY).maybeSingle();
     if (readError) throw new Error(copy.checkFailed);
     const config = parseChannelSettings(row?.value);
+    if (data.channel === 'telegram') {
+      const { error: bindingError } = await sb.from('telegram_bot_bindings').update({ enabled: false }).eq('tenant_id',data.tenantId);
+      if (bindingError) throw new Error(copy.checkFailed);
+    }
     config[data.channel] = { accountId: "", accountName: "", accountVerified: false, checkedAt: null };
     if (data.channel === "viber") {
       const { error } = await sb.from("tenant_credentials").delete().eq("tenant_id", data.tenantId).eq("key", "viber_bot_token");
@@ -178,4 +182,34 @@ export const clearAdditionalConnection = createServerFn({ method: "POST" })
     const { error } = await sb.from("settings").upsert({ tenant_id: data.tenantId, key: CHANNELS_KEY, value: config, updated_by: context.userId }, { onConflict: "tenant_id,key" });
     if (error) throw new Error(copy.checkFailed);
     return { ok: true };
+  });
+
+export const activateTelegram = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await admin(context, data.tenantId);
+    const { telegramCall, telegramCredentials } = await import('./telegram.server');
+    const { supabaseAdmin: sb } = await import('@/integrations/supabase/client.server');
+    const bot = await telegramCall('getMe');
+    if (!bot.id) throw new Error(copy.checkFailed);
+    const creds = telegramCredentials();
+    const { data: existing, error: readError } = await sb.from('telegram_bot_bindings').select('tenant_id').eq('bot_id',String(bot.id)).maybeSingle();
+    if (readError || (existing && existing.tenant_id !== data.tenantId)) throw new Error('Bot đã thuộc sàn khác.');
+    const url = 'https://project--037ef328-074a-4c9e-8c29-68ffe926410e-dev.lovable.app/api/public/telegram/webhook';
+    const current = await telegramCall('getWebhookInfo');
+    if (current.url && current.url !== url) throw new Error('Bot đang nhận tin tại ứng dụng khác; chưa thay đổi kết nối.');
+    const { error } = await sb.from('telegram_bot_bindings').upsert({ bot_id:String(bot.id),tenant_id:data.tenantId,key_digest:creds.digest,enabled:false },{onConflict:'bot_id'});
+    if (error) throw new Error(copy.checkFailed);
+    await telegramCall('setWebhook',{url,secret_token:creds.secret,allowed_updates:['message'],drop_pending_updates:false});
+    const verified = await telegramCall('getWebhookInfo');
+    if (verified.url !== url) throw new Error(copy.checkFailed);
+    const { error: enabledError } = await sb.from('telegram_bot_bindings').update({ enabled:true }).eq('bot_id',String(bot.id)).eq('tenant_id',data.tenantId);
+    if (enabledError) throw new Error(copy.checkFailed);
+    const { data: row } = await sb.from('settings').select('value').eq('tenant_id',data.tenantId).eq('key',CHANNELS_KEY).maybeSingle();
+    const config = parseChannelSettings(row?.value);
+    config.telegram = {accountId:String(bot.id),accountName:bot.first_name ?? '',accountVerified:true,checkedAt:new Date().toISOString()};
+    const { error: saveError } = await sb.from('settings').upsert({tenant_id:data.tenantId,key:CHANNELS_KEY,value:config,updated_by:context.userId},{onConflict:'tenant_id,key'});
+    if (saveError) throw new Error(copy.checkFailed);
+    return {ok:true,username:bot.username};
   });
