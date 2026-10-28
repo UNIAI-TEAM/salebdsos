@@ -498,28 +498,57 @@ function ContractsPage() {
                 <Label>Mã hợp đồng</Label>
                 <Input value={form.code} placeholder="Để trống để tự sinh" onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))} />
               </div>
-              <div className="grid gap-1.5">
-                <Label>Ngày ký</Label>
-                <Input type="date" value={form.signedAt} onChange={(e) => setForm((p) => ({ ...p, signedAt: e.target.value }))} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Giá bán</Label>
-                <Input inputMode="numeric" value={form.salePrice} onChange={(e) => setForm((p) => ({ ...p, salePrice: e.target.value }))} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Chiết khấu</Label>
-                <Input inputMode="numeric" value={form.discountAmount} onChange={(e) => setForm((p) => ({ ...p, discountAmount: e.target.value, discountPolicyId: "" }))} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>Hoa hồng Sale (%)</Label>
-                <Input inputMode="decimal" value={form.commissionPercent} onChange={(e) => setForm((p) => ({ ...p, commissionPercent: e.target.value }))} />
-              </div>
+              {form.kind === "sale" ? (
+                <div className="grid gap-1.5">
+                  <Label>Ngày ký</Label>
+                  <Input type="date" value={form.signedAt} onChange={(e) => setForm((p) => ({ ...p, signedAt: e.target.value }))} />
+                </div>
+              ) : null}
+              {form.kind === "rental" ? (
+                <>
+                  <div className="grid gap-1.5">
+                    <Label>Giá thuê / tháng</Label>
+                    <Input inputMode="numeric" data-testid="rental-monthly-rent" value={form.monthlyRent} onChange={(e) => setForm((p) => ({ ...p, monthlyRent: e.target.value }))} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Tiền cọc</Label>
+                    <Input inputMode="numeric" value={form.deposit} onChange={(e) => setForm((p) => ({ ...p, deposit: e.target.value }))} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Thuê từ ngày</Label>
+                    <Input type="date" data-testid="rental-lease-start" value={form.leaseStart} onChange={(e) => setForm((p) => ({ ...p, leaseStart: e.target.value }))} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Thuê đến ngày</Label>
+                    <Input type="date" data-testid="rental-lease-end" value={form.leaseEnd} onChange={(e) => setForm((p) => ({ ...p, leaseEnd: e.target.value }))} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Ngày thu tiền hàng tháng</Label>
+                    <Input inputMode="numeric" data-testid="rental-cycle-day" value={form.cycleDay} onChange={(e) => setForm((p) => ({ ...p, cycleDay: e.target.value }))} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid gap-1.5">
+                    <Label>Giá bán</Label>
+                    <Input inputMode="numeric" value={form.salePrice} onChange={(e) => setForm((p) => ({ ...p, salePrice: e.target.value }))} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Chiết khấu</Label>
+                    <Input inputMode="numeric" value={form.discountAmount} onChange={(e) => setForm((p) => ({ ...p, discountAmount: e.target.value, discountPolicyId: "" }))} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Hoa hồng Sale (%)</Label>
+                    <Input inputMode="decimal" value={form.commissionPercent} onChange={(e) => setForm((p) => ({ ...p, commissionPercent: e.target.value }))} />
+                  </div>
+                </>
+              )}
             </div>
             <div className="grid gap-1.5">
               <Label>Ghi chú</Label>
               <Textarea rows={2} value={form.note} onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))} />
             </div>
-            {policySuggestions.length > 0 && (
+            {form.kind === "sale" && policySuggestions.length > 0 && (
               <div className="grid gap-1.5" data-testid="discount-suggestions">
                 <Label>Chiết khấu thanh toán nhanh áp dụng được</Label>
                 <div className="flex flex-wrap gap-1.5">
