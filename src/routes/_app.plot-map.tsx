@@ -204,6 +204,83 @@ function PlotMapPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const history = useQuery({
+    queryKey: ["plot-transforms", tenantId, effectiveProject],
+    queryFn: () => fnHistory({ data: { projectId: effectiveProject } }),
+    enabled: !!tenantId && !!effectiveProject && historyOpen,
+  });
+
+  const toggleMergeUnit = (u: Row) => {
+    if (u.listing_status !== "available") {
+      toast.error("Chỉ ghép được lô đang trống");
+      return;
+    }
+    setMergeIds((ids) => (ids.includes(u.id) ? ids.filter((x) => x !== u.id) : [...ids, u.id]));
+  };
+
+  const openMerge = () => {
+    const check = validateMergeDraft(mergeUnits, mergeCode || "x");
+    if (!check.ok && mergeUnits.length < 2) {
+      toast.error(check.error);
+      return;
+    }
+    setMergeCode((mergeUnits[0]?.zone ? `${mergeUnits[0].zone}-G` : "LO-G") + "");
+    setMergeArea(totals.area ? String(totals.area) : "");
+    setMergePrice(totals.price ? String(totals.price) : "");
+    setMergeOpen(true);
+  };
+
+  const splitMut = useMutation({
+    mutationFn: () => {
+      if (!selected) throw new Error("Chọn lô trước");
+      const check = validateSplitDraft(selected, splitChildren);
+      if (!check.ok) throw new Error(check.error);
+      return fnSplit({
+        data: {
+          id: selected.id,
+          expected: selected.updated_at,
+          children: splitChildren.map((c) => ({
+            code: c.code.trim(),
+            area: Number(c.area.replace(/[^\d.-]/g, "")),
+            price: Number(c.price.replace(/[^\d.-]/g, "") || 0),
+            map_row: c.map_row ? Number(c.map_row) : null,
+            map_col: c.map_col ? Number(c.map_col) : null,
+          })),
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Đã tách lô — lô gốc chuyển sang Đã tách/ghép");
+      setSplitOpen(false);
+      setSelected(null);
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mergeMut = useMutation({
+    mutationFn: () => {
+      const check = validateMergeDraft(mergeUnits, mergeCode);
+      if (!check.ok) throw new Error(check.error);
+      return fnMerge({
+        data: {
+          ids: mergeIds,
+          code: mergeCode.trim(),
+          area: mergeArea ? Number(mergeArea.replace(/[^\d.-]/g, "")) : undefined,
+          price: mergePrice ? Number(mergePrice.replace(/[^\d.-]/g, "")) : undefined,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Đã ghép lô — các lô gốc chuyển sang Đã tách/ghép");
+      setMergeOpen(false);
+      setMergeIds([]);
+      setMergeMode(false);
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-4" data-testid="plot-map-page">
       <PageHeader
@@ -230,7 +307,35 @@ function PlotMapPage() {
         <Badge variant="outline">{stats.total} lô</Badge>
         <Badge variant="outline">Hấp thụ {stats.absorption}%</Badge>
         <Badge variant="outline">Còn bán ~{money(stats.openValue)}</Badge>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <Button
+            variant={mergeMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              setMergeMode((m) => !m);
+              setMergeIds([]);
+            }}
+            data-testid="toggle-merge-mode"
+          >
+            <Combine className="mr-1.5 h-4 w-4" />
+            {mergeMode ? `Đang chọn ghép (${mergeIds.length})` : "Ghép lô"}
+          </Button>
+          {mergeMode && mergeIds.length >= 2 && (
+            <Button size="sm" onClick={openMerge} data-testid="open-merge">
+              Ghép {mergeIds.length} lô
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setHistoryOpen(true)} data-testid="open-transform-history">
+            <History className="mr-1.5 h-4 w-4" />
+            Lịch sử tách/ghép
+          </Button>
+        </div>
       </div>
+      {mergeMode && (
+        <p className="text-xs text-muted-foreground">
+          Chế độ ghép lô: bấm vào các lô <b>đang trống</b> trên sơ đồ để chọn (2–20 lô, cùng dự án), rồi bấm "Ghép".
+        </p>
+      )}
 
       {/* Chú thích trạng thái */}
       <div className="flex flex-wrap gap-1.5">
