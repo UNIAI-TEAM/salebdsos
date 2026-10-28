@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Cổng CTV: mời liên kết tài khoản riêng, tự gửi khách, chỉ xem trạng thái/hoa hồng của mình; kiểm thử quyền, gửi/lưu lại và điện thoại.
+
 - [x] Telegram hai chiều: địa chỉ công khai không còn 404; kiểm tra trước kích hoạt, cấu hình origin server-side, chặn thiếu hội thoại/sai binding và báo lỗi nhà cung cấp; 24 kiểm thử đạt. Nhận thật TEST TELEGRAM 2842 → trả lời từ Hộp thoại được Telegram xác nhận → tải lại vẫn thấy Đã gửi. 0 tin chờ, không có lỗi webhook; bản gia cố mới chưa xuất bản.
 
 - [x] Cộng tác viên bán hàng: hồ sơ, Sale phụ trách, khách giới thiệu, duyệt hoa hồng theo hợp đồng và lịch sử chi riêng; thử lưu/đọc lại khoản chi 20/60 triệu, chặn trùng/vượt/sửa đã chi và sàn khác, 3 kiểm thử đạt, mobile không tràn; dữ liệu thử đã dọn. Chưa xuất bản; chưa có tài khoản CTV hoặc cổng tự gửi khách.
