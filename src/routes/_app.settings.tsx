@@ -14,11 +14,12 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { BrandingFields } from '@/components/app/branding-fields';
 import {
   getSettings, updateSetting, resetSetting, type SettingKey, type SettingsMap,
 } from "@/lib/settings.functions";
 
-export const Route = createFileRoute("/_app/settings")({ component: SettingsPage });
+export const Route = createFileRoute("/_app/settings")({ head:()=>({meta:[{title:'Cài đặt & thương hiệu sàn — SaleBDS OS'},{name:'description',content:'Chọn giao diện, thay logo và slogan riêng cho sàn bất động sản.'},{property:'og:title',content:'Cài đặt thương hiệu — SaleBDS OS'},{property:'og:description',content:'Quản lý giao diện, logo và slogan của sàn.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component: SettingsPage });
 
 const TABS: { key: SettingKey; label: string; icon: typeof User; desc: string }[] = [
   { key: "general", label: "Chung", icon: User, desc: "Tên workspace, múi giờ, ngôn ngữ, tiền tệ" },
@@ -37,21 +38,21 @@ function SettingsPage() {
 
   const q = useQuery({
     queryKey: ["settings", tenantId],
-    queryFn: () => fnGet({ data: { tenantId: tenantId! } }),
+    queryFn: () => fnGet({ data: { tenantId: tenantId ?? '' } }),
     enabled: !!tenantId,
   });
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["settings", tenantId] });
+  const invalidate = () => {qc.invalidateQueries({ queryKey: ["settings", tenantId] });qc.invalidateQueries({queryKey:['tenant-branding',tenantId]});};
 
   const updateMut = useMutation({
     mutationFn: (input: { key: SettingKey; value: unknown }) =>
-      fnUpdate({ data: { tenantId: tenantId!, key: input.key, value: input.value } }),
+      fnUpdate({ data: { tenantId: tenantId ?? '', key: input.key, value: input.value } }),
     onSuccess: () => { toast.success("Đã lưu cài đặt"); invalidate(); },
     onError: (e: Error) => toast.error(e.message || "Không lưu được"),
   });
 
   const resetMut = useMutation({
-    mutationFn: (key: SettingKey) => fnReset({ data: { tenantId: tenantId!, key } }),
+    mutationFn: (key: SettingKey) => fnReset({ data: { tenantId: tenantId ?? '', key } }),
     onSuccess: () => { toast.success("Đã đặt lại mặc định"); invalidate(); },
     onError: (e: Error) => toast.error(e.message || "Không đặt lại được"),
   });
@@ -84,6 +85,8 @@ function SettingsPage() {
                   <div className="text-[12px] text-muted-foreground">{t.desc}</div>
                 </div>
                 <SettingForm
+                  key={tenantId}
+                  tenantId={tenantId}
                   section={t.key}
                   values={settings}
                   saving={updateMut.isPending && updateMut.variables?.key === t.key}
@@ -101,8 +104,9 @@ function SettingsPage() {
 }
 
 function SettingForm({
-  section, values, saving, resetting, onSave, onReset,
+  tenantId, section, values, saving, resetting, onSave, onReset,
 }: {
+  tenantId: string;
   section: SettingKey;
   values: SettingsMap;
   saving: boolean;
@@ -172,23 +176,7 @@ function SettingForm({
       )}
 
       {section === "branding" && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Màu chính (HEX)">
-            <div className="flex items-center gap-2">
-              <Input value={String(form.primary_color ?? "#2563EB")}
-                onChange={(e) => set("primary_color", e.target.value)} placeholder="#2563EB" />
-              <div className="h-9 w-9 rounded-md border" style={{ background: String(form.primary_color ?? "#2563EB") }} />
-            </div>
-          </Field>
-          <Field label="Logo URL">
-            <Input value={String(form.logo_url ?? "")} onChange={(e) => set("logo_url", e.target.value)}
-              placeholder="https://…" />
-          </Field>
-          <Field label="Slogan" className="sm:col-span-2">
-            <Input value={String(form.tagline ?? "")} maxLength={160}
-              onChange={(e) => set("tagline", e.target.value)} placeholder="Điều hành kinh doanh bằng điểm chạm" />
-          </Field>
-        </div>
+        <BrandingFields tenantId={tenantId} form={form} set={set}/>
       )}
 
       {section === "business" && (

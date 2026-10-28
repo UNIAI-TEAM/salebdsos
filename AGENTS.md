@@ -30,3 +30,4 @@
 - CRM attachments use a private bucket with tenant/uploader paths and related-record checks; public marketing storage stays separate to prevent unauthenticated document downloads.
 - Staff invitations bind verified recipient email transactionally; existing global identities are invited rather than overwritten, and tenant admins cannot reset passwords for cross-tenant or platform accounts.
 - Tenant sender domains use admin-checked service-only configuration and encrypted tenant credentials; provider verification gates sending, never shared workspace credentials.
+- Tenant branding uses tenant-keyed settings and semantic CSS presets; mode stays a user preference, and logo uploads validate admin access and image bytes.
