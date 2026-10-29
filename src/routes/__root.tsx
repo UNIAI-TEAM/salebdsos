@@ -90,6 +90,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
+      { name: "zalo-platform-site-verification", content: "Ji23ShB8CrHRxkTLlVjCJM3Pza6Cho8RCJat" },
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
       { name: "theme-color", content: "#0B0F1A" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
