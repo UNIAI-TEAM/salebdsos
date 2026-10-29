@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Settings2,
   ArrowLeft, Bot, Check, CircleCheck, CircleDot, Inbox, ListFilter, PanelRight, Plus, Radio, UserRound, X, Zap,
+  Paperclip,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -39,6 +40,8 @@ import {
   saveCallResult,
   saveChannelSettings,
   sendMessage,
+  sendZaloAttachment,
+  resendZaloMessage,
   startCall,
 } from "@/lib/inbox.functions";
 import { listAssignees } from "@/lib/tickets.functions";
@@ -53,6 +56,8 @@ import {
   type ChannelSettings,
 } from "@/lib/channels";
 import { ChatConnections } from "@/components/app/chat-connections";
+import { attachmentKind, formatLeft, zaloWindow } from "@/lib/zalo-oa";
+import { INBOX_ZALO_COPY as ZT } from "@/lib/inbox-zalo-copy";
 import { INBOX_COPY as t, replyChannel, messengerWindowOpen, PENDING_INBOX_CHANNELS, canSendPendingChannel } from "@/lib/omnichannel";
 import { inboxLeadChoices, linkConversationLead } from "@/lib/omnichannel.functions";
 import { Link } from "@tanstack/react-router";
@@ -113,6 +118,8 @@ function InboxPage() {
   const fetchList = useServerFn(listConversations);
   const fetchThread = useServerFn(getConversation);
   const send = useServerFn(sendMessage);
+  const sendAttachment = useServerFn(sendZaloAttachment);
+  const resend = useServerFn(resendZaloMessage);
   const call = useServerFn(startCall);
   const saveCall = useServerFn(saveCallResult);
   const fetchChannels = useServerFn(getChannelSettings);
