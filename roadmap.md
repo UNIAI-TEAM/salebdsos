@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Kiểm thử từng bước Vietants cùng người dùng: chuẩn bị kịch bản, xác nhận bản xuất bản, khách thật gửi lời chào/lựa chọn/chuyển nhân viên, kiểm tra ticket không trùng, nhân viên trả lời/đóng phiếu, khách chấm điểm và đọc lại. Báo người dùng tại mỗi bước cần thao tác từ Zalo; không giả lập tin khách thành kiểm thử thật.
+
 - [x] Gọi lấy lại hồ sơ Vietants ngày 29/10: Zalo trả tên Nguyễn Tuấn Kiệt và URL ảnh thật, lỗi null; tên/ảnh hiện trên Hộp thoại. Không còn chặn -212 cho khách đã thử.
 - [x] Kiểm tra cấu hình hỗ trợ và lưu bản nháp “Vietants – Tư vấn & chuyển nhân viên” đang Tắt, không bịa bảng giá; tải lại giữ nguyên. Mô phỏng lời chào → chọn 1 → câu ngoài kịch bản → gặp nhân viên đạt; 44 test quy tắc đạt. Kịch bản và bật Zalo áp dụng toàn sàn, không riêng OA; chưa bật để tránh tác động OA khác.
 - [ ] Kiểm thử Zalo toàn luồng thật: cần xuất bản code hiện tại, bật kịch bản cho kênh Zalo và khách thử mới chưa có Sale trả lời gửi tin/lựa chọn/gặp nhân viên/điểm. Khảo sát cũ đã gửi thật nhưng điểm 5 chưa lưu; không coi mô phỏng hoặc ticket thủ công là xác nhận toàn luồng.
