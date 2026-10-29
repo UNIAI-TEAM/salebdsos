@@ -30,4 +30,4 @@
 - Staff invitations bind verified recipient email transactionally; existing global identities are invited rather than overwritten, and tenant admins cannot reset passwords for cross-tenant or platform accounts.
 - Tenant sender domains use admin-checked service-only configuration and encrypted tenant credentials; provider verification gates sending, never shared workspace credentials.
 - Tenant branding uses tenant-keyed settings and semantic CSS presets; mode stays a user preference, and logo uploads validate admin access and image bytes.
-- Zalo OAs: service-only zalo_oa_accounts with encrypted per-row tokens and per-OA webhook keys; locked atomic refresh (single-use refresh token); replies use the conversation identity's OA, never a guessed one.
+- Zalo OAs use encrypted service-only accounts, locked token refresh and identity-scoped replies; health uses per-OA webhook evidence, signatures preserve raw bodies and IDs, and accept documented mac spacing.

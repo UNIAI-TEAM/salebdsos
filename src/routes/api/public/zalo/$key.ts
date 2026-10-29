@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { eventText, webhookFresh, ZALO_FOLLOW_EVENTS, ZALO_HANDLED_EVENTS } from "@/lib/zalo-oa";
+import { eventText, parseZaloWebhook, webhookFresh, ZALO_FOLLOW_EVENTS, ZALO_HANDLED_EVENTS } from "@/lib/zalo-oa";
 
 const schema = z.object({
   event_name: z.string().max(80),
@@ -29,16 +29,17 @@ export const Route = createFileRoute("/api/public/zalo/$key")({
         const { data: oa } = await sb.from("zalo_oa_accounts").select("id,tenant_id,oa_id,app_id,status,project_id,app_secret_ct,app_secret_iv,oa_secret_ct,oa_secret_iv").eq("webhook_key", params.key).maybeSingle();
         if (!oa || oa.status === "disconnected") return json({ error: "not found" }, 404);
         const { decryptValue } = await import("@/lib/credentials.server");
-        const { signatureEquals, zaloSignature, receiveChannelMessage } = await import("@/lib/omnichannel.server");
+        const { receiveChannelMessage } = await import("@/lib/omnichannel.server");
+        const { verifyZaloSignature } = await import("@/lib/zalo-signature.server");
         const { logWebhook } = await import("@/lib/zalo-oa.server");
         let parsed;
-        try { parsed = schema.safeParse(JSON.parse(raw)); } catch { await logWebhook(oa.tenant_id, oa.id, "", false, "JSON không hợp lệ"); return json({ ok: false, rejected: "bad json" }); }
+        try { parsed = schema.safeParse(parseZaloWebhook(raw)); } catch { await logWebhook(oa.tenant_id, oa.id, "", false, "JSON không hợp lệ"); return json({ ok: false, rejected: "bad json" }); }
         if (!parsed.success) { await logWebhook(oa.tenant_id, oa.id, "", false, "Sự kiện sai định dạng"); return json({ ok: false, rejected: "invalid event" }); }
         const p = parsed.data;
         const secret = (oa.oa_secret_ct ? await decryptValue(oa.oa_secret_ct, oa.oa_secret_iv) : null) ?? await decryptValue(oa.app_secret_ct, oa.app_secret_iv);
         if (!secret) return json({ ok: false, rejected: "OA not configured" });
         const sig = request.headers.get("x-zevent-signature") ?? "";
-        if (!signatureEquals(sig, zaloSignature(raw, oa.app_id, String(p.timestamp), secret))) {
+        if (!verifyZaloSignature(sig, raw, oa.app_id, String(p.timestamp), secret)) {
           await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sai chữ ký");
           return json({ ok: false, rejected: "invalid signature" });
         }

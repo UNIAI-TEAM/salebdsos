@@ -1,4 +1,6 @@
 export const INBOX_COPY = {
+  zaloReceiveRejected: "Token đã kết nối · xác thực tin đến thất bại. Kiểm tra OA Secret Key trong Sửa cấu hình.",
+  zaloAwaitingWebhook: "Token đã kết nối · chưa nhận tin đến được xác thực",
   activateTelegram: "Bật gửi & nhận Telegram", telegramReady: "Đã bật Telegram · chờ tin nhắn thử", telegramLive: "Gửi và nhận tin nhắn riêng",
   title: "Hộp thoại đa kênh", connected: "Đã kết nối", configured: "Đã cấu hình · chưa xác minh", disconnected: "Chưa kết nối", disabled: "Đang tắt",
   review: "Chưa xác nhận hồ sơ khách", identityMissing: "Chưa xác định duy nhất tài khoản khách trên kênh này; cần kiểm tra liên kết trước khi gửi.",

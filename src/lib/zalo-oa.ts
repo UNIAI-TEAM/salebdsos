@@ -49,6 +49,21 @@ export function canRunAutomation(status: OaStatus) {
   return status === "connected";
 }
 
+/** Multi-OA health is independent of the deprecated single-OA settings. */
+export function oaConnectionSummary(accounts: { status: OaStatus; last_webhook_at: string | null }[]) {
+  const active = accounts.filter((a) => canSend(a.status));
+  return {
+    configured: accounts.some((a) => a.status !== "disconnected"),
+    enabled: active.length > 0,
+    verified: active.some((a) => Boolean(a.last_webhook_at)),
+  };
+}
+
+/** Preserve provider identifiers beyond JavaScript's safe integer range. Verify the original body, not this normalized JSON. */
+export function parseZaloWebhook(raw: string): unknown {
+  return JSON.parse(raw.replace(/"(id|oa_id|app_id)"\s*:\s*(\d+)/g, '"$1":"$2"'));
+}
+
 /** Sự kiện webhook còn mới không (timestamp của Zalo tính bằng mili giây). */
 export function webhookFresh(timestamp: string | number, now = Date.now(), maxAgeMinutes: number = ZALO_OA_DEFAULTS.webhookMaxAgeMinutes) {
   const ts = Number(timestamp);

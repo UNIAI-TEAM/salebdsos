@@ -193,6 +193,7 @@ function InboxPage() {
   const channelsQuery = useQuery({
     queryKey: ["channel-settings", tenantId],
     enabled: Boolean(tenantId),
+    refetchInterval: 20000,
     queryFn: () => {
       if (!tenantId) throw new Error("Chưa chọn workspace");
       return fetchChannels({ data: { tenantId } });
@@ -395,7 +396,7 @@ function InboxPage() {
             <PopoverContent align="end" className="w-80 max-w-[calc(100vw-32px)] p-3">
               <p className="mb-3 text-sm font-semibold">{ui.connections}</p>
               <div className="space-y-3" aria-label={t.channelStatus}>
-                {channelsQuery.data?.connections.map(c => <div key={c.channel} className="flex items-start gap-2"><span className={`mt-1.5 size-1.5 shrink-0 rounded-full ${c.configured && c.enabled && c.verified ? "bg-success" : "bg-muted-foreground"}`} /><div className="min-w-0"><p className="text-xs font-medium">{CHANNEL_LABEL[c.channel]}</p><p className="text-[11px] text-muted-foreground">{!c.configured ? t.disconnected : !c.enabled ? t.disabled : c.verified ? t.connected : t.configured} · {c.channel === "sms" || c.channel === "email" ? t.outboundOnly : t.twoWay}</p></div></div>)}
+                {channelsQuery.data?.connections.map(c => <div key={c.channel} className="flex items-start gap-2"><span className={`mt-1.5 size-1.5 shrink-0 rounded-full ${c.configured && c.enabled && c.verified ? "bg-success" : "bg-muted-foreground"}`} /><div className="min-w-0"><p className="text-xs font-medium">{CHANNEL_LABEL[c.channel]}</p><p className="text-[11px] text-muted-foreground">{("detail" in c && c.detail) || (!c.configured ? t.disconnected : !c.enabled ? t.disabled : c.verified ? t.connected : t.configured)} · {c.channel === "sms" || c.channel === "email" ? t.outboundOnly : t.twoWay}</p></div></div>)}
                 {PENDING_INBOX_CHANNELS.map(c => <div key={c.channel} className="flex items-start gap-2" title={c.reason}><span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-muted-foreground" /><div><p className="text-xs font-medium">{c.label}</p><p className="text-[11px] text-muted-foreground">{t.disconnected} · {t.notActivated}</p></div></div>)}
               </div>
             </PopoverContent>
