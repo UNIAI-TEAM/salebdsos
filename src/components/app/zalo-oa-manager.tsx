@@ -114,7 +114,7 @@ export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tena
       </ul>
       {adding && <AddDialog tenantId={tenantId} projects={projects} apps={(d?.accounts ?? []).filter((a) => a.status !== "disconnected")} onClose={() => setAdding(false)} onSaved={refresh} create={create} />}
       {manualId && <ManualDialog onClose={() => setManualId(null)} onSave={(accessToken, refreshToken) => act("m", () => saveTokens({ data: { tenantId, id: manualId, accessToken, refreshToken } }), "Đã lưu token").then(() => setManualId(null))} />}
-      {editId && (() => { const acc = d?.accounts.find((x) => x.id === editId); return acc ? <EditDialog name={acc.name ?? ""} oaId={acc.oaId} onClose={() => setEditId(null)} onSave={(name, appSecret) => act("e", () => update({ data: { tenantId, id: acc.id, name, ...(appSecret ? { appSecret } : {}) } }), "Đã lưu cấu hình").then(() => setEditId(null))} /> : null; })()}
+      {editId && (() => { const acc = d?.accounts.find((x) => x.id === editId); return acc ? <EditDialog name={acc.name ?? ""} oaId={acc.oaId} onClose={() => setEditId(null)} onSave={(name, appSecret, oaSecret) => act("e", () => update({ data: { tenantId, id: acc.id, name, ...(appSecret ? { appSecret } : {}), ...(oaSecret ? { oaSecret } : {}) } }), "Đã lưu cấu hình").then(() => setEditId(null))} /> : null; })()}
       {logsId && <LogsDialog tenantId={tenantId} id={logsId} onClose={() => setLogsId(null)} />}
     </div>
   );
@@ -164,8 +164,8 @@ function AddDialog({ tenantId, projects, apps, onClose, onSaved, create }: { ten
   );
 }
 
-function EditDialog({ name, oaId, onClose, onSave }: { name: string; oaId: string; onClose: () => void; onSave: (name: string, appSecret: string) => void }) {
-  const [n, setN] = useState(name), [sec, setSec] = useState("");
+function EditDialog({ name, oaId, onClose, onSave }: { name: string; oaId: string; onClose: () => void; onSave: (name: string, appSecret: string, oaSecret: string) => void }) {
+  const [n, setN] = useState(name), [sec, setSec] = useState(""), [oas, setOas] = useState("");
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
@@ -173,8 +173,9 @@ function EditDialog({ name, oaId, onClose, onSave }: { name: string; oaId: strin
         <div className="space-y-3">
           <div className="space-y-1"><Label>Tên hiển thị</Label><Input value={n} onChange={(e) => setN(e.target.value)} /></div>
           <div className="space-y-1"><Label>Secret Key mới (để trống nếu giữ nguyên)</Label><Input type="password" autoComplete="off" value={sec} onChange={(e) => setSec(e.target.value)} /></div>
+          <div className="space-y-1"><Label>OA Secret Key (Zalo Developers → Webhook) — dùng xác minh tin nhắn đến</Label><Input type="password" autoComplete="off" value={oas} onChange={(e) => setOas(e.target.value)} placeholder="Để trống nếu giữ nguyên" /></div>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button disabled={!n.trim() || (sec.length > 0 && sec.length < 10)} onClick={() => onSave(n.trim(), sec.trim())}>Lưu</Button></DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button disabled={!n.trim() || (sec.length > 0 && sec.length < 10) || (oas.length > 0 && oas.length < 10)} onClick={() => onSave(n.trim(), sec.trim(), oas.trim())}>Lưu</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
