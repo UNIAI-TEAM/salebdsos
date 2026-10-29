@@ -4956,6 +4956,8 @@ export type Database = {
           last_webhook_at: string | null
           name: string
           oa_id: string
+          oa_secret_ct: string | null
+          oa_secret_iv: string | null
           oauth_expires_at: string | null
           oauth_state: string | null
           oauth_verifier_ct: string | null
@@ -4986,6 +4988,8 @@ export type Database = {
           last_webhook_at?: string | null
           name?: string
           oa_id: string
+          oa_secret_ct?: string | null
+          oa_secret_iv?: string | null
           oauth_expires_at?: string | null
           oauth_state?: string | null
           oauth_verifier_ct?: string | null
@@ -5016,6 +5020,8 @@ export type Database = {
           last_webhook_at?: string | null
           name?: string
           oa_id?: string
+          oa_secret_ct?: string | null
+          oa_secret_iv?: string | null
           oauth_expires_at?: string | null
           oauth_state?: string | null
           oauth_verifier_ct?: string | null
