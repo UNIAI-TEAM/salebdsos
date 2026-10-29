@@ -1,4 +1,5 @@
 export const INBOX_COPY = {
+  zaloReceiveVerified: "Đã kết nối · đã xác thực nhận tin. Khả năng gửi phụ thuộc gói và quyền Zalo OA.",
   zaloReceiveRejected: "Token đã kết nối · xác thực tin đến thất bại. Kiểm tra OA Secret Key trong Sửa cấu hình.",
   zaloAwaitingWebhook: "Token đã kết nối · chưa nhận tin đến được xác thực",
   activateTelegram: "Bật gửi & nhận Telegram", telegramReady: "Đã bật Telegram · chờ tin nhắn thử", telegramLive: "Gửi và nhận tin nhắn riêng",
