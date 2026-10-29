@@ -105,3 +105,18 @@ describe("zalo window, retry, attachments", () => {
     expect("error" in attachmentKind("image/gif", 100)).toBe(true);
   });
 });
+
+import { parseZaloVerifier, ZALO_VERIFIER_PATH } from "./zalo-oa";
+describe("zalo domain verifier", () => {
+  it("reads code from file content", () => {
+    expect(parseZaloVerifier('<meta property="zalo-platform-site-verification" content="UT6cSgtrBcjwzBemfS8KENpGk3cGfc9XC3Ko" />')).toBe("UT6cSgtrBcjwzBemfS8KENpGk3cGfc9XC3Ko");
+  });
+  it("reads code from filename", () => {
+    expect(parseZaloVerifier("zalo_verifierJi23ShB8CrHRxkTLlVjCJM3Pza6Cho8RCJat.html")).toBe("Ji23ShB8CrHRxkTLlVjCJM3Pza6Cho8RCJat");
+  });
+  it("rejects garbage", () => { expect(parseZaloVerifier("<script>")).toBeNull(); });
+  it("matches only verifier paths", () => {
+    expect(ZALO_VERIFIER_PATH.exec("/zalo_verifierABCDEFGH12.html")?.[1]).toBe("ABCDEFGH12");
+    expect(ZALO_VERIFIER_PATH.test("/zalo_verifier../x.html")).toBe(false);
+  });
+});

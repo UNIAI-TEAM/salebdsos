@@ -208,3 +208,44 @@ export const importLegacyZalo = createServerFn({ method: "POST" })
     await audit(data.tenantId, row.id, context.userId, "imported_legacy");
     return { id: row.id };
   });
+
+export const listZaloVerifiers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => tenant.parse(d))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context, data.tenantId);
+    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
+    const { publicOrigin } = await import("./zalo-oa.server");
+    const { data: rows, error } = await sb.from("zalo_site_verifications" as any).select("code,label,created_at").eq("tenant_id", data.tenantId).order("created_at", { ascending: false });
+    if (error) throw new Error("Không tải được danh sách xác thực");
+    const origin = publicOrigin();
+    return ((rows ?? []) as any[]).map((r) => ({ code: r.code as string, label: r.label as string | null, createdAt: r.created_at as string, url: `${origin}/zalo_verifier${r.code}.html` }));
+  });
+
+export const addZaloVerifier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => tenant.extend({ input: z.string().max(5000), label: z.string().trim().max(120).optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context, data.tenantId);
+    const { parseZaloVerifier } = await import("./zalo-oa");
+    const code = parseZaloVerifier(data.input);
+    if (!code) throw new Error("Không đọc được mã xác thực Zalo từ tệp/nội dung này");
+    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
+    const { data: existing } = await sb.from("zalo_site_verifications" as any).select("tenant_id").eq("code", code).maybeSingle();
+    if (existing && (existing as any).tenant_id !== data.tenantId) throw new Error("Mã xác thực này đã được sàn khác sử dụng");
+    if (!existing) {
+      const { error } = await sb.from("zalo_site_verifications" as any).insert({ code, tenant_id: data.tenantId, label: data.label || null, created_by: context.userId });
+      if (error) throw new Error("Không lưu được mã xác thực");
+    }
+    return { code };
+  });
+
+export const removeZaloVerifier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => tenant.extend({ code: z.string().max(80) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context, data.tenantId);
+    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
+    await sb.from("zalo_site_verifications" as any).delete().eq("tenant_id", data.tenantId).eq("code", data.code);
+    return { ok: true };
+  });

@@ -206,3 +206,17 @@ export function attachmentKind(type: string, size: number): { kind: "image" | "f
   if ((ZALO_UPLOAD.file.types as readonly string[]).includes(type)) return size <= ZALO_UPLOAD.file.maxBytes ? { kind: "file" } : { error: "Tệp tối đa 5MB" };
   return { error: "Zalo chỉ nhận ảnh JPG/PNG hoặc tệp PDF/DOC/DOCX" };
 }
+
+/** Extract a Zalo domain-verification code from a filename, file content or raw code. */
+export function parseZaloVerifier(input: string): string | null {
+  const s = input.trim();
+  const meta = s.match(/zalo-platform-site-verification"\s+content="([A-Za-z0-9_-]{8,80})"/);
+  if (meta) return meta[1];
+  const file = s.match(/zalo_verifier([A-Za-z0-9_-]{8,80})\.html/);
+  if (file) return file[1];
+  return /^[A-Za-z0-9_-]{8,80}$/.test(s) ? s : null;
+}
+export const ZALO_VERIFIER_PATH = /^\/zalo_verifier([A-Za-z0-9_-]{8,80})\.html$/;
+export function zaloVerifierHtml(code: string) {
+  return `<!DOCTYPE html>\n<html lang="en">\n\n<head>\n    <meta property="zalo-platform-site-verification" content="${code}" />\n</head>\n\n<body>\nThere Is No Limit To What You Can Accomplish Using Zalo!\n</body>\n\n</html>`;
+}
