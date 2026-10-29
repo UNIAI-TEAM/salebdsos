@@ -85,6 +85,36 @@ export function zaloSendError(message: string) {
     : message;
 }
 
+/* ---------------- OA ID có thể chưa biết khi tạo ---------------- */
+// Admin không phải lúc nào cũng tìm thấy OA ID. Khi để trống, hàng đợi mang mã "pending:" theo
+// webhook_key riêng (không đụng hàng) rồi Zalo xác nhận mã thật trong phiên cấp quyền.
+export const PENDING_OA_PREFIX = "pending:";
+export const pendingOaId = (webhookKey: string) => `${PENDING_OA_PREFIX}${webhookKey}`;
+export const isPendingOaId = (oaId: string) => oaId.startsWith(PENDING_OA_PREFIX);
+
+/**
+ * Mã OA sau phiên cấp quyền. `callback` là mã Zalo trả trên URL callback; `authoritative` là mã do
+ * chính Access Token xác nhận (getoa) — ưu tiên mã này vì URL có thể bị sửa.
+ */
+export function resolveOaAfterGrant(
+  current: string, callback: string | null, authoritative: string | null,
+): { action: "keep" } | { action: "assign"; oaId: string } | { action: "error"; message: string } {
+  if (authoritative && callback && authoritative !== callback) {
+    return { action: "error", message: `Zalo trả về hai mã OA khác nhau (${authoritative} và ${callback}). Anh/chị hãy cấp quyền lại.` };
+  }
+  if (isPendingOaId(current)) {
+    const got = authoritative ?? callback;
+    return got
+      ? { action: "assign", oaId: got }
+      : { action: "error", message: "Zalo không trả về mã OA trong phiên cấp quyền. Anh/chị hãy nhập OA ID thủ công rồi bấm Cấp quyền lại." };
+  }
+  if (callback && callback !== current) return { action: "error", message: "Anh/chị đã chọn OA khác với OA đang cấu hình." };
+  if (authoritative && authoritative !== current) {
+    return { action: "error", message: `Access Token thuộc OA ${authoritative}, không phải OA ${current} đang cấu hình.` };
+  }
+  return { action: "keep" };
+}
+
 export function readZaloProfile(meta: unknown) {
   const m = meta && typeof meta === "object" ? meta as Record<string, unknown> : {};
   const p = m.zaloProfile && typeof m.zaloProfile === "object" ? m.zaloProfile as Record<string, unknown> : {};
