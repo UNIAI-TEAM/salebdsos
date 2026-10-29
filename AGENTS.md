@@ -30,5 +30,5 @@
 - Staff invitations bind verified recipient email transactionally; existing global identities are invited rather than overwritten, and tenant admins cannot reset passwords for cross-tenant or platform accounts.
 - Tenant sender domains use admin-checked service-only configuration and encrypted tenant credentials; provider verification gates sending, never shared workspace credentials.
 - Tenant branding uses tenant-keyed settings and semantic CSS presets; mode stays a user preference, and logo uploads validate admin access and image bytes.
-- Zalo OA: encrypted credentials, locked refresh, identity-scoped replies; raw signatures/large IDs preserved. Delivery events use sender OA; v3 profiles cached per identity, CRM names stay. OA ID may be left blank, then filled from the token-confirmed code; assigned OAs are never rewritten.
+- Zalo OA: encrypted tokens, locked refresh, identity-scoped replies; preserve raw signatures/large IDs. Delivery uses sender OA; v3 profiles cache per identity with authorized refresh, preserving CRM names. Pending OA IDs come from token confirmation; assigned IDs never change.
 - Tickets/CSAT/welcome bot: pure tested support.ts + afterInbound run once per stored inbound message on every channel; a partial unique index keeps one active ticket per conversation.

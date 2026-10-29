@@ -10,4 +10,6 @@ export const INBOX_ZALO_COPY = {
   resend: "Gửi lại",
   resent: "Đã gửi lại thành công",
   resendFailed: "Gửi lại chưa thành công",
+  refreshProfile: "Lấy lại tên và ảnh từ Zalo",
+  profileUpdated: "Đã lấy lại thông tin khách từ Zalo",
 } as const;

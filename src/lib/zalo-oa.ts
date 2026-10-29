@@ -118,6 +118,12 @@ export function readZaloProfile(meta: unknown) {
   return { name: typeof p.name === "string" ? p.name : null, avatar: typeof p.avatar === "string" && p.avatar.startsWith("https://") ? p.avatar : null };
 }
 
+export function zaloProfileFailure(code: number | undefined, message: string, http: number) {
+  if (code === -212) return "Zalo chưa cho ứng dụng dùng API lấy tên/ảnh (mã -212). Trong Zalo Developers → Đăng ký API → Official Account API, đăng ký API truy xuất chi tiết người dùng và kiểm tra quyền quản lý thông tin người dùng.";
+  if (/upgrade OA Tier Package/i.test(message)) return "Zalo từ chối lấy tên/ảnh: OA cần nâng cấp gói dịch vụ để dùng tính năng này.";
+  return `Zalo từ chối lấy tên/ảnh (mã ${code ?? http}). Kiểm tra quyền quản lý thông tin người dùng của ứng dụng.`;
+}
+
 export function zaloContactName(name: string | null, meta: unknown) {
   const profile = readZaloProfile(meta);
   return !name || ["Khách Zalo", "Khách ẩn danh"].includes(name) ? profile.name || name : name;

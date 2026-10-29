@@ -13,7 +13,7 @@ import {
   MessageSquare,
   Settings2,
   ArrowLeft, Bot, Check, CircleCheck, CircleDot, Inbox, ListFilter, PanelRight, Plus, Radio, UserRound, X, Zap,
-  Paperclip,
+  Paperclip, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -121,6 +121,17 @@ function InboxPage() {
 
   const fetchList = useServerFn(listConversations);
   const fetchThread = useServerFn(getConversation);
+  const profileRefresh = useMutation({
+    mutationFn: async () => {
+      if (!tenantId || !activeId) throw new Error(ui.select);
+      return fetchThread({ data: { tenantId, conversationId: activeId, refreshProfile: true } });
+    },
+    onSuccess: (result) => {
+      result.conversation.profileError ? toast.warning(result.conversation.profileError) : toast.success(ZT.profileUpdated);
+      refresh();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
   const send = useServerFn(sendMessage);
   const sendAttachment = useServerFn(sendZaloAttachment);
   const resend = useServerFn(resendZaloMessage);
@@ -506,6 +517,7 @@ function InboxPage() {
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 text-xs">
             <div className="flex flex-col items-center gap-2 py-2"><Avatar className="size-14"><AvatarImage src={thread.conversation.avatar ?? undefined} alt={thread.conversation.name} /><AvatarFallback className="bg-secondary text-lg font-semibold">{initials(thread.conversation.name)}</AvatarFallback></Avatar><p className="text-center text-sm font-semibold">{thread.conversation.name}</p><Badge variant="outline" className="gap-1 text-[10px]"><ChannelGlyph channel={thread.conversation.channel} className="size-3" />{CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}</Badge></div>
             {thread.conversation.profileError && <p role="status" className="text-warning">{thread.conversation.profileError}</p>}
+            {thread.conversation.zalo && <Button size="sm" variant="outline" className="w-full" disabled={profileRefresh.isPending} onClick={() => profileRefresh.mutate()}><RefreshCw className={profileRefresh.isPending ? "animate-spin" : ""} />{ZT.refreshProfile}</Button>}
             <div><p className="mb-1 text-muted-foreground">{ui.phone}</p>{thread.conversation.phone ? <a href={`tel:${thread.conversation.phone}`} className="font-medium">{thread.conversation.phone}</a> : <p>{ui.noPhone}</p>}</div>
             <div><p className="mb-1 text-muted-foreground">{ui.project}</p><p>{items.find(i => i.id === activeId)?.projectName ?? ui.noProject}</p></div>
             <div className="space-y-2">{thread.conversation.leadId && <Button asChild size="sm" variant="outline" className="w-full"><Link to="/leads" search={{ lead: thread.conversation.leadId }}><UserRound />{ui.profile}</Link></Button>}<Button size="sm" variant="ghost" className="w-full" onClick={() => setLinkOpen(true)}>{t.link}</Button>{!thread.conversation.customerId && <Button size="sm" variant="outline" className="w-full" onClick={() => { setCustForm({ fullName: thread.conversation.name === "Khách ẩn danh" ? "" : thread.conversation.name, phone: thread.conversation.phone ?? "", email: "" }); setCreateCustOpen(true); }} data-testid="create-customer-from-conversation"><Plus />Tạo khách hàng mới từ hội thoại</Button>}</div>

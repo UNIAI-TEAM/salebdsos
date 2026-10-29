@@ -1,5 +1,10 @@
 # Roadmap
 
+- [x] Gọi lại API tên/ảnh đúng OA Vietants từ hội thoại đăng nhập; Zalo trả -212 (ứng dụng chưa đăng ký API lấy chi tiết người dùng, không phải lỗi gói). Thêm nút lấy lại hồ sơ và hướng dẫn chính xác; 30 test đạt, build OK.
+- [x] Thử ticket Vietants thật: tạo phiếu kiểm thử liên kết hội thoại, Nhận → Xử lý xong trên giao diện, Zalo xác nhận khảo sát đã gửi (có message ID), tải lại phiếu vẫn Đã xử lý/Chờ khách. Khách gửi TEST TICKET VIETANTS và trả lời 5 đã vào hội thoại.
+- [ ] Vietants tự tạo ticket/lưu điểm 5/kịch bản: webhook trên trang đã xuất bản vẫn chạy bản cũ, chưa gọi phần hỗ trợ mới; cần xuất bản rồi thử tin mới. Không coi phiếu tạo thủ công là kiểm chứng tự tạo, chưa lưu điểm từ tin 5; không bật bot giành hội thoại đã có Sale trả lời.
+- [ ] Tên/ảnh Vietants thành công: quản trị ứng dụng cần đăng ký API truy xuất chi tiết người dùng trong Zalo Developers và quyền quản lý thông tin người dùng; sau đó bấm Lấy lại tên và ảnh từ Zalo.
+
 - [x] Form "Thêm Zalo OA" rõ ràng: mỗi ô có hướng dẫn lấy giá trị ở đâu; Secret Key đổi tên thành "Secret Key của ứng dụng (App Secret)" và ghi rõ không phải OA Secret Key (khóa này nhập sau trong Sửa cấu hình). OA ID được bỏ trống: lưu dạng chờ theo webhook riêng, cấp quyền xong tự ghi đúng mã do token xác nhận; OA đã có mã không bao giờ bị cấp quyền sau ghi đè. 17 test đạt, đã thử lưu không nhập OA ID → hiện "Chưa có mã OA — bấm Cấp quyền" → xóa bản ghi thử, build OK. Chưa xuất bản.
 - [x] Đối chiếu lỗi Zalo thật: nhận user_send_text thành công lúc 04:48 UTC; gửi bị nhà cung cấp chặn do OA cần nâng cấp gói. Bổ sung lấy tên/ảnh qua v3 user-detail, cache đúng danh tính OA và hiển thị avatar/lỗi; API hồ sơ hiện bị Zalo từ chối nên chưa có tên/ảnh thật. Sửa nhận diện OA ở sự kiện xác nhận gửi để tránh báo Sai OA giả; 29 test đạt, giao diện hội thoại thật/lỗi đã kiểm tra, bản sửa chưa xuất bản.
 - [ ] Zalo gửi/tên/ảnh thành công: chờ quản trị OA kiểm tra nâng cấp gói và quyền quản lý thông tin người dùng; không thể vượt giới hạn Zalo bằng gửi lại hoặc đổi khóa.

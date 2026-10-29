@@ -2,7 +2,7 @@
 import { createHash } from "crypto";
 import { supabaseAdmin as sb } from "@/integrations/supabase/client.server";
 import { decryptValue, encryptValue } from "./credentials.server";
-import { canSend, isPendingOaId, isTransientSendError, needsRefresh, OAUTH_CALLBACK_PATH, resolveOaAfterGrant, ZALO_OA_DEFAULTS, ZALO_RETRY, zaloSendError, type OaStatus } from "./zalo-oa";
+import { canSend, isPendingOaId, isTransientSendError, needsRefresh, OAUTH_CALLBACK_PATH, resolveOaAfterGrant, ZALO_OA_DEFAULTS, ZALO_RETRY, zaloSendError, zaloProfileFailure, type OaStatus } from "./zalo-oa";
 
 const OAUTH = "https://oauth.zaloapp.com/v4/oa";
 const REFRESH_TOKEN_DAYS = 90;
@@ -172,10 +172,7 @@ export async function getOaUserProfile(accountId: string, userId: string) {
     const r = await fetch(url, { headers: { access_token: v.token }, signal: AbortSignal.timeout(6000) });
     const body = await r.json() as { error?: number; message?: string; data?: { display_name?: string; avatar?: string; avatars?: Record<string, string> } };
     if (!r.ok || body.error !== 0 || !body.data) {
-      const packageBlocked = /upgrade OA Tier Package/i.test(body.message ?? "");
-      return { name: null, avatar: null, error: packageBlocked
-        ? "Zalo từ chối lấy tên/ảnh: OA cần nâng cấp gói dịch vụ để dùng tính năng này."
-        : `Zalo từ chối lấy tên/ảnh (mã ${body.error ?? r.status}). Kiểm tra quyền quản lý thông tin người dùng và gói dịch vụ OA.` };
+      return { name: null, avatar: null, error: zaloProfileFailure(body.error, body.message ?? "", r.status) };
     }
     const avatar = body.data.avatar || body.data.avatars?.["240"] || body.data.avatars?.["120"];
     return { name: body.data.display_name?.slice(0, 120) || null, avatar: avatar?.startsWith("https://") ? avatar : null, error: null };
