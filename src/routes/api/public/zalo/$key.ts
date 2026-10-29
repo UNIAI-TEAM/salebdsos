@@ -58,8 +58,9 @@ export const Route = createFileRoute("/api/public/zalo/$key")({
           if (!sig) hints.push("thiếu header chữ ký");
           else if (!/^mac\s*=\s*[a-f0-9]{64}$/i.test(sig.trim())) hints.push("header chữ ký sai định dạng");
           if (!sawOaSecret) hints.push("chưa lưu OA Secret Key");
-          else if (sig) hints.push(`không OA nào trong sàn có OA Secret Key khớp ứng dụng ${payloadApp || oa.app_id} — dán OA Secret Key trên trang Webhook của ứng dụng này vào Sửa cấu hình`);
-          await logWebhook(oa.tenant_id, oa.id, p.event_name, false, `Sai chữ ký: ${hints.join("; ") || "không xác định"}`);
+          else if (sig) hints.push(payloadApp ? `không OA nào trong sàn có OA Secret Key khớp ứng dụng ${payloadApp}` : "sự kiện không ghi mã ứng dụng (có thể do hệ thống khác chuyển tiếp)");
+          const evOa = eventOaId(p) ? String(eventOaId(p)) : "không rõ";
+          await logWebhook(oa.tenant_id, oa.id, p.event_name, false, `Sai chữ ký: ${hints.join("; ") || "không xác định"} · ứng dụng trong tin: ${payloadApp || "không có"} · OA trong tin: ${evOa} · nguồn: ${(request.headers.get("user-agent") ?? "không rõ").slice(0, 60)}`);
           return json({ ok: false, rejected: "invalid signature" });
         }
         if (!webhookFresh(p.timestamp)) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sự kiện quá cũ"); return json({ ok: false, rejected: "stale event" }); }
