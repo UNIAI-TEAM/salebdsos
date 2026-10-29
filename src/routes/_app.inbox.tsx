@@ -620,34 +620,13 @@ function InboxPage() {
             </div>
 
             <div className="rounded-xl border border-border p-3">
-              <div className="flex items-center justify-between gap-3">
-                <Label className="text-sm font-semibold"><MessageCircle className="mr-1.5 inline h-4 w-4" />Zalo OA</Label>
-                <Switch
-                  checked={config.zalo.enabled}
-                  onCheckedChange={(value) => setConfig((prev) => ({ ...prev, zalo: { ...prev.zalo, enabled: value } }))}
-                />
-              </div>
-              <Input
-                className="mt-2"
-                value={config.zalo.oaName}
-                onChange={(event) => setConfig((prev) => ({ ...prev, zalo: { ...prev.zalo, oaName: event.target.value } }))}
-                placeholder="Tên Official Account"
-              />
-              <Input
-                className="mt-2"
-                value={config.zalo.oaId}
-                onChange={(event) => setConfig((prev) => ({ ...prev, zalo: { ...prev.zalo, oaId: event.target.value } }))}
-                placeholder="Mã OA (khi đã có)"
-              />
-              <Input
-                className="mt-2"
-                value={config.zalo.oaLink}
-                onChange={(event) => setConfig((prev) => ({ ...prev, zalo: { ...prev.zalo, oaLink: event.target.value } }))}
-                placeholder="Link mở Zalo cho khách, ví dụ zalo.me/…"
-              />
-              <p className="mt-2 text-[11px] text-muted-foreground">
-                Khoá Zalo OA được lưu qua ô bảo mật ở phía trên.
+              <Label className="text-sm font-semibold"><MessageCircle className="mr-1.5 inline h-4 w-4" />Zalo OA</Label>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Zalo OA (một hoặc nhiều OA) được cấu hình tại một nơi duy nhất: Cài đặt & tích hợp → Tích hợp kênh → Zalo OA.
               </p>
+              <Button asChild size="sm" variant="outline" className="mt-2">
+                <Link to="/integrations" onClick={() => setSettingsOpen(false)}>Mở cấu hình Zalo OA</Link>
+              </Button>
             </div>
 
             <div className="rounded-xl border border-border p-3">
