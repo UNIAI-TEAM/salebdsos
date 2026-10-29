@@ -5069,6 +5069,30 @@ export type Database = {
         }
         Relationships: []
       }
+      zalo_site_verifications: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          label: string | null
+          tenant_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          label?: string | null
+          tenant_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          label?: string | null
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       zalo_webhook_logs: {
         Row: {
           created_at: string
