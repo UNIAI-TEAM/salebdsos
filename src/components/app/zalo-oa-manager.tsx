@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Copy, Plus, Pencil, RefreshCw, ShieldCheck, Pause, Play, Unplug, KeyRound, History } from "lucide-react";
@@ -54,7 +53,7 @@ export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tena
         <p className="max-w-2xl text-sm text-muted-foreground">{T.intro}{!configure && <> {T.configureHint}</>}</p>
         <Button size="sm" onClick={() => setAdding(true)}><Plus className="mr-1 h-4 w-4" />{T.add}</Button>
       </div>
-      {!configure && <Button asChild size="sm" variant="outline"><Link to="/inbox" search={{ settings: "1" } as never}>{T.openConfigure}</Link></Button>}
+      {!configure && <Button asChild size="sm" variant="outline"><a href="/inbox?settings=1">{T.openConfigure}</a></Button>}
       {d && configure && (
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">{T.redirect}</Label>

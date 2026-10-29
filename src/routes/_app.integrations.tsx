@@ -198,7 +198,7 @@ function IntegrationsPage() {
             <div className="flex min-w-0 items-center gap-2"><MessageCircle className="h-5 w-5 shrink-0 text-primary" /><span className="text-sm">Tự tạo khách khi khách nhắn kèm số điện thoại hoặc gửi form thông tin</span></div>
             <Switch checked={form.zaloLeadFromChat} onCheckedChange={(v) => setForm({ ...form, zaloLeadFromChat: v })} />
           </div>
-          {tenantId && <ZaloOaManager tenantId={tenantId} projects={projects} />}
+          {tenantId && <ZaloOaManager tenantId={tenantId} projects={projects} mode="add" />}
         </div>
       </SectionCard>
 

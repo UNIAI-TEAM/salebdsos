@@ -61,6 +61,8 @@ import { INBOX_ZALO_COPY as ZT } from "@/lib/inbox-zalo-copy";
 import { INBOX_COPY as t, replyChannel, messengerWindowOpen, PENDING_INBOX_CHANNELS, canSendPendingChannel } from "@/lib/omnichannel";
 import { inboxLeadChoices, linkConversationLead } from "@/lib/omnichannel.functions";
 import { Link } from "@tanstack/react-router";
+import { ZaloOaManager } from "@/components/app/zalo-oa-manager";
+import { supabase } from "@/integrations/supabase/client";
 import { expandShortcut } from "@/lib/social";
 
 const TAG_TONE: Record<string, string> = {
@@ -153,6 +155,8 @@ function InboxPage() {
   const [sendChannel, setSendChannel] = useState<string>("auto");
   const [emailSubject, setEmailSubject] = useState("Thông tin dự án");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  useEffect(() => { if (new URLSearchParams(window.location.search).get("settings") === "1") setSettingsOpen(true); }, []);
+  const zaloProjects = useQuery({ queryKey: ["inbox-zalo-projects", tenantId], enabled: Boolean(tenantId && settingsOpen), queryFn: async () => { const { data, error } = await supabase.from("projects").select("id,name").eq("tenant_id", tenantId!).order("name"); if (error) throw error; return data as { id: string; name: string }[]; } });
   const [config, setConfig] = useState<ChannelSettings>(DEFAULT_CHANNEL_SETTINGS);
   const [callDialog, setCallDialog] = useState<{ callId: string; phone: string } | null>(null);
   const [callForm, setCallForm] = useState({ outcome: "connected", minutes: "1", recordingUrl: "", notes: "" });
@@ -590,7 +594,7 @@ function InboxPage() {
 
       {/* Cấu hình kênh liên lạc */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Kênh liên lạc</DialogTitle>
           </DialogHeader>
@@ -621,12 +625,7 @@ function InboxPage() {
 
             <div className="rounded-xl border border-border p-3">
               <Label className="text-sm font-semibold"><MessageCircle className="mr-1.5 inline h-4 w-4" />Zalo OA</Label>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Zalo OA (một hoặc nhiều OA) được cấu hình tại một nơi duy nhất: Cài đặt & tích hợp → Tích hợp kênh → Zalo OA.
-              </p>
-              <Button asChild size="sm" variant="outline" className="mt-2">
-                <Link to="/integrations" onClick={() => setSettingsOpen(false)}>Mở cấu hình Zalo OA</Link>
-              </Button>
+              <div className="mt-2">{tenantId && <ZaloOaManager tenantId={tenantId} projects={zaloProjects.data ?? []} mode="configure" />}</div>
             </div>
 
             <div className="rounded-xl border border-border p-3">
