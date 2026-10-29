@@ -31,3 +31,4 @@
 - Tenant sender domains use admin-checked service-only configuration and encrypted tenant credentials; provider verification gates sending, never shared workspace credentials.
 - Tenant branding uses tenant-keyed settings and semantic CSS presets; mode stays a user preference, and logo uploads validate admin access and image bytes.
 - Zalo OA: encrypted credentials, locked refresh, identity-scoped replies; raw signatures/large IDs preserved. Delivery events use sender OA; v3 profiles cached per identity, CRM names stay. OA ID may be left blank, then filled from the token-confirmed code; assigned OAs are never rewritten.
+- Support tickets/CSAT/welcome bot share pure src/lib/support.ts (tested) and support.server.ts afterInbound, called once after every stored inbound message (web chat + receiveChannelMessage); one active ticket per conversation is enforced by a partial unique index, and auto-sends only go to verified channels.
