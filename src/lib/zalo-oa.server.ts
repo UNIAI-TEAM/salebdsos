@@ -164,7 +164,7 @@ export async function sendFromOa(accountRowId: string, zaloUserId: string, text:
     let message: Record<string, unknown> = { text: text.slice(0, 2000) };
     if (file) {
       const form = new FormData();
-      form.append("file", new Blob([file.bytes], { type: file.type }), file.name);
+      form.append("file", new Blob([file.bytes as BlobPart], { type: file.type }), file.name);
       const up = await zaloCall(token, `https://openapi.zalo.me/v2.0/oa/upload/${file.kind}`, { method: "POST", body: form });
       if (!up.ok) {
         lastError = up.body.message || `Tải tệp lên Zalo lỗi ${up.http ?? "mạng"}`;
