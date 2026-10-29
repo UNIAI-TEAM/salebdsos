@@ -1,5 +1,6 @@
 // Cấu hình hỗ trợ khách: tự tạo ticket, đánh giá hài lòng (CSAT), kịch bản chào mừng. Pure — dùng chung UI và máy chủ.
 import { z } from "zod";
+import { SUPPORT_COPY } from "./support-copy";
 
 export const SUPPORT_KEY = "support_config";
 /** Kênh gửi được tin tự động thật (đã kiểm chứng gửi đi). */
@@ -21,6 +22,7 @@ export const supportSchema = z.object({
     expireHours: z.number().int().min(1).max(168).default(48),
   }).default({}),
   welcome: z.object({
+    fallback: z.string().trim().min(5).max(500).default(SUPPORT_COPY.fallbackDefault),
     flowId: z.string().max(40).default(""),
     channels: z.array(z.enum(AUTO_SEND_CHANNELS)).default(["web_chat"]),
   }).default({}),
@@ -59,3 +61,5 @@ export function surveyOpen(cfg: SupportConfig, requestedAt: string | null, rated
 }
 
 export const canAutoSend = (channel: string) => (AUTO_SEND_CHANNELS as readonly string[]).includes(channel);
+
+export const shouldCreateSupportTicket = (cfg: SupportConfig, handoff: boolean) => cfg.ticket.autoCreate && handoff;

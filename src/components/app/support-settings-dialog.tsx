@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getSupportSettings, saveSupportSettings, TICKET_PRIORITIES } from "@/lib/tickets.functions";
 import { AUTO_SEND_CHANNELS, renderSurvey, type SupportConfig } from "@/lib/support";
+import { SUPPORT_COPY as C } from "@/lib/support-copy";
 
 const CHANNEL_LABEL: Record<string, string> = { web_chat: "Chat trên web", zalo: "Zalo OA", telegram: "Telegram" };
 
@@ -56,13 +57,13 @@ export function SupportSettingsDialog({ open, onOpenChange, tenantId }: { open: 
             </TabsList>
 
             <TabsContent value="ticket" className="divide-y divide-border">
-              <Row label="Tự tạo ticket khi khách nhắn" hint="Mỗi hội thoại chỉ có 1 ticket đang mở, giao cho Sale phụ trách khách.">
+              <Row label={C.ticketOnHandoff} hint={C.ticketOnHandoffHint}>
                 <Switch disabled={ro} checked={cfg.ticket.autoCreate} onCheckedChange={(v) => set("ticket", { autoCreate: v })} />
               </Row>
               <Row label="Hạn phản hồi (phút)" hint="Quá hạn ticket báo đỏ.">
                 <Input disabled={ro} type="number" min={5} className="h-9 w-24" value={cfg.ticket.slaMinutes} onChange={(e) => set("ticket", { slaMinutes: Number(e.target.value) })} />
               </Row>
-              <Row label="Mở lại nếu khách nhắn trong (giờ)" hint="Sau thời gian này sẽ tạo ticket mới. 0 = luôn tạo mới.">
+              <Row label={C.reopen} hint="Sau thời gian này sẽ tạo ticket mới. 0 = luôn tạo mới.">
                 <Input disabled={ro} type="number" min={0} className="h-9 w-24" value={cfg.ticket.reopenHours} onChange={(e) => set("ticket", { reopenHours: Number(e.target.value) })} />
               </Row>
               <Row label="Mức ưu tiên mặc định">
@@ -99,6 +100,7 @@ export function SupportSettingsDialog({ open, onOpenChange, tenantId }: { open: 
             </TabsContent>
 
             <TabsContent value="welcome" className="space-y-3">
+              <div><Label className="text-xs">{C.fallback}</Label><Textarea disabled={ro} rows={3} className="mt-1" value={cfg.welcome.fallback} onChange={(e) => set("welcome", { fallback: e.target.value })} /></div>
               <div>
                 <Label className="text-xs">Kịch bản chào mừng</Label>
                 <p className="text-xs text-muted-foreground">Tin đầu tiên của khách sẽ được trả lời bằng kịch bản này, kèm các lựa chọn để khách chọn.</p>

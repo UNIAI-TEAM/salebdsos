@@ -23,11 +23,18 @@ describe("chat flows", () => {
     expect(stepBot([flow()], s, "Mặt bằng căn hộ", false).state?.nodeId).toBe("layout");
     expect(stepBot([flow()], s, "cho xem bang gia", false).state?.nodeId).toBe("price");
   });
-  it("hands off to Sale on handoff node, unmatched reply, or explicit request", () => {
+  it("hands off only on configured node or explicit request", () => {
     const s = { flowId: "f1", nodeId: "start" };
     expect(stepBot([flow()], s, "3", false)).toMatchObject({ handoff: true, state: null, tag: "Hẹn xem nhà mẫu" });
-    expect(stepBot([flow()], s, "căn góc tầng mấy?", false)).toMatchObject({ handoff: true, reason: "no_match" });
+    expect(stepBot([flow()], s, "căn góc tầng mấy?", false)).toMatchObject({ handoff: false, state: s, reason: "no_match" });
     expect(stepBot([flow()], s, "cho tôi gặp sale", false)).toMatchObject({ handoff: true, reason: "handoff_request" });
+  });
+  it("human request works without a running flow", () => {
+    expect(stepBot([], null, "tôi cần gặp nhân viên", false)).toMatchObject({ handoff: true, reason: "handoff_request" });
+  });
+  it("answers keyword FAQ even while another flow is active", () => {
+    const faq = { ...flow(), id: "faq", trigger: "keyword" as const, keywords: ["pháp lý"], startNodeId: "answer", nodes: [{ ...flow().nodes[0], id: "answer", text: "Hồ sơ pháp lý đã duyệt", buttons: [] }] };
+    expect(stepBot([flow(), faq], { flowId: "f1", nodeId: "start" }, "pháp lý thế nào", false)).toMatchObject({ handoff: false, reply: "Hồ sơ pháp lý đã duyệt" });
   });
   it("keyword trigger matches whole words only", () => {
     const k = { ...flow(), trigger: "keyword" as const, keywords: ["giá"] };

@@ -1,10 +1,11 @@
 // Kịch bản chat dạng cây phân nhánh. Pure: dùng chung builder, mô phỏng và máy chủ.
 import { z } from "zod";
+import { SUPPORT_COPY } from "./support-copy";
 
 export const CHAT_FLOWS_KEY = "chat_flows";
 /** Kênh bot đang tự trả lời thật. Kênh khác chỉ mô phỏng cho tới khi gửi đi được xác minh. */
 export const BOT_LIVE_CHANNELS = ["web_chat"] as const;
-export const HANDOFF_WORDS = ["gap sale", "gap tu van vien", "nguoi that", "tu van vien", "nhan vien"];
+export const HANDOFF_WORDS = ["gap sale", "gap tu van vien", "gap chuyen vien", "nguoi that", "tu van vien", "nhan vien"];
 
 const id = z.string().trim().min(1).max(40);
 export const buttonSchema = z.object({
@@ -131,10 +132,11 @@ export function pickCommentFlow(flows: ChatFlow[], postId: string | null, text: 
 }
 
 /** Một lượt bot: từ trạng thái hiện tại + tin khách → tin trả lời, trạng thái mới, có chuyển Sale không. */
-export function stepBot(flows: ChatFlow[], state: BotState, text: string, isFirstMessage: boolean, vars: Record<string, string> = {}, entry: string | null = null): BotStep {
+export function stepBot(flows: ChatFlow[], state: BotState, text: string, isFirstMessage: boolean, vars: Record<string, string> = {}, entry: string | null = null, fallback: string = SUPPORT_COPY.fallbackDefault): BotStep {
   const idle: BotStep = { reply: null, media: [], state: null, handoff: false, tag: null, appointment: null, need: null, reason: "idle" };
   const enter = (flow: ChatFlow, nodeId: string, reason: BotStep["reason"]): BotStep => {
-    const node = flow.nodes.find((n) => n.id === nodeId)!;
+    const node = flow.nodes.find((n) => n.id === nodeId);
+    if (!node) return idle;
     const end = node.handoff || node.buttons.length === 0;
     return {
       reply: renderNode(node, vars),
@@ -148,11 +150,15 @@ export function stepBot(flows: ChatFlow[], state: BotState, text: string, isFirs
     };
   };
   const current = state ? flows.find((f) => f.id === state.flowId && f.enabled) : null;
-  const node = current?.nodes.find((n) => n.id === state!.nodeId);
+  const node = current?.nodes.find((n) => n.id === state?.nodeId);
+  if (wantsHuman(text)) return { ...idle, reply: SUPPORT_COPY.handoff, handoff: true, reason: "handoff_request" };
   if (current && node) {
-    if (wantsHuman(text)) return { media: [], reply: "Dạ, em chuyển anh/chị sang chuyên viên tư vấn ngay ạ.", state: null, handoff: true, tag: null, appointment: null, need: null, reason: "handoff_request" };
     const b = matchButton(node, text);
-    if (!b) return { media: [], reply: "Dạ, chuyên viên tư vấn sẽ phản hồi anh/chị trong ít phút nữa ạ.", state: null, handoff: true, tag: null, appointment: null, need: null, reason: "no_match" };
+    if (!b) {
+      const other = pickFlow(flows, text, false, entry);
+      if (other) return enter(other, other.startNodeId, "start");
+      return { ...idle, reply: `${fallback}\n\n${node.buttons.map((button, i) => `${i + 1}. ${button.label}`).join("\n")}`, state, reason: "no_match" };
+    }
     if (!b.next) return { reply: null, media: [], state: null, handoff: true, tag: null, appointment: null, need: null, reason: "handoff_node" };
     return enter(current, b.next, "next");
   }

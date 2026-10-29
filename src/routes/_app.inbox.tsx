@@ -66,6 +66,8 @@ import { ZaloOaManager, ZaloDomainVerifier } from "@/components/app/zalo-oa-mana
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { expandShortcut } from "@/lib/social";
+import { SupportSettingsDialog } from "@/components/app/support-settings-dialog";
+import { SUPPORT_COPY as SC } from "@/lib/support-copy";
 
 const TAG_TONE: Record<string, string> = {
   blue: "border-info/30 bg-info/10 text-info", amber: "border-warning/30 bg-warning/10 text-warning",
@@ -168,6 +170,7 @@ function InboxPage() {
   const [sendChannel, setSendChannel] = useState<string>("auto");
   const [emailSubject, setEmailSubject] = useState("Thông tin dự án");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   useEffect(() => { if (new URLSearchParams(window.location.search).get("settings") === "1") setSettingsOpen(true); }, []);
   const zaloProjects = useQuery({ queryKey: ["inbox-zalo-projects", tenantId], enabled: Boolean(tenantId && settingsOpen), queryFn: async () => { const { data, error } = await supabase.from("projects").select("id,name").eq("tenant_id", tenantId!).order("name"); if (error) throw error; return data as { id: string; name: string }[]; } });
   const [config, setConfig] = useState<ChannelSettings>(DEFAULT_CHANNEL_SETTINGS);
@@ -405,6 +408,7 @@ function InboxPage() {
           <span className="hidden text-xs text-muted-foreground sm:inline">{listQuery.data?.unreadTotal ?? 0} {ui.unread.toLowerCase()}</span>
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          <Button size="sm" variant="ghost" title={SC.chatSettings} aria-label={SC.chatSettings} onClick={() => setSupportOpen(true)}><Bot className="size-4" /><span className="hidden sm:inline">{SC.chatSettings}</span></Button>
           <Popover><PopoverTrigger asChild><Button size="sm" variant="ghost" aria-label={ui.connections}><Radio className="size-4" /><span className="hidden sm:inline">{ui.channels}</span></Button></PopoverTrigger>
             <PopoverContent align="end" className="w-80 max-w-[calc(100vw-32px)] p-3">
               <p className="mb-3 text-sm font-semibold">{ui.connections}</p>
@@ -527,6 +531,7 @@ function InboxPage() {
         </aside>}
       </div>
 
+      {tenantId && <SupportSettingsDialog open={supportOpen} onOpenChange={setSupportOpen} tenantId={tenantId} />}
       <Dialog open={linkOpen} onOpenChange={setLinkOpen}><DialogContent><DialogHeader><DialogTitle>{t.link}</DialogTitle></DialogHeader><Input placeholder="Tìm hồ sơ theo tên hoặc SĐT" value={leadSearch} onChange={e => setLeadSearch(e.target.value)} /><div className="max-h-72 space-y-1 overflow-y-auto">{choices.data?.map(l => <Button key={l.id} variant="ghost" className="h-auto w-full justify-start py-3" disabled={linkMutation.isPending} onClick={() => linkMutation.mutate(l.id)}>{l.full_name} · {l.phone ?? "—"}</Button>)}</div></DialogContent></Dialog>
 
       {/* Tạo hồ sơ khách mới từ hội thoại */}

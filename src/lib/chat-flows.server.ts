@@ -1,7 +1,7 @@
 // Chạy bot kịch bản trên hội thoại thật. Chỉ gọi sau khi tin khách đã được lưu.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { appendMessage } from "./channels.server";
-import { BOT_LIVE_CHANNELS, CHAT_FLOWS_KEY, appointmentSlot, parseChatFlows, stepBot, type BotState } from "./chat-flows";
+import { BOT_LIVE_CHANNELS, CHAT_FLOWS_KEY, appointmentSlot, parseChatFlows, stepBot, wantsHuman, type BotState } from "./chat-flows";
 
 type BotMeta = { flowId?: string; nodeId?: string; handoff?: boolean; tags?: string[]; appointmentId?: string };
 
@@ -26,8 +26,11 @@ export async function runChatBot(args: { tenantId: string; conversationId: strin
   // Kịch bản chào mừng: tự đưa lựa chọn ngay tin đầu tiên.
   const flows = parseChatFlows(cfg?.value).flows.map((f) => f.id === support.welcome.flowId ? { ...f, enabled: true, trigger: "first_message" as const } : f);
   const state: BotState = bot.flowId && bot.nodeId ? { flowId: bot.flowId, nodeId: bot.nodeId } : null;
-  const step = stepBot(flows, state, args.text, (count ?? 0) <= 1, args.vars ?? {}, state ? null : args.entry ?? null);
-  if (step.reason === "idle") return { replied: false };
+  const step = stepBot(flows, state, args.text, (count ?? 0) <= 1, args.vars ?? {}, state ? null : args.entry ?? null, support.welcome.fallback);
+  if (step.reason === "idle") {
+    const r = await sendAutoMessage(args.tenantId, args.conversationId, args.channel, support.welcome.fallback);
+    return { replied: r.sent, handoff: wantsHuman(args.text) };
+  }
 
   const web = args.channel === "web_chat";
   for (const m of step.media) {
