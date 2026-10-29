@@ -22,6 +22,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { QrCode } from "@/components/qr-code";
+import { SupportSettingsDialog } from "@/components/app/support-settings-dialog";
+import { SUPPORT_COPY as C } from "@/lib/support-copy";
 
 export const Route = createFileRoute("/_app/chat-flows")({
   head: () => ({
@@ -70,6 +72,7 @@ function ChatFlowsPage() {
   const add = (f: ChatFlow = templateFlow()) => { setFlows((a) => [...a, f]); setActiveId(f.id); };
   const [libOpen, setLibOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -78,6 +81,7 @@ function ChatFlowsPage() {
         sub="Bot trả lời khách theo cây nút bấm và từ khóa, rồi chuyển chuyên viên khi khách cần người thật."
         action={canEdit ? (
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setSupportOpen(true)}><Bot className="h-4 w-4" />{C.chatSettings}</Button>
             <Button variant="outline" onClick={() => setLibOpen(true)}><LibraryBig className="h-4 w-4" />Thư viện mẫu</Button>
             <Button variant="outline" onClick={() => setAiOpen(true)}><Sparkles className="h-4 w-4" />Tạo bằng AI</Button>
             <Button variant="outline" onClick={() => add()}><Plus className="h-4 w-4" />Kịch bản mới</Button>
@@ -85,9 +89,7 @@ function ChatFlowsPage() {
           </div>
         ) : undefined}
       />
-      <div className="rounded-xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-        Bot đang tự trả lời trên <span className="font-medium text-foreground">chat landing</span>. Zalo OA, Messenger, Telegram dùng được ở khung mô phỏng; tự trả lời trên các kênh này sẽ bật sau khi kênh được xác minh gửi/nhận thật. Bot dừng ngay khi Sale nhắn trong hội thoại.
-      </div>
+      {tenantId && <SupportSettingsDialog open={supportOpen} onOpenChange={setSupportOpen} tenantId={tenantId} />}
       {q.isLoading ? <div className="text-sm text-muted-foreground">Đang tải…</div> : (
         <div className="grid gap-6 xl:grid-cols-[220px_minmax(0,1fr)_340px]">
           <SectionCard title="Kịch bản">
