@@ -81,6 +81,7 @@ export const listConversations = createServerFn({ method: "GET" })
         search: z.string().max(120).optional(),
         mine: z.boolean().optional(),
         tag: z.string().max(40).optional(),
+        oa: z.string().regex(/^\d{3,40}$/).optional(),
       })
       .parse(d),
   )
@@ -100,6 +101,11 @@ export const listConversations = createServerFn({ method: "GET" })
 
     if (!canSeeAll || data.mine) query = query.eq("owner_user_id", userId);
     if (data.tag) query = query.contains("meta", { tags: [data.tag] } as never);
+    if (data.oa) {
+      const { data: oaConvs } = await supabase.from("channel_identities").select("conversation_id").eq("tenant_id", data.tenantId).eq("channel", "zalo").eq("account_id", data.oa).limit(1000);
+      const ids = (oaConvs ?? []).map((r) => r.conversation_id);
+      query = query.in("id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+    }
     if (data.channel && data.channel !== "all") query = query.eq("channel", data.channel as never);
     const safeSearch = (data.search ?? "").replace(/[,()*%\\:."']/g, " ").trim();
     if (safeSearch) {
@@ -114,6 +120,8 @@ export const listConversations = createServerFn({ method: "GET" })
     if (convQ.error) throw new Error(convQ.error.message);
 
     const projectNames = new Map((projectsQ.data ?? []).map((p) => [p.id, p.name]));
+    const { oaLabels } = await import("./inbox-zalo.server");
+    const { byConversation, accounts: oaAccounts } = await oaLabels(supabase, data.tenantId, (convQ.data ?? []).filter((r) => r.channel === "zalo").map((r) => r.id));
     const items = (convQ.data ?? []).map((row) => ({
       id: row.id,
       channel: row.channel as string,
@@ -126,10 +134,12 @@ export const listConversations = createServerFn({ method: "GET" })
       projectName: row.project_id ? projectNames.get(row.project_id) ?? null : null,
       leadId: row.lead_id,
       tags: (((row as any).meta ?? {}).tags ?? []) as string[],
+      oaName: byConversation.get(row.id) ?? null,
     }));
 
     return {
       items,
+      oaAccounts,
       canSeeAll,
       unreadTotal: items.reduce((sum, item) => sum + (item.unread ?? 0), 0),
     };
@@ -160,7 +170,7 @@ export const getConversation = createServerFn({ method: "GET" })
       const { data: linked } = await siblings;
       conversationIds = [...new Set([conv.id, ...(linked ?? []).map(c => c.id)])];
     }
-    const { data: identities } = await supabase.from("channel_identities").select("channel,last_inbound_at").eq("tenant_id", data.tenantId).in("conversation_id", conversationIds);
+    const { data: identities } = await supabase.from("channel_identities").select("channel,account_id,conversation_id,last_inbound_at").eq("tenant_id", data.tenantId).in("conversation_id", conversationIds);
 
     const [messagesQ, callsQ] = await Promise.all([
       supabase
@@ -265,6 +275,7 @@ export const sendMessage = createServerFn({ method: "POST" })
     let status = "sent";
     let externalId: string | null = null;
     let errorMessage: string | null = null;
+    let zaloAttempts = 0;
 
     if (channel === "telegram") {
       const { sendTelegramMessage } = await import("./telegram.server");
@@ -277,27 +288,12 @@ export const sendMessage = createServerFn({ method: "POST" })
       status = result.status; externalId = result.externalId; errorMessage = result.error;
     }
     if (channel === "zalo") {
-      const { loadChannelSettings } = await import("./channels.server");
-      const { pickReplyIdentity } = await import("./zalo-oa");
-      const config = await loadChannelSettings(data.tenantId);
-      let identityQuery = supabase.from("channel_identities").select("account_id,external_user_id,conversation_id").eq("tenant_id", data.tenantId).eq("channel", "zalo");
-      identityQuery = conv.lead_id ? identityQuery.or(`lead_id.eq.${conv.lead_id},conversation_id.eq.${data.conversationId}`) : identityQuery.eq("conversation_id", data.conversationId);
-      const { data: ids } = await identityQuery.limit(20);
-      const identity = pickReplyIdentity(ids ?? [], data.conversationId);
-      if (!identity) throw new Error("Chưa xác định duy nhất tài khoản Zalo; cần kiểm tra hồ sơ trước khi gửi.");
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: oa } = await supabaseAdmin.from("zalo_oa_accounts").select("id").eq("tenant_id", data.tenantId).eq("oa_id", identity.account_id).neq("status", "disconnected").maybeSingle();
-      let result;
-      if (oa) {
-        const { sendFromOa } = await import("./zalo-oa.server");
-        result = await sendFromOa(oa.id, identity.external_user_id, data.body);
-      } else {
-        if (identity.account_id !== config.zalo.oaId) throw new Error("OA của hội thoại này đã ngắt kết nối — không gửi được.");
-        result = await sendZaloMessage({ tenantId: data.tenantId, zaloUserId: identity.external_user_id, text: data.body });
-      }
+      const { sendZaloForConversation } = await import("./inbox-zalo.server");
+      const result = await sendZaloForConversation(supabase, data.tenantId, conv, data.conversationId, data.body);
       status = result.status;
       externalId = result.externalId;
       errorMessage = result.error;
+      zaloAttempts = result.attempts;
     }
 
     if (channel === "sms" || channel === "email") {
@@ -353,7 +349,9 @@ export const sendMessage = createServerFn({ method: "POST" })
       externalId,
       deliveryStatus: status,
       errorMessage,
+      ...(zaloAttempts ? { meta: { attempts: zaloAttempts } } : {}),
     });
+    if (status === "failed" && channel === "zalo") await notifySendFailure(data.tenantId, userId, conv.lead_id, errorMessage);
 
     return { ok: true, messageId: message.id, status, warning: errorMessage };
   });
