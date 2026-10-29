@@ -107,6 +107,9 @@ import { Route as ApiPublicQCodeRouteImport } from './routes/api/public/q.$code'
 import { Route as ApiPublicSalesPagesSlugRouteImport } from './routes/api/public/sales-pages.$slug'
 import { Route as ApiPublicTCodeRouteImport } from './routes/api/public/t.$code'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
+import { Route as ApiPublicZaloKeyRouteImport } from './routes/api/public/zalo/$key'
+import { Route as ApiPublicZaloOauthCallbackRouteImport } from './routes/api/public/zalo/oauth-callback'
+import { Route as ApiPublicZaloRefreshTokensRouteImport } from './routes/api/public/zalo/refresh-tokens'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -602,6 +605,23 @@ const ApiPublicTelegramWebhookRoute =
     path: '/api/public/telegram/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicZaloKeyRoute = ApiPublicZaloKeyRouteImport.update({
+  id: '/api/public/zalo/$key',
+  path: '/api/public/zalo/$key',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicZaloOauthCallbackRoute =
+  ApiPublicZaloOauthCallbackRouteImport.update({
+    id: '/api/public/zalo/oauth-callback',
+    path: '/api/public/zalo/oauth-callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicZaloRefreshTokensRoute =
+  ApiPublicZaloRefreshTokensRouteImport.update({
+    id: '/api/public/zalo/refresh-tokens',
+    path: '/api/public/zalo/refresh-tokens',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -701,6 +721,9 @@ export interface FileRoutesByFullPath {
   '/api/public/sales-pages/$slug': typeof ApiPublicSalesPagesSlugRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/api/public/zalo/$key': typeof ApiPublicZaloKeyRoute
+  '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
+  '/api/public/zalo/refresh-tokens': typeof ApiPublicZaloRefreshTokensRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -798,6 +821,9 @@ export interface FileRoutesByTo {
   '/api/public/sales-pages/$slug': typeof ApiPublicSalesPagesSlugRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/api/public/zalo/$key': typeof ApiPublicZaloKeyRoute
+  '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
+  '/api/public/zalo/refresh-tokens': typeof ApiPublicZaloRefreshTokensRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -899,6 +925,9 @@ export interface FileRoutesById {
   '/api/public/sales-pages/$slug': typeof ApiPublicSalesPagesSlugRoute
   '/api/public/t/$code': typeof ApiPublicTCodeRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/api/public/zalo/$key': typeof ApiPublicZaloKeyRoute
+  '/api/public/zalo/oauth-callback': typeof ApiPublicZaloOauthCallbackRoute
+  '/api/public/zalo/refresh-tokens': typeof ApiPublicZaloRefreshTokensRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1000,6 +1029,9 @@ export interface FileRouteTypes {
     | '/api/public/sales-pages/$slug'
     | '/api/public/t/$code'
     | '/api/public/telegram/webhook'
+    | '/api/public/zalo/$key'
+    | '/api/public/zalo/oauth-callback'
+    | '/api/public/zalo/refresh-tokens'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1097,6 +1129,9 @@ export interface FileRouteTypes {
     | '/api/public/sales-pages/$slug'
     | '/api/public/t/$code'
     | '/api/public/telegram/webhook'
+    | '/api/public/zalo/$key'
+    | '/api/public/zalo/oauth-callback'
+    | '/api/public/zalo/refresh-tokens'
   id:
     | '__root__'
     | '/'
@@ -1197,6 +1232,9 @@ export interface FileRouteTypes {
     | '/api/public/sales-pages/$slug'
     | '/api/public/t/$code'
     | '/api/public/telegram/webhook'
+    | '/api/public/zalo/$key'
+    | '/api/public/zalo/oauth-callback'
+    | '/api/public/zalo/refresh-tokens'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1233,6 +1271,9 @@ export interface RootRouteChildren {
   ApiPublicSalesPagesSlugRoute: typeof ApiPublicSalesPagesSlugRoute
   ApiPublicTCodeRoute: typeof ApiPublicTCodeRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
+  ApiPublicZaloKeyRoute: typeof ApiPublicZaloKeyRoute
+  ApiPublicZaloOauthCallbackRoute: typeof ApiPublicZaloOauthCallbackRoute
+  ApiPublicZaloRefreshTokensRoute: typeof ApiPublicZaloRefreshTokensRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1923,6 +1964,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/zalo/$key': {
+      id: '/api/public/zalo/$key'
+      path: '/api/public/zalo/$key'
+      fullPath: '/api/public/zalo/$key'
+      preLoaderRoute: typeof ApiPublicZaloKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/zalo/oauth-callback': {
+      id: '/api/public/zalo/oauth-callback'
+      path: '/api/public/zalo/oauth-callback'
+      fullPath: '/api/public/zalo/oauth-callback'
+      preLoaderRoute: typeof ApiPublicZaloOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/zalo/refresh-tokens': {
+      id: '/api/public/zalo/refresh-tokens'
+      path: '/api/public/zalo/refresh-tokens'
+      fullPath: '/api/public/zalo/refresh-tokens'
+      preLoaderRoute: typeof ApiPublicZaloRefreshTokensRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -2128,6 +2190,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSalesPagesSlugRoute: ApiPublicSalesPagesSlugRoute,
   ApiPublicTCodeRoute: ApiPublicTCodeRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
+  ApiPublicZaloKeyRoute: ApiPublicZaloKeyRoute,
+  ApiPublicZaloOauthCallbackRoute: ApiPublicZaloOauthCallbackRoute,
+  ApiPublicZaloRefreshTokensRoute: ApiPublicZaloRefreshTokensRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
