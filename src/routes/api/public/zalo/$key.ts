@@ -36,11 +36,23 @@ export const Route = createFileRoute("/api/public/zalo/$key")({
         try { parsed = schema.safeParse(parseZaloWebhook(raw)); } catch { await logWebhook(oa.tenant_id, oa.id, "", false, "JSON không hợp lệ"); return json({ ok: false, rejected: "bad json" }); }
         if (!parsed.success) { await logWebhook(oa.tenant_id, oa.id, "", false, "Sự kiện sai định dạng"); return json({ ok: false, rejected: "invalid event" }); }
         const p = parsed.data;
-        const secret = (oa.oa_secret_ct ? await decryptValue(oa.oa_secret_ct, oa.oa_secret_iv) : null) ?? await decryptValue(oa.app_secret_ct, oa.app_secret_iv);
+        const oaSecret = oa.oa_secret_ct ? await decryptValue(oa.oa_secret_ct, oa.oa_secret_iv) : null;
+        const appSecret = await decryptValue(oa.app_secret_ct, oa.app_secret_iv);
+        const secret = oaSecret ?? appSecret;
         if (!secret) return json({ ok: false, rejected: "OA not configured" });
         const sig = request.headers.get("x-zevent-signature") ?? "";
-        if (!verifyZaloSignature(sig, raw, oa.app_id, String(p.timestamp), secret)) {
-          await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sai chữ ký");
+        const ts = String(p.timestamp);
+        if (!verifyZaloSignature(sig, raw, oa.app_id, ts, secret)) {
+          // Chẩn đoán không chứa khóa: giúp quản trị biết sai ở đâu mà không nới lỏng xác thực.
+          const hints: string[] = [];
+          if (!sig) hints.push("thiếu header chữ ký");
+          else if (!/^mac\s*=\s*[a-f0-9]{64}$/i.test(sig.trim())) hints.push("header chữ ký sai định dạng");
+          if (!oaSecret) hints.push("chưa lưu OA Secret Key");
+          const payloadApp = p.app_id ? String(p.app_id) : "";
+          if (payloadApp && payloadApp !== oa.app_id) hints.push(`App ID của sự kiện (${payloadApp}) khác App ID đã cấu hình`);
+          else if (sig && oaSecret && appSecret && verifyZaloSignature(sig, raw, oa.app_id, ts, appSecret)) hints.push("ô OA Secret Key đang chứa khóa ứng dụng");
+          else if (sig && oaSecret) hints.push("OA Secret Key đã lưu không khớp khóa trên trang Webhook của Zalo");
+          await logWebhook(oa.tenant_id, oa.id, p.event_name, false, `Sai chữ ký: ${hints.join("; ") || "không xác định"}`);
           return json({ ok: false, rejected: "invalid signature" });
         }
         if (p.app_id && String(p.app_id) !== oa.app_id) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sai App ID"); return json({ ok: false, rejected: "wrong app" }); }
