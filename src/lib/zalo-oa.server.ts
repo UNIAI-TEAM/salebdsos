@@ -76,7 +76,7 @@ export async function buildAuthorizeUrl(a: OaRow) {
 }
 
 /** OA ID có thể chưa biết khi tạo → gán sau theo mã Zalo xác nhận trong phiên cấp quyền. */
-async function assertOaFree(tenantId: string, oaId: string) {
+export async function assertOaFree(tenantId: string, oaId: string) {
   const { data: taken } = await sb.from("zalo_oa_accounts").select("tenant_id").eq("oa_id", oaId).maybeSingle();
   if (taken) throw new Error(taken.tenant_id === tenantId ? "OA này đã có trong danh sách." : "OA này đã được một sàn khác kết nối.");
 }
