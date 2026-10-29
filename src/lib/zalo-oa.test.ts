@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { canRunAutomation, canSend, displayStatus, needsRefresh, oaConnectionSummary, oaReceiveHealth, parseZaloWebhook, pickReplyIdentity, webhookFresh, eventOaId, zaloSendError, readZaloProfile, zaloContactName, pendingOaId, isPendingOaId, resolveOaAfterGrant } from "./zalo-oa";
+import { canRunAutomation, canSend, displayStatus, needsRefresh, oaConnectionSummary, oaReceiveHealth, parseZaloWebhook, pickReplyIdentity, webhookFresh, eventOaId, zaloSendError, readZaloProfile, zaloContactName, pendingOaId, isPendingOaId, resolveOaAfterGrant, zaloProfileFailure } from "./zalo-oa";
 
 const now = new Date("2026-10-29T00:00:00Z");
 const oaError = (r: ReturnType<typeof resolveOaAfterGrant>) => (r.action === "error" ? r.message : "");
 
 describe("zalo oa rules", () => {
+  it("profile -212 means API registration, not a package upgrade", () => {
+    const error = zaloProfileFailure(-212, "App has not registed this api", 200);
+    expect(error).toContain("Đăng ký API");
+    expect(error).not.toContain("nâng cấp gói");
+  });
   it("OA ID left empty is filled after the grant, preferring the token-confirmed code", () => {
     expect(pendingOaId("ab12")).toBe("pending:ab12");
     expect(isPendingOaId(pendingOaId("ab12"))).toBe(true);

@@ -149,8 +149,8 @@ export const listConversations = createServerFn({ method: "GET" })
 
 export const getConversation = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { tenantId: string; conversationId: string }) =>
-    z.object({ tenantId: z.string().uuid(), conversationId: z.string().uuid() }).parse(d),
+  .inputValidator((d: { tenantId: string; conversationId: string; refreshProfile?: boolean }) =>
+    z.object({ tenantId: z.string().uuid(), conversationId: z.string().uuid(), refreshProfile: z.boolean().optional() }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -177,7 +177,7 @@ export const getConversation = createServerFn({ method: "GET" })
     let senderProfile = null;
     if (ownZalo.length === 1 && ownZalo[0]) {
       const { syncZaloContact } = await import("./zalo-contact.server");
-      senderProfile = await syncZaloContact(data.tenantId, ownZalo[0].account_id, ownZalo[0].external_user_id);
+      senderProfile = await syncZaloContact(data.tenantId, ownZalo[0].account_id, ownZalo[0].external_user_id, data.refreshProfile);
     }
 
     const [messagesQ, callsQ] = await Promise.all([
