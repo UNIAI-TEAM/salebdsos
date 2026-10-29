@@ -1,9 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { canRunAutomation, canSend, displayStatus, needsRefresh, pickReplyIdentity, webhookFresh } from "./zalo-oa";
+import { canRunAutomation, canSend, displayStatus, needsRefresh, oaConnectionSummary, parseZaloWebhook, pickReplyIdentity, webhookFresh } from "./zalo-oa";
 
 const now = new Date("2026-10-29T00:00:00Z");
 
 describe("zalo oa rules", () => {
+  it("multi-OA connection is verified only after an authenticated webhook", () => {
+    expect(oaConnectionSummary([{ status: "connected", last_webhook_at: null }])).toEqual({ configured: true, enabled: true, verified: false });
+    expect(oaConnectionSummary([{ status: "connected", last_webhook_at: now.toISOString() }])).toEqual({ configured: true, enabled: true, verified: true });
+    expect(oaConnectionSummary([{ status: "expired", last_webhook_at: now.toISOString() }]).verified).toBe(false);
+    expect(oaConnectionSummary([{ status: "disconnected", last_webhook_at: now.toISOString() }]).enabled).toBe(false);
+  });
+  it("preserves the real OA and sender IDs without rounding", () => {
+    expect(parseZaloWebhook('{"oa_id":2788520716563342888,"sender":{"id":2788520716563342889},"timestamp":1793244000000}')).toEqual({ oa_id: "2788520716563342888", sender: { id: "2788520716563342889" }, timestamp: 1793244000000 });
+  });
   it("refreshes access token 15 minutes before expiry", () => {
     expect(needsRefresh("2026-10-29T00:14:00Z", now)).toBe(true);
     expect(needsRefresh("2026-10-29T00:16:00Z", now)).toBe(false);

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { eventText, webhookFresh, ZALO_FOLLOW_EVENTS, ZALO_HANDLED_EVENTS } from "@/lib/zalo-oa";
+import { eventText, parseZaloWebhook, webhookFresh, ZALO_FOLLOW_EVENTS, ZALO_HANDLED_EVENTS } from "@/lib/zalo-oa";
 
 const schema = z.object({
   event_name: z.string().max(80),
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/public/zalo/$key")({
         const { signatureEquals, zaloSignature, receiveChannelMessage } = await import("@/lib/omnichannel.server");
         const { logWebhook } = await import("@/lib/zalo-oa.server");
         let parsed;
-        try { parsed = schema.safeParse(JSON.parse(raw)); } catch { await logWebhook(oa.tenant_id, oa.id, "", false, "JSON không hợp lệ"); return json({ ok: false, rejected: "bad json" }); }
+        try { parsed = schema.safeParse(parseZaloWebhook(raw)); } catch { await logWebhook(oa.tenant_id, oa.id, "", false, "JSON không hợp lệ"); return json({ ok: false, rejected: "bad json" }); }
         if (!parsed.success) { await logWebhook(oa.tenant_id, oa.id, "", false, "Sự kiện sai định dạng"); return json({ ok: false, rejected: "invalid event" }); }
         const p = parsed.data;
         const secret = (oa.oa_secret_ct ? await decryptValue(oa.oa_secret_ct, oa.oa_secret_iv) : null) ?? await decryptValue(oa.app_secret_ct, oa.app_secret_iv);

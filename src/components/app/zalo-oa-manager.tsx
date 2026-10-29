@@ -41,7 +41,11 @@ export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tena
   const q = useQuery({ queryKey: ["zalo-oas", tenantId], queryFn: () => list({ data: { tenantId } }), enabled: !!tenantId });
   const [adding, setAdding] = useState(false), [manualId, setManualId] = useState<string | null>(null), [logsId, setLogsId] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null), [editId, setEditId] = useState<string | null>(null);
-  const refresh = () => qc.invalidateQueries({ queryKey: ["zalo-oas", tenantId] });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["zalo-oas", tenantId] });
+    qc.invalidateQueries({ queryKey: ["channel-settings", tenantId] });
+    qc.invalidateQueries({ queryKey: ["inbox", tenantId] });
+  };
   async function act(key: string, fn: () => Promise<unknown>, ok?: string) {
     setBusy(key);
     try { await fn(); if (ok) toast.success(ok); refresh(); } catch (e) { toast.error((e as Error).message); } finally { setBusy(null); }
