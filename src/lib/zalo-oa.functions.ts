@@ -138,9 +138,17 @@ export const saveZaloOaTokens = createServerFn({ method: "POST" })
     try { b = JSON.parse(raw); } catch { /* giữ rỗng */ }
     if (b.error !== 0) throw new Error(`Zalo từ chối Access Token (${b.error ?? "?"}: ${b.message ?? "không rõ"}). Token có thể đã hết hạn — lấy token mới rồi dán lại.`);
     const got = String(b.data?.oa_id ?? "");
-    if (got !== a.oa_id) throw new Error(`Access Token thuộc OA ${got}${b.data?.name ? ` (${b.data.name})` : ""}, không phải OA ${a.oa_id} đang cấu hình.`);
-    const { saveManualTokens, audit } = await import("./zalo-oa.server");
+    const { resolveOaAfterGrant } = await import("./zalo-oa");
+    const res = resolveOaAfterGrant(a.oa_id, null, got || null);
+    if (res.action === "error") throw new Error(`Access Token thuộc OA ${got}${b.data?.name ? ` (${b.data.name})` : ""}, không phải OA ${a.oa_id} đang cấu hình.`);
+    const { saveManualTokens, audit, assertOaFree } = await import("./zalo-oa.server");
+    if (res.action === "assign") await assertOaFree(data.tenantId, res.oaId);
     await saveManualTokens(a.id, data.accessToken, data.refreshToken);
+    if (res.action === "assign") {
+      const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
+      await sb.from("zalo_oa_accounts").update({ oa_id: res.oaId, last_error: null, updated_at: new Date().toISOString() }).eq("id", a.id);
+      await audit(data.tenantId, a.id, context.userId, "oa_id_assigned", { oaId: res.oaId });
+    }
     await audit(data.tenantId, a.id, context.userId, "tokens_saved");
     return { ok: true };
   });
