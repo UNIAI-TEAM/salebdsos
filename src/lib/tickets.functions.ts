@@ -237,3 +237,37 @@ export const listAssignees = createServerFn({ method: "GET" })
     const nameOf = new Map((profiles ?? []).map((p) => [p.user_id, p.full_name || p.email || "Thành viên"]));
     return ids.map((id) => ({ id, name: nameOf.get(id) ?? "Thành viên" }));
   });
+
+/** Cấu hình hỗ trợ: ticket tự động, đánh giá hài lòng, kịch bản chào mừng. */
+export const getSupportSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const roles = await rolesOf(supabase, data.tenantId, userId);
+    const { parseSupportConfig, SUPPORT_KEY } = await import("./support");
+    const { parseChatFlows, CHAT_FLOWS_KEY } = await import("./chat-flows");
+    const { data: rows, error } = await supabase.from("settings").select("key,value").eq("tenant_id", data.tenantId).in("key", [SUPPORT_KEY, CHAT_FLOWS_KEY]);
+    if (error) throw new Error(error.message);
+    const get = (k: string) => (rows ?? []).find((r: { key: string }) => r.key === k)?.value;
+    return {
+      config: parseSupportConfig(get(SUPPORT_KEY)),
+      flows: parseChatFlows(get(CHAT_FLOWS_KEY)).flows.map((f) => ({ id: f.id, name: f.name, enabled: f.enabled })),
+      canEdit: roles.some((r) => MANAGER_ROLES.has(r)),
+    };
+  });
+
+export const saveSupportSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid(), config: z.unknown() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const roles = await rolesOf(supabase, data.tenantId, userId);
+    if (!roles.some((r) => MANAGER_ROLES.has(r))) throw new Error("Chỉ quản trị được đổi cấu hình hỗ trợ");
+    const { supportSchema, SUPPORT_KEY } = await import("./support");
+    const parsed = supportSchema.safeParse(data.config);
+    if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Cấu hình không hợp lệ");
+    const { error } = await supabase.from("settings").upsert({ tenant_id: data.tenantId, key: SUPPORT_KEY, value: parsed.data as never }, { onConflict: "tenant_id,key" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
