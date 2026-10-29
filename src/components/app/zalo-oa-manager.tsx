@@ -54,12 +54,6 @@ export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tena
         <Button size="sm" onClick={() => setAdding(true)}><Plus className="mr-1 h-4 w-4" />{T.add}</Button>
       </div>
       {!configure && <Button asChild size="sm" variant="outline"><a href="/inbox?settings=1">{T.openConfigure}</a></Button>}
-      {d && configure && (
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">{T.redirect}</Label>
-          <div className="flex gap-2"><Input readOnly value={d.redirectUri} className="font-mono text-xs" /><Button size="icon" variant="outline" aria-label="Sao chép" onClick={() => copy(d.redirectUri)}><Copy className="h-4 w-4" /></Button></div>
-        </div>
-      )}
       {d?.legacyOaId && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 p-3 text-sm">
           <span>{T.legacy.replace("{id}", d.legacyOaId)}</span>
