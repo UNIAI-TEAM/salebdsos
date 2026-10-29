@@ -94,10 +94,12 @@ export async function saveManualTokens(id: string, accessToken: string, refreshT
   await storeTokens(id, { access_token: accessToken, refresh_token: refreshToken, expires_in: 90000 });
 }
 
-async function syncProfile(id: string, token: string) {
+export async function syncProfile(id: string, token: string) {
   try {
     const r = await fetch("https://openapi.zalo.me/v2.0/oa/getoa", { headers: { access_token: token } });
-    const b = (await r.json()) as { error?: number; data?: { oa_id?: string | number; name?: string; avatar?: string } };
+    // oa_id vượt quá Number.MAX_SAFE_INTEGER → đọc dạng chuỗi trước khi JSON.parse làm tròn số.
+    const raw = (await r.text()).replace(/"oa_id"\s*:\s*(\d+)/g, '"oa_id":"$1"');
+    const b = JSON.parse(raw) as { error?: number; message?: string; data?: { oa_id?: string; name?: string; avatar?: string } };
     if (b.error === 0 && b.data) await sb.from("zalo_oa_accounts").update({ ...(b.data.name ? { name: b.data.name } : {}), avatar_url: b.data.avatar ?? null }).eq("id", id);
     return b;
   } catch { return null; }

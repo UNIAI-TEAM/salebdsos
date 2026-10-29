@@ -128,8 +128,12 @@ export const saveZaloOaTokens = createServerFn({ method: "POST" })
     await requireAdmin(context, data.tenantId);
     const a = await ownRow(data.tenantId, data.id);
     const r = await fetch("https://openapi.zalo.me/v2.0/oa/getoa", { headers: { access_token: data.accessToken } });
-    const b = (await r.json().catch(() => ({}))) as { error?: number; data?: { oa_id?: string | number } };
-    if (b.error !== 0 || String(b.data?.oa_id ?? "") !== a.oa_id) throw new Error("Access Token không thuộc OA này hoặc đã hết hạn.");
+    const raw = (await r.text().catch(() => "{}")).replace(/"oa_id"\s*:\s*(\d+)/g, '"oa_id":"$1"');
+    let b: { error?: number; message?: string; data?: { oa_id?: string; name?: string } } = {};
+    try { b = JSON.parse(raw); } catch { /* giữ rỗng */ }
+    if (b.error !== 0) throw new Error(`Zalo từ chối Access Token (${b.error ?? "?"}: ${b.message ?? "không rõ"}). Token có thể đã hết hạn — lấy token mới rồi dán lại.`);
+    const got = String(b.data?.oa_id ?? "");
+    if (got !== a.oa_id) throw new Error(`Access Token thuộc OA ${got}${b.data?.name ? ` (${b.data.name})` : ""}, không phải OA ${a.oa_id} đang cấu hình.`);
     const { saveManualTokens, audit } = await import("./zalo-oa.server");
     await saveManualTokens(a.id, data.accessToken, data.refreshToken);
     await audit(data.tenantId, a.id, context.userId, "tokens_saved");
