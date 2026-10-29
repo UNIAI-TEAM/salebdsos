@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 const page = (title: string, body: string, status = 200) =>
-  new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><body style="font-family:system-ui;max-width:480px;margin:64px auto;padding:0 16px;line-height:1.5"><h2>${title}</h2><p>${body}</p><p><a href="/integrations">Quay lại Tích hợp</a></p></body>`, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+  new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><body style="font-family:system-ui;max-width:480px;margin:64px auto;padding:0 16px;line-height:1.5"><h2>${title}</h2><p>${body}</p><p><a href="/inbox?settings=1">Quay lại cấu hình Zalo OA</a></p></body>`, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 
 const esc = (s: string) => s.replace(/[<>&"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" })[c]!);
 
