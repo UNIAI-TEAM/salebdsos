@@ -32,7 +32,7 @@ const statusVariant = (s: string) => (s === "connected" ? "secondary" : s === "p
 const fmt = (s: string | null) => (s ? new Date(s).toLocaleString("vi-VN") : T.never);
 const copy = (v: string) => navigator.clipboard.writeText(v).then(() => toast.success("Đã sao chép"));
 
-export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tenantId: string; projects: Project[]; mode?: "add" | "configure" }) {
+export function ZaloOaManager({ tenantId, projects, mode = "configure", embedded = false }: { tenantId: string; projects: Project[]; mode?: "add" | "configure"; embedded?: boolean }) {
   const configure = mode === "configure";
   const qc = useQueryClient();
   const list = useServerFn(listZaloOas), create = useServerFn(createZaloOa), update = useServerFn(updateZaloOa);
@@ -54,10 +54,10 @@ export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tena
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-2xl text-sm text-muted-foreground">{T.intro}{!configure && <> {T.configureHint}</>}</p>
+        <p className="max-w-2xl text-sm text-muted-foreground">{T.intro}{!configure && !embedded && <> {T.configureHint}</>}</p>
         <Button size="sm" onClick={() => setAdding(true)}><Plus className="mr-1 h-4 w-4" />{T.add}</Button>
       </div>
-      {!configure && <Button asChild size="sm" variant="outline"><a href="/inbox?settings=1">{T.openConfigure}</a></Button>}
+      {!configure && !embedded && <Button asChild size="sm" variant="outline"><a href="/inbox?settings=1">{T.openConfigure}</a></Button>}
       {d?.legacyOaId && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 p-3 text-sm">
           <span>{T.legacy.replace("{id}", d.legacyOaId)}</span>
@@ -119,7 +119,6 @@ export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tena
       {adding && <AddDialog tenantId={tenantId} projects={projects} apps={(d?.accounts ?? []).filter((a) => a.status !== "disconnected")} onClose={() => setAdding(false)} onSaved={refresh} create={create} />}
       {manualId && <ManualDialog onClose={() => setManualId(null)} onSave={(accessToken, refreshToken) => act("m", () => saveTokens({ data: { tenantId, id: manualId, accessToken, refreshToken } }), "Đã lưu token").then(() => setManualId(null))} />}
       {editId && (() => { const acc = d?.accounts.find((x) => x.id === editId); return acc ? <EditDialog name={acc.name ?? ""} oaId={acc.oaId} onClose={() => setEditId(null)} onSave={(name, appSecret, oaSecret) => act("e", () => update({ data: { tenantId, id: acc.id, name, ...(appSecret ? { appSecret } : {}), ...(oaSecret ? { oaSecret } : {}) } }), "Đã lưu cấu hình").then(() => setEditId(null))} /> : null; })()}
-      {configure && <DomainVerifier tenantId={tenantId} />}
       {logsId && <LogsDialog tenantId={tenantId} id={logsId} onClose={() => setLogsId(null)} />}
     </div>
   );
@@ -241,7 +240,7 @@ function LogsDialog({ tenantId, id, onClose }: { tenantId: string; id: string; o
   );
 }
 
-function DomainVerifier({ tenantId }: { tenantId: string }) {
+export function ZaloDomainVerifier({ tenantId }: { tenantId: string }) {
   const qc = useQueryClient();
   const list = useServerFn(listZaloVerifiers), add = useServerFn(addZaloVerifier), remove = useServerFn(removeZaloVerifier);
   const q = useQuery({ queryKey: ["zalo-verifiers", tenantId], queryFn: () => list({ data: { tenantId } }), enabled: !!tenantId });
