@@ -62,7 +62,7 @@ export const listTickets = createServerFn({ method: "GET" })
     const base = () =>
       supabase
         .from("message_tickets")
-        .select("id, code, title, source, kind, priority, assignee_user_id, due_at, status, created_by, created_at, conversation_id", { count: "exact" })
+        .select("id, code, title, source, kind, priority, assignee_user_id, due_at, status, created_by, created_at, conversation_id, csat_score, csat_comment, csat_requested_at, auto_created, reopened_count", { count: "exact" })
         .eq("tenant_id", data.tenantId);
 
     let q = base().order("created_at", { ascending: false }).range(data.page * 50, data.page * 50 + 49);
@@ -73,12 +73,14 @@ export const listTickets = createServerFn({ method: "GET" })
     const safeSearch = (data.search ?? "").replace(/[,()*%\\:."']/g, " ").trim();
     if (safeSearch) q = q.or(`title.ilike.%${safeSearch}%,code.ilike.%${safeSearch}%`);
 
-    const [itemsQ, openQ, overdueQ, resolvedQ] = await Promise.all([
+    const [itemsQ, openQ, overdueQ, resolvedQ, csatQ] = await Promise.all([
       q,
       base().in("status", ["open", "assigned"]),
       base().in("status", ["open", "assigned"]).lt("due_at", new Date().toISOString()),
       base().eq("status", "resolved"),
+      supabase.from("message_tickets").select("csat_score").eq("tenant_id", data.tenantId).not("csat_score", "is", null).order("csat_rated_at", { ascending: false }).limit(500),
     ]);
+    const scores = (csatQ.data ?? []).map((r: { csat_score: number | null }) => r.csat_score ?? 0);
     if (itemsQ.error) throw new Error(itemsQ.error.message);
 
     const assigneeIds = [...new Set((itemsQ.data ?? []).map((t) => t.assignee_user_id).filter(Boolean))] as string[];
@@ -92,6 +94,8 @@ export const listTickets = createServerFn({ method: "GET" })
         open: openQ.count ?? 0,
         overdue: overdueQ.count ?? 0,
         resolved: resolvedQ.count ?? 0,
+        csatAvg: scores.length ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10 : null,
+        csatCount: scores.length,
       },
       total: itemsQ.count ?? 0,
       items: (itemsQ.data ?? []).map((t) => ({
@@ -206,7 +210,12 @@ export const updateTicket = createServerFn({ method: "POST" })
       .eq("tenant_id", data.tenantId)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
-    return { ok: true };
+    let survey = false;
+    if (data.status === "resolved" && ticket.status !== "resolved") {
+      const { requestCsat } = await import("./support.server");
+      survey = (await requestCsat(data.tenantId, data.id).catch(() => ({ sent: false }))).sent;
+    }
+    return { ok: true, survey };
   });
 
 /** Danh sách thành viên để giao ticket / giao hội thoại. */

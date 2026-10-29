@@ -153,14 +153,12 @@ export const Route = createFileRoute("/api/public/chat/$slug")({
           senderName: name ?? "Khách",
         });
 
-        try {
-          const { runChatBot } = await import("@/lib/chat-flows.server");
+        {
+          const { afterInbound } = await import("@/lib/support.server");
           const { data: project } = page.project_id
             ? await supabaseAdmin.from("projects").select("name").eq("id", page.project_id).maybeSingle()
             : { data: null };
-          await runChatBot({ tenantId: page.tenant_id, conversationId, channel: "web_chat", text, vars: { ...(name ? { name } : {}), project: project?.name ?? "" }, entry });
-        } catch (e) {
-          console.error("chat bot failed", e);
+          await afterInbound({ tenantId: page.tenant_id, conversationId, channel: "web_chat", text, contactName: name ?? null, vars: { ...(name ? { name } : {}), project: project?.name ?? "" }, entry });
         }
 
         return json({ ok: true, conversationId });
