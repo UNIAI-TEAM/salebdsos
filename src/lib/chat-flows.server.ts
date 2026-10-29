@@ -24,9 +24,7 @@ export async function runChatBot(args: { tenantId: string; conversationId: strin
   // Sale đã trả lời hoặc bot đã chuyển giao → bot im lặng, không giành lại hội thoại.
   if ((human ?? []).length > 0 || bot.handoff) return { replied: false };
   // Kịch bản chào mừng: tự đưa lựa chọn ngay tin đầu tiên.
-  const flows = parseChatFlows(cfg?.value).flows.map((f) => f.id === support.welcome.flowId ? { ...f, enabled: true } : f)
-    .sort((a, b) => Number(b.id === support.welcome.flowId) - Number(a.id === support.welcome.flowId))
-    .map((f) => f.id === support.welcome.flowId && f.trigger !== "first_message" && f.trigger !== "keyword" ? f : f.id === support.welcome.flowId ? { ...f, trigger: "first_message" as const } : f);
+  const flows = parseChatFlows(cfg?.value).flows.map((f) => f.id === support.welcome.flowId ? { ...f, enabled: true, trigger: "first_message" as const } : f);
   const state: BotState = bot.flowId && bot.nodeId ? { flowId: bot.flowId, nodeId: bot.nodeId } : null;
   const step = stepBot(flows, state, args.text, (count ?? 0) <= 1, args.vars ?? {}, state ? null : args.entry ?? null);
   if (step.reason === "idle") return { replied: false };
