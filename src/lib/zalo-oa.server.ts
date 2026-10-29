@@ -2,7 +2,7 @@
 import { createHash } from "crypto";
 import { supabaseAdmin as sb } from "@/integrations/supabase/client.server";
 import { decryptValue, encryptValue } from "./credentials.server";
-import { canSend, isTransientSendError, needsRefresh, OAUTH_CALLBACK_PATH, ZALO_OA_DEFAULTS, ZALO_RETRY, zaloSendError, type OaStatus } from "./zalo-oa";
+import { canSend, isPendingOaId, isTransientSendError, needsRefresh, OAUTH_CALLBACK_PATH, resolveOaAfterGrant, ZALO_OA_DEFAULTS, ZALO_RETRY, zaloSendError, type OaStatus } from "./zalo-oa";
 
 const OAUTH = "https://oauth.zaloapp.com/v4/oa";
 const REFRESH_TOKEN_DAYS = 90;
@@ -75,17 +75,37 @@ export async function buildAuthorizeUrl(a: OaRow) {
   return url.toString();
 }
 
+/** OA ID có thể chưa biết khi tạo → gán sau theo mã Zalo xác nhận trong phiên cấp quyền. */
+async function assertOaFree(tenantId: string, oaId: string) {
+  const { data: taken } = await sb.from("zalo_oa_accounts").select("tenant_id").eq("oa_id", oaId).maybeSingle();
+  if (taken) throw new Error(taken.tenant_id === tenantId ? "OA này đã có trong danh sách." : "OA này đã được một sàn khác kết nối.");
+}
+
 export async function completeOAuth(state: string, code: string, oaId: string | null) {
   const { data } = await sb.from("zalo_oa_accounts").select(COLS + ",oauth_verifier_ct,oauth_verifier_iv,oauth_expires_at").eq("oauth_state", state).maybeSingle();
   const row = data as (OaRow & { oauth_verifier_ct: string; oauth_verifier_iv: string; oauth_expires_at: string }) | null;
   if (!row || !row.oauth_expires_at || new Date(row.oauth_expires_at) < new Date()) throw new Error("Phiên cấp quyền đã hết hạn, vui lòng thử lại.");
-  if (oaId && oaId !== row.oa_id) throw new Error("Anh/chị đã chọn OA khác với OA đang cấu hình.");
+  if (isPendingOaId(row.oa_id)) { if (oaId) await assertOaFree(row.tenant_id, oaId); }
+  else if (oaId && oaId !== row.oa_id) throw new Error("Anh/chị đã chọn OA khác với OA đang cấu hình.");
   const [verifier, secret] = await Promise.all([decryptValue(row.oauth_verifier_ct, row.oauth_verifier_iv), appSecretOf(row)]);
   await sb.from("zalo_oa_accounts").update({ oauth_state: null, oauth_verifier_ct: null, oauth_verifier_iv: null, oauth_expires_at: null }).eq("id", row.id);
   if (!verifier || !secret) throw new Error("Thiếu khóa ứng dụng.");
   const t = await tokenRequest(row.app_id, secret, { code, grant_type: "authorization_code", code_verifier: verifier });
   await storeTokens(row.id, t);
-  if (t.access_token) await syncProfile(row.id, t.access_token);
+  const profile = t.access_token ? await syncProfile(row.id, t.access_token) : null;
+  // getoa trả mã OA do chính token xác nhận → đáng tin hơn mã trên URL callback.
+  const authoritative = profile?.error === 0 ? String(profile.data?.oa_id ?? "") || null : null;
+  const r = resolveOaAfterGrant(row.oa_id, oaId, authoritative);
+  if (r.action === "error") {
+    await sb.from("zalo_oa_accounts").update({ last_error: r.message, updated_at: new Date().toISOString() }).eq("id", row.id);
+    await audit(row.tenant_id, row.id, null, "oauth_oa_mismatch", { error: r.message });
+    throw new Error(r.message);
+  }
+  if (r.action === "assign") {
+    await assertOaFree(row.tenant_id, r.oaId);
+    await sb.from("zalo_oa_accounts").update({ oa_id: r.oaId, updated_at: new Date().toISOString() }).eq("id", row.id);
+    await audit(row.tenant_id, row.id, null, "oa_id_assigned", { oaId: r.oaId });
+  }
   await audit(row.tenant_id, row.id, null, "oauth_connected");
   return row;
 }
