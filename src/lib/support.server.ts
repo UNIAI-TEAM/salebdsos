@@ -17,9 +17,8 @@ export async function sendAutoMessage(tenantId: string, conversationId: string, 
     if (channel === "zalo") {
       const { data: conv } = await sb.from("conversations").select("lead_id").eq("tenant_id", tenantId).eq("id", conversationId).single();
       const { sendZaloForConversation, resolveZaloTarget } = await import("./inbox-zalo.server");
-      const { canRunAutomation } = await import("./zalo-oa");
       const target = await resolveZaloTarget(sb, tenantId, { lead_id: conv?.lead_id ?? null }, conversationId);
-      if (!target.oa || !canRunAutomation(target.oa.status)) return { sent: false };
+      if (!target.oa || target.oa.status !== "connected") return { sent: false };
       const r = await sendZaloForConversation(sb, tenantId, { lead_id: conv?.lead_id ?? null }, conversationId, text);
       status = r.status; externalId = r.externalId ?? null; error = r.error ?? null;
     } else if (channel === "telegram") {
