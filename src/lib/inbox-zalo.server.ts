@@ -39,3 +39,15 @@ export async function signMedia<T extends { attachment_url: string | null }>(row
   const map = new Map((data ?? []).map((d) => [d.path, d.signedUrl]));
   return rows.map((r) => (isStoredMedia(r.attachment_url) ? { ...r, attachment_url: map.get(r.attachment_url!.slice(INBOX_MEDIA_BUCKET.length + 1)) ?? null } : r));
 }
+
+/** Tên OA theo hội thoại (Sale không đọc bảng OA trực tiếp; chỉ trả tên/OA ID trong sàn). */
+export async function oaLabels(supabase: any, tenantId: string, conversationIds: string[]) {
+  const { data: accounts } = await supabaseAdmin.from("zalo_oa_accounts").select("oa_id,name,status").eq("tenant_id", tenantId).neq("status", "disconnected").order("created_at");
+  const names = new Map((accounts ?? []).map((a) => [a.oa_id, a.name || `OA ${a.oa_id}`]));
+  const byConversation = new Map<string, string>();
+  if (conversationIds.length) {
+    const { data: ids } = await supabase.from("channel_identities").select("conversation_id,account_id").eq("tenant_id", tenantId).eq("channel", "zalo").in("conversation_id", conversationIds);
+    for (const r of (ids ?? []) as { conversation_id: string; account_id: string }[]) byConversation.set(r.conversation_id, names.get(r.account_id) ?? `OA ${r.account_id}`);
+  }
+  return { byConversation, accounts: (accounts ?? []).map((a) => ({ oaId: a.oa_id, name: a.name || `OA ${a.oa_id}` })) };
+}
