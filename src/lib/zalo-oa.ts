@@ -94,14 +94,11 @@ export const isPendingOaId = (oaId: string) => oaId.startsWith(PENDING_OA_PREFIX
 
 /**
  * Mã OA sau phiên cấp quyền. `callback` là mã Zalo trả trên URL callback; `authoritative` là mã do
- * chính Access Token xác nhận (getoa) — ưu tiên mã này vì URL có thể bị sửa.
+ * chính Access Token xác nhận (getoa). OA chưa có mã sẽ lấy mã do token xác nhận, vì URL có thể bị sửa.
  */
 export function resolveOaAfterGrant(
   current: string, callback: string | null, authoritative: string | null,
 ): { action: "keep" } | { action: "assign"; oaId: string } | { action: "error"; message: string } {
-  if (authoritative && callback && authoritative !== callback) {
-    return { action: "error", message: `Zalo trả về hai mã OA khác nhau (${authoritative} và ${callback}). Anh/chị hãy cấp quyền lại.` };
-  }
   if (isPendingOaId(current)) {
     const got = authoritative ?? callback;
     return got
