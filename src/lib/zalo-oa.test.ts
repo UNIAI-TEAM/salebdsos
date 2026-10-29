@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canRunAutomation, canSend, displayStatus, needsRefresh, oaConnectionSummary, oaReceiveHealth, parseZaloWebhook, pickReplyIdentity, webhookFresh, eventOaId, zaloSendError, readZaloProfile, zaloContactName } from "./zalo-oa";
+import { canRunAutomation, canSend, displayStatus, needsRefresh, oaConnectionSummary, oaReceiveHealth, parseZaloWebhook, pickReplyIdentity, webhookFresh, eventOaId, zaloSendError, readZaloProfile, zaloContactName, pendingOaId, isPendingOaId, resolveOaAfterGrant } from "./zalo-oa";
 
 const now = new Date("2026-10-29T00:00:00Z");
 

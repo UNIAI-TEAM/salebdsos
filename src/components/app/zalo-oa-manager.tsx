@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ChannelGlyph } from "@/components/app/channel-glyph";
-import { OA_STATUS_LABEL } from "@/lib/zalo-oa";
+import { isPendingOaId, OA_STATUS_LABEL } from "@/lib/zalo-oa";
 import { authorizeZaloOa, checkZaloOa, createZaloOa, disconnectZaloOa, importLegacyZalo, listZaloOas, saveZaloOaTokens, updateZaloOa, zaloOaLogs } from "@/lib/zalo-oa.functions";
 
 const T = {
@@ -74,7 +74,7 @@ export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tena
               {a.avatarUrl ? <img src={a.avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" /> : <div className="grid h-10 w-10 place-items-center rounded-full bg-muted"><ChannelGlyph channel="zalo" /></div>}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2"><p className="truncate font-medium">{a.name || "Zalo OA"}</p><Badge variant={statusVariant(a.displayStatus)}>{OA_STATUS_LABEL[a.displayStatus]}</Badge></div>
-                <p className="text-xs text-muted-foreground">OA {a.oaId} · {a.conversations} {T.convs} · {T.lastWebhook}: {fmt(a.lastWebhookAt)}</p>
+                <p className="text-xs text-muted-foreground">{isPendingOaId(a.oaId) ? "Chưa có mã OA — bấm Cấp quyền" : `OA ${a.oaId}`} · {a.conversations} {T.convs} · {T.lastWebhook}: {fmt(a.lastWebhookAt)}</p>
                 {a.refreshExpiresAt && <p className="text-xs text-muted-foreground">{T.tokenUntil}: {fmt(a.refreshExpiresAt)}</p>}
                 {a.lastError && <p className="text-xs text-destructive">{a.lastError}</p>}
               </div>
