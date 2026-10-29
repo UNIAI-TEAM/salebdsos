@@ -83,6 +83,15 @@ export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tena
             </div>
             {configure && a.status !== "disconnected" && (
               <>
+                <ol className="list-decimal space-y-0.5 rounded-lg bg-muted/40 p-3 pl-7 text-xs text-muted-foreground">
+                  <li>Chép <b>Callback URL</b> dưới đây, dán vào Zalo Developers → ứng dụng {a.appId} → <b>Đăng nhập / Official Account → Callback URL</b> → Lưu.</li>
+                  <li>Chép <b>Webhook của OA</b>, dán vào mục Webhook của ứng dụng.</li>
+                  <li>Bấm <b>{a.hasTokens ? T.reauthorize : T.authorize}</b>, đăng nhập Zalo chủ OA và đồng ý — hệ thống tự lấy Access Token và Refresh Token.</li>
+                </ol>
+                {d && <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Callback URL</Label>
+                  <div className="flex gap-2"><Input readOnly value={d.redirectUri} className="font-mono text-xs" /><Button size="icon" variant="outline" aria-label="Sao chép Callback URL" onClick={() => copy(d.redirectUri)}><Copy className="h-4 w-4" /></Button></div>
+                </div>}
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">{T.webhook}</Label>
                   <div className="flex gap-2"><Input readOnly value={a.webhookUrl} className="font-mono text-xs" /><Button size="icon" variant="outline" aria-label="Sao chép" onClick={() => copy(a.webhookUrl)}><Copy className="h-4 w-4" /></Button></div>
