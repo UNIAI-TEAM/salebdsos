@@ -86,7 +86,7 @@ export const updateZaloOa = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => one.extend({
     name: z.string().trim().min(1).max(120).optional(), projectId: z.string().uuid().nullable().optional(),
-    paused: z.boolean().optional(), appSecret: z.string().trim().min(10).max(500).optional(),
+    paused: z.boolean().optional(), appSecret: z.string().trim().min(10).max(500).optional(), oaSecret: z.string().trim().min(10).max(500).optional(),
   }).parse(d))
   .handler(async ({ data, context }) => {
     await requireAdmin(context, data.tenantId);
@@ -103,9 +103,10 @@ export const updateZaloOa = createServerFn({ method: "POST" })
       patch.status = data.paused ? "paused" : "connected";
     }
     if (data.appSecret) { const v = await encryptValue(data.appSecret); patch.app_secret_ct = v.ct; patch.app_secret_iv = v.iv; }
+    if (data.oaSecret) { const v = await encryptValue(data.oaSecret); patch.oa_secret_ct = v.ct; patch.oa_secret_iv = v.iv; }
     const { error } = await sb.from("zalo_oa_accounts").update(patch as never).eq("id", a.id);
     if (error) throw new Error("Không lưu được thay đổi");
-    await audit(data.tenantId, a.id, context.userId, "updated", { fields: Object.keys(patch).filter((k) => !k.startsWith("app_secret") && k !== "updated_at"), secretReplaced: Boolean(data.appSecret) });
+    await audit(data.tenantId, a.id, context.userId, "updated", { fields: Object.keys(patch).filter((k) => !k.startsWith("app_secret") && !k.startsWith("oa_secret") && k !== "updated_at"), secretReplaced: Boolean(data.appSecret), oaSecretReplaced: Boolean(data.oaSecret) });
     return { ok: true };
   });
 

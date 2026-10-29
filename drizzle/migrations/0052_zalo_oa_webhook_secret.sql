@@ -1,0 +1,1 @@
+ALTER TABLE public.zalo_oa_accounts ADD COLUMN IF NOT EXISTS oa_secret_ct text, ADD COLUMN IF NOT EXISTS oa_secret_iv text;

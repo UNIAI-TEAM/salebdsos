@@ -26,7 +26,7 @@ export const Route = createFileRoute("/api/public/zalo/$key")({
         const raw = await request.text();
         if (raw.length > 200000) return json({ error: "payload too large" }, 413);
         const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
-        const { data: oa } = await sb.from("zalo_oa_accounts").select("id,tenant_id,oa_id,app_id,status,project_id,app_secret_ct,app_secret_iv").eq("webhook_key", params.key).maybeSingle();
+        const { data: oa } = await sb.from("zalo_oa_accounts").select("id,tenant_id,oa_id,app_id,status,project_id,app_secret_ct,app_secret_iv,oa_secret_ct,oa_secret_iv").eq("webhook_key", params.key).maybeSingle();
         if (!oa || oa.status === "disconnected") return json({ error: "not found" }, 404);
         const { decryptValue } = await import("@/lib/credentials.server");
         const { signatureEquals, zaloSignature, receiveChannelMessage } = await import("@/lib/omnichannel.server");
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/public/zalo/$key")({
         try { parsed = schema.safeParse(JSON.parse(raw)); } catch { await logWebhook(oa.tenant_id, oa.id, "", false, "JSON không hợp lệ"); return json({ ok: false, rejected: "bad json" }); }
         if (!parsed.success) { await logWebhook(oa.tenant_id, oa.id, "", false, "Sự kiện sai định dạng"); return json({ ok: false, rejected: "invalid event" }); }
         const p = parsed.data;
-        const secret = await decryptValue(oa.app_secret_ct, oa.app_secret_iv);
+        const secret = (oa.oa_secret_ct ? await decryptValue(oa.oa_secret_ct, oa.oa_secret_iv) : null) ?? await decryptValue(oa.app_secret_ct, oa.app_secret_iv);
         if (!secret) return json({ ok: false, rejected: "OA not configured" });
         const sig = request.headers.get("x-zevent-signature") ?? "";
         if (!signatureEquals(sig, zaloSignature(raw, oa.app_id, String(p.timestamp), secret))) {
