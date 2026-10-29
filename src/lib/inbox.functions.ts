@@ -278,16 +278,23 @@ export const sendMessage = createServerFn({ method: "POST" })
     }
     if (channel === "zalo") {
       const { loadChannelSettings } = await import("./channels.server");
+      const { pickReplyIdentity } = await import("./zalo-oa");
       const config = await loadChannelSettings(data.tenantId);
-      let identityQuery = supabase.from("channel_identities").select("external_user_id").eq("tenant_id", data.tenantId);
-      identityQuery = conv.lead_id ? identityQuery.eq("lead_id", conv.lead_id) : identityQuery.eq("conversation_id", data.conversationId);
-      const { data: ids } = await identityQuery.eq("channel", "zalo").eq("account_id", config.zalo.oaId).limit(2);
-      if (!ids || ids.length !== 1) throw new Error("Chưa xác định duy nhất tài khoản Zalo; cần kiểm tra hồ sơ trước khi gửi.");
-      const result = await sendZaloMessage({
-        tenantId: data.tenantId,
-        zaloUserId: ids[0].external_user_id,
-        text: data.body,
-      });
+      let identityQuery = supabase.from("channel_identities").select("account_id,external_user_id,conversation_id").eq("tenant_id", data.tenantId).eq("channel", "zalo");
+      identityQuery = conv.lead_id ? identityQuery.or(`lead_id.eq.${conv.lead_id},conversation_id.eq.${data.conversationId}`) : identityQuery.eq("conversation_id", data.conversationId);
+      const { data: ids } = await identityQuery.limit(20);
+      const identity = pickReplyIdentity(ids ?? [], data.conversationId);
+      if (!identity) throw new Error("Chưa xác định duy nhất tài khoản Zalo; cần kiểm tra hồ sơ trước khi gửi.");
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: oa } = await supabaseAdmin.from("zalo_oa_accounts").select("id").eq("tenant_id", data.tenantId).eq("oa_id", identity.account_id).neq("status", "disconnected").maybeSingle();
+      let result;
+      if (oa) {
+        const { sendFromOa } = await import("./zalo-oa.server");
+        result = await sendFromOa(oa.id, identity.external_user_id, data.body);
+      } else {
+        if (identity.account_id !== config.zalo.oaId) throw new Error("OA của hội thoại này đã ngắt kết nối — không gửi được.");
+        result = await sendZaloMessage({ tenantId: data.tenantId, zaloUserId: identity.external_user_id, text: data.body });
+      }
       status = result.status;
       externalId = result.externalId;
       errorMessage = result.error;
