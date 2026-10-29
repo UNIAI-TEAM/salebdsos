@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, Plus, RefreshCw, ShieldCheck, Pause, Play, Unplug, KeyRound, History } from "lucide-react";
+import { Copy, Plus, Pencil, RefreshCw, ShieldCheck, Pause, Play, Unplug, KeyRound, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,9 @@ const T = {
   confirmDisconnect: "Ngắt kết nối OA này? Token bị xóa, hội thoại cũ vẫn giữ và chỉ đọc.",
   webhook: "Webhook của OA (dán vào ứng dụng Zalo)", redirect: "Callback URL cấp quyền (khai báo một lần trong ứng dụng Zalo)",
   project: "Dự án gắn kèm", noProject: "Không gắn dự án", convs: "hội thoại", lastWebhook: "Tin gần nhất", never: "chưa có",
-  tokenUntil: "Refresh token hết hạn",
+  tokenUntil: "Refresh token hết hạn", edit: "Sửa cấu hình",
+  configureHint: "Cấu hình (cấp quyền, webhook, dự án, kiểm tra kết nối) nằm trong Hộp thoại đa kênh → Kênh liên lạc.",
+  openConfigure: "Cấu hình trong Hộp thoại",
 };
 
 type Project = { id: string; name: string };
@@ -30,14 +32,15 @@ const statusVariant = (s: string) => (s === "connected" ? "secondary" : s === "p
 const fmt = (s: string | null) => (s ? new Date(s).toLocaleString("vi-VN") : T.never);
 const copy = (v: string) => navigator.clipboard.writeText(v).then(() => toast.success("Đã sao chép"));
 
-export function ZaloOaManager({ tenantId, projects }: { tenantId: string; projects: Project[] }) {
+export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tenantId: string; projects: Project[]; mode?: "add" | "configure" }) {
+  const configure = mode === "configure";
   const qc = useQueryClient();
   const list = useServerFn(listZaloOas), create = useServerFn(createZaloOa), update = useServerFn(updateZaloOa);
   const authorize = useServerFn(authorizeZaloOa), check = useServerFn(checkZaloOa), disconnect = useServerFn(disconnectZaloOa);
   const importLegacy = useServerFn(importLegacyZalo), saveTokens = useServerFn(saveZaloOaTokens);
   const q = useQuery({ queryKey: ["zalo-oas", tenantId], queryFn: () => list({ data: { tenantId } }), enabled: !!tenantId });
   const [adding, setAdding] = useState(false), [manualId, setManualId] = useState<string | null>(null), [logsId, setLogsId] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null), [editId, setEditId] = useState<string | null>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: ["zalo-oas", tenantId] });
   async function act(key: string, fn: () => Promise<unknown>, ok?: string) {
     setBusy(key);
@@ -47,10 +50,11 @@ export function ZaloOaManager({ tenantId, projects }: { tenantId: string; projec
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-2xl text-sm text-muted-foreground">{T.intro}</p>
+        <p className="max-w-2xl text-sm text-muted-foreground">{T.intro}{!configure && <> {T.configureHint}</>}</p>
         <Button size="sm" onClick={() => setAdding(true)}><Plus className="mr-1 h-4 w-4" />{T.add}</Button>
       </div>
-      {d && (
+      {!configure && <Button asChild size="sm" variant="outline"><a href="/inbox?settings=1">{T.openConfigure}</a></Button>}
+      {d && configure && (
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">{T.redirect}</Label>
           <div className="flex gap-2"><Input readOnly value={d.redirectUri} className="font-mono text-xs" /><Button size="icon" variant="outline" aria-label="Sao chép" onClick={() => copy(d.redirectUri)}><Copy className="h-4 w-4" /></Button></div>
@@ -65,7 +69,7 @@ export function ZaloOaManager({ tenantId, projects }: { tenantId: string; projec
       {q.isLoading && <p className="text-sm text-muted-foreground">Đang tải…</p>}
       {q.error && <p className="text-sm text-destructive">{(q.error as Error).message}</p>}
       {d && d.accounts.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">{T.empty}</p>}
-      <ul className="grid gap-3 lg:grid-cols-2">
+      <ul className={configure ? "grid gap-3" : "grid gap-3 lg:grid-cols-2"}>
         {d?.accounts.map((a) => (
           <li key={a.id} className="space-y-3 rounded-xl border border-border p-4">
             <div className="flex items-start gap-3">
@@ -77,7 +81,7 @@ export function ZaloOaManager({ tenantId, projects }: { tenantId: string; projec
                 {a.lastError && <p className="text-xs text-destructive">{a.lastError}</p>}
               </div>
             </div>
-            {a.status !== "disconnected" && (
+            {configure && a.status !== "disconnected" && (
               <>
                 <div className="space-y-1">
                   <Label className="text-xs text-muted-foreground">{T.webhook}</Label>
@@ -95,6 +99,7 @@ export function ZaloOaManager({ tenantId, projects }: { tenantId: string; projec
                   <Button size="sm" variant="outline" disabled={!a.hasTokens || busy === "c" + a.id} onClick={() => act("c" + a.id, async () => { const r = await check({ data: { tenantId, id: a.id } }); r.ok ? toast.success("Kết nối hoạt động") : toast.warning(r.error ?? "Chưa xác minh được"); })}><RefreshCw className="mr-1 h-4 w-4" />{T.check}</Button>
                   {a.status === "connected" && <Button size="sm" variant="outline" onClick={() => act("s" + a.id, () => update({ data: { tenantId, id: a.id, paused: true } }), "Đã tạm dừng tự động hóa")}><Pause className="mr-1 h-4 w-4" />{T.pause}</Button>}
                   {a.status === "paused" && <Button size="sm" variant="outline" onClick={() => act("s" + a.id, () => update({ data: { tenantId, id: a.id, paused: false } }), "Đã bật lại")}><Play className="mr-1 h-4 w-4" />{T.resume}</Button>}
+                  <Button size="sm" variant="outline" onClick={() => setEditId(a.id)}><Pencil className="mr-1 h-4 w-4" />{T.edit}</Button>
                   <Button size="sm" variant="ghost" onClick={() => setManualId(a.id)}><KeyRound className="mr-1 h-4 w-4" />{T.manual}</Button>
                   <Button size="sm" variant="ghost" onClick={() => setLogsId(a.id)}><History className="mr-1 h-4 w-4" />{T.logs}</Button>
                   <Button size="sm" variant="ghost" className="text-destructive" onClick={() => confirm(T.confirmDisconnect) && act("d" + a.id, () => disconnect({ data: { tenantId, id: a.id } }), "Đã ngắt kết nối")}><Unplug className="mr-1 h-4 w-4" />{T.disconnect}</Button>
@@ -106,6 +111,7 @@ export function ZaloOaManager({ tenantId, projects }: { tenantId: string; projec
       </ul>
       {adding && <AddDialog tenantId={tenantId} projects={projects} apps={(d?.accounts ?? []).filter((a) => a.status !== "disconnected")} onClose={() => setAdding(false)} onSaved={refresh} create={create} />}
       {manualId && <ManualDialog onClose={() => setManualId(null)} onSave={(accessToken, refreshToken) => act("m", () => saveTokens({ data: { tenantId, id: manualId, accessToken, refreshToken } }), "Đã lưu token").then(() => setManualId(null))} />}
+      {editId && (() => { const acc = d?.accounts.find((x) => x.id === editId); return acc ? <EditDialog name={acc.name ?? ""} oaId={acc.oaId} onClose={() => setEditId(null)} onSave={(name, appSecret) => act("e", () => update({ data: { tenantId, id: acc.id, name, ...(appSecret ? { appSecret } : {}) } }), "Đã lưu cấu hình").then(() => setEditId(null))} /> : null; })()}
       {logsId && <LogsDialog tenantId={tenantId} id={logsId} onClose={() => setLogsId(null)} />}
     </div>
   );
@@ -150,6 +156,22 @@ function AddDialog({ tenantId, projects, apps, onClose, onSaved, create }: { ten
           </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button disabled={busy || !f.name || !f.oaId || (!reuse && (!f.appId || f.appSecret.length < 10))} onClick={save}>Lưu</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditDialog({ name, oaId, onClose, onSave }: { name: string; oaId: string; onClose: () => void; onSave: (name: string, appSecret: string) => void }) {
+  const [n, setN] = useState(name), [sec, setSec] = useState("");
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{T.edit} · OA {oaId}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1"><Label>Tên hiển thị</Label><Input value={n} onChange={(e) => setN(e.target.value)} /></div>
+          <div className="space-y-1"><Label>Secret Key mới (để trống nếu giữ nguyên)</Label><Input type="password" autoComplete="off" value={sec} onChange={(e) => setSec(e.target.value)} /></div>
+        </div>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button disabled={!n.trim() || (sec.length > 0 && sec.length < 10)} onClick={() => onSave(n.trim(), sec.trim())}>Lưu</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
