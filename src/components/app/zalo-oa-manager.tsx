@@ -191,11 +191,19 @@ function EditDialog({ name, oaId, onClose, onSave }: { name: string; oaId: strin
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>{T.edit} · OA {oaId}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{T.edit} · {isPendingOaId(oaId) ? "OA chưa có mã (chờ Cấp quyền)" : `OA ${oaId}`}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1"><Label>Tên hiển thị</Label><Input value={n} onChange={(e) => setN(e.target.value)} /></div>
-          <div className="space-y-1"><Label>Secret Key mới (để trống nếu giữ nguyên)</Label><Input type="password" autoComplete="off" value={sec} onChange={(e) => setSec(e.target.value)} /></div>
-          <div className="space-y-1"><Label>OA Secret Key (Zalo Developers → Webhook) — dùng xác minh tin nhắn đến</Label><Input type="password" autoComplete="off" value={oas} onChange={(e) => setOas(e.target.value)} placeholder="Để trống nếu giữ nguyên" /></div>
+          <div className="space-y-1">
+            <Label>Secret Key của ứng dụng <span className="font-normal text-muted-foreground">(App Secret)</span></Label>
+            <Input type="password" autoComplete="off" value={sec} onChange={(e) => setSec(e.target.value)} placeholder="Để trống nếu giữ nguyên" />
+            <p className="text-xs text-muted-foreground">Khóa của ứng dụng Zalo — Zalo for Developers → Ứng dụng của tôi → chọn ứng dụng. Chỉ nhập khi khóa đổi.</p>
+          </div>
+          <div className="space-y-1">
+            <Label>OA Secret Key <span className="font-normal text-muted-foreground">— khóa xác minh tin nhắn đến</span></Label>
+            <Input type="password" autoComplete="off" value={oas} onChange={(e) => setOas(e.target.value)} placeholder="Để trống nếu giữ nguyên" />
+            <p className="text-xs text-muted-foreground">Lấy từ trang Webhook của OA trên Zalo (cạnh nút Reset). Nhập lại nếu Zalo báo sai chữ ký. Đây không phải khóa ứng dụng.</p>
+          </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button disabled={!n.trim() || (sec.length > 0 && sec.length < 10) || (oas.length > 0 && oas.length < 10)} onClick={() => onSave(n.trim(), sec.trim(), oas.trim())}>Lưu</Button></DialogFooter>
       </DialogContent>
