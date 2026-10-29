@@ -150,8 +150,13 @@ export async function getOaUserProfile(accountId: string, userId: string) {
     const url = new URL("https://openapi.zalo.me/v3.0/oa/user/detail");
     url.searchParams.set("data", JSON.stringify({ user_id: userId }));
     const r = await fetch(url, { headers: { access_token: v.token }, signal: AbortSignal.timeout(6000) });
-    const body = await r.json() as { error?: number; data?: { display_name?: string; avatar?: string; avatars?: Record<string, string> } };
-    if (!r.ok || body.error !== 0 || !body.data) return { name: null, avatar: null, error: "Zalo chưa cho phép lấy tên/ảnh người gửi. Kiểm tra quyền quản lý thông tin người dùng của ứng dụng khi cấp quyền OA." };
+    const body = await r.json() as { error?: number; message?: string; data?: { display_name?: string; avatar?: string; avatars?: Record<string, string> } };
+    if (!r.ok || body.error !== 0 || !body.data) {
+      const packageBlocked = /upgrade OA Tier Package/i.test(body.message ?? "");
+      return { name: null, avatar: null, error: packageBlocked
+        ? "Zalo từ chối lấy tên/ảnh: OA cần nâng cấp gói dịch vụ để dùng tính năng này."
+        : `Zalo từ chối lấy tên/ảnh (mã ${body.error ?? r.status}). Kiểm tra quyền quản lý thông tin người dùng và gói dịch vụ OA.` };
+    }
     const avatar = body.data.avatar || body.data.avatars?.["240"] || body.data.avatars?.["120"];
     return { name: body.data.display_name?.slice(0, 120) || null, avatar: avatar?.startsWith("https://") ? avatar : null, error: null };
   } catch { return { name: null, avatar: null, error: "Chưa lấy được tên/ảnh từ Zalo; hệ thống sẽ thử lại sau." }; }
