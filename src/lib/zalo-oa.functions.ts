@@ -146,7 +146,7 @@ export const saveZaloOaTokens = createServerFn({ method: "POST" })
     await saveManualTokens(a.id, data.accessToken, data.refreshToken);
     if (res.action === "assign") {
       const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
-      await sb.from("zalo_oa_accounts").update({ oa_id: res.oaId, name: a.name || b.data?.name || null, last_error: null, updated_at: new Date().toISOString() }).eq("id", a.id);
+      await sb.from("zalo_oa_accounts").update({ oa_id: res.oaId, last_error: null, updated_at: new Date().toISOString() }).eq("id", a.id);
       await audit(data.tenantId, a.id, context.userId, "oa_id_assigned", { oaId: res.oaId });
     }
     await audit(data.tenantId, a.id, context.userId, "tokens_saved");
