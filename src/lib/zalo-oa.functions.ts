@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ADMIN_ROLES } from "./permissions";
-import { displayStatus, webhookPath, type OaStatus } from "./zalo-oa";
+import { displayStatus, pendingOaId, webhookPath, type OaStatus } from "./zalo-oa";
 
 async function requireAdmin(context: { supabase: any; userId: string }, tenantId: string) {
   const { data, error } = await context.supabase.from("user_roles").select("role").eq("tenant_id", tenantId).eq("user_id", context.userId);
@@ -53,7 +53,7 @@ export const listZaloOas = createServerFn({ method: "POST" })
 export const createZaloOa = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => tenant.extend({
-    name: z.string().trim().min(1).max(120), oaId: digits, appId: digits.optional(),
+    name: z.string().trim().min(1).max(120), oaId: digits.optional(), appId: digits.optional(),
     appSecret: z.string().trim().min(10).max(500).optional(), reuseFromId: z.string().uuid().optional(),
     projectId: z.string().uuid().nullable().optional(),
   }).parse(d))
@@ -62,8 +62,13 @@ export const createZaloOa = createServerFn({ method: "POST" })
     const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
     const { encryptValue } = await import("./credentials.server");
     const { audit } = await import("./zalo-oa.server");
-    const { data: taken } = await sb.from("zalo_oa_accounts").select("tenant_id").eq("oa_id", data.oaId).maybeSingle();
-    if (taken) throw new Error(taken.tenant_id === data.tenantId ? "OA này đã có trong danh sách." : "OA này đã được một sàn khác kết nối.");
+    const webhookKey = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, "0")).join("");
+    // OA ID để trống là hợp lệ: hàng đợi "pending:" theo webhook_key riêng, Zalo xác nhận mã thật khi cấp quyền.
+    const oaId = data.oaId?.trim() || pendingOaId(webhookKey);
+    if (data.oaId) {
+      const { data: taken } = await sb.from("zalo_oa_accounts").select("tenant_id").eq("oa_id", oaId).maybeSingle();
+      if (taken) throw new Error(taken.tenant_id === data.tenantId ? "OA này đã có trong danh sách." : "OA này đã được một sàn khác kết nối.");
+    }
     let appId = data.appId, ct: string | null = null, iv: string | null = null;
     if (data.reuseFromId) {
       const src = await ownRow(data.tenantId, data.reuseFromId);
@@ -72,13 +77,12 @@ export const createZaloOa = createServerFn({ method: "POST" })
       if (!appId || !data.appSecret) throw new Error("Cần App ID và Secret Key của ứng dụng Zalo.");
       ({ ct, iv } = await encryptValue(data.appSecret));
     }
-    const webhookKey = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, "0")).join("");
     const { data: row, error } = await sb.from("zalo_oa_accounts").insert({
-      tenant_id: data.tenantId, oa_id: data.oaId, name: data.name, app_id: appId!, app_secret_ct: ct, app_secret_iv: iv,
+      tenant_id: data.tenantId, oa_id: oaId, name: data.name, app_id: appId!, app_secret_ct: ct, app_secret_iv: iv,
       project_id: data.projectId ?? null, webhook_key: webhookKey, created_by: context.userId,
     }).select("id").single();
     if (error) throw new Error(error.code === "23505" ? "OA này đã được kết nối." : "Không lưu được OA");
-    await audit(data.tenantId, row.id, context.userId, "created", { oaId: data.oaId, reuse: Boolean(data.reuseFromId) });
+    await audit(data.tenantId, row.id, context.userId, "created", { oaId, pending: !data.oaId, reuse: Boolean(data.reuseFromId) });
     return { id: row.id };
   });
 

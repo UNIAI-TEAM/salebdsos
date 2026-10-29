@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ChannelGlyph } from "@/components/app/channel-glyph";
-import { OA_STATUS_LABEL } from "@/lib/zalo-oa";
+import { isPendingOaId, OA_STATUS_LABEL } from "@/lib/zalo-oa";
 import { authorizeZaloOa, checkZaloOa, createZaloOa, disconnectZaloOa, importLegacyZalo, listZaloOas, saveZaloOaTokens, updateZaloOa, zaloOaLogs } from "@/lib/zalo-oa.functions";
 
 const T = {
@@ -74,7 +74,7 @@ export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tena
               {a.avatarUrl ? <img src={a.avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" /> : <div className="grid h-10 w-10 place-items-center rounded-full bg-muted"><ChannelGlyph channel="zalo" /></div>}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2"><p className="truncate font-medium">{a.name || "Zalo OA"}</p><Badge variant={statusVariant(a.displayStatus)}>{OA_STATUS_LABEL[a.displayStatus]}</Badge></div>
-                <p className="text-xs text-muted-foreground">OA {a.oaId} · {a.conversations} {T.convs} · {T.lastWebhook}: {fmt(a.lastWebhookAt)}</p>
+                <p className="text-xs text-muted-foreground">{isPendingOaId(a.oaId) ? "Chưa có mã OA — bấm Cấp quyền" : `OA ${a.oaId}`} · {a.conversations} {T.convs} · {T.lastWebhook}: {fmt(a.lastWebhookAt)}</p>
                 {a.refreshExpiresAt && <p className="text-xs text-muted-foreground">{T.tokenUntil}: {fmt(a.refreshExpiresAt)}</p>}
                 {a.lastError && <p className="text-xs text-destructive">{a.lastError}</p>}
               </div>
@@ -131,8 +131,8 @@ function AddDialog({ tenantId, projects, apps, onClose, onSaved, create }: { ten
   async function save() {
     setBusy(true);
     try {
-      await create({ data: { tenantId, name: f.name, oaId: f.oaId, ...(reuse ? { reuseFromId: f.reuseFromId } : { appId: f.appId, appSecret: f.appSecret }), projectId: f.projectId || null } });
-      toast.success("Đã thêm OA — bấm Cấp quyền để kết nối"); onSaved(); onClose();
+      await create({ data: { tenantId, name: f.name, ...(f.oaId ? { oaId: f.oaId } : {}), ...(reuse ? { reuseFromId: f.reuseFromId } : { appId: f.appId, appSecret: f.appSecret }), projectId: f.projectId || null } });
+      toast.success(f.oaId ? "Đã thêm OA — bấm Cấp quyền để kết nối" : "Đã thêm OA — bấm Cấp quyền, hệ thống tự lấy đúng mã OA"); onSaved(); onClose();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   }
   const uniqueApps = [...new Map(apps.map((a) => [a.appId, a])).values()];
@@ -140,20 +140,38 @@ function AddDialog({ tenantId, projects, apps, onClose, onSaved, create }: { ten
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader><DialogTitle>Thêm Zalo OA</DialogTitle></DialogHeader>
+        <p className="text-xs text-muted-foreground">Cần 3 thông tin: <b>OA ID</b> (mã số của OA — bỏ trống được), <b>App ID</b> và <b>Secret Key của ứng dụng</b>. Gợi ý lấy từng giá trị nằm ngay dưới mỗi ô.</p>
         <div className="space-y-3">
-          <div className="space-y-1"><Label>Tên hiển thị</Label><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="VD: OA Dự án Aurora" /></div>
-          <div className="space-y-1"><Label>OA ID</Label><Input inputMode="numeric" value={f.oaId} onChange={(e) => setF({ ...f, oaId: e.target.value.replace(/\D/g, "") })} /></div>
+          <div className="space-y-1">
+            <Label>Tên hiển thị</Label>
+            <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="VD: OA Dự án Aurora" />
+            <p className="text-xs text-muted-foreground">Tên để anh/chị dễ nhớ, không hiển thị với khách.</p>
+          </div>
+          <div className="space-y-1">
+            <Label>OA ID <span className="font-normal text-muted-foreground">— mã số riêng của OA</span></Label>
+            <Input inputMode="numeric" value={f.oaId} onChange={(e) => setF({ ...f, oaId: e.target.value.replace(/\D/g, "") })} placeholder="VD: 2788520716563342888 — hoặc bỏ trống" />
+            <p className="text-xs text-muted-foreground">Dãy 18–19 chữ số định danh OA, xem ở trang quản trị OA (mục Thông tin / Cài đặt OA) hoặc trong danh sách Official Account trên Zalo for Developers. <b>Không tìm thấy cứ bỏ trống</b>: sau khi bấm Cấp quyền và chọn OA, hệ thống tự ghi đúng mã.</p>
+          </div>
           {uniqueApps.length > 0 && (
             <div className="space-y-1"><Label>Ứng dụng Zalo</Label>
               <Select value={f.reuseFromId || "new"} onValueChange={(v) => setF({ ...f, reuseFromId: v === "new" ? "" : v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="new">Ứng dụng mới (nhập App ID/Secret)</SelectItem>{uniqueApps.map((a) => <SelectItem key={a.id} value={a.id}>Dùng chung App {a.appId}</SelectItem>)}</SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">Dùng chung ứng dụng khi OA mới thuộc cùng một ứng dụng Zalo; chọn "Ứng dụng mới" nếu OA này do ứng dụng khác quản lý.</p>
             </div>
           )}
           {!reuse && <>
-            <div className="space-y-1"><Label>App ID</Label><Input inputMode="numeric" value={f.appId} onChange={(e) => setF({ ...f, appId: e.target.value.replace(/\D/g, "") })} /></div>
-            <div className="space-y-1"><Label>Secret Key (OA Secret Key của ứng dụng)</Label><Input type="password" autoComplete="off" value={f.appSecret} onChange={(e) => setF({ ...f, appSecret: e.target.value })} /></div>
+            <div className="space-y-1">
+              <Label>App ID <span className="font-normal text-muted-foreground">— mã ứng dụng Zalo</span></Label>
+              <Input inputMode="numeric" value={f.appId} onChange={(e) => setF({ ...f, appId: e.target.value.replace(/\D/g, "") })} placeholder="VD: 1234567890" />
+              <p className="text-xs text-muted-foreground">Lấy ở Zalo for Developers (developers.zalo.me) → Ứng dụng của tôi → chọn ứng dụng → App ID.</p>
+            </div>
+            <div className="space-y-1">
+              <Label>Secret Key của ứng dụng <span className="font-normal text-muted-foreground">(App Secret)</span></Label>
+              <Input type="password" autoComplete="off" value={f.appSecret} onChange={(e) => setF({ ...f, appSecret: e.target.value })} placeholder="Dán khóa bí mật của ứng dụng Zalo" />
+              <p className="text-xs text-muted-foreground">Lấy ở cùng trang với App ID. Đây là <b>khóa của ứng dụng Zalo</b>, KHÔNG phải OA Secret Key. OA Secret Key (khóa xác minh tin nhắn đến) nhập sau trong <b>Sửa cấu hình</b>.</p>
+            </div>
           </>}
           <div className="space-y-1"><Label>{T.project}</Label>
             <Select value={f.projectId || "none"} onValueChange={(v) => setF({ ...f, projectId: v === "none" ? "" : v })}>
@@ -162,7 +180,7 @@ function AddDialog({ tenantId, projects, apps, onClose, onSaved, create }: { ten
             </Select>
           </div>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button disabled={busy || !f.name || !f.oaId || (!reuse && (!f.appId || f.appSecret.length < 10))} onClick={save}>Lưu</Button></DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button disabled={busy || !f.name || (!reuse && (!f.appId || f.appSecret.length < 10))} onClick={save}>Lưu</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -173,11 +191,19 @@ function EditDialog({ name, oaId, onClose, onSave }: { name: string; oaId: strin
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>{T.edit} · OA {oaId}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{T.edit} · {isPendingOaId(oaId) ? "OA chưa có mã (chờ Cấp quyền)" : `OA ${oaId}`}</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1"><Label>Tên hiển thị</Label><Input value={n} onChange={(e) => setN(e.target.value)} /></div>
-          <div className="space-y-1"><Label>Secret Key mới (để trống nếu giữ nguyên)</Label><Input type="password" autoComplete="off" value={sec} onChange={(e) => setSec(e.target.value)} /></div>
-          <div className="space-y-1"><Label>OA Secret Key (Zalo Developers → Webhook) — dùng xác minh tin nhắn đến</Label><Input type="password" autoComplete="off" value={oas} onChange={(e) => setOas(e.target.value)} placeholder="Để trống nếu giữ nguyên" /></div>
+          <div className="space-y-1">
+            <Label>Secret Key của ứng dụng <span className="font-normal text-muted-foreground">(App Secret)</span></Label>
+            <Input type="password" autoComplete="off" value={sec} onChange={(e) => setSec(e.target.value)} placeholder="Để trống nếu giữ nguyên" />
+            <p className="text-xs text-muted-foreground">Khóa của ứng dụng Zalo — Zalo for Developers → Ứng dụng của tôi → chọn ứng dụng. Chỉ nhập khi khóa đổi.</p>
+          </div>
+          <div className="space-y-1">
+            <Label>OA Secret Key <span className="font-normal text-muted-foreground">— khóa xác minh tin nhắn đến</span></Label>
+            <Input type="password" autoComplete="off" value={oas} onChange={(e) => setOas(e.target.value)} placeholder="Để trống nếu giữ nguyên" />
+            <p className="text-xs text-muted-foreground">Lấy từ trang Webhook của OA trên Zalo (cạnh nút Reset). Nhập lại nếu Zalo báo sai chữ ký. Đây không phải khóa ứng dụng.</p>
+          </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Hủy</Button><Button disabled={!n.trim() || (sec.length > 0 && sec.length < 10) || (oas.length > 0 && oas.length < 10)} onClick={() => onSave(n.trim(), sec.trim(), oas.trim())}>Lưu</Button></DialogFooter>
       </DialogContent>
