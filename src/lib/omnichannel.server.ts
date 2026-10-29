@@ -83,11 +83,12 @@ export async function channelConnectionStatus(tenantId: string) {
   const health = (row?.value ?? {}) as Record<string, { ok?: boolean; checkedAt?: string; lastWebhookAt?: string }>;
   const { data: telegram } = await sb.from("telegram_bot_bindings").select("enabled,key_digest").eq("tenant_id",tenantId).maybeSingle();
   const key = process.env["TELEGRAM_API_KEY"];
+  const { count: multiOa = 0 } = await sb.from("zalo_oa_accounts").select("id", { count: "exact", head: true }).eq("tenant_id", tenantId).in("status", ["connected", "paused", "webhook_error"]);
   const ready = Boolean(telegram?.enabled && key && telegram.key_digest === createHash("sha256").update(key).digest("hex"));
   return [
     { channel: "telegram", configured: ready, enabled: ready, verified: Boolean(ready && health.telegram?.lastWebhookAt), checkedAt: config.telegram.checkedAt },
     { channel: "web_chat", configured: config.webChat.enabled, enabled: config.webChat.enabled, verified: config.webChat.enabled, checkedAt: null },
-    { channel: "zalo", configured: Boolean(config.zalo.oaId && config.zalo.appId && s.zalo_app_secret && s.zalo_access_token), enabled: config.zalo.enabled, verified: Boolean(health.zalo?.ok && health.zalo?.lastWebhookAt), checkedAt: health.zalo?.checkedAt ?? null },
+    { channel: "zalo", configured: Boolean(config.zalo.oaId && config.zalo.appId && s.zalo_app_secret && s.zalo_access_token) || (multiOa ?? 0) > 0, enabled: config.zalo.enabled || (multiOa ?? 0) > 0, verified: Boolean(health.zalo?.ok && health.zalo?.lastWebhookAt), checkedAt: health.zalo?.checkedAt ?? null },
     { channel: "messenger", configured: Boolean(config.messenger.pageId && s.fb_app_secret && s.fb_page_token), enabled: config.messenger.enabled, verified: Boolean(health.messenger?.ok && health.messenger?.lastWebhookAt), checkedAt: health.messenger?.checkedAt ?? null },
     { channel: "sms", configured: Boolean(config.sms.enabled && process.env.ESMS_API_KEY && process.env.ESMS_SECRET_KEY), enabled: config.sms.enabled, verified: false, checkedAt: null },
     { channel: "email", configured: Boolean(emailDomain && s.resend_api_key), enabled: Boolean(config.email.enabled && emailDomain?.enabled && emailDomain.status === 'verified'), verified: emailDomain?.status === 'verified', checkedAt: emailDomain?.checked_at ?? null },

@@ -73,7 +73,7 @@ export const saveChannelSettings = createServerFn({ method: "POST" })
 
 export const listConversations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { tenantId: string; channel?: string; search?: string; mine?: boolean; tag?: string }) =>
+  .inputValidator((d: { tenantId: string; channel?: string; search?: string; mine?: boolean; tag?: string; oa?: string }) =>
     z
       .object({
         tenantId: z.string().uuid(),
@@ -81,6 +81,7 @@ export const listConversations = createServerFn({ method: "GET" })
         search: z.string().max(120).optional(),
         mine: z.boolean().optional(),
         tag: z.string().max(40).optional(),
+        oa: z.string().regex(/^\d{3,40}$/).optional(),
       })
       .parse(d),
   )
@@ -100,6 +101,11 @@ export const listConversations = createServerFn({ method: "GET" })
 
     if (!canSeeAll || data.mine) query = query.eq("owner_user_id", userId);
     if (data.tag) query = query.contains("meta", { tags: [data.tag] } as never);
+    if (data.oa) {
+      const { data: oaConvs } = await supabase.from("channel_identities").select("conversation_id").eq("tenant_id", data.tenantId).eq("channel", "zalo").eq("account_id", data.oa).limit(1000);
+      const ids = (oaConvs ?? []).map((r) => r.conversation_id);
+      query = query.in("id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+    }
     if (data.channel && data.channel !== "all") query = query.eq("channel", data.channel as never);
     const safeSearch = (data.search ?? "").replace(/[,()*%\\:."']/g, " ").trim();
     if (safeSearch) {
@@ -114,6 +120,8 @@ export const listConversations = createServerFn({ method: "GET" })
     if (convQ.error) throw new Error(convQ.error.message);
 
     const projectNames = new Map((projectsQ.data ?? []).map((p) => [p.id, p.name]));
+    const { oaLabels } = await import("./inbox-zalo.server");
+    const { byConversation, accounts: oaAccounts } = await oaLabels(supabase, data.tenantId, (convQ.data ?? []).filter((r) => r.channel === "zalo").map((r) => r.id));
     const items = (convQ.data ?? []).map((row) => ({
       id: row.id,
       channel: row.channel as string,
@@ -126,10 +134,12 @@ export const listConversations = createServerFn({ method: "GET" })
       projectName: row.project_id ? projectNames.get(row.project_id) ?? null : null,
       leadId: row.lead_id,
       tags: (((row as any).meta ?? {}).tags ?? []) as string[],
+      oaName: byConversation.get(row.id) ?? null,
     }));
 
     return {
       items,
+      oaAccounts,
       canSeeAll,
       unreadTotal: items.reduce((sum, item) => sum + (item.unread ?? 0), 0),
     };
@@ -160,12 +170,12 @@ export const getConversation = createServerFn({ method: "GET" })
       const { data: linked } = await siblings;
       conversationIds = [...new Set([conv.id, ...(linked ?? []).map(c => c.id)])];
     }
-    const { data: identities } = await supabase.from("channel_identities").select("channel,last_inbound_at").eq("tenant_id", data.tenantId).in("conversation_id", conversationIds);
+    const { data: identities } = await supabase.from("channel_identities").select("channel,account_id,conversation_id,last_inbound_at").eq("tenant_id", data.tenantId).in("conversation_id", conversationIds);
 
     const [messagesQ, callsQ] = await Promise.all([
       supabase
         .from("conversation_messages")
-        .select("id, channel, direction, body, attachment_url, sender_name, sender_user_id, delivery_status, error_message, created_at")
+        .select("id, channel, direction, body, attachment_url, sender_name, sender_user_id, delivery_status, error_message, created_at, meta")
         .in("conversation_id", conversationIds)
         .order("created_at", { ascending: true })
         .limit(300),
@@ -184,7 +194,10 @@ export const getConversation = createServerFn({ method: "GET" })
 
     const convMeta = (conv.meta ?? {}) as Record<string, unknown>;
     const bot = (convMeta.bot ?? {}) as { flowId?: string; handoff?: boolean };
-    const msgs = messagesQ.data ?? [];
+    const { signMedia, oaLabels } = await import("./inbox-zalo.server");
+    const msgs = await signMedia(messagesQ.data ?? []);
+    const zaloIdentity = (identities ?? []).find((i) => i.channel === "zalo" && i.conversation_id === conv.id) ?? null;
+    const zaloOa = zaloIdentity ? (await oaLabels(supabase, data.tenantId, [conv.id])).byConversation.get(conv.id) ?? null : null;
     // Bot tạm ngừng khi đã chuyển giao, hoặc khi Sale đã trực tiếp trả lời trong lúc flow còn hoạt động
     const humanReplied = msgs.some((m) => m.direction === "out" && m.sender_user_id);
     const botPaused = bot.handoff === true || (Boolean(bot.flowId) && humanReplied);
@@ -217,6 +230,7 @@ export const getConversation = createServerFn({ method: "GET" })
         botPaused,
         botActive: Boolean(bot.flowId) && !botPaused,
         tags: (convMeta.tags ?? []) as string[],
+        zalo: zaloIdentity ? { lastInboundAt: zaloIdentity.last_inbound_at, oaName: zaloOa } : null,
       },
       messages: msgs,
       calls: callsQ.data ?? [],
@@ -265,6 +279,7 @@ export const sendMessage = createServerFn({ method: "POST" })
     let status = "sent";
     let externalId: string | null = null;
     let errorMessage: string | null = null;
+    let zaloAttempts = 0;
 
     if (channel === "telegram") {
       const { sendTelegramMessage } = await import("./telegram.server");
@@ -277,27 +292,12 @@ export const sendMessage = createServerFn({ method: "POST" })
       status = result.status; externalId = result.externalId; errorMessage = result.error;
     }
     if (channel === "zalo") {
-      const { loadChannelSettings } = await import("./channels.server");
-      const { pickReplyIdentity } = await import("./zalo-oa");
-      const config = await loadChannelSettings(data.tenantId);
-      let identityQuery = supabase.from("channel_identities").select("account_id,external_user_id,conversation_id").eq("tenant_id", data.tenantId).eq("channel", "zalo");
-      identityQuery = conv.lead_id ? identityQuery.or(`lead_id.eq.${conv.lead_id},conversation_id.eq.${data.conversationId}`) : identityQuery.eq("conversation_id", data.conversationId);
-      const { data: ids } = await identityQuery.limit(20);
-      const identity = pickReplyIdentity(ids ?? [], data.conversationId);
-      if (!identity) throw new Error("Chưa xác định duy nhất tài khoản Zalo; cần kiểm tra hồ sơ trước khi gửi.");
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: oa } = await supabaseAdmin.from("zalo_oa_accounts").select("id").eq("tenant_id", data.tenantId).eq("oa_id", identity.account_id).neq("status", "disconnected").maybeSingle();
-      let result;
-      if (oa) {
-        const { sendFromOa } = await import("./zalo-oa.server");
-        result = await sendFromOa(oa.id, identity.external_user_id, data.body);
-      } else {
-        if (identity.account_id !== config.zalo.oaId) throw new Error("OA của hội thoại này đã ngắt kết nối — không gửi được.");
-        result = await sendZaloMessage({ tenantId: data.tenantId, zaloUserId: identity.external_user_id, text: data.body });
-      }
+      const { sendZaloForConversation } = await import("./inbox-zalo.server");
+      const result = await sendZaloForConversation(supabase, data.tenantId, conv, data.conversationId, data.body);
       status = result.status;
       externalId = result.externalId;
       errorMessage = result.error;
+      zaloAttempts = result.attempts;
     }
 
     if (channel === "sms" || channel === "email") {
@@ -353,7 +353,9 @@ export const sendMessage = createServerFn({ method: "POST" })
       externalId,
       deliveryStatus: status,
       errorMessage,
+      ...(zaloAttempts ? { meta: { attempts: zaloAttempts } } : {}),
     });
+    if (status === "failed" && channel === "zalo") await notifySendFailure(data.tenantId, userId, conv.lead_id, errorMessage);
 
     return { ok: true, messageId: message.id, status, warning: errorMessage };
   });
@@ -674,4 +676,91 @@ export const createCustomerFromConversation = createServerFn({ method: "POST" })
       .update({ customer_id: customer.id } as never).eq("id", conv.id);
     if (linkErr) throw new Error(linkErr.message);
     return { ok: true, customerId: customer.id, name: customer.full_name };
+  });
+
+
+/* ------------------------- Zalo: ảnh/tệp và gửi lại ------------------------- */
+
+async function notifySendFailure(tenantId: string, userId: string, leadId: string | null, error: string | null) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  await supabaseAdmin.from("notifications").insert({ tenant_id: tenantId, user_id: userId, lead_id: leadId, type: "system", title: "Tin Zalo gửi thất bại", body: (error ?? "").slice(0, 160), link: "/inbox" } as never);
+}
+
+async function loadSendableConversation(supabase: any, tenantId: string, userId: string, conversationId: string) {
+  const roleList = await roles(supabase as never, tenantId, userId);
+  const { data: conv } = await supabase.from("conversations").select("id, channel, lead_id, owner_user_id").eq("tenant_id", tenantId).eq("id", conversationId).maybeSingle();
+  if (!conv) throw new Error("Không tìm thấy hội thoại");
+  if (!canAccessConversation(roleList, conv.owner_user_id, userId)) throw new Error("Bạn chỉ được nhắn khách mình phụ trách");
+  const { data: profile } = await supabase.from("profiles").select("full_name,email").eq("user_id", userId).maybeSingle();
+  return { conv, senderName: profile?.full_name || profile?.email?.split("@")[0] || "Chuyên viên" };
+}
+
+/** Gửi ảnh/tệp qua Zalo OA. Tệp lưu trong kho riêng tư theo sàn/hội thoại; hiển thị bằng liên kết ký tạm. */
+export const sendZaloAttachment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => {
+    if (!(d instanceof FormData)) throw new Error("Thiếu tệp");
+    const file = d.get("file");
+    if (!(file instanceof File)) throw new Error("Thiếu tệp");
+    const meta = z.object({ tenantId: z.string().uuid(), conversationId: z.string().uuid(), caption: z.string().trim().max(2000).default("") }).parse({ tenantId: d.get("tenantId"), conversationId: d.get("conversationId"), caption: d.get("caption") ?? "" });
+    return { ...meta, file };
+  })
+  .handler(async ({ data, context }) => {
+    const { attachmentKind } = await import("./zalo-oa");
+    const check = attachmentKind(data.file.type, data.file.size);
+    if ("error" in check) throw new Error(check.error);
+    const bytes = new Uint8Array(await data.file.arrayBuffer());
+    const head = Array.from(bytes.slice(0, 4), (b) => b.toString(16).padStart(2, "0")).join("");
+    const okMagic = data.file.type === "image/png" ? head === "89504e47" : data.file.type === "image/jpeg" ? head.startsWith("ffd8ff") : data.file.type === "application/pdf" ? head === "25504446" : data.file.type === "application/msword" ? head === "d0cf11e0" : head === "504b0304";
+    if (!okMagic) throw new Error("Nội dung tệp không khớp định dạng");
+    const { conv, senderName } = await loadSendableConversation(context.supabase, data.tenantId, context.userId, data.conversationId);
+    const { sendZaloForConversation, INBOX_MEDIA_BUCKET } = await import("./inbox-zalo.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const ext = ({ "image/png": "png", "image/jpeg": "jpg", "application/pdf": "pdf", "application/msword": "doc" } as Record<string, string>)[data.file.type] ?? "docx";
+    const path = `${data.tenantId}/${data.conversationId}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabaseAdmin.storage.from(INBOX_MEDIA_BUCKET).upload(path, bytes, { contentType: data.file.type });
+    if (upErr) throw new Error("Không lưu được tệp");
+    const name = data.file.name.replace(/[\r\n]/g, " ").slice(0, 120) || `tep.${ext}`;
+    const result = await sendZaloForConversation(context.supabase, data.tenantId, conv, data.conversationId, data.caption, { bytes, name, type: data.file.type, kind: check.kind });
+    const { appendMessage } = await import("@/lib/channels.server");
+    const message = await appendMessage({
+      tenantId: data.tenantId, conversationId: data.conversationId, channel: "zalo", direction: "out",
+      body: data.caption || (check.kind === "image" ? "[Ảnh]" : `[Tệp] ${name}`), senderUserId: context.userId, senderName,
+      attachmentUrl: `${INBOX_MEDIA_BUCKET}/${path}`, externalId: result.externalId, deliveryStatus: result.status, errorMessage: result.error,
+      meta: { attempts: result.attempts, file: { name, type: data.file.type, kind: check.kind } },
+    });
+    if (result.status === "failed") await notifySendFailure(data.tenantId, context.userId, conv.lead_id, result.error);
+    return { messageId: message.id, status: result.status, warning: result.error };
+  });
+
+/** Gửi lại tin Zalo thất bại (chữ hoặc tệp), cập nhật đúng bản ghi cũ — không tạo tin trùng. */
+export const resendZaloMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ tenantId: z.string().uuid(), messageId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: msg } = await supabaseAdmin.from("conversation_messages").select("id,conversation_id,channel,direction,body,attachment_url,delivery_status,meta,sender_user_id").eq("tenant_id", data.tenantId).eq("id", data.messageId).maybeSingle();
+    if (!msg || msg.channel !== "zalo" || msg.direction !== "out") throw new Error("Không tìm thấy tin cần gửi lại");
+    if (msg.delivery_status !== "failed") throw new Error("Tin này không ở trạng thái gửi thất bại");
+    const { conv } = await loadSendableConversation(context.supabase, data.tenantId, context.userId, msg.conversation_id);
+    const meta = (msg.meta ?? {}) as { attempts?: number; resends?: number; file?: { name: string; type: string; kind: "image" | "file" } };
+    // Khóa lạc quan: chỉ một lần gửi lại thắng.
+    const { data: locked } = await supabaseAdmin.from("conversation_messages").update({ delivery_status: "pending" } as never).eq("id", msg.id).eq("delivery_status", "failed").select("id");
+    if (!locked?.length) throw new Error("Tin đang được gửi lại");
+    const { sendZaloForConversation, INBOX_MEDIA_BUCKET, isStoredMedia } = await import("./inbox-zalo.server");
+    let result;
+    try {
+      let file;
+      if (meta.file && isStoredMedia(msg.attachment_url)) {
+        const { data: blob, error } = await supabaseAdmin.storage.from(INBOX_MEDIA_BUCKET).download(msg.attachment_url!.slice(INBOX_MEDIA_BUCKET.length + 1));
+        if (error || !blob) throw new Error("Không đọc được tệp đã lưu");
+        file = { ...meta.file, bytes: new Uint8Array(await blob.arrayBuffer()) };
+      }
+      const text = meta.file ? (msg.body?.startsWith("[") ? "" : msg.body ?? "") : msg.body ?? "";
+      result = await sendZaloForConversation(context.supabase, data.tenantId, conv, msg.conversation_id, text, file);
+    } catch (e) {
+      result = { status: "failed" as const, externalId: null, error: (e as Error).message, attempts: 0 };
+    }
+    await supabaseAdmin.from("conversation_messages").update({ delivery_status: result.status, error_message: result.error, external_id: result.externalId, meta: { ...meta, attempts: (meta.attempts ?? 0) + result.attempts, resends: (meta.resends ?? 0) + 1 } } as never).eq("id", msg.id);
+    return { status: result.status, warning: result.error };
   });

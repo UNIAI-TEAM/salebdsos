@@ -10,7 +10,7 @@ const schema = z.object({
   sender: z.object({ id: z.union([z.string(), z.number()]) }).optional(),
   recipient: z.object({ id: z.union([z.string(), z.number()]) }).optional(),
   follower: z.object({ id: z.union([z.string(), z.number()]) }).optional(),
-  message: z.object({ text: z.string().max(20000).optional(), msg_id: z.string().max(300).optional() }).passthrough().optional(),
+  message: z.object({ text: z.string().max(20000).optional(), msg_id: z.string().max(300).optional(), attachments: z.array(z.object({ payload: z.object({ url: z.string().max(2000).optional() }).passthrough().optional() }).passthrough()).max(10).optional() }).passthrough().optional(),
   info: z.object({ name: z.string().max(120).optional(), phone: z.string().max(40).optional() }).passthrough().optional(),
 }).passthrough();
 
@@ -57,9 +57,11 @@ export const Route = createFileRoute("/api/public/zalo/$key")({
           return json({ ok: true, ignored: true });
         }
         const userId = String(p.sender.id);
+        const rawUrl = p.message?.attachments?.[0]?.payload?.url;
+        const attachmentUrl = rawUrl && /^https:\/\//.test(rawUrl) ? rawUrl : undefined;
         const eventId = p.message?.msg_id ?? `${p.event_name}:${userId}:${p.timestamp}`;
         try {
-          await receiveChannelMessage({ tenantId: oa.tenant_id, channel: "zalo", accountId: oa.oa_id, userId, eventId, body: eventText(p.event_name, p.message, p.info), name: p.info?.name, phone: p.info?.phone, projectId: oa.project_id });
+          await receiveChannelMessage({ tenantId: oa.tenant_id, channel: "zalo", accountId: oa.oa_id, userId, eventId, body: eventText(p.event_name, p.message, p.info), name: p.info?.name, phone: p.info?.phone, projectId: oa.project_id, attachment: attachmentUrl });
           await logWebhook(oa.tenant_id, oa.id, p.event_name, true);
           return json({ ok: true });
         } catch (e) {

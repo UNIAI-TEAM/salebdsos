@@ -2,7 +2,7 @@
 import { createHash } from "crypto";
 import { supabaseAdmin as sb } from "@/integrations/supabase/client.server";
 import { decryptValue, encryptValue } from "./credentials.server";
-import { canSend, needsRefresh, OAUTH_CALLBACK_PATH, ZALO_OA_DEFAULTS, type OaStatus } from "./zalo-oa";
+import { canSend, isTransientSendError, needsRefresh, OAUTH_CALLBACK_PATH, ZALO_OA_DEFAULTS, ZALO_RETRY, type OaStatus } from "./zalo-oa";
 
 const OAUTH = "https://oauth.zaloapp.com/v4/oa";
 const REFRESH_TOKEN_DAYS = 90;
@@ -138,32 +138,54 @@ async function validToken(id: string) {
   return a ? { a, token: await decryptValue(a.access_token_ct, a.access_token_iv) } : null;
 }
 
-export type SendResult = { status: "sent" | "failed"; externalId: string | null; error: string | null };
+export type SendResult = { status: "sent" | "failed"; externalId: string | null; error: string | null; attempts: number };
+export type OutgoingFile = { bytes: Uint8Array; name: string; type: string; kind: "image" | "file" };
 
-/** Gửi tin tư vấn từ đúng OA; lỗi token thì làm mới và thử lại 1 lần. */
-export async function sendFromOa(accountRowId: string, zaloUserId: string, text: string): Promise<SendResult> {
-  const v = await validToken(accountRowId);
-  if (!v || !canSend(v.a.status) || !v.token) return { status: "failed", externalId: null, error: "OA chưa kết nối hoặc hết hạn token — cần cấp quyền lại." };
-  const attempt = async (token: string) => {
-    const r = await fetch("https://openapi.zalo.me/v3.0/oa/message/cs", {
-      method: "POST", headers: { "Content-Type": "application/json", access_token: token },
-      body: JSON.stringify({ recipient: { user_id: zaloUserId }, message: { text: text.slice(0, 2000) } }),
-    });
-    return { ok: r.ok, body: (await r.json().catch(() => ({}))) as { error?: number; message?: string; data?: { message_id?: string } } };
-  };
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function zaloCall(token: string, url: string, init: RequestInit) {
   try {
-    let res = await attempt(v.token);
-    if (res.body.error === -216 || res.body.error === -124) {
-      if (await refreshOa(accountRowId, true)) {
-        const again = await validToken(accountRowId);
-        if (again?.token) res = await attempt(again.token);
-      }
-    }
-    if (!res.ok || (res.body.error ?? 0) !== 0) return { status: "failed", externalId: null, error: res.body.message || "Zalo từ chối gửi tin" };
-    return { status: "sent", externalId: res.body.data?.message_id ?? null, error: null };
+    const r = await fetch(url, { ...init, headers: { ...(init.headers as Record<string, string>), access_token: token } });
+    const body = (await r.json().catch(() => ({}))) as { error?: number; message?: string; data?: { message_id?: string; attachment_id?: string; token?: string } };
+    return { http: r.status as number | null, ok: r.ok && (body.error ?? 0) === 0, body };
   } catch (e) {
-    return { status: "failed", externalId: null, error: (e as Error).message };
+    return { http: null as number | null, ok: false, body: { message: (e as Error).message } as { error?: number; message?: string; data?: { message_id?: string; attachment_id?: string; token?: string } } };
   }
+}
+
+/** Gửi tin tư vấn (chữ/ảnh/tệp) từ đúng OA. Lỗi token → làm mới 1 lần; lỗi tạm thời → thử lại tối đa 3 lần, cách quãng tăng dần. */
+export async function sendFromOa(accountRowId: string, zaloUserId: string, text: string, file?: OutgoingFile): Promise<SendResult> {
+  let v = await validToken(accountRowId);
+  if (!v || !canSend(v.a.status) || !v.token) return { status: "failed", externalId: null, error: "OA chưa kết nối hoặc hết hạn token — cần cấp quyền lại.", attempts: 0 };
+  let lastError = "Zalo từ chối gửi tin", refreshed = false;
+  for (let i = 0; i < ZALO_RETRY.maxAttempts; i++) {
+    if (ZALO_RETRY.delaysMs[i]) await sleep(ZALO_RETRY.delaysMs[i]);
+    const token = v!.token!;
+    let message: Record<string, unknown> = { text: text.slice(0, 2000) };
+    if (file) {
+      const form = new FormData();
+      form.append("file", new Blob([file.bytes as BlobPart], { type: file.type }), file.name);
+      const up = await zaloCall(token, `https://openapi.zalo.me/v2.0/oa/upload/${file.kind}`, { method: "POST", body: form });
+      if (!up.ok) {
+        lastError = up.body.message || `Tải tệp lên Zalo lỗi ${up.http ?? "mạng"}`;
+        if (!refreshed && (up.body.error === -216 || up.body.error === -124)) { refreshed = true; if (await refreshOa(accountRowId, true)) { v = await validToken(accountRowId); i--; continue; } }
+        if (isTransientSendError(up.http, up.body.error)) continue;
+        return { status: "failed", externalId: null, error: lastError, attempts: i + 1 };
+      }
+      message = file.kind === "image"
+        ? { ...(text ? { text: text.slice(0, 2000) } : {}), attachment: { type: "template", payload: { template_type: "media", elements: [{ media_type: "image", attachment_id: up.body.data?.attachment_id }] } } }
+        : { attachment: { type: "file", payload: { token: up.body.data?.token } } };
+    }
+    const res = await zaloCall(token, "https://openapi.zalo.me/v3.0/oa/message/cs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recipient: { user_id: zaloUserId }, message }) });
+    if (res.ok) return { status: "sent", externalId: res.body.data?.message_id ?? null, error: null, attempts: i + 1 };
+    lastError = res.body.message || `Zalo trả lỗi ${res.http ?? "mạng"}`;
+    if (!refreshed && (res.body.error === -216 || res.body.error === -124)) {
+      refreshed = true;
+      if (await refreshOa(accountRowId, true)) { v = await validToken(accountRowId); if (v?.token) { i--; continue; } }
+    }
+    if (!isTransientSendError(res.http, res.body.error)) return { status: "failed", externalId: null, error: lastError, attempts: i + 1 };
+  }
+  return { status: "failed", externalId: null, error: `${lastError} (đã thử ${ZALO_RETRY.maxAttempts} lần)`, attempts: ZALO_RETRY.maxAttempts };
 }
 
 export async function checkOa(id: string) {
