@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Chẩn đoán OA thật NextSchool: token hợp lệ nhưng webhook báo sai chữ ký; sửa xác thực/trạng thái kênh và kiểm thử Hộp thoại, không bỏ kiểm tra bảo mật.
+
 - [x] Zalo OA bước 1: nhiều OA tại Tích hợp (thêm, dùng chung ứng dụng, cấp quyền Zalo, nhập token tay, gắn dự án, tạm dừng, ngắt kết nối, nhật ký), webhook riêng có chữ ký/chống phát lại, trả lời từ đúng OA, làm mới token có khóa + hằng giờ. Thử tin giả lập có chữ ký: nhận 1 tin, gửi trùng không nhân đôi, sai chữ ký bị chặn; 5 test đạt; dữ liệu thử đã dọn. Chưa thử OA thật.
 - [x] Zalo OA bước 1 phần còn lại: nhãn + lọc OA trong Hộp thoại, đồng hồ hạn gửi tin 7 ngày (cảnh báo 12 giờ cuối, quá hạn khóa gửi cả ở máy chủ), gửi ảnh JPG/PNG ≤1MB và PDF/DOC ≤5MB (kiểm nội dung tệp, lưu kho riêng tư), tự thử lại 3 lần với lỗi tạm thời + nút Gửi lại cập nhật đúng tin cũ, báo Sale khi lỗi. 8 test quy tắc đạt, build OK.
 - [ ] Kiểm thử giao diện Hộp thoại phần Zalo mới: chưa đăng nhập được bản xem trước để thử — cần anh đăng nhập preview rồi em chạy lại.
