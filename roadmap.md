@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Lỗi cấp quyền lại: OA đang cấu hình NextSchool 2788520716563342888 nhưng Zalo trả về 1931793407476901203; hệ thống chặn đúng để không đổi sang OA khác. Cần người dùng chọn đúng OA khi cấp quyền hoặc thêm OA kia thành tài khoản riêng.
+
 - [x] Chẩn đoán OA thật NextSchool: kiểm tra token trực tiếp qua giao diện thành công; webhook công khai đã nhận user_send_text/image nhưng từ chối sai chữ ký, chưa có hội thoại Zalo. Đã sửa trạng thái dùng OA thay cấu hình cũ, tự cập nhật và nêu lỗi nhận tin; chuẩn hóa mac spacing, giữ nguyên body và ID lớn. 26 test đạt, build OK; chưa xuất bản.
 - [ ] Xác nhận Zalo gửi–nhận thật: cần xuất bản sửa mới và quản trị kiểm tra/nhập lại OA Secret Key tại NextSchool → Sửa cấu hình nếu tiếp tục sai chữ ký, rồi gửi tin mới; không thể khôi phục tin đã bị từ chối hoặc xác minh hai chiều khi chưa có tin vào hợp lệ.
 
