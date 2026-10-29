@@ -6,7 +6,11 @@ import { BOT_LIVE_CHANNELS, CHAT_FLOWS_KEY, appointmentSlot, parseChatFlows, ste
 type BotMeta = { flowId?: string; nodeId?: string; handoff?: boolean; tags?: string[]; appointmentId?: string };
 
 export async function runChatBot(args: { tenantId: string; conversationId: string; channel: string; text: string; vars?: Record<string, string>; entry?: string | null }) {
-  if (!(BOT_LIVE_CHANNELS as readonly string[]).includes(args.channel)) return { replied: false };
+  const { loadSupportConfig, sendAutoMessage } = await import("./support.server");
+  const support = await loadSupportConfig(args.tenantId);
+  // web_chat luôn chạy; Zalo/Telegram chỉ khi sàn bật trong Cấu hình hỗ trợ.
+  const live = (BOT_LIVE_CHANNELS as readonly string[]).includes(args.channel) || (support.welcome.channels as string[]).includes(args.channel);
+  if (!live) return { replied: false };
   const sb = supabaseAdmin;
   const [{ data: cfg }, { data: conv }, { data: human }, { count }] = await Promise.all([
     sb.from("settings").select("value").eq("tenant_id", args.tenantId).eq("key", CHAT_FLOWS_KEY).maybeSingle(),
@@ -19,16 +23,21 @@ export async function runChatBot(args: { tenantId: string; conversationId: strin
   const bot = (meta.bot ?? {}) as BotMeta;
   // Sale đã trả lời hoặc bot đã chuyển giao → bot im lặng, không giành lại hội thoại.
   if ((human ?? []).length > 0 || bot.handoff) return { replied: false };
-  const flows = parseChatFlows(cfg?.value).flows;
+  // Kịch bản chào mừng: tự đưa lựa chọn ngay tin đầu tiên.
+  const flows = parseChatFlows(cfg?.value).flows.map((f) => f.id === support.welcome.flowId ? { ...f, enabled: true, trigger: "first_message" as const } : f);
   const state: BotState = bot.flowId && bot.nodeId ? { flowId: bot.flowId, nodeId: bot.nodeId } : null;
   const step = stepBot(flows, state, args.text, (count ?? 0) <= 1, args.vars ?? {}, state ? null : args.entry ?? null);
   if (step.reason === "idle") return { replied: false };
 
+  const web = args.channel === "web_chat";
   for (const m of step.media) {
-    await appendMessage({ tenantId: args.tenantId, conversationId: args.conversationId, channel: args.channel, direction: "out", body: m.caption || null, attachmentUrl: m.url, senderName: "Trợ lý tự động", deliveryStatus: "sent", meta: { bot: true, media_type: m.type } });
+    if (web) await appendMessage({ tenantId: args.tenantId, conversationId: args.conversationId, channel: args.channel, direction: "out", body: m.caption || null, attachmentUrl: m.url, senderName: "Trợ lý tự động", deliveryStatus: "sent", meta: { bot: true, media_type: m.type } });
+    else await sendAutoMessage(args.tenantId, args.conversationId, args.channel, [m.caption, m.url].filter(Boolean).join("\n"), { media_type: m.type });
   }
   if (step.reply) {
-    await appendMessage({ tenantId: args.tenantId, conversationId: args.conversationId, channel: args.channel, direction: "out", body: step.reply, senderName: "Trợ lý tự động", deliveryStatus: "sent", meta: { bot: true, flow_id: step.state?.flowId ?? state?.flowId ?? null } });
+    const meta = { flow_id: step.state?.flowId ?? state?.flowId ?? null };
+    if (web) await appendMessage({ tenantId: args.tenantId, conversationId: args.conversationId, channel: args.channel, direction: "out", body: step.reply, senderName: "Trợ lý tự động", deliveryStatus: "sent", meta: { bot: true, ...meta } });
+    else await sendAutoMessage(args.tenantId, args.conversationId, args.channel, step.reply, meta);
   }
   const fill = (t: string) => t.replace(/\{(\w+)\}/g, (m, k: string) => args.vars?.[k] ?? (k === "project" ? "dự án" : m)).trim();
   let appointmentId = bot.appointmentId;

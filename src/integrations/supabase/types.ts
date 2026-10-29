@@ -3165,14 +3165,20 @@ export type Database = {
       message_tickets: {
         Row: {
           assignee_user_id: string | null
+          auto_created: boolean
           code: string
           conversation_id: string | null
           created_at: string
           created_by: string | null
+          csat_comment: string | null
+          csat_rated_at: string | null
+          csat_requested_at: string | null
+          csat_score: number | null
           due_at: string | null
           id: string
           kind: string
           priority: string
+          reopened_count: number
           resolved_at: string | null
           source: string | null
           status: string
@@ -3182,14 +3188,20 @@ export type Database = {
         }
         Insert: {
           assignee_user_id?: string | null
+          auto_created?: boolean
           code?: string
           conversation_id?: string | null
           created_at?: string
           created_by?: string | null
+          csat_comment?: string | null
+          csat_rated_at?: string | null
+          csat_requested_at?: string | null
+          csat_score?: number | null
           due_at?: string | null
           id?: string
           kind?: string
           priority?: string
+          reopened_count?: number
           resolved_at?: string | null
           source?: string | null
           status?: string
@@ -3199,14 +3211,20 @@ export type Database = {
         }
         Update: {
           assignee_user_id?: string | null
+          auto_created?: boolean
           code?: string
           conversation_id?: string | null
           created_at?: string
           created_by?: string | null
+          csat_comment?: string | null
+          csat_rated_at?: string | null
+          csat_requested_at?: string | null
+          csat_score?: number | null
           due_at?: string | null
           id?: string
           kind?: string
           priority?: string
+          reopened_count?: number
           resolved_at?: string | null
           source?: string | null
           status?: string

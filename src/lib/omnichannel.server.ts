@@ -47,7 +47,11 @@ export async function receiveChannelMessage(args: { tenantId: string; channel: "
   const { data: health } = await sb.from("settings").select("value").eq("tenant_id", args.tenantId).eq("key", "channel_health").maybeSingle();
   const state = (health?.value ?? {}) as Record<string, { ok?: boolean; checkedAt?: string; lastWebhookAt?: string }>;
   await sb.from("settings").upsert({ tenant_id: args.tenantId, key: "channel_health", value: { ...state, [args.channel]: { ...state[args.channel], lastWebhookAt: new Date().toISOString() } } }, { onConflict: "tenant_id,key" });
-  const result = data as { duplicate?: boolean; ownerUserId?: string; leadId?: string };
+  const result = data as { duplicate?: boolean; ownerUserId?: string; leadId?: string; conversationId?: string };
+  if (!result.duplicate && result.conversationId) {
+    const { afterInbound } = await import("./support.server");
+    await afterInbound({ tenantId: args.tenantId, conversationId: result.conversationId, channel: args.channel, text: args.body, contactName: args.name ?? null, vars: args.name ? { name: args.name } : {} });
+  }
   if (!result.duplicate && result.ownerUserId) {
     await sb.from("notifications").insert({ tenant_id: args.tenantId, user_id: result.ownerUserId, lead_id: result.leadId, type: "lead", title: `Tin nhắn mới · ${args.channel === "telegram" ? "Telegram" : args.channel === "zalo" ? "Zalo OA" : "Messenger"}`, body: args.body.slice(0, 160), link: "/inbox" } as never);
     const { sendPushToUser } = await import("./push.server");

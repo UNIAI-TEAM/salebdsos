@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { CheckCircle2, Plus, RotateCcw, Search, TicketCheck, UserPlus } from "lucide-react";
+import { CheckCircle2, Plus, RotateCcw, Search, Settings2, Star, TicketCheck, UserPlus } from "lucide-react";
+import { SupportSettingsDialog } from "@/components/app/support-settings-dialog";
 import { toast } from "sonner";
 import { PageHeader, SectionCard, KpiCard } from "@/components/app/ui";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ function TicketsPage() {
   const [priority, setPriority] = useState("all");
   const [mine, setMine] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [form, setForm] = useState({ title: "", kind: TICKET_KINDS[0] as string, priority: "normal", assigneeUserId: "", dueAt: "" });
 
   const fnList = useServerFn(listTickets);
@@ -107,7 +109,7 @@ function TicketsPage() {
       if (!tenantId) throw new Error("Chưa chọn sàn");
       return fnUpdate({ data: { tenantId, ...patch } });
     },
-    onSuccess: () => { toast.success("Đã cập nhật ticket"); invalidate(); },
+    onSuccess: (r) => { toast.success(r.survey ? "Đã xử lý xong và gửi đánh giá cho khách" : "Đã cập nhật ticket"); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -118,18 +120,24 @@ function TicketsPage() {
       <PageHeader
         compact
         title="Ticket tin nhắn"
-        sub="Giao việc chăm sóc từ hội thoại, theo dõi hạn xử lý và trạng thái."
+        sub="Tin nhắn mới từ mọi kênh tự tạo ticket; xử lý xong khách nhận đánh giá hài lòng."
         action={
-          <Button size="sm" onClick={() => setCreateOpen(true)} data-testid="create-ticket">
-            <Plus className="mr-1.5 h-4 w-4" /> Tạo ticket
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setSettingsOpen(true)} data-testid="support-settings">
+              <Settings2 className="mr-1.5 h-4 w-4" /> Cấu hình
+            </Button>
+            <Button size="sm" onClick={() => setCreateOpen(true)} data-testid="create-ticket">
+              <Plus className="mr-1.5 h-4 w-4" /> Tạo ticket
+            </Button>
+          </div>
         }
       />
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <KpiCard compact icon={TicketCheck} label="Đang mở" value={String(kpi?.open ?? 0)} tone="blue" />
         <KpiCard compact icon={TicketCheck} label="Quá hạn SLA" value={String(kpi?.overdue ?? 0)} tone={kpi?.overdue ? "rose" : "primary"} />
         <KpiCard compact icon={CheckCircle2} label="Đã xử lý" value={String(kpi?.resolved ?? 0)} tone="green" />
+        <KpiCard compact icon={Star} label={`Hài lòng (${kpi?.csatCount ?? 0} lượt)`} value={kpi?.csatAvg != null ? `${kpi.csatAvg}/5` : "—"} tone="primary" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -183,6 +191,7 @@ function TicketsPage() {
                   <th className="px-3 py-2">Phụ trách</th>
                   <th className="px-3 py-2">Hạn xử lý</th>
                   <th className="px-3 py-2">Trạng thái</th>
+                  <th className="px-3 py-2">Đánh giá</th>
                   <th className="px-3 py-2" />
                 </tr>
               </thead>
@@ -202,6 +211,11 @@ function TicketsPage() {
                     </td>
                     <td className="px-3 py-2.5">
                       <Badge variant="outline" className={STATUS_TONE[t.status]}>{label(TICKET_STATUSES, t.status)}</Badge>
+                      {t.reopened_count > 0 && <span className="ml-1 text-[10px] text-muted-foreground">mở lại {t.reopened_count}</span>}
+                    </td>
+                    <td className="px-3 py-2.5 text-xs" title={t.csat_comment ?? undefined}>
+                      {t.csat_score != null ? <span className={t.csat_score <= 2 ? "font-medium text-destructive" : "font-medium"}>{"★".repeat(t.csat_score)}<span className="text-muted-foreground">{"★".repeat(5 - t.csat_score)}</span></span>
+                        : t.csat_requested_at ? <span className="text-muted-foreground">Chờ khách</span> : "—"}
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex justify-end gap-1">
@@ -247,6 +261,7 @@ function TicketsPage() {
         )}
       </SectionCard>
 
+      {tenantId && <SupportSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} tenantId={tenantId} />}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
