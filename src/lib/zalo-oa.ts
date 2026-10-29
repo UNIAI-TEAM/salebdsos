@@ -103,7 +103,7 @@ export function resolveOaAfterGrant(
     const got = authoritative ?? callback;
     return got
       ? { action: "assign", oaId: got }
-      : { action: "error", message: "Zalo không trả về mã OA trong phiên cấp quyền. Anh/chị hãy nhập OA ID thủ công rồi bấm Cấp quyền lại." };
+      : { action: "error", message: "Zalo không trả về mã OA trong phiên cấp quyền. Anh/chị hãy bấm Cấp quyền lại và chọn đúng OA." };
   }
   if (callback && callback !== current) return { action: "error", message: "Anh/chị đã chọn OA khác với OA đang cấu hình." };
   if (authoritative && authoritative !== current) {

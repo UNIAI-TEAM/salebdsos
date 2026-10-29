@@ -125,14 +125,14 @@ export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tena
 }
 
 function AddDialog({ tenantId, projects, apps, onClose, onSaved, create }: { tenantId: string; projects: Project[]; apps: { id: string; appId: string; name: string }[]; onClose: () => void; onSaved: () => void; create: ReturnType<typeof useServerFn<typeof createZaloOa>> }) {
-  const [f, setF] = useState({ name: "", oaId: "", appId: "", appSecret: "", reuseFromId: "", projectId: "" });
+  const [f, setF] = useState({ name: "", appId: "", appSecret: "", reuseFromId: "", projectId: "" });
   const [busy, setBusy] = useState(false);
   const reuse = Boolean(f.reuseFromId);
   async function save() {
     setBusy(true);
     try {
-      await create({ data: { tenantId, name: f.name, ...(f.oaId ? { oaId: f.oaId } : {}), ...(reuse ? { reuseFromId: f.reuseFromId } : { appId: f.appId, appSecret: f.appSecret }), projectId: f.projectId || null } });
-      toast.success(f.oaId ? "Đã thêm OA — bấm Cấp quyền để kết nối" : "Đã thêm OA — bấm Cấp quyền, hệ thống tự lấy đúng mã OA"); onSaved(); onClose();
+      await create({ data: { tenantId, name: f.name, ...(reuse ? { reuseFromId: f.reuseFromId } : { appId: f.appId, appSecret: f.appSecret }), projectId: f.projectId || null } });
+      toast.success("Đã thêm OA — bấm Cấp quyền, hệ thống tự lấy đúng mã OA và token"); onSaved(); onClose();
     } catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
   }
   const uniqueApps = [...new Map(apps.map((a) => [a.appId, a])).values()];
@@ -140,17 +140,12 @@ function AddDialog({ tenantId, projects, apps, onClose, onSaved, create }: { ten
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader><DialogTitle>Thêm Zalo OA</DialogTitle></DialogHeader>
-        <p className="text-xs text-muted-foreground">Cần 3 thông tin: <b>OA ID</b> (mã số của OA — bỏ trống được), <b>App ID</b> và <b>Secret Key của ứng dụng</b>. Gợi ý lấy từng giá trị nằm ngay dưới mỗi ô.</p>
+        <p className="text-xs text-muted-foreground">Chỉ cần 2 thông tin: <b>App ID</b> và <b>Secret Key của ứng dụng</b>. Mã OA và token sẽ tự lấy khi anh/chị bấm <b>Cấp quyền</b> và chọn OA. Gợi ý lấy từng giá trị nằm ngay dưới mỗi ô.</p>
         <div className="space-y-3">
           <div className="space-y-1">
             <Label>Tên hiển thị</Label>
             <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="VD: OA Dự án Aurora" />
             <p className="text-xs text-muted-foreground">Tên để anh/chị dễ nhớ, không hiển thị với khách.</p>
-          </div>
-          <div className="space-y-1">
-            <Label>OA ID <span className="font-normal text-muted-foreground">— mã số riêng của OA</span></Label>
-            <Input inputMode="numeric" value={f.oaId} onChange={(e) => setF({ ...f, oaId: e.target.value.replace(/\D/g, "") })} placeholder="VD: 2788520716563342888 — hoặc bỏ trống" />
-            <p className="text-xs text-muted-foreground">Dãy 18–19 chữ số định danh OA, xem ở trang quản trị OA (mục Thông tin / Cài đặt OA) hoặc trong danh sách Official Account trên Zalo for Developers. <b>Không tìm thấy cứ bỏ trống</b>: sau khi bấm Cấp quyền và chọn OA, hệ thống tự ghi đúng mã.</p>
           </div>
           {uniqueApps.length > 0 && (
             <div className="space-y-1"><Label>Ứng dụng Zalo</Label>
