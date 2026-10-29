@@ -12,12 +12,12 @@ import type { ChannelSettings } from "@/lib/channels";
 export function ChatConnections({ tenantId, config, onConfigChange, telegramEnabled = false }: { tenantId: string; config: ChannelSettings; onConfigChange: (config: ChannelSettings) => void; telegramEnabled?: boolean }) {
   const qc = useQueryClient();
   const save = useServerFn(saveChatConnection), verify = useServerFn(verifyChatConnection), setup = useServerFn(getChatConnectionSetup);
-  const [channel, setChannel] = useState<"zalo" | "messenger" | "telegram" | "whatsapp" | "viber">("zalo");
+  const [channel, setChannel] = useState<"zalo" | "messenger" | "telegram" | "whatsapp" | "viber">("messenger");
   const saveAdditional = useServerFn(saveAdditionalConnection), verifyAdditional = useServerFn(verifyAdditionalConnection);
   const clearAdditional = useServerFn(clearAdditionalConnection);
   const activate = useServerFn(activateTelegram);
   const additional = channel !== "zalo" && channel !== "messenger";
-  const [account, setAccount] = useState(config.zalo.oaId), [appId, setAppId] = useState(config.zalo.appId);
+  const [account, setAccount] = useState(config.messenger.pageId), [appId, setAppId] = useState(config.zalo.appId);
   const [secret, setSecret] = useState(""), [token, setToken] = useState(""), [busy, setBusy] = useState(false);
   const info = useQuery({ queryKey: ["chat-setup", tenantId], queryFn: () => setup({ data: { tenantId } }) });
   const change = (value: typeof channel) => { setChannel(value); setAccount(value === "zalo" ? config.zalo.oaId : value === "messenger" ? config.messenger.pageId : config[value].accountId); setSecret(""); setToken(""); };
@@ -47,7 +47,7 @@ export function ChatConnections({ tenantId, config, onConfigChange, telegramEnab
     finally { setBusy(false); }
   }
   return <div className="space-y-3 border-b border-border pb-4">
-    <div className="flex flex-wrap gap-2">{(["zalo", "messenger", "telegram", "whatsapp", "viber"] as const).map(c => <Button key={c} size="sm" variant={channel === c ? "default" : "outline"} onClick={() => change(c)}>{t[c]}</Button>)}</div>
+    <div className="flex flex-wrap gap-2">{(["messenger", "telegram", "whatsapp", "viber"] as const).map(c => <Button key={c} size="sm" variant={channel === c ? "default" : "outline"} onClick={() => change(c)}>{t[c]}</Button>)}</div>
     <div><Label htmlFor="channel-account">{channel === "telegram" ? t.botId : channel === "whatsapp" ? t.phoneNumberId : channel === "viber" ? t.viberUri : t.account}</Label><Input id="channel-account" value={account} onChange={e => setAccount(e.target.value)} /></div>
     {channel === "zalo" && <div><Label>{t.appId}</Label><Input value={appId} onChange={e => setAppId(e.target.value)} /></div>}
     {!additional && <div><Label>{t.secret}</Label><Input type="password" autoComplete="new-password" value={secret} onChange={e => setSecret(e.target.value)} placeholder="••••••••" /></div>}
