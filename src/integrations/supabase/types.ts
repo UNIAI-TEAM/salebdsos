@@ -4940,6 +4940,167 @@ export type Database = {
           },
         ]
       }
+      zalo_oa_accounts: {
+        Row: {
+          access_token_ct: string | null
+          access_token_iv: string | null
+          app_id: string
+          app_secret_ct: string | null
+          app_secret_iv: string | null
+          avatar_url: string | null
+          config: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          last_error: string | null
+          last_webhook_at: string | null
+          name: string
+          oa_id: string
+          oauth_expires_at: string | null
+          oauth_state: string | null
+          oauth_verifier_ct: string | null
+          oauth_verifier_iv: string | null
+          project_id: string | null
+          refresh_expires_at: string | null
+          refresh_lock_until: string | null
+          refresh_token_ct: string | null
+          refresh_token_iv: string | null
+          status: string
+          tenant_id: string
+          token_expires_at: string | null
+          updated_at: string
+          webhook_key: string
+        }
+        Insert: {
+          access_token_ct?: string | null
+          access_token_iv?: string | null
+          app_id: string
+          app_secret_ct?: string | null
+          app_secret_iv?: string | null
+          avatar_url?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_error?: string | null
+          last_webhook_at?: string | null
+          name?: string
+          oa_id: string
+          oauth_expires_at?: string | null
+          oauth_state?: string | null
+          oauth_verifier_ct?: string | null
+          oauth_verifier_iv?: string | null
+          project_id?: string | null
+          refresh_expires_at?: string | null
+          refresh_lock_until?: string | null
+          refresh_token_ct?: string | null
+          refresh_token_iv?: string | null
+          status?: string
+          tenant_id: string
+          token_expires_at?: string | null
+          updated_at?: string
+          webhook_key: string
+        }
+        Update: {
+          access_token_ct?: string | null
+          access_token_iv?: string | null
+          app_id?: string
+          app_secret_ct?: string | null
+          app_secret_iv?: string | null
+          avatar_url?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_error?: string | null
+          last_webhook_at?: string | null
+          name?: string
+          oa_id?: string
+          oauth_expires_at?: string | null
+          oauth_state?: string | null
+          oauth_verifier_ct?: string | null
+          oauth_verifier_iv?: string | null
+          project_id?: string | null
+          refresh_expires_at?: string | null
+          refresh_lock_until?: string | null
+          refresh_token_ct?: string | null
+          refresh_token_iv?: string | null
+          status?: string
+          tenant_id?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          webhook_key?: string
+        }
+        Relationships: []
+      }
+      zalo_oa_audit: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          detail: Json
+          id: string
+          oa_account_id: string | null
+          tenant_id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          oa_account_id?: string | null
+          tenant_id: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          oa_account_id?: string | null
+          tenant_id?: string
+        }
+        Relationships: []
+      }
+      zalo_webhook_logs: {
+        Row: {
+          created_at: string
+          detail: string | null
+          event_name: string
+          id: string
+          oa_account_id: string
+          ok: boolean
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          event_name?: string
+          id?: string
+          oa_account_id: string
+          ok: boolean
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          event_name?: string
+          id?: string
+          oa_account_id?: string
+          ok?: boolean
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zalo_webhook_logs_oa_account_id_fkey"
+            columns: ["oa_account_id"]
+            isOneToOne: false
+            referencedRelation: "zalo_oa_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -5166,6 +5327,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      claim_zalo_token_refresh: {
+        Args: { p_account: string; p_seconds?: number }
+        Returns: boolean
       }
       collaborator_command: {
         Args: { p_action: string; p_data: Json; p_tenant: string }
