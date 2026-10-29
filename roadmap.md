@@ -1,6 +1,7 @@
 # Roadmap
 
-- [ ] Kiểm tra lỗi trả lời Zalo khi đã nhận tin và bổ sung tên/ảnh người gửi; đối chiếu nhật ký, kiểm thử gửi và đọc lại trên Hộp thoại.
+- [x] Đối chiếu lỗi Zalo thật: nhận user_send_text thành công lúc 04:48 UTC; gửi bị nhà cung cấp chặn do OA cần nâng cấp gói. Bổ sung lấy tên/ảnh qua v3 user-detail, cache đúng danh tính OA và hiển thị avatar/lỗi; API hồ sơ hiện bị Zalo từ chối nên chưa có tên/ảnh thật. Sửa nhận diện OA ở sự kiện xác nhận gửi để tránh báo Sai OA giả; 29 test đạt, giao diện hội thoại thật/lỗi đã kiểm tra, bản sửa chưa xuất bản.
+- [ ] Zalo gửi/tên/ảnh thành công: chờ quản trị OA kiểm tra nâng cấp gói và quyền quản lý thông tin người dùng; không thể vượt giới hạn Zalo bằng gửi lại hoặc đổi khóa.
 
 - [x] Lỗi cấp quyền lại: OA đang cấu hình NextSchool 2788520716563342888 nhưng Zalo trả về 1931793407476901203; hệ thống chặn đúng để không đổi sang OA khác. Cần người dùng chọn đúng OA khi cấp quyền hoặc thêm OA kia thành tài khoản riêng.
 
