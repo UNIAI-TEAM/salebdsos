@@ -4,6 +4,19 @@ import { canRunAutomation, canSend, displayStatus, needsRefresh, oaConnectionSum
 const now = new Date("2026-10-29T00:00:00Z");
 
 describe("zalo oa rules", () => {
+  it("OA ID left empty is filled after the grant, preferring the token-confirmed code", () => {
+    expect(pendingOaId("ab12")).toBe("pending:ab12");
+    expect(isPendingOaId(pendingOaId("ab12"))).toBe(true);
+    expect(isPendingOaId("2788520716563342888")).toBe(false);
+    expect(resolveOaAfterGrant(pendingOaId("ab12"), "1931793407476901203", null)).toEqual({ action: "assign", oaId: "1931793407476901203" });
+    expect(resolveOaAfterGrant(pendingOaId("ab12"), "1931793407476901203", "3691970953710863215")).toEqual({ action: "assign", oaId: "3691970953710863215" });
+    expect(resolveOaAfterGrant(pendingOaId("ab12"), null, null).action).toBe("error");
+  });
+  it("a grant never rewrites the OA already configured", () => {
+    expect(resolveOaAfterGrant("2788520716563342888", "2788520716563342888", "2788520716563342888")).toEqual({ action: "keep" });
+    expect(resolveOaAfterGrant("2788520716563342888", "1931793407476901203", null).message).toContain("OA khác");
+    expect(resolveOaAfterGrant("2788520716563342888", null, "1931793407476901203").message).toContain("Access Token thuộc OA");
+  });
   it("foreign OA errors do not extinguish a proven connection", () => {
     expect(oaReceiveHealth([{status:"connected",last_webhook_at:"2026-10-29T04:48:06Z"}], {ok:false,detail:"Sai OA",created_at:"2026-10-29T04:56:49Z"}).verified).toBe(true);
   });
