@@ -1,5 +1,6 @@
 # Roadmap
 
+- [x] Form "Thêm Zalo OA" rõ ràng: mỗi ô có hướng dẫn lấy giá trị ở đâu; Secret Key đổi tên thành "Secret Key của ứng dụng (App Secret)" và ghi rõ không phải OA Secret Key (khóa này nhập sau trong Sửa cấu hình). OA ID được bỏ trống: lưu dạng chờ theo webhook riêng, cấp quyền xong tự ghi đúng mã do token xác nhận; OA đã có mã không bao giờ bị cấp quyền sau ghi đè. 17 test đạt, đã thử lưu không nhập OA ID → hiện "Chưa có mã OA — bấm Cấp quyền" → xóa bản ghi thử, build OK. Chưa xuất bản.
 - [x] Đối chiếu lỗi Zalo thật: nhận user_send_text thành công lúc 04:48 UTC; gửi bị nhà cung cấp chặn do OA cần nâng cấp gói. Bổ sung lấy tên/ảnh qua v3 user-detail, cache đúng danh tính OA và hiển thị avatar/lỗi; API hồ sơ hiện bị Zalo từ chối nên chưa có tên/ảnh thật. Sửa nhận diện OA ở sự kiện xác nhận gửi để tránh báo Sai OA giả; 29 test đạt, giao diện hội thoại thật/lỗi đã kiểm tra, bản sửa chưa xuất bản.
 - [ ] Zalo gửi/tên/ảnh thành công: chờ quản trị OA kiểm tra nâng cấp gói và quyền quản lý thông tin người dùng; không thể vượt giới hạn Zalo bằng gửi lại hoặc đổi khóa.
 
