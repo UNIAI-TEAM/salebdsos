@@ -14,8 +14,7 @@
 - Inbox presentation uses a viewport-contained list/thread workspace, optional customer panel and centralized layout copy; channel capability and send-blocking logic remain shared and unchanged.
 - Channel profile changes use authenticated atomic link_channel_profile; ingestion never guesses profiles from phones or reuses legacy conversations, preventing mixed-customer history and partial links.
 - Pending inbox providers use one shared capability registry and remain send-blocked until their runtime integration is implemented and verified, preventing labels from implying working messaging.
-- Additional account verification never enables messaging; Telegram activation binds the project bot exclusively to one tenant in a service-only registry and verifies a derived webhook secret plus credential digest on every receive/send, preventing cross-tenant use of project-wide credentials.
-- Telegram activation preflights the credential-free public POST auth gate before changing any binding or webhook; its public origin can be configured server-side, preventing activation on missing or redirected deployments.
+- Account verification never enables messaging; Telegram binds the project bot to one tenant in a service-only registry, verifies derived webhook secret + credential digest on every receive/send, and preflights the public POST gate (server-configurable origin) before changing bindings.
 - Lead allocation uses shared tested pool/load helpers and exact tenant-wide counts; database triggers initialize entry SLA and record successful Sale replies, keeping deadlines consistent across all ingress paths.
 - Landing chat visitor keys include the page identity so visiting another Sale's page cannot reuse a previous personal conversation.
 - Lead assignment push is queued by database triggers for every owner change; SLA jobs revalidate owner/response/deadline, wake on enqueue and stop their schedule after drain, so ingress paths and handovers cannot bypass or duplicate assignment push.
@@ -31,3 +30,4 @@
 - Staff invitations bind verified recipient email transactionally; existing global identities are invited rather than overwritten, and tenant admins cannot reset passwords for cross-tenant or platform accounts.
 - Tenant sender domains use admin-checked service-only configuration and encrypted tenant credentials; provider verification gates sending, never shared workspace credentials.
 - Tenant branding uses tenant-keyed settings and semantic CSS presets; mode stays a user preference, and logo uploads validate admin access and image bytes.
+- Zalo OAs: service-only zalo_oa_accounts with encrypted per-row tokens and per-OA webhook keys; locked atomic refresh (single-use refresh token); replies use the conversation identity's OA, never a guessed one.

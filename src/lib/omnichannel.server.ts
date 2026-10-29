@@ -12,10 +12,10 @@ export function signatureEquals(actual: string, expected: string) {
 export const metaSignature = (raw: string, secret: string) => "sha256=" + createHmac("sha256", secret).update(raw).digest("hex");
 export const zaloSignature = (raw: string, appId: string, timestamp: string, secret: string) => "mac=" + createHash("sha256").update(appId + raw + timestamp + secret).digest("hex");
 
-export async function receiveChannelMessage(args: { tenantId: string; channel: "zalo" | "messenger" | "telegram"; accountId: string; userId: string; eventId: string; body: string; name?: string; phone?: string; attachment?: string }) {
+export async function receiveChannelMessage(args: { tenantId: string; channel: "zalo" | "messenger" | "telegram"; accountId: string; userId: string; eventId: string; body: string; name?: string; phone?: string; attachment?: string; projectId?: string | null }) {
   const { assignLeadOwner } = await import("./lead-routing.server");
   const { data: settings } = await sb.from("settings").select("value").eq("tenant_id", args.tenantId).eq("key", "integrations").maybeSingle();
-  const projectId = parseIntegrationSettings(settings?.value).defaultProjectId;
+  const projectId = args.projectId ?? parseIntegrationSettings(settings?.value).defaultProjectId;
   const { data: identity } = await sb.from("channel_identities").select("lead_id").eq("tenant_id", args.tenantId).eq("channel", args.channel).eq("account_id", args.accountId).eq("external_user_id", args.userId).maybeSingle();
   let owner: string | null = null;
   if (identity?.lead_id) {

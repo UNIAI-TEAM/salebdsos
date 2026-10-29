@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getIntegrations, rotatePortalKey, saveIntegrations } from "@/lib/integrations.functions";
 import { PORTALS } from "@/lib/integrations";
 import { FacebookCredentials } from "@/components/app/facebook-credentials";
+import { ZaloOaManager } from "@/components/app/zalo-oa-manager";
 import { TenantEmailSettings } from "@/components/app/tenant-email-settings";
 
 export const Route = createFileRoute("/_app/integrations")({
@@ -197,8 +198,7 @@ function IntegrationsPage() {
             <div className="flex min-w-0 items-center gap-2"><MessageCircle className="h-5 w-5 shrink-0 text-primary" /><span className="text-sm">Tự tạo khách khi khách nhắn kèm số điện thoại hoặc gửi form thông tin</span></div>
             <Switch checked={form.zaloLeadFromChat} onCheckedChange={(v) => setForm({ ...form, zaloLeadFromChat: v })} />
           </div>
-          <Badge variant={d.env.zalo ? "secondary" : "outline"}>{d.env.zalo ? "Đã kết nối OA" : "Chưa kết nối OA — cấu hình ở Hộp thoại → Kênh liên lạc"}</Badge>
-          <CopyRow label="Webhook Zalo" value={`${origin}/api/public/zalo-webhook`} />
+          {tenantId && <ZaloOaManager tenantId={tenantId} projects={projects} />}
         </div>
       </SectionCard>
 

@@ -59,3 +59,18 @@ export async function zaloCreds(tenantId: string) {
   const [appSecret, accessToken] = await Promise.all([getCredential(tenantId, "zalo_app_secret"), getCredential(tenantId, "zalo_access_token")]);
   return { appSecret, accessToken };
 }
+
+/** Mã hoá/giải mã một giá trị lưu thẳng trên bản ghi (ví dụ token của từng Zalo OA). */
+export async function encryptValue(value: string) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await aesKey(), new TextEncoder().encode(value)));
+  return { ct: b64(ct), iv: b64(iv) };
+}
+export async function decryptValue(ct: string | null | undefined, iv: string | null | undefined): Promise<string | null> {
+  if (!ct || !iv) return null;
+  try {
+    return new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(iv) }, await aesKey(), unb64(ct)));
+  } catch {
+    return null;
+  }
+}
