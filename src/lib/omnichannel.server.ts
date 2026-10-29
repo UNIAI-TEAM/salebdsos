@@ -4,7 +4,7 @@ import { getCredential, zaloCreds } from "./credentials.server";
 import { loadChannelSettings } from "./channels.server";
 import { parseIntegrationSettings } from "./integrations";
 import { INBOX_COPY, messengerWindowOpen, uniqueChannelIdentity } from "./omnichannel";
-import { oaConnectionSummary, type OaStatus } from "./zalo-oa";
+import { oaReceiveHealth, type OaStatus } from "./zalo-oa";
 
 export function signatureEquals(actual: string, expected: string) {
   const a = Buffer.from(actual), b = Buffer.from(expected);
@@ -86,13 +86,13 @@ export async function channelConnectionStatus(tenantId: string) {
   const key = process.env["TELEGRAM_API_KEY"];
   const { data: oaRows, error: oaError } = await sb.from("zalo_oa_accounts").select("status,last_webhook_at").eq("tenant_id", tenantId);
   if (oaError) throw new Error(INBOX_COPY.checkFailed);
-  const multiOa = oaRows?.length ? oaConnectionSummary(oaRows as { status: OaStatus; last_webhook_at: string | null }[]) : null;
   const { data: latestOaLog } = await sb.from("zalo_webhook_logs").select("ok,detail,created_at").eq("tenant_id", tenantId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  const multiOa = oaRows?.length ? oaReceiveHealth(oaRows as { status: OaStatus; last_webhook_at: string | null }[], latestOaLog) : null;
   const ready = Boolean(telegram?.enabled && key && telegram.key_digest === createHash("sha256").update(key).digest("hex"));
   return [
     { channel: "telegram", configured: ready, enabled: ready, verified: Boolean(ready && health.telegram?.lastWebhookAt), checkedAt: config.telegram.checkedAt },
     { channel: "web_chat", configured: config.webChat.enabled, enabled: config.webChat.enabled, verified: config.webChat.enabled, checkedAt: null },
-    { channel: "zalo", configured: multiOa?.configured ?? Boolean(config.zalo.oaId && config.zalo.appId && s.zalo_app_secret && s.zalo_access_token), enabled: multiOa?.enabled ?? config.zalo.enabled, verified: multiOa ? multiOa.verified && latestOaLog?.ok !== false : Boolean(health.zalo?.ok && health.zalo?.lastWebhookAt), checkedAt: latestOaLog?.created_at ?? health.zalo?.checkedAt ?? null, detail: multiOa?.enabled ? (latestOaLog?.ok === false ? INBOX_COPY.zaloReceiveRejected : !multiOa.verified ? INBOX_COPY.zaloAwaitingWebhook : null) : null },
+    { channel: "zalo", configured: multiOa?.configured ?? Boolean(config.zalo.oaId && config.zalo.appId && s.zalo_app_secret && s.zalo_access_token), enabled: multiOa?.enabled ?? config.zalo.enabled, verified: multiOa ? multiOa.verified : Boolean(health.zalo?.ok && health.zalo?.lastWebhookAt), checkedAt: latestOaLog?.created_at ?? health.zalo?.checkedAt ?? null, detail: multiOa?.enabled ? (multiOa.authRejected ? INBOX_COPY.zaloReceiveRejected : !multiOa.verified ? INBOX_COPY.zaloAwaitingWebhook : INBOX_COPY.zaloReceiveVerified) : null },
     { channel: "messenger", configured: Boolean(config.messenger.pageId && s.fb_app_secret && s.fb_page_token), enabled: config.messenger.enabled, verified: Boolean(health.messenger?.ok && health.messenger?.lastWebhookAt), checkedAt: health.messenger?.checkedAt ?? null },
     { channel: "sms", configured: Boolean(config.sms.enabled && process.env.ESMS_API_KEY && process.env.ESMS_SECRET_KEY), enabled: config.sms.enabled, verified: false, checkedAt: null },
     { channel: "email", configured: Boolean(emailDomain && s.resend_api_key), enabled: Boolean(config.email.enabled && emailDomain?.enabled && emailDomain.status === 'verified'), verified: emailDomain?.status === 'verified', checkedAt: emailDomain?.checked_at ?? null },

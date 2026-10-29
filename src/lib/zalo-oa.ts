@@ -59,6 +59,14 @@ export function oaConnectionSummary(accounts: { status: OaStatus; last_webhook_a
   };
 }
 
+/** Rejected foreign-OA/delivery events cannot erase proven connection evidence. */
+export function oaReceiveHealth(accounts: { status: OaStatus; last_webhook_at: string | null }[], latest: { ok: boolean; detail: string | null; created_at: string } | null) {
+  const summary = oaConnectionSummary(accounts);
+  const lastAccepted = Math.max(0, ...accounts.filter(a => canSend(a.status)).map(a => Date.parse(a.last_webhook_at ?? "") || 0));
+  const authRejected = Boolean(latest && !latest.ok && /^Sai chữ ký|^Sai App ID/.test(latest.detail ?? "") && Date.parse(latest.created_at) > lastAccepted);
+  return { ...summary, verified: summary.verified && !authRejected, authRejected };
+}
+
 /** Preserve provider identifiers beyond JavaScript's safe integer range. Verify the original body, not this normalized JSON. */
 export function parseZaloWebhook(raw: string): unknown {
   return JSON.parse(raw.replace(/"(id|oa_id|app_id)"\s*:\s*(\d+)/g, '"$1":"$2"'));

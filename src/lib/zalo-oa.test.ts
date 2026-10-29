@@ -1,9 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { canRunAutomation, canSend, displayStatus, needsRefresh, oaConnectionSummary, parseZaloWebhook, pickReplyIdentity, webhookFresh, eventOaId, zaloSendError, readZaloProfile, zaloContactName } from "./zalo-oa";
+import { canRunAutomation, canSend, displayStatus, needsRefresh, oaConnectionSummary, oaReceiveHealth, parseZaloWebhook, pickReplyIdentity, webhookFresh, eventOaId, zaloSendError, readZaloProfile, zaloContactName } from "./zalo-oa";
 
 const now = new Date("2026-10-29T00:00:00Z");
 
 describe("zalo oa rules", () => {
+  it("foreign OA errors do not extinguish a proven connection", () => {
+    expect(oaReceiveHealth([{status:"connected",last_webhook_at:"2026-10-29T04:48:06Z"}], {ok:false,detail:"Sai OA",created_at:"2026-10-29T04:56:49Z"}).verified).toBe(true);
+  });
+  it("new signature failures remain visible without treating old failures as current", () => {
+    const accounts = [{status:"connected" as const,last_webhook_at:"2026-10-29T04:48:06Z"}];
+    expect(oaReceiveHealth(accounts,{ok:false,detail:"Sai chữ ký",created_at:"2026-10-29T04:56:49Z"}).verified).toBe(false);
+    expect(oaReceiveHealth(accounts,{ok:false,detail:"Sai chữ ký",created_at:"2026-10-29T04:46:00Z"}).verified).toBe(true);
+  });
   it("delivery events identify OA as sender, inbound events as recipient", () => {
     expect(eventOaId({event_name:"user_received_message",sender:{id:"2788520716563342888"},recipient:{id:"4119378443424178308"}})).toBe("2788520716563342888");
     expect(eventOaId({event_name:"user_send_text",sender:{id:"4119378443424178308"},recipient:{id:"2788520716563342888"}})).toBe("2788520716563342888");
