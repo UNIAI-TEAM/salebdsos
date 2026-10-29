@@ -33,3 +33,29 @@ describe("zalo oa rules", () => {
     expect(pickReplyIdentity([{ account_id: "oa1", conversation_id: "c1" }, { account_id: "oa2", conversation_id: "c1" }], "c1")).toBeNull();
   });
 });
+
+import { attachmentKind, isTransientSendError, zaloWindow } from "./zalo-oa";
+describe("zalo window, retry, attachments", () => {
+  const t = Date.parse("2026-10-29T00:00:00Z");
+  it("send window lasts 168 hours after the last customer message and warns in the last 12 hours", () => {
+    expect(zaloWindow("2026-10-22T01:00:00Z", t)).toMatchObject({ open: true, warn: true });
+    expect(zaloWindow("2026-10-27T00:00:00Z", t)).toMatchObject({ open: true, warn: false });
+    expect(zaloWindow("2026-10-21T23:00:00Z", t).open).toBe(false);
+    expect(zaloWindow(null, t).open).toBe(false);
+  });
+  it("retries only network, 5xx and rate-limit errors", () => {
+    expect(isTransientSendError(null)).toBe(true);
+    expect(isTransientSendError(503)).toBe(true);
+    expect(isTransientSendError(429)).toBe(true);
+    expect(isTransientSendError(200, -32)).toBe(true);
+    expect(isTransientSendError(200, -230)).toBe(false);
+    expect(isTransientSendError(400)).toBe(false);
+  });
+  it("accepts JPG/PNG up to 1MB and PDF/DOC up to 5MB", () => {
+    expect(attachmentKind("image/png", 900_000)).toEqual({ kind: "image" });
+    expect("error" in attachmentKind("image/png", 1_200_000)).toBe(true);
+    expect(attachmentKind("application/pdf", 4_000_000)).toEqual({ kind: "file" });
+    expect("error" in attachmentKind("application/pdf", 6_000_000)).toBe(true);
+    expect("error" in attachmentKind("image/gif", 100)).toBe(true);
+  });
+});

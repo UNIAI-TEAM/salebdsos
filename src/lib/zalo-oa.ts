@@ -93,3 +93,42 @@ export function webhookPath(key: string) {
   return `/api/public/zalo/${key}`;
 }
 export const OAUTH_CALLBACK_PATH = "/api/public/zalo/oauth-callback";
+
+/* ---------------- Cửa sổ gửi tin tư vấn ---------------- */
+// Độ dài cửa sổ theo chính sách Zalo hiện hành (cần đối chiếu developers.zalo.me khi chính sách thay đổi).
+export const ZALO_WINDOW = { hours: 168, warnHours: 12 } as const;
+
+export function zaloWindow(lastInboundAt: string | null, now = Date.now(), hours: number = ZALO_WINDOW.hours) {
+  if (!lastInboundAt) return { open: false, endsAt: null as string | null, msLeft: 0, warn: false };
+  const end = new Date(lastInboundAt).getTime() + hours * 3600_000;
+  const msLeft = Math.max(0, end - now);
+  return { open: msLeft > 0, endsAt: new Date(end).toISOString(), msLeft, warn: msLeft > 0 && msLeft < ZALO_WINDOW.warnHours * 3600_000 };
+}
+
+export function formatLeft(ms: number) {
+  const h = Math.floor(ms / 3600_000), m = Math.floor((ms % 3600_000) / 60_000);
+  if (h >= 24) return `${Math.floor(h / 24)} ngày ${h % 24} giờ`;
+  return h > 0 ? `${h} giờ ${m} phút` : `${m} phút`;
+}
+
+/* ---------------- Gửi lại khi lỗi tạm thời ---------------- */
+export const ZALO_RETRY = { maxAttempts: 3, delaysMs: [0, 1500, 4000] } as const;
+
+/** Lỗi tạm thời (mạng, 5xx, quá tốc độ) mới thử lại; lỗi quyền/cửa sổ/người nhận thì dừng ngay. */
+export function isTransientSendError(httpStatus: number | null, zaloCode?: number | null) {
+  if (httpStatus === null) return true; // lỗi mạng
+  if (httpStatus === 429 || httpStatus >= 500) return true;
+  return zaloCode === -32; // -32: vượt giới hạn tốc độ
+}
+
+/* ---------------- Tệp đính kèm ---------------- */
+export const ZALO_UPLOAD = {
+  image: { maxBytes: 1_000_000, types: ["image/jpeg", "image/png"] },
+  file: { maxBytes: 5_000_000, types: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] },
+} as const;
+
+export function attachmentKind(type: string, size: number): { kind: "image" | "file" } | { error: string } {
+  if ((ZALO_UPLOAD.image.types as readonly string[]).includes(type)) return size <= ZALO_UPLOAD.image.maxBytes ? { kind: "image" } : { error: "Ảnh tối đa 1MB (JPG/PNG)" };
+  if ((ZALO_UPLOAD.file.types as readonly string[]).includes(type)) return size <= ZALO_UPLOAD.file.maxBytes ? { kind: "file" } : { error: "Tệp tối đa 5MB" };
+  return { error: "Zalo chỉ nhận ảnh JPG/PNG hoặc tệp PDF/DOC/DOCX" };
+}
