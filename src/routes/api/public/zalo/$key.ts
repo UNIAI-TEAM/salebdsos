@@ -16,6 +16,7 @@ const schema = z.object({
 
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
+// Zalo chỉ chấp nhận webhook khi luôn trả 200: yêu cầu bị từ chối vẫn trả 200 nhưng KHÔNG được xử lý.
 // Webhook riêng cho từng OA: /api/public/zalo/<khóa ngẫu nhiên>. Xác minh chữ ký theo OA Secret trước mọi xử lý.
 export const Route = createFileRoute("/api/public/zalo/$key")({
   server: {
@@ -31,20 +32,20 @@ export const Route = createFileRoute("/api/public/zalo/$key")({
         const { signatureEquals, zaloSignature, receiveChannelMessage } = await import("@/lib/omnichannel.server");
         const { logWebhook } = await import("@/lib/zalo-oa.server");
         let parsed;
-        try { parsed = schema.safeParse(JSON.parse(raw)); } catch { await logWebhook(oa.tenant_id, oa.id, "", false, "JSON không hợp lệ"); return json({ error: "bad json" }, 400); }
-        if (!parsed.success) { await logWebhook(oa.tenant_id, oa.id, "", false, "Sự kiện sai định dạng"); return json({ error: "invalid event" }, 400); }
+        try { parsed = schema.safeParse(JSON.parse(raw)); } catch { await logWebhook(oa.tenant_id, oa.id, "", false, "JSON không hợp lệ"); return json({ ok: false, rejected: "bad json" }); }
+        if (!parsed.success) { await logWebhook(oa.tenant_id, oa.id, "", false, "Sự kiện sai định dạng"); return json({ ok: false, rejected: "invalid event" }); }
         const p = parsed.data;
         const secret = await decryptValue(oa.app_secret_ct, oa.app_secret_iv);
-        if (!secret) return json({ error: "OA not configured" }, 401);
+        if (!secret) return json({ ok: false, rejected: "OA not configured" });
         const sig = request.headers.get("x-zevent-signature") ?? "";
         if (!signatureEquals(sig, zaloSignature(raw, oa.app_id, String(p.timestamp), secret))) {
           await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sai chữ ký");
-          return json({ error: "invalid signature" }, 401);
+          return json({ ok: false, rejected: "invalid signature" });
         }
-        if (p.app_id && String(p.app_id) !== oa.app_id) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sai App ID"); return json({ error: "wrong app" }, 401); }
-        if (!webhookFresh(p.timestamp)) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sự kiện quá cũ"); return json({ error: "stale event" }, 401); }
+        if (p.app_id && String(p.app_id) !== oa.app_id) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sai App ID"); return json({ ok: false, rejected: "wrong app" }); }
+        if (!webhookFresh(p.timestamp)) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sự kiện quá cũ"); return json({ ok: false, rejected: "stale event" }); }
         const eventOa = p.oa_id ?? (p.event_name.startsWith("user_") ? p.recipient?.id : p.sender?.id);
-        if (eventOa && String(eventOa) !== oa.oa_id) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sai OA"); return json({ error: "wrong OA" }, 401); }
+        if (eventOa && String(eventOa) !== oa.oa_id) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sai OA"); return json({ ok: false, rejected: "wrong OA" }); }
 
         await sb.from("zalo_oa_accounts").update({ last_webhook_at: new Date().toISOString(), ...(oa.status === "webhook_error" ? { status: "connected" } : {}) }).eq("id", oa.id);
 
