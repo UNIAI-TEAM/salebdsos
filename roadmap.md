@@ -1,11 +1,15 @@
 # Roadmap
 
+- [x] Gọi lấy lại hồ sơ Vietants ngày 29/10: Zalo trả tên Nguyễn Tuấn Kiệt và URL ảnh thật, lỗi null; tên/ảnh hiện trên Hộp thoại. Không còn chặn -212 cho khách đã thử.
+- [x] Kiểm tra cấu hình hỗ trợ và lưu bản nháp “Vietants – Tư vấn & chuyển nhân viên” đang Tắt, không bịa bảng giá; tải lại giữ nguyên. Mô phỏng lời chào → chọn 1 → câu ngoài kịch bản → gặp nhân viên đạt; 44 test quy tắc đạt. Kịch bản và bật Zalo áp dụng toàn sàn, không riêng OA; chưa bật để tránh tác động OA khác.
+- [ ] Kiểm thử Zalo toàn luồng thật: cần xuất bản code hiện tại, bật kịch bản cho kênh Zalo và khách thử mới chưa có Sale trả lời gửi tin/lựa chọn/gặp nhân viên/điểm. Khảo sát cũ đã gửi thật nhưng điểm 5 chưa lưu; không coi mô phỏng hoặc ticket thủ công là xác nhận toàn luồng.
+
 - [x] Kiểm tra lại Vietants sau khi bật quyền: gọi lấy lại hồ sơ thật vẫn -212, cần đăng ký API chứ không chỉ bật quyền. Chatbot tư vấn trước, chỉ tạo/giao ticket khi khách yêu cầu nhân viên hoặc kịch bản chuyển giao; câu chưa khớp giữ bot và đưa lựa chọn, FAQ từ khóa hoạt động giữa luồng. Có Cấu hình chatbot ngay Hộp thoại và bộ dựng kịch bản; chỉnh lời trả lời dự phòng. 46 test đạt; luồng web thật xác nhận 0 ticket khi bot tư vấn, 1 ticket Đã giao khi gặp nhân viên, lặp yêu cầu không tạo trùng. Khôi phục kịch bản cũ sau thử. Zalo thực chờ xuất bản và cấu hình kịch bản (sàn chưa lưu kịch bản nào).
 
 - [x] Gọi lại API tên/ảnh đúng OA Vietants từ hội thoại đăng nhập; Zalo trả -212 (ứng dụng chưa đăng ký API lấy chi tiết người dùng, không phải lỗi gói). Thêm nút lấy lại hồ sơ và hướng dẫn chính xác; 30 test đạt, build OK.
 - [x] Thử ticket Vietants thật: tạo phiếu kiểm thử liên kết hội thoại, Nhận → Xử lý xong trên giao diện, Zalo xác nhận khảo sát đã gửi (có message ID), tải lại phiếu vẫn Đã xử lý/Chờ khách. Khách gửi TEST TICKET VIETANTS và trả lời 5 đã vào hội thoại.
 - [ ] Vietants tự tạo ticket/lưu điểm 5/kịch bản: webhook trên trang đã xuất bản vẫn chạy bản cũ, chưa gọi phần hỗ trợ mới; cần xuất bản rồi thử tin mới. Không coi phiếu tạo thủ công là kiểm chứng tự tạo, chưa lưu điểm từ tin 5; không bật bot giành hội thoại đã có Sale trả lời.
-- [ ] Tên/ảnh Vietants thành công: quản trị ứng dụng cần đăng ký API truy xuất chi tiết người dùng trong Zalo Developers và quyền quản lý thông tin người dùng; sau đó bấm Lấy lại tên và ảnh từ Zalo.
+- [x] Tên/ảnh Vietants thành công: đã gọi lại ngày 29/10, tên Nguyễn Tuấn Kiệt và ảnh thật đã lưu/hiển thị; lỗi null.
 
 - [x] Form "Thêm Zalo OA" rõ ràng: mỗi ô có hướng dẫn lấy giá trị ở đâu; Secret Key đổi tên thành "Secret Key của ứng dụng (App Secret)" và ghi rõ không phải OA Secret Key (khóa này nhập sau trong Sửa cấu hình). OA ID được bỏ trống: lưu dạng chờ theo webhook riêng, cấp quyền xong tự ghi đúng mã do token xác nhận; OA đã có mã không bao giờ bị cấp quyền sau ghi đè. 17 test đạt, đã thử lưu không nhập OA ID → hiện "Chưa có mã OA — bấm Cấp quyền" → xóa bản ghi thử, build OK. Chưa xuất bản.
 - [x] Đối chiếu lỗi Zalo thật: nhận user_send_text thành công lúc 04:48 UTC; gửi bị nhà cung cấp chặn do OA cần nâng cấp gói. Bổ sung lấy tên/ảnh qua v3 user-detail, cache đúng danh tính OA và hiển thị avatar/lỗi; API hồ sơ hiện bị Zalo từ chối nên chưa có tên/ảnh thật. Sửa nhận diện OA ở sự kiện xác nhận gửi để tránh báo Sai OA giả; 29 test đạt, giao diện hội thoại thật/lỗi đã kiểm tra, bản sửa chưa xuất bản.
