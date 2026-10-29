@@ -1,5 +1,10 @@
 # Roadmap
 
+- [x] Zalo OA bước 1: nhiều OA tại Tích hợp (thêm, dùng chung ứng dụng, cấp quyền Zalo, nhập token tay, gắn dự án, tạm dừng, ngắt kết nối, nhật ký), webhook riêng có chữ ký/chống phát lại, trả lời từ đúng OA, làm mới token có khóa + hằng giờ. Thử tin giả lập có chữ ký: nhận 1 tin, gửi trùng không nhân đôi, sai chữ ký bị chặn; 5 test đạt; dữ liệu thử đã dọn. Chưa thử OA thật.
+- [ ] Zalo OA bước 1 còn: nhãn/lọc theo OA trong Hộp thoại, đồng hồ cửa sổ gửi tin, gửi ảnh/tệp, hàng đợi gửi lại — làm tiếp khi anh duyệt.
+- [ ] Zalo bước 2–5: Ticket & phân công, CSAT, kịch bản tư vấn trên Zalo, vận hành — chờ anh duyệt từng bước.
+- [ ] Thử OA thật: cần Publish, anh nhập App ID/Secret và bấm Cấp quyền.
+
 - [x] Theme/logo/slogan tại Cài đặt → Thương hiệu: 4 preset theo sàn, giữ lựa chọn sáng/tối cá nhân; logo PNG/JPG/WebP 2MB, kiểm nội dung và quyền quản trị. Lưu theme/slogan/logo, tải lại và xem logo thành công; đã khôi phục thương hiệu trước thử. 4 test đạt, build OK; chưa xuất bản.
 
 - [x] Cấu hình email riêng tại Tích hợp: Resend theo tài khoản từng sàn, khóa mã hóa, quản trị nhập tên miền/địa chỉ gửi, lấy DNS, xác minh, gửi thử đến chính mình và lịch sử tiếp nhận/thất bại; chặn tên miền chưa xác minh. 5 test quy tắc đạt; giao diện quản trị và chặn địa chỉ khác tên miền đã kiểm tra. Chưa xuất bản.
