@@ -36,29 +36,37 @@ export const Route = createFileRoute("/api/public/zalo/$key")({
         try { parsed = schema.safeParse(parseZaloWebhook(raw)); } catch { await logWebhook(oa.tenant_id, oa.id, "", false, "JSON không hợp lệ"); return json({ ok: false, rejected: "bad json" }); }
         if (!parsed.success) { await logWebhook(oa.tenant_id, oa.id, "", false, "Sự kiện sai định dạng"); return json({ ok: false, rejected: "invalid event" }); }
         const p = parsed.data;
-        const oaSecret = oa.oa_secret_ct ? await decryptValue(oa.oa_secret_ct, oa.oa_secret_iv) : null;
-        const appSecret = await decryptValue(oa.app_secret_ct, oa.app_secret_iv);
-        const secret = oaSecret ?? appSecret;
-        if (!secret) return json({ ok: false, rejected: "OA not configured" });
+        // Zalo gắn webhook theo ỨNG DỤNG, không theo OA: một địa chỉ có thể nhận sự kiện của mọi OA dùng chung
+        // ứng dụng đó. Vì vậy thử khóa của mọi OA trong cùng sàn, rồi định tuyến theo mã OA của sự kiện.
+        const COLS = "id,tenant_id,oa_id,app_id,status,project_id,app_secret_ct,app_secret_iv,oa_secret_ct,oa_secret_iv";
+        const { data: siblings } = await sb.from("zalo_oa_accounts").select(COLS).eq("tenant_id", oa.tenant_id).neq("status", "disconnected");
+        const pool = [oa, ...(siblings ?? []).filter((x) => x.id !== oa.id)];
         const sig = request.headers.get("x-zevent-signature") ?? "";
         const ts = String(p.timestamp);
-        if (!verifyZaloSignature(sig, raw, oa.app_id, ts, secret)) {
-          // Chẩn đoán không chứa khóa: giúp quản trị biết sai ở đâu mà không nới lỏng xác thực.
+        const payloadApp = p.app_id ? String(p.app_id) : "";
+        let verifiedApp: string | null = null;
+        let sawOaSecret = false;
+        outer: for (const c of pool) {
+          const secrets = [c.oa_secret_ct ? await decryptValue(c.oa_secret_ct, c.oa_secret_iv) : null, await decryptValue(c.app_secret_ct, c.app_secret_iv)];
+          if (secrets[0]) sawOaSecret = true;
+          for (const appId of new Set([payloadApp, c.app_id].filter(Boolean))) {
+            for (const sec of secrets) if (sec && sig && verifyZaloSignature(sig, raw, appId, ts, sec)) { verifiedApp = appId; break outer; }
+          }
+        }
+        if (!verifiedApp) {
           const hints: string[] = [];
           if (!sig) hints.push("thiếu header chữ ký");
           else if (!/^mac\s*=\s*[a-f0-9]{64}$/i.test(sig.trim())) hints.push("header chữ ký sai định dạng");
-          if (!oaSecret) hints.push("chưa lưu OA Secret Key");
-          const payloadApp = p.app_id ? String(p.app_id) : "";
-          if (payloadApp && payloadApp !== oa.app_id) hints.push(`App ID của sự kiện (${payloadApp}) khác App ID đã cấu hình`);
-          else if (sig && oaSecret && appSecret && verifyZaloSignature(sig, raw, oa.app_id, ts, appSecret)) hints.push("ô OA Secret Key đang chứa khóa ứng dụng");
-          else if (sig && oaSecret) hints.push("OA Secret Key đã lưu không khớp khóa trên trang Webhook của Zalo");
+          if (!sawOaSecret) hints.push("chưa lưu OA Secret Key");
+          else if (sig) hints.push(`không OA nào trong sàn có OA Secret Key khớp ứng dụng ${payloadApp || oa.app_id} — dán OA Secret Key trên trang Webhook của ứng dụng này vào Sửa cấu hình`);
           await logWebhook(oa.tenant_id, oa.id, p.event_name, false, `Sai chữ ký: ${hints.join("; ") || "không xác định"}`);
           return json({ ok: false, rejected: "invalid signature" });
         }
-        if (p.app_id && String(p.app_id) !== oa.app_id) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sai App ID"); return json({ ok: false, rejected: "wrong app" }); }
         if (!webhookFresh(p.timestamp)) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sự kiện quá cũ"); return json({ ok: false, rejected: "stale event" }); }
-        const eventOa = eventOaId(p);
-        if (eventOa && String(eventOa) !== oa.oa_id) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sai OA"); return json({ ok: false, rejected: "wrong OA" }); }
+        const eventOa = eventOaId(p) ? String(eventOaId(p)) : oa.oa_id;
+        const target = pool.find((x) => x.oa_id === eventOa);
+        if (!target) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, `OA ${eventOa} chưa được thêm vào sàn`); return json({ ok: false, rejected: "unknown OA" }); }
+        if (target.id !== oa.id) Object.assign(oa, target);
 
         await sb.from("zalo_oa_accounts").update({ last_webhook_at: new Date().toISOString(), ...(oa.status === "webhook_error" ? { status: "connected" } : {}) }).eq("id", oa.id);
 
