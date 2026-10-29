@@ -124,6 +124,10 @@ function InboxPage() {
 
   const [channel, setChannel] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("");
+  const [oaFilter, setOaFilter] = useState<string>("all");
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => { const t = setInterval(() => setNowTick(Date.now()), 60_000); return () => clearInterval(t); }, []);
   const fetchKit = useServerFn(getInboxKit);
   const saveTags = useServerFn(setConversationTags);
   const assignConv = useServerFn(assignConversation);
@@ -156,12 +160,12 @@ function InboxPage() {
   });
 
   const listQuery = useQuery({
-    queryKey: ["inbox", tenantId, channel, search, tagFilter, mineOnly],
+    queryKey: ["inbox", tenantId, channel, search, tagFilter, mineOnly, oaFilter],
     enabled: Boolean(tenantId),
     refetchInterval: 20000,
     queryFn: () => {
       if (!tenantId) throw new Error("Chưa chọn workspace");
-      return fetchList({ data: { tenantId, channel, search: search || undefined, tag: tagFilter || undefined, mine: mineOnly || undefined } });
+      return fetchList({ data: { tenantId, channel, search: search || undefined, tag: tagFilter || undefined, mine: mineOnly || undefined, oa: oaFilter !== "all" ? oaFilter : undefined } });
     },
   });
 
@@ -233,6 +237,24 @@ function InboxPage() {
       refresh();
     },
     onError: (error: Error) => toast.error(error.message),
+  });
+
+  const attachMutation = useMutation({
+    mutationFn: (file: File) => {
+      if (!tenantId || !activeId) throw new Error("Chưa chọn hội thoại");
+      const check = attachmentKind(file.type, file.size);
+      if ("error" in check) throw new Error(check.error);
+      const fd = new FormData();
+      fd.append("tenantId", tenantId); fd.append("conversationId", activeId); fd.append("caption", draft.trim()); fd.append("file", file);
+      return sendAttachment({ data: fd });
+    },
+    onSuccess: (r) => { if (r.status === "sent") { setDraft(""); toast.success(ZT.attachSent); } else if (r.warning) toast.warning(r.warning); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const resendMutation = useMutation({
+    mutationFn: (messageId: string) => { if (!tenantId) throw new Error("Chưa chọn workspace"); return resend({ data: { tenantId, messageId } }); },
+    onSuccess: (r) => { r.status === "sent" ? toast.success(ZT.resent) : toast.warning(r.warning ?? ZT.resendFailed); refresh(); },
+    onError: (e: Error) => { toast.error(e.message); refresh(); },
   });
 
   const callMutation = useMutation({
@@ -341,7 +363,8 @@ function InboxPage() {
   const connection = channelsQuery.data?.connections.find(c => c.channel === selectedChannel);
   const channelBlocked = !canSendPendingChannel(selectedChannel) || (["zalo", "messenger", "telegram"].includes(selectedChannel) && (!connection?.configured || !connection.enabled));
   const messengerLast = thread?.conversation.identities.find(i => i.channel === "messenger")?.last_inbound_at ?? null;
-  const windowBlocked = selectedChannel === "messenger" && !messengerWindowOpen(messengerLast);
+  const zaloWin = selectedChannel === "zalo" && thread?.conversation.zalo ? zaloWindow(thread.conversation.zalo.lastInboundAt, nowTick) : null;
+  const windowBlocked = (selectedChannel === "messenger" && !messengerWindowOpen(messengerLast)) || (zaloWin !== null && !zaloWin.open);
 
   const openSettings = () => {
     setConfig(channelsQuery.data?.config ?? DEFAULT_CHANNEL_SETTINGS);
@@ -387,13 +410,14 @@ function InboxPage() {
               </label>
             )}
             <Select value={channel} onValueChange={setChannel}><SelectTrigger className="h-8 border-0 bg-transparent px-1 text-xs shadow-none" aria-label={ui.channels}><SelectValue /></SelectTrigger><SelectContent>{CHANNEL_FILTERS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent></Select>
+            {(listQuery.data?.oaAccounts.length ?? 0) > 1 && <Select value={oaFilter} onValueChange={setOaFilter}><SelectTrigger className="h-8 w-auto max-w-40 border-0 bg-transparent px-1 text-xs shadow-none" aria-label={ZT.oaFilter} data-testid="filter-oa"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">{ZT.allOa}</SelectItem>{listQuery.data?.oaAccounts.map(a => <SelectItem key={a.oaId} value={a.oaId}>{a.name}</SelectItem>)}</SelectContent></Select>}
             {tagFilter && <Button size="sm" variant="secondary" className="h-6 text-[11px]" onClick={() => setTagFilter("")}>{tagMeta(tagFilter)?.label}<X className="size-3" /></Button>}
           </div>
           <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-thin" data-testid="inbox-list">
             {listQuery.isLoading ? <li className="py-12 text-center text-xs text-muted-foreground">{ui.loading}</li> : visibleItems.length === 0 ? <li className="flex flex-col items-center gap-3 px-4 py-16 text-xs text-muted-foreground"><Inbox className="size-8 stroke-1 opacity-50" />{ui.empty}</li> : visibleItems.map(item => <li key={item.id}>
               <Button variant="ghost" onClick={() => { setActiveId(item.id); setDraft(""); setSendChannel("auto"); setDetailsOpen(false); }} className={`h-auto w-full justify-start gap-3 whitespace-normal rounded-none border-b border-border/50 px-3 py-3 text-left text-foreground hover:bg-muted/60 hover:text-foreground ${activeId === item.id ? "bg-primary-soft hover:bg-primary-soft" : ""}`} aria-pressed={activeId === item.id} data-testid="inbox-conversation">
                 <div className="relative shrink-0"><span className="flex size-10 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">{initials(item.name)}</span><ChannelGlyph channel={item.channel} className="absolute -bottom-1 -right-1 size-5 border-2 border-card shadow-sm" /></div>
-                <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><p className="truncate text-xs font-semibold">{item.name}</p><time className="shrink-0 text-[10px] font-normal text-muted-foreground">{new Date(item.lastAt).toLocaleDateString("vi-VN", {day: "2-digit", month: "2-digit"})}</time></div><div className="mt-1 flex items-center gap-2"><p className="min-w-0 flex-1 truncate text-xs font-normal text-muted-foreground">{item.preview ?? "—"}</p>{item.unread > 0 && <span className="grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] text-primary-foreground">{item.unread}</span>}</div><p className="mt-1 truncate text-[10px] font-normal text-muted-foreground">{CHANNEL_LABEL[item.channel] ?? item.channel}{item.projectName ? ` · ${item.projectName}` : ""}</p>{item.tags?.length ? <div className="mt-1 flex flex-wrap gap-1">{item.tags.map(key => { const meta = tagMeta(key); return meta ? <span key={key} className={`rounded px-1 text-[10px] ${TAG_TONE[meta.tone]}`}>{meta.label}</span> : null; })}</div> : null}</div>
+                <div className="min-w-0 flex-1"><div className="flex items-center justify-between gap-2"><p className="truncate text-xs font-semibold">{item.name}</p><time className="shrink-0 text-[10px] font-normal text-muted-foreground">{new Date(item.lastAt).toLocaleDateString("vi-VN", {day: "2-digit", month: "2-digit"})}</time></div><div className="mt-1 flex items-center gap-2"><p className="min-w-0 flex-1 truncate text-xs font-normal text-muted-foreground">{item.preview ?? "—"}</p>{item.unread > 0 && <span className="grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] text-primary-foreground">{item.unread}</span>}</div><p className="mt-1 truncate text-[10px] font-normal text-muted-foreground">{item.oaName ?? CHANNEL_LABEL[item.channel] ?? item.channel}{item.projectName ? ` · ${item.projectName}` : ""}</p>{item.tags?.length ? <div className="mt-1 flex flex-wrap gap-1">{item.tags.map(key => { const meta = tagMeta(key); return meta ? <span key={key} className={`rounded px-1 text-[10px] ${TAG_TONE[meta.tone]}`}>{meta.label}</span> : null; })}</div> : null}</div>
               </Button>
             </li>)}
           </ul>
@@ -403,7 +427,7 @@ function InboxPage() {
             <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-3 md:px-4">
               <Button size="icon" variant="ghost" className="shrink-0 md:hidden" aria-label={ui.back} onClick={() => setActiveId(null)}><ArrowLeft /></Button>
               <span className="grid size-9 shrink-0 place-items-center rounded-full bg-secondary text-xs font-semibold">{initials(thread.conversation.name)}</span>
-              <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{thread.conversation.name}</h2><p className="flex items-center gap-1 truncate text-[11px] text-muted-foreground"><ChannelGlyph channel={thread.conversation.channel} className="size-3.5" /><span className="truncate">{CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}{thread.conversation.phone ? ` · ${thread.conversation.phone}` : ""}</span></p></div>
+              <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{thread.conversation.name}</h2><p className="flex items-center gap-1 truncate text-[11px] text-muted-foreground"><ChannelGlyph channel={thread.conversation.channel} className="size-3.5" /><span className="truncate">{thread.conversation.zalo?.oaName ?? CHANNEL_LABEL[thread.conversation.channel] ?? thread.conversation.channel}{thread.conversation.phone ? ` · ${thread.conversation.phone}` : ""}</span></p></div>
               {thread.conversation.phone && <Button variant="ghost" size="icon" title={ui.call} aria-label={ui.call} onClick={() => { const phone = thread.conversation.phone; if (phone) callMutation.mutate(phone); }} disabled={callMutation.isPending}><PhoneCall /></Button>}
               <Select
                 value={thread.conversation.ownerUserId ?? "none"}
@@ -445,9 +469,9 @@ function InboxPage() {
                 <div className={`max-w-[90%] rounded-lg px-3 py-2.5 text-sm shadow-sm sm:max-w-[78%] ${message.channel === "note" ? "border border-dashed border-warning bg-warning/10 text-foreground" : message.direction === "out" ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-bl-sm border border-border bg-card text-card-foreground"}`}>
                   <p className="mb-1 flex items-center gap-1 text-[10px] font-medium opacity-80"><ChannelGlyph channel={message.channel} className={`size-3 ${message.direction === "out" && !isBrandChannel(message.channel) && message.channel !== "note" ? "bg-primary-foreground/20! text-primary-foreground!" : ""}`} />{message.channel === "note" ? ui.note : CHANNEL_LABEL[message.channel] ?? message.channel}{message.sender_name ? ` · ${message.sender_name}` : ""}</p>
                   <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{message.body}</p>
-                  {message.attachment_url && (message.channel === "call" ? <audio controls src={message.attachment_url} className="mt-2 max-w-full" /> : <a href={message.attachment_url} target="_blank" rel="noreferrer" className="mt-2 block underline">{ui.attachment}</a>)}
+                  {message.attachment_url && (message.channel === "call" ? <audio controls src={message.attachment_url} className="mt-2 max-w-full" /> : (message.meta as { file?: { kind?: string } } | null)?.file?.kind === "image" ? <a href={message.attachment_url} target="_blank" rel="noreferrer"><img src={message.attachment_url} alt={ZT.image} className="mt-2 max-h-56 rounded-md object-cover" /></a> : <a href={message.attachment_url} target="_blank" rel="noreferrer" className="mt-2 block underline">{ui.attachment}</a>)}
                 </div>
-                <p className="mt-1 max-w-full text-[10px] text-muted-foreground">{timeLabel(message.created_at)}{message.direction === "out" ? ` · ${({ sent: t.sent, pending: t.pending, failed: t.failed, delivered: t.delivered, read: t.read } as Record<string, string>)[message.delivery_status] ?? message.delivery_status}` : ""}{message.error_message ? ` · ${message.error_message}` : ""}</p>
+                <p className="mt-1 max-w-full text-[10px] text-muted-foreground">{timeLabel(message.created_at)}{message.direction === "out" ? ` · ${({ sent: t.sent, pending: t.pending, failed: t.failed, delivered: t.delivered, read: t.read } as Record<string, string>)[message.delivery_status] ?? message.delivery_status}` : ""}{message.error_message ? ` · ${message.error_message}` : ""}{message.channel === "zalo" && message.direction === "out" && message.delivery_status === "failed" && <Button variant="link" size="sm" className="ml-1 h-auto p-0 text-[10px]" disabled={resendMutation.isPending} onClick={() => resendMutation.mutate(message.id)} data-testid="resend-message">{ZT.resend}</Button>}</p>
               </div>)}
             </div>
             <div className="relative shrink-0 border-t border-border bg-card p-3 pr-16" data-testid="inbox-composer">
@@ -455,10 +479,11 @@ function InboxPage() {
                 {kit?.quickReplies.length ? <Popover><PopoverTrigger asChild><Button size="icon" variant="ghost" className="size-7" title={ui.quick} aria-label={ui.quick}><Zap /></Button></PopoverTrigger><PopoverContent align="end" className="max-h-64 w-80 max-w-[calc(100vw-32px)] overflow-y-auto p-1">{kit.quickReplies.map(q => <Button key={q.shortcut} variant="ghost" className="h-auto w-full flex-col items-start gap-1 whitespace-normal py-2 text-left" onClick={() => setDraft(q.text.replace(/\{project\}/g, "dự án"))}><span className="text-xs text-primary">/{q.shortcut}</span><span className="line-clamp-2 text-xs text-muted-foreground">{q.text}</span></Button>)}</PopoverContent></Popover> : null}
               </div>
               {(selectedChannel === "sms" || selectedChannel === "email") && <p role="status" className="mb-2 text-[11px] text-muted-foreground">{t.outboundOnly} · {!connection?.configured ? t.disconnected : !connection.enabled ? t.disabled : connection.verified ? t.connected : t.configured}</p>}
-              {(channelBlocked || windowBlocked) && <p role="status" className="mb-2 text-[11px] text-warning">{channelBlocked ? t.notConnected : t.windowClosed}</p>}
+              {zaloWin && !channelBlocked && <p role="status" data-testid="zalo-window" className={`mb-2 text-[11px] ${!zaloWin.open ? "text-destructive" : zaloWin.warn ? "text-warning" : "text-muted-foreground"}`}>{zaloWin.open ? `${ZT.windowLeft} ${formatLeft(zaloWin.msLeft)}` : ZT.windowClosed}</p>}
+              {(channelBlocked || (windowBlocked && !zaloWin)) && <p role="status" className="mb-2 text-[11px] text-warning">{channelBlocked ? t.notConnected : t.windowClosed}</p>}
               {sendChannel === "email" && <Input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder={ui.emailSubject} className="mb-2 h-8 text-xs" />}
               {slashOptions.length > 0 && <div className="absolute bottom-full left-3 right-3 mb-1 rounded-md border border-border bg-popover p-1 shadow-soft">{slashOptions.slice(0, 6).map(q => <Button key={q.shortcut} variant="ghost" className="h-auto w-full justify-start py-2 text-xs" onClick={() => applyQuick(q.shortcut)}><span className="text-primary">/{q.shortcut}</span><span className="truncate text-muted-foreground">{q.text}</span></Button>)}</div>}
-              <div className="flex items-end gap-2"><Textarea value={draft} onKeyDown={e => { if ((e.key === "Tab" || e.key === "Enter") && slashOptions.length > 0) { e.preventDefault(); applyQuick(slashOptions[0].shortcut); } }} onChange={e => setDraft(e.target.value)} rows={2} placeholder={sendChannel === "note" ? ui.noteDraft : sendChannel === "sms" ? ui.smsDraft : ui.draft} className="max-h-32 min-h-16 resize-none rounded-md border-0 bg-muted/40 text-sm shadow-none" /><Button size="icon" className="mb-1 shrink-0" title={ui.send} aria-label={ui.send} onClick={() => sendMutation.mutate()} disabled={!draft.trim() || sendMutation.isPending || channelBlocked || windowBlocked}><Send /></Button></div>
+              <div className="flex items-end gap-2"><Textarea value={draft} onKeyDown={e => { if ((e.key === "Tab" || e.key === "Enter") && slashOptions.length > 0) { e.preventDefault(); applyQuick(slashOptions[0].shortcut); } }} onChange={e => setDraft(e.target.value)} rows={2} placeholder={sendChannel === "note" ? ui.noteDraft : sendChannel === "sms" ? ui.smsDraft : ui.draft} className="max-h-32 min-h-16 resize-none rounded-md border-0 bg-muted/40 text-sm shadow-none" />{selectedChannel === "zalo" && <><input ref={fileInput} type="file" accept="image/jpeg,image/png,application/pdf,.doc,.docx" className="hidden" data-testid="zalo-file" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) attachMutation.mutate(f); }} /><Button size="icon" variant="ghost" className="mb-1 shrink-0" title={ZT.attach} aria-label={ZT.attach} disabled={attachMutation.isPending || channelBlocked || windowBlocked} onClick={() => fileInput.current?.click()}><Paperclip /></Button></>}<Button size="icon" className="mb-1 shrink-0" title={ui.send} aria-label={ui.send} onClick={() => sendMutation.mutate()} disabled={!draft.trim() || sendMutation.isPending || channelBlocked || windowBlocked}><Send /></Button></div>
             </div>
           </>}
         </section>

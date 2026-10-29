@@ -175,7 +175,7 @@ export const getConversation = createServerFn({ method: "GET" })
     const [messagesQ, callsQ] = await Promise.all([
       supabase
         .from("conversation_messages")
-        .select("id, channel, direction, body, attachment_url, sender_name, sender_user_id, delivery_status, error_message, created_at")
+        .select("id, channel, direction, body, attachment_url, sender_name, sender_user_id, delivery_status, error_message, created_at, meta")
         .in("conversation_id", conversationIds)
         .order("created_at", { ascending: true })
         .limit(300),
