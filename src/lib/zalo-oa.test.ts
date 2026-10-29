@@ -1,9 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { canRunAutomation, canSend, displayStatus, needsRefresh, oaConnectionSummary, parseZaloWebhook, pickReplyIdentity, webhookFresh } from "./zalo-oa";
+import { canRunAutomation, canSend, displayStatus, needsRefresh, oaConnectionSummary, parseZaloWebhook, pickReplyIdentity, webhookFresh, eventOaId, zaloSendError, readZaloProfile, zaloContactName } from "./zalo-oa";
 
 const now = new Date("2026-10-29T00:00:00Z");
 
 describe("zalo oa rules", () => {
+  it("delivery events identify OA as sender, inbound events as recipient", () => {
+    expect(eventOaId({event_name:"user_received_message",sender:{id:"2788520716563342888"},recipient:{id:"4119378443424178308"}})).toBe("2788520716563342888");
+    expect(eventOaId({event_name:"user_send_text",sender:{id:"4119378443424178308"},recipient:{id:"2788520716563342888"}})).toBe("2788520716563342888");
+  });
+  it("package rejection is permanent and does not trigger retry", () => {
+    expect(zaloSendError("The OA needs to upgrade OA Tier Package to use this feature.")).toContain("OA cần nâng cấp gói dịch vụ");
+    expect(isTransientSendError(200, -230)).toBe(false);
+  });
+  it("provider profile fills generic names without replacing CRM names or unsafe avatars", () => {
+    const meta = {zaloProfile:{name:"Kiệt",avatar:"https://example.com/avatar.jpg"}};
+    expect(zaloContactName("Khách Zalo",meta)).toBe("Kiệt");
+    expect(zaloContactName("Khách CRM",meta)).toBe("Khách CRM");
+    expect(readZaloProfile(meta).avatar).toBe("https://example.com/avatar.jpg");
+    expect(readZaloProfile({zaloProfile:{avatar:"javascript:alert(1)"}}).avatar).toBeNull();
+  });
   it("multi-OA connection is verified only after an authenticated webhook", () => {
     expect(oaConnectionSummary([{ status: "connected", last_webhook_at: null }])).toEqual({ configured: true, enabled: true, verified: false });
     expect(oaConnectionSummary([{ status: "connected", last_webhook_at: now.toISOString() }])).toEqual({ configured: true, enabled: true, verified: true });

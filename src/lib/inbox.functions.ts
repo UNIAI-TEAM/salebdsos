@@ -1,5 +1,6 @@
 // Hộp thoại hội thoại gộp theo khách + cuộc gọi có ghi âm
 import { createServerFn } from "@tanstack/react-start";
+import { readZaloProfile, zaloContactName, zaloSendError } from "./zalo-oa";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { CHANNELS_KEY, channelSettingsSchema, parseChannelSettings } from "@/lib/channels";
@@ -125,7 +126,8 @@ export const listConversations = createServerFn({ method: "GET" })
     const items = (convQ.data ?? []).map((row) => ({
       id: row.id,
       channel: row.channel as string,
-      name: row.contact_name || row.contact_phone || "Khách ẩn danh",
+      name: zaloContactName(row.contact_name, row.meta) || row.contact_phone || "Khách ẩn danh",
+      avatar: readZaloProfile(row.meta).avatar,
       phone: row.contact_phone,
       status: row.status,
       unread: row.unread_count,
@@ -170,7 +172,13 @@ export const getConversation = createServerFn({ method: "GET" })
       const { data: linked } = await siblings;
       conversationIds = [...new Set([conv.id, ...(linked ?? []).map(c => c.id)])];
     }
-    const { data: identities } = await supabase.from("channel_identities").select("channel,account_id,conversation_id,last_inbound_at").eq("tenant_id", data.tenantId).in("conversation_id", conversationIds);
+    const { data: identities } = await supabase.from("channel_identities").select("channel,account_id,external_user_id,conversation_id,last_inbound_at").eq("tenant_id", data.tenantId).in("conversation_id", conversationIds);
+    const ownZalo = (identities ?? []).filter(i => i.channel === "zalo" && i.conversation_id === conv.id);
+    let senderProfile = null;
+    if (ownZalo.length === 1 && ownZalo[0]) {
+      const { syncZaloContact } = await import("./zalo-contact.server");
+      senderProfile = await syncZaloContact(data.tenantId, ownZalo[0].account_id, ownZalo[0].external_user_id);
+    }
 
     const [messagesQ, callsQ] = await Promise.all([
       supabase
@@ -216,7 +224,9 @@ export const getConversation = createServerFn({ method: "GET" })
       conversation: {
         id: conv.id,
         channel: conv.channel as string,
-        name: conv.contact_name || conv.contact_phone || "Khách ẩn danh",
+        name: zaloContactName(conv.contact_name, senderProfile ? {zaloProfile: senderProfile} : conv.meta) || conv.contact_phone || "Khách ẩn danh",
+        avatar: senderProfile?.avatar ?? readZaloProfile(conv.meta).avatar,
+        profileError: senderProfile?.error ?? null,
         phone: conv.contact_phone,
         zaloId: conv.contact_zalo_id,
         identities: identities ?? [],
@@ -232,7 +242,7 @@ export const getConversation = createServerFn({ method: "GET" })
         tags: (convMeta.tags ?? []) as string[],
         zalo: zaloIdentity ? { lastInboundAt: zaloIdentity.last_inbound_at, oaName: zaloOa } : null,
       },
-      messages: msgs,
+      messages: msgs.map(m => ({ ...m, error_message: m.channel === "zalo" && m.error_message ? zaloSendError(m.error_message) : m.error_message })),
       calls: callsQ.data ?? [],
     };
   });

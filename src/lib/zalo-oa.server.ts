@@ -2,7 +2,7 @@
 import { createHash } from "crypto";
 import { supabaseAdmin as sb } from "@/integrations/supabase/client.server";
 import { decryptValue, encryptValue } from "./credentials.server";
-import { canSend, isTransientSendError, needsRefresh, OAUTH_CALLBACK_PATH, ZALO_OA_DEFAULTS, ZALO_RETRY, type OaStatus } from "./zalo-oa";
+import { canSend, isTransientSendError, needsRefresh, OAUTH_CALLBACK_PATH, ZALO_OA_DEFAULTS, ZALO_RETRY, zaloSendError, type OaStatus } from "./zalo-oa";
 
 const OAUTH = "https://oauth.zaloapp.com/v4/oa";
 const REFRESH_TOKEN_DAYS = 90;
@@ -48,7 +48,8 @@ async function tokenRequest(appId: string, secret: string, form: Record<string, 
 
 /** Lưu access + refresh token mới trong cùng một lần ghi (refresh token Zalo chỉ dùng một lần). */
 async function storeTokens(id: string, t: TokenResponse) {
-  const [a, r] = await Promise.all([encryptValue(t.access_token!), encryptValue(t.refresh_token!)]);
+  if (!t.access_token || !t.refresh_token) throw new Error("Thiếu token Zalo");
+  const [a, r] = await Promise.all([encryptValue(t.access_token), encryptValue(t.refresh_token)]);
   const seconds = Number(t.expires_in ?? 90000) || 90000;
   const { error } = await sb.from("zalo_oa_accounts").update({
     access_token_ct: a.ct, access_token_iv: a.iv, refresh_token_ct: r.ct, refresh_token_iv: r.iv,
@@ -84,7 +85,7 @@ export async function completeOAuth(state: string, code: string, oaId: string | 
   if (!verifier || !secret) throw new Error("Thiếu khóa ứng dụng.");
   const t = await tokenRequest(row.app_id, secret, { code, grant_type: "authorization_code", code_verifier: verifier });
   await storeTokens(row.id, t);
-  await syncProfile(row.id, t.access_token!);
+  if (t.access_token) await syncProfile(row.id, t.access_token);
   await audit(row.tenant_id, row.id, null, "oauth_connected");
   return row;
 }
@@ -141,6 +142,25 @@ async function validToken(id: string) {
 }
 
 export type SendResult = { status: "sent" | "failed"; externalId: string | null; error: string | null; attempts: number };
+
+export async function getOaUserProfile(accountId: string, userId: string) {
+  const v = await validToken(accountId);
+  if (!v?.token) return { name: null, avatar: null, error: "Chưa có token hợp lệ để lấy thông tin người gửi." };
+  try {
+    const url = new URL("https://openapi.zalo.me/v3.0/oa/user/detail");
+    url.searchParams.set("data", JSON.stringify({ user_id: userId }));
+    const r = await fetch(url, { headers: { access_token: v.token }, signal: AbortSignal.timeout(6000) });
+    const body = await r.json() as { error?: number; message?: string; data?: { display_name?: string; avatar?: string; avatars?: Record<string, string> } };
+    if (!r.ok || body.error !== 0 || !body.data) {
+      const packageBlocked = /upgrade OA Tier Package/i.test(body.message ?? "");
+      return { name: null, avatar: null, error: packageBlocked
+        ? "Zalo từ chối lấy tên/ảnh: OA cần nâng cấp gói dịch vụ để dùng tính năng này."
+        : `Zalo từ chối lấy tên/ảnh (mã ${body.error ?? r.status}). Kiểm tra quyền quản lý thông tin người dùng và gói dịch vụ OA.` };
+    }
+    const avatar = body.data.avatar || body.data.avatars?.["240"] || body.data.avatars?.["120"];
+    return { name: body.data.display_name?.slice(0, 120) || null, avatar: avatar?.startsWith("https://") ? avatar : null, error: null };
+  } catch { return { name: null, avatar: null, error: "Chưa lấy được tên/ảnh từ Zalo; hệ thống sẽ thử lại sau." }; }
+}
 export type OutgoingFile = { bytes: Uint8Array; name: string; type: string; kind: "image" | "file" };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -162,14 +182,15 @@ export async function sendFromOa(accountRowId: string, zaloUserId: string, text:
   let lastError = "Zalo từ chối gửi tin", refreshed = false;
   for (let i = 0; i < ZALO_RETRY.maxAttempts; i++) {
     if (ZALO_RETRY.delaysMs[i]) await sleep(ZALO_RETRY.delaysMs[i]);
-    const token = v!.token!;
+    if (!v?.token) return { status: "failed", externalId: null, error: "Không lấy được token sau khi làm mới.", attempts: i + 1 };
+    const token = v.token;
     let message: Record<string, unknown> = { text: text.slice(0, 2000) };
     if (file) {
       const form = new FormData();
       form.append("file", new Blob([file.bytes as BlobPart], { type: file.type }), file.name);
       const up = await zaloCall(token, `https://openapi.zalo.me/v2.0/oa/upload/${file.kind}`, { method: "POST", body: form });
       if (!up.ok) {
-        lastError = up.body.message || `Tải tệp lên Zalo lỗi ${up.http ?? "mạng"}`;
+        lastError = zaloSendError(up.body.message || `Tải tệp lên Zalo lỗi ${up.http ?? "mạng"}`);
         if (!refreshed && (up.body.error === -216 || up.body.error === -124)) { refreshed = true; if (await refreshOa(accountRowId, true)) { v = await validToken(accountRowId); i--; continue; } }
         if (isTransientSendError(up.http, up.body.error)) continue;
         return { status: "failed", externalId: null, error: lastError, attempts: i + 1 };
@@ -180,7 +201,7 @@ export async function sendFromOa(accountRowId: string, zaloUserId: string, text:
     }
     const res = await zaloCall(token, "https://openapi.zalo.me/v3.0/oa/message/cs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recipient: { user_id: zaloUserId }, message }) });
     if (res.ok) return { status: "sent", externalId: res.body.data?.message_id ?? null, error: null, attempts: i + 1 };
-    lastError = res.body.message || `Zalo trả lỗi ${res.http ?? "mạng"}`;
+    lastError = zaloSendError(res.body.message || `Zalo trả lỗi ${res.http ?? "mạng"}`);
     if (!refreshed && (res.body.error === -216 || res.body.error === -124)) {
       refreshed = true;
       if (await refreshOa(accountRowId, true)) { v = await validToken(accountRowId); if (v?.token) { i--; continue; } }

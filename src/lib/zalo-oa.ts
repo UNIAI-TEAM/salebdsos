@@ -64,6 +64,30 @@ export function parseZaloWebhook(raw: string): unknown {
   return JSON.parse(raw.replace(/"(id|oa_id|app_id)"\s*:\s*(\d+)/g, '"$1":"$2"'));
 }
 
+/** OA is the recipient for inbound messages, sender for outbound/delivery events. */
+export function eventOaId(p: { event_name: string; oa_id?: string | number; sender?: { id: string | number }; recipient?: { id: string | number } }) {
+  const inbound = ZALO_HANDLED_EVENTS.has(p.event_name);
+  const id = p.oa_id ?? (inbound ? p.recipient?.id : p.sender?.id);
+  return id == null ? null : String(id);
+}
+
+export function zaloSendError(message: string) {
+  return /upgrade OA Tier Package/i.test(message)
+    ? "Zalo từ chối gửi: OA cần nâng cấp gói dịch vụ để dùng tính năng nhắn tin qua API. Quản trị OA cần kiểm tra gói trên Zalo OA; gửi lại không khắc phục được lỗi này."
+    : message;
+}
+
+export function readZaloProfile(meta: unknown) {
+  const m = meta && typeof meta === "object" ? meta as Record<string, unknown> : {};
+  const p = m.zaloProfile && typeof m.zaloProfile === "object" ? m.zaloProfile as Record<string, unknown> : {};
+  return { name: typeof p.name === "string" ? p.name : null, avatar: typeof p.avatar === "string" && p.avatar.startsWith("https://") ? p.avatar : null };
+}
+
+export function zaloContactName(name: string | null, meta: unknown) {
+  const profile = readZaloProfile(meta);
+  return !name || ["Khách Zalo", "Khách ẩn danh"].includes(name) ? profile.name || name : name;
+}
+
 /** Sự kiện webhook còn mới không (timestamp của Zalo tính bằng mili giây). */
 export function webhookFresh(timestamp: string | number, now = Date.now(), maxAgeMinutes: number = ZALO_OA_DEFAULTS.webhookMaxAgeMinutes) {
   const ts = Number(timestamp);

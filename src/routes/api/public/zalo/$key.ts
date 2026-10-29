@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { eventText, parseZaloWebhook, webhookFresh, ZALO_FOLLOW_EVENTS, ZALO_HANDLED_EVENTS } from "@/lib/zalo-oa";
+import { eventText, eventOaId, parseZaloWebhook, webhookFresh, ZALO_FOLLOW_EVENTS, ZALO_HANDLED_EVENTS } from "@/lib/zalo-oa";
 
 const schema = z.object({
   event_name: z.string().max(80),
@@ -57,7 +57,7 @@ export const Route = createFileRoute("/api/public/zalo/$key")({
         }
         if (p.app_id && String(p.app_id) !== oa.app_id) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sai App ID"); return json({ ok: false, rejected: "wrong app" }); }
         if (!webhookFresh(p.timestamp)) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sự kiện quá cũ"); return json({ ok: false, rejected: "stale event" }); }
-        const eventOa = p.oa_id ?? (p.event_name.startsWith("user_") ? p.recipient?.id : p.sender?.id);
+        const eventOa = eventOaId(p);
         if (eventOa && String(eventOa) !== oa.oa_id) { await logWebhook(oa.tenant_id, oa.id, p.event_name, false, "Sai OA"); return json({ ok: false, rejected: "wrong OA" }); }
 
         await sb.from("zalo_oa_accounts").update({ last_webhook_at: new Date().toISOString(), ...(oa.status === "webhook_error" ? { status: "connected" } : {}) }).eq("id", oa.id);
@@ -76,6 +76,8 @@ export const Route = createFileRoute("/api/public/zalo/$key")({
         const eventId = p.message?.msg_id ?? `${p.event_name}:${userId}:${p.timestamp}`;
         try {
           await receiveChannelMessage({ tenantId: oa.tenant_id, channel: "zalo", accountId: oa.oa_id, userId, eventId, body: eventText(p.event_name, p.message, p.info), name: p.info?.name, phone: p.info?.phone, projectId: oa.project_id, attachment: attachmentUrl });
+          const { syncZaloContact } = await import("@/lib/zalo-contact.server");
+          await syncZaloContact(oa.tenant_id, oa.oa_id, userId);
           await logWebhook(oa.tenant_id, oa.id, p.event_name, true);
           return json({ ok: true });
         } catch (e) {
