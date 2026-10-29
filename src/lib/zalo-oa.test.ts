@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { canRunAutomation, canSend, displayStatus, needsRefresh, oaConnectionSummary, oaReceiveHealth, parseZaloWebhook, pickReplyIdentity, webhookFresh, eventOaId, zaloSendError, readZaloProfile, zaloContactName, pendingOaId, isPendingOaId, resolveOaAfterGrant } from "./zalo-oa";
 
 const now = new Date("2026-10-29T00:00:00Z");
+const oaError = (r: ReturnType<typeof resolveOaAfterGrant>) => (r.action === "error" ? r.message : "");
 
 describe("zalo oa rules", () => {
   it("OA ID left empty is filled after the grant, preferring the token-confirmed code", () => {
@@ -14,8 +15,8 @@ describe("zalo oa rules", () => {
   });
   it("a grant never rewrites the OA already configured", () => {
     expect(resolveOaAfterGrant("2788520716563342888", "2788520716563342888", "2788520716563342888")).toEqual({ action: "keep" });
-    expect(resolveOaAfterGrant("2788520716563342888", "1931793407476901203", null).message).toContain("OA khác");
-    expect(resolveOaAfterGrant("2788520716563342888", null, "1931793407476901203").message).toContain("Access Token thuộc OA");
+    expect(oaError(resolveOaAfterGrant("2788520716563342888", "1931793407476901203", null))).toContain("OA khác");
+    expect(oaError(resolveOaAfterGrant("2788520716563342888", null, "1931793407476901203"))).toContain("Access Token thuộc OA");
   });
   it("foreign OA errors do not extinguish a proven connection", () => {
     expect(oaReceiveHealth([{status:"connected",last_webhook_at:"2026-10-29T04:48:06Z"}], {ok:false,detail:"Sai OA",created_at:"2026-10-29T04:56:49Z"}).verified).toBe(true);
