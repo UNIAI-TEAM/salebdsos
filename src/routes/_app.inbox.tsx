@@ -62,7 +62,8 @@ import { INBOX_ZALO_COPY as ZT } from "@/lib/inbox-zalo-copy";
 import { INBOX_COPY as t, replyChannel, messengerWindowOpen, PENDING_INBOX_CHANNELS, canSendPendingChannel } from "@/lib/omnichannel";
 import { inboxLeadChoices, linkConversationLead } from "@/lib/omnichannel.functions";
 import { Link } from "@tanstack/react-router";
-import { ZaloOaManager } from "@/components/app/zalo-oa-manager";
+import { ZaloOaManager, ZaloDomainVerifier } from "@/components/app/zalo-oa-manager";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { expandShortcut } from "@/lib/social";
 
@@ -601,6 +602,12 @@ function InboxPage() {
           <DialogHeader>
             <DialogTitle>Kênh liên lạc</DialogTitle>
           </DialogHeader>
+          <Tabs defaultValue="general">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="general">Kênh chung</TabsTrigger>
+              <TabsTrigger value="zalo"><MessageCircle className="mr-1.5 h-4 w-4" />Zalo</TabsTrigger>
+            </TabsList>
+            <TabsContent value="general" className="mt-4">
           <div className="space-y-4">
             {tenantId && <ChatConnections tenantId={tenantId} config={config} onConfigChange={setConfig} telegramEnabled={channelsQuery.data?.connections.find(c=>c.channel==='telegram')?.enabled} />}
             <div className="rounded-xl border border-border p-3">
@@ -626,10 +633,6 @@ function InboxPage() {
               />
             </div>
 
-            <div className="rounded-xl border border-border p-3">
-              <Label className="text-sm font-semibold"><MessageCircle className="mr-1.5 inline h-4 w-4" />Zalo OA</Label>
-              <div className="mt-2">{tenantId && <ZaloOaManager tenantId={tenantId} projects={zaloProjects.data ?? []} mode="configure" />}</div>
-            </div>
 
             <div className="rounded-xl border border-border p-3">
               <div className="flex items-center justify-between gap-3">
@@ -740,6 +743,22 @@ function InboxPage() {
               </p>
             </div>
           </div>
+            </TabsContent>
+            <TabsContent value="zalo" className="mt-4">
+              {tenantId && (
+                <Tabs defaultValue="create">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="create">Tạo OA</TabsTrigger>
+                    <TabsTrigger value="configure">Cấu hình</TabsTrigger>
+                    <TabsTrigger value="verify">Xác thực</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="create" className="mt-4"><ZaloOaManager tenantId={tenantId} projects={zaloProjects.data ?? []} mode="add" embedded /></TabsContent>
+                  <TabsContent value="configure" className="mt-4"><ZaloOaManager tenantId={tenantId} projects={zaloProjects.data ?? []} mode="configure" /></TabsContent>
+                  <TabsContent value="verify" className="mt-4"><ZaloDomainVerifier tenantId={tenantId} /></TabsContent>
+                </Tabs>
+              )}
+            </TabsContent>
+          </Tabs>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSettingsOpen(false)}>Đóng</Button>
             <Button onClick={() => settingsMutation.mutate()} disabled={settingsMutation.isPending}>Lưu</Button>
