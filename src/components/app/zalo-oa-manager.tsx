@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ChannelGlyph } from "@/components/app/channel-glyph";
 import { isPendingOaId, OA_STATUS_LABEL } from "@/lib/zalo-oa";
-import { authorizeZaloOa, checkZaloOa, createZaloOa, disconnectZaloOa, importLegacyZalo, listZaloOas, saveZaloOaTokens, updateZaloOa, zaloOaLogs } from "@/lib/zalo-oa.functions";
+import { addZaloVerifier, listZaloVerifiers, removeZaloVerifier, authorizeZaloOa, checkZaloOa, createZaloOa, disconnectZaloOa, importLegacyZalo, listZaloOas, saveZaloOaTokens, updateZaloOa, zaloOaLogs } from "@/lib/zalo-oa.functions";
 
 const T = {
   title: "Danh sách Zalo OA",
@@ -119,6 +119,7 @@ export function ZaloOaManager({ tenantId, projects, mode = "configure" }: { tena
       {adding && <AddDialog tenantId={tenantId} projects={projects} apps={(d?.accounts ?? []).filter((a) => a.status !== "disconnected")} onClose={() => setAdding(false)} onSaved={refresh} create={create} />}
       {manualId && <ManualDialog onClose={() => setManualId(null)} onSave={(accessToken, refreshToken) => act("m", () => saveTokens({ data: { tenantId, id: manualId, accessToken, refreshToken } }), "Đã lưu token").then(() => setManualId(null))} />}
       {editId && (() => { const acc = d?.accounts.find((x) => x.id === editId); return acc ? <EditDialog name={acc.name ?? ""} oaId={acc.oaId} onClose={() => setEditId(null)} onSave={(name, appSecret, oaSecret) => act("e", () => update({ data: { tenantId, id: acc.id, name, ...(appSecret ? { appSecret } : {}), ...(oaSecret ? { oaSecret } : {}) } }), "Đã lưu cấu hình").then(() => setEditId(null))} /> : null; })()}
+      {configure && <DomainVerifier tenantId={tenantId} />}
       {logsId && <LogsDialog tenantId={tenantId} id={logsId} onClose={() => setLogsId(null)} />}
     </div>
   );
@@ -237,5 +238,42 @@ function LogsDialog({ tenantId, id, onClose }: { tenantId: string; id: string; o
         <ul className="space-y-1 text-xs">{q.data?.audits.map((l, i) => <li key={i} className="flex justify-between gap-2"><span>{ACTION_LABEL[l.action] ?? l.action}</span><span className="shrink-0 text-muted-foreground">{fmt(l.created_at)}</span></li>)}</ul>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function DomainVerifier({ tenantId }: { tenantId: string }) {
+  const qc = useQueryClient();
+  const list = useServerFn(listZaloVerifiers), add = useServerFn(addZaloVerifier), remove = useServerFn(removeZaloVerifier);
+  const q = useQuery({ queryKey: ["zalo-verifiers", tenantId], queryFn: () => list({ data: { tenantId } }), enabled: !!tenantId });
+  const [text, setText] = useState(""), [busy, setBusy] = useState(false);
+  async function save(input: string) {
+    setBusy(true);
+    try { await add({ data: { tenantId, input } }); toast.success("Đã bật tệp xác thực — quay lại Zalo bấm Xác thực"); setText(""); qc.invalidateQueries({ queryKey: ["zalo-verifiers", tenantId] }); }
+    catch (e) { toast.error((e as Error).message); } finally { setBusy(false); }
+  }
+  async function onFile(f: File | undefined) { if (f) await save(f.name + "\n" + (await f.text()).slice(0, 4000)); }
+  return (
+    <section className="space-y-3 rounded-xl border border-border p-4">
+      <div>
+        <p className="font-medium">Xác thực tên miền với Zalo</p>
+        <p className="text-xs text-muted-foreground">Khi Zalo yêu cầu tải tệp <b>zalo_verifier….html</b> lên website, chọn tệp đó (hoặc dán tên/nội dung tệp) tại đây. Hệ thống tự phục vụ tệp ngay, không cần sửa hay xuất bản lại. Sau đó bấm <b>Xác thực</b> trên Zalo, chọn phương thức tải tệp HTML.</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Input type="file" accept=".html,text/html" className="max-w-xs" disabled={busy} onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ""; }} />
+        <Input placeholder="Hoặc dán tên tệp / nội dung / mã" value={text} onChange={(e) => setText(e.target.value)} className="min-w-0 flex-1" />
+        <Button size="sm" disabled={busy || !text.trim()} onClick={() => save(text)}>Thêm</Button>
+      </div>
+      {q.data && q.data.length > 0 && (
+        <ul className="space-y-2">
+          {q.data.map((v) => (
+            <li key={v.code} className="flex items-center gap-2">
+              <Input readOnly value={v.url} className="font-mono text-xs" />
+              <Button size="icon" variant="outline" aria-label="Mở tệp" asChild><a href={v.url} target="_blank" rel="noopener noreferrer"><ShieldCheck className="h-4 w-4" /></a></Button>
+              <Button size="icon" variant="ghost" aria-label="Xóa" onClick={() => remove({ data: { tenantId, code: v.code } }).then(() => qc.invalidateQueries({ queryKey: ["zalo-verifiers", tenantId] }))}><Unplug className="h-4 w-4" /></Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

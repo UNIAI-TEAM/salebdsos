@@ -372,6 +372,13 @@
       "when": 1793246857777,
       "tag": "0052_zalo_oa_webhook_secret",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1793254961590,
+      "tag": "0053_zalo_site_verifications",
+      "breakpoints": true
     }
   ]
 }
