@@ -1,7 +1,8 @@
 // Ticket tự động + đánh giá hài lòng cho mọi kênh. Chỉ gọi từ máy chủ sau khi tin khách đã được lưu.
 import { supabaseAdmin as sb } from "@/integrations/supabase/client.server";
 import { appendMessage } from "./channels.server";
-import { canAutoSend, parseRating, parseSupportConfig, renderSurvey, shouldReopen, SUPPORT_KEY, surveyOpen, ticketDueAt, type SupportConfig } from "./support";
+import { canAutoSend, parseRating, parseSupportConfig, renderSurvey, shouldReopen, shouldCreateSupportTicket, SUPPORT_KEY, surveyOpen, ticketDueAt, type SupportConfig } from "./support";
+import { wantsHuman } from "./chat-flows";
 
 export async function loadSupportConfig(tenantId: string): Promise<SupportConfig> {
   const { data } = await sb.from("settings").select("value").eq("tenant_id", tenantId).eq("key", SUPPORT_KEY).maybeSingle();
@@ -29,7 +30,7 @@ export async function sendAutoMessage(tenantId: string, conversationId: string, 
 }
 
 /** Xử lý tin khách cho ticket/CSAT. consumed = tin là câu trả lời đánh giá (không chạy bot, không mở ticket). */
-export async function handleInboundSupport(args: { tenantId: string; conversationId: string; channel: string; text: string; contactName?: string | null }) {
+export async function handleInboundSupport(args: { tenantId: string; conversationId: string; channel: string; text: string; contactName?: string | null }, handoff = false) {
   const cfg = await loadSupportConfig(args.tenantId);
   const now = new Date();
 
@@ -40,7 +41,9 @@ export async function handleInboundSupport(args: { tenantId: string; conversatio
   if (pending && surveyOpen(cfg, pending.csat_requested_at, pending.csat_rated_at, now)) {
     const rating = parseRating(args.text);
     if (rating) {
-      await sb.from("message_tickets").update({ csat_score: rating.score, csat_comment: rating.comment || null, csat_rated_at: now.toISOString() }).eq("id", pending.id).is("csat_rated_at", null);
+      const { data: rated, error: ratingError } = await sb.from("message_tickets").update({ csat_score: rating.score, csat_comment: rating.comment || null, csat_rated_at: now.toISOString() }).eq("tenant_id", args.tenantId).eq("id", pending.id).is("csat_rated_at", null).select("id");
+      if (ratingError) throw new Error("Không lưu được đánh giá");
+      if (!rated?.length) return { consumed: true };
       await sendAutoMessage(args.tenantId, args.conversationId, args.channel, rating.score <= 2 && cfg.csat.lowScoreFollowup ? `${cfg.csat.thanks}\n${cfg.csat.lowScoreFollowup}` : cfg.csat.thanks, { csat: true });
       if (rating.score <= 2 && pending.assignee_user_id) {
         await sb.from("notifications").insert({ tenant_id: args.tenantId, user_id: pending.assignee_user_id, type: "system", title: `Khách đánh giá thấp (${rating.score}/5) · ${pending.code}`, body: rating.comment || "Cần liên hệ lại khách", link: "/inbox-tickets" } as never);
@@ -50,7 +53,7 @@ export async function handleInboundSupport(args: { tenantId: string; conversatio
   }
 
   // 2) Tự tạo / mở lại ticket
-  if (!cfg.ticket.autoCreate) return { consumed: false };
+  if (!shouldCreateSupportTicket(cfg, handoff)) return { consumed: false };
   const { data: active } = await sb.from("message_tickets").select("id").eq("tenant_id", args.tenantId).eq("conversation_id", args.conversationId).in("status", ["open", "assigned"]).limit(1).maybeSingle();
   if (active) return { consumed: false };
   const { data: conv } = await sb.from("conversations").select("owner_user_id,contact_name").eq("tenant_id", args.tenantId).eq("id", args.conversationId).maybeSingle();
@@ -58,7 +61,7 @@ export async function handleInboundSupport(args: { tenantId: string; conversatio
   const { data: last } = await sb.from("message_tickets").select("id,resolved_at,reopened_count,status")
     .eq("tenant_id", args.tenantId).eq("conversation_id", args.conversationId).eq("status", "resolved").order("resolved_at", { ascending: false }).limit(1).maybeSingle();
   if (last && shouldReopen(cfg, last.resolved_at, now)) {
-    await sb.from("message_tickets").update({ status: owner ? "assigned" : "open", resolved_at: null, due_at: ticketDueAt(cfg, now), reopened_count: (last.reopened_count ?? 0) + 1, assignee_user_id: owner, csat_requested_at: null }).eq("id", last.id).eq("status", "resolved");
+    await sb.from("message_tickets").update({ status: owner ? "assigned" : "open", resolved_at: null, due_at: ticketDueAt(cfg, now), reopened_count: (last.reopened_count ?? 0) + 1, assignee_user_id: owner, csat_requested_at: null, csat_rated_at: null, csat_score: null, csat_comment: null }).eq("tenant_id", args.tenantId).eq("id", last.id).eq("status", "resolved");
     return { consumed: false, reopened: true };
   }
   const name = args.contactName || conv?.contact_name || "Khách";
@@ -85,14 +88,19 @@ export async function requestCsat(tenantId: string, ticketId: string) {
   return sendAutoMessage(tenantId, t.conversation_id, conv.channel as string, renderSurvey(cfg), { csat_request: t.id });
 }
 
-/** Sau khi lưu tin khách: CSAT → ticket → bot kịch bản. Không để lỗi phụ làm hỏng việc nhận tin. */
+/** CSAT → chatbot → chỉ tạo/giao ticket khi khách hoặc kịch bản cần nhân viên. */
 export async function afterInbound(args: { tenantId: string; conversationId: string; channel: string; text: string; contactName?: string | null; vars?: Record<string, string>; entry?: string | null }) {
   try {
     const r = await handleInboundSupport(args);
     if (r.consumed) return;
   } catch (e) { console.error("support handling failed", e); }
+  let handoff = wantsHuman(args.text);
   try {
     const { runChatBot } = await import("./chat-flows.server");
-    await runChatBot(args);
+    const bot = await runChatBot(args);
+    handoff = handoff || bot.handoff === true;
   } catch (e) { console.error("chat bot failed", e); }
+  if (handoff) {
+    try { await handleInboundSupport(args, true); } catch (e) { console.error("ticket handoff failed", e); }
+  }
 }

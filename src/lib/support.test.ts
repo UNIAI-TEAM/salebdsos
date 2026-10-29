@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { canAutoSend, parseRating, parseSupportConfig, renderSurvey, shouldReopen, surveyOpen, ticketDueAt } from "./support";
+import { canAutoSend, parseRating, parseSupportConfig, renderSurvey, shouldReopen, shouldCreateSupportTicket, surveyOpen, ticketDueAt } from "./support";
 
 const cfg = parseSupportConfig({});
 const now = new Date("2026-10-29T07:00:00Z");
 
 describe("support config", () => {
+  it("ordinary chatbot questions never create tickets", () => {
+    expect(shouldCreateSupportTicket(cfg, false)).toBe(false);
+  });
+  it("handoff creates a ticket only when automatic handoff tickets are enabled", () => {
+    expect(shouldCreateSupportTicket(cfg, true)).toBe(true);
+    expect(shouldCreateSupportTicket({ ...cfg, ticket: { ...cfg.ticket, autoCreate: false } }, true)).toBe(false);
+  });
   it("defaults: auto ticket, SLA 30 phút, mở lại trong 24h, CSAT bật", () => {
     expect(cfg.ticket.autoCreate).toBe(true);
     expect(ticketDueAt(cfg, now)).toBe("2026-10-29T07:30:00.000Z");
