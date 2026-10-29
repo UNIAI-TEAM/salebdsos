@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Kiểm tra lại tên/ảnh Vietants sau khi cấp đầy đủ quyền; chatbot tư vấn trước, chỉ tạo/giao ticket khi khách cần nhân viên; cấu hình kịch bản rõ ràng và kiểm thử luồng chuyển giao.
+- [x] Kiểm tra lại Vietants sau khi bật quyền: gọi lấy lại hồ sơ thật vẫn -212, cần đăng ký API chứ không chỉ bật quyền. Chatbot tư vấn trước, chỉ tạo/giao ticket khi khách yêu cầu nhân viên hoặc kịch bản chuyển giao; câu chưa khớp giữ bot và đưa lựa chọn, FAQ từ khóa hoạt động giữa luồng. Có Cấu hình chatbot ngay Hộp thoại và bộ dựng kịch bản; chỉnh lời trả lời dự phòng. 46 test đạt; luồng web thật xác nhận 0 ticket khi bot tư vấn, 1 ticket Đã giao khi gặp nhân viên, lặp yêu cầu không tạo trùng. Khôi phục kịch bản cũ sau thử. Zalo thực chờ xuất bản và cấu hình kịch bản (sàn chưa lưu kịch bản nào).
 
 - [x] Gọi lại API tên/ảnh đúng OA Vietants từ hội thoại đăng nhập; Zalo trả -212 (ứng dụng chưa đăng ký API lấy chi tiết người dùng, không phải lỗi gói). Thêm nút lấy lại hồ sơ và hướng dẫn chính xác; 30 test đạt, build OK.
 - [x] Thử ticket Vietants thật: tạo phiếu kiểm thử liên kết hội thoại, Nhận → Xử lý xong trên giao diện, Zalo xác nhận khảo sát đã gửi (có message ID), tải lại phiếu vẫn Đã xử lý/Chờ khách. Khách gửi TEST TICKET VIETANTS và trả lời 5 đã vào hội thoại.
